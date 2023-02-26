@@ -1,0 +1,12 @@
+[submodule "Toki/vendor/glfw"]
+	path = Toki/vendor/glfw
+	url = https://github.com/CelanMatjaz/glfw
+[submodule "Toki/vendor/imgui"]
+	path = Toki/vendor/imgui
+	url = https://github.com/CelanMatjaz/imgui
+[submodule "Toki/vendor/stb"]
+	path = Toki/vendor/stb
+	url = https://github.com/CelanMatjaz/stb
+[submodule "Toki/vendor/glm"]
+	path = Toki/vendor/glm
+	url = https://github.com/CelanMatjaz/glm
