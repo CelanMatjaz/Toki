@@ -3,3 +3,9 @@ obj
 MakeFile
 Toki.make
 vendor
+.vs
+
+Toki.sln
+Toki.vcxproj
+Toki.vcxproj.filters
+Toki.vcxproj.user

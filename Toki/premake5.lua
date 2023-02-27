@@ -18,6 +18,7 @@ project "Toki"
 
     files {
         "src/**.cpp",
+        "src/**.h",
     }
 
     includedirs {
@@ -28,6 +29,7 @@ project "Toki"
         "./vendor/glm/",
         "./vendor/imgui",
         "./vendor/imgui/backends",
+        "./vendor/stb/"
     }
 
     libdirs { 
@@ -38,8 +40,8 @@ project "Toki"
 
     links {
         "imgui",
-        "vulkan-1",
         "glfw",
+        "vulkan-1",
     }
 
     filter "system:windows" 
@@ -57,8 +59,8 @@ project "Toki"
         optimize "On"        
 
     filter "action:vs*"  -- for Visual Studio actions
-        pchheader "./src/tkpch.h"
         pchsource "./src/tkpch.cpp"
+        pchheader "tkpch.h"
 
     filter "action:not vs*"  -- for everything else
         pchheader "./src/tkpch.h"
