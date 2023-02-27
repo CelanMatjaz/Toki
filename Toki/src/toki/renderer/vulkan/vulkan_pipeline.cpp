@@ -146,4 +146,47 @@ namespace Toki {
         TK_ASSERT(VulkanRenderer::getDevice().createGraphicsPipelines({}, 1, &pipelineInfo, nullptr, &pipeline) == vk::Result::eSuccess);
         return pipeline;
     }
+
+    vk::DescriptorSetLayout VulkanPipeline::createDescriptorSetLayout(const DescriptorSetLayoutData& bindings) {
+        std::vector<vk::DescriptorSetLayoutBinding> layoutBindings;
+        layoutBindings.reserve(bindings.size());
+
+        for (uint32_t i = 0; i < bindings.size(); ++i) {
+            vk::DescriptorSetLayoutBinding binding{};
+            binding.binding = bindings[i].binding;
+            binding.descriptorType = bindings[i].descriptorType;
+            binding.descriptorCount = bindings[i].count;
+            binding.stageFlags = bindings[i].stageFlags;
+
+            layoutBindings.push_back(binding);
+        }
+
+        vk::DescriptorSetLayoutCreateInfo layoutInfo;
+        layoutInfo.setBindings(layoutBindings);
+
+        vk::DescriptorSetLayout descriptorSetLayout;
+        TK_ASSERT(VulkanRenderer::getDevice().createDescriptorSetLayout(&layoutInfo, nullptr, &descriptorSetLayout) == vk::Result::eSuccess);
+        return descriptorSetLayout;
+    }
+
+    vk::DescriptorPool VulkanPipeline::createDescriptorPool(vk::DescriptorType type, uint32_t size) {
+        vk::DescriptorPoolSize poolSize{type, size};
+        vk::DescriptorPoolCreateInfo poolInfo({}, size, 1, &poolSize);
+
+        vk::DescriptorPool descriptorPool;
+        TK_ASSERT(VulkanRenderer::getDevice().createDescriptorPool(&poolInfo, nullptr, &descriptorPool) == vk::Result::eSuccess);
+        return descriptorPool;
+    }
+
+    std::vector<vk::DescriptorSet> VulkanPipeline::createDescriptorSets(vk::DescriptorPool descriptorPool, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts) {
+        vk::DescriptorSetAllocateInfo allocInfo;
+        allocInfo.descriptorPool = descriptorPool;
+        allocInfo.descriptorSetCount = descriptorSetLayouts.size();
+        allocInfo.pSetLayouts = descriptorSetLayouts.data();
+
+        std::vector<vk::DescriptorSet> descriptorSets(descriptorSetLayouts.size());
+        TK_ASSERT(VulkanRenderer::getDevice().allocateDescriptorSets(&allocInfo, descriptorSets.data()) == vk::Result::eSuccess);
+        return descriptorSets;
+    }
+
 }
