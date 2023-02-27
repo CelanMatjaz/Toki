@@ -4,6 +4,7 @@ MakeFile
 Toki.make
 vendor
 .vs
+shaders/compiled
 
 Toki.sln
 Toki.vcxproj

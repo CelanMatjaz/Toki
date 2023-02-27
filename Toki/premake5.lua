@@ -14,7 +14,7 @@ project "Toki"
 
     targetdir("bin/%{cfg.buildcfg}/%{prj.name}")
 
-    -- prebuildcommands { "make -f ./shaders.make" } TODO: move this
+    prebuildcommands { "make -f ./shaders.make" }
 
     files {
         "src/**.cpp",
