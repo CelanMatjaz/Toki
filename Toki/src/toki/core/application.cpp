@@ -10,7 +10,7 @@ namespace Toki {
         TK_ASSERT(application == nullptr);
         application = this;
 
-        window = TokiWindow::createWindow("Window", 1280, 720, false);
+        window = TokiWindow::createWindow("Window", 1280, 720, true);
 
         TK_ASSERT(rendererBackend == nullptr);
         Application::rendererBackend = new VulkanRenderer();
@@ -26,9 +26,9 @@ namespace Toki {
             float deltaTime = now - lastFrameTime;
             lastFrameTime = now;
 
-            // rendererBackend->startFrame();
+            rendererBackend->beginFrame();
             onUpdate(deltaTime);
-            // rendererBackend->endFrame();
+            rendererBackend->endFrame();
 
             glfwPollEvents();
             if (glfwWindowShouldClose(window->getHandle())) running = false;

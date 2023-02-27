@@ -20,22 +20,20 @@ namespace Toki {
         physicalDevice = instance.enumeratePhysicalDevices().front();
         VulkanDevice::initQueueFamilyIndexes();
         device = VulkanDevice::createDevice();
+        graphicsQueue = device.getQueue(VulkanDevice::getQueueFamilyIndexes().graphicsQueueIndex, 0);
         createCommandPool();
         createSwapchain();
         createFrames();
         createDepthBuffer();
         createRenderPass();
+        createFrameBuffers();
     }
 
     void VulkanRenderer::cleanup() {
-        device.destroyRenderPass(renderPass);
-        depthBuffer.cleanup();
+        device.waitIdle();
 
-        for (auto& imageView : swapchainImageViews) {
-            device.destroyImageView(imageView);
-        }
+        cleanupSwapchain();
 
-        device.destroySwapchainKHR(swapchain);
 
         for (uint32_t i = 0; i < MAX_FRAMES; ++i) {
             frames[i].cleanup();
@@ -45,6 +43,121 @@ namespace Toki {
         device.destroy();
         vkDestroySurfaceKHR(instance, static_cast<VkSurfaceKHR>(VulkanRenderer::surface), nullptr);
         instance.destroy();
+    }
+
+    void VulkanRenderer::recreateSwapchain() {
+        device.waitIdle();
+
+        cleanupSwapchain();
+        createSwapchain();
+        createRenderPass();
+        createDepthBuffer();
+        createFrameBuffers();
+    }
+
+    void VulkanRenderer::cleanupSwapchain() {
+        depthBuffer.cleanup();
+        device.destroyRenderPass(renderPass);
+
+        for (uint32_t i = 0; i < frameBuffers.size(); ++i) {
+            vkDestroyFramebuffer(device, frameBuffers[i], nullptr);
+        }
+
+        for (auto& imageView : swapchainImageViews) {
+            device.destroyImageView(imageView);
+        }
+
+        device.destroySwapchainKHR(swapchain);
+    }
+
+    void VulkanRenderer::beginFrame() {
+        FrameData* frame = getCurrentFrame();
+        uint64_t timeout = UINT64_MAX - 1;
+        vk::Result result = device.acquireNextImageKHR(swapchain, timeout, frame->presentSemaphore, nullptr, &imageIndex);
+
+        TK_ASSERT(device.waitForFences(1, &frame->renderFence, VK_TRUE, timeout) == vk::Result::eSuccess);
+
+        if (result == vk::Result::eErrorOutOfDateKHR) {
+            recreateSwapchain();
+            return;
+        }
+        else if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR) {
+            throw std::runtime_error("Failed to acquire swapchain image");
+        }
+
+        TK_ASSERT(device.resetFences(1, &frame->renderFence) == vk::Result::eSuccess);
+
+        TK_ASSERT((result == vk::Result::eSuccess || result == vk::Result::eSuboptimalKHR) && "Failed to acquire swapchain image");
+
+        isFrameStarted = true;
+
+        vk::CommandBufferBeginInfo commandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+        TK_ASSERT(frame->commandBuffer.begin(&commandBufferBeginInfo) == vk::Result::eSuccess);
+
+        vk::ClearValue clearValue{};
+        clearValue.color = { 0.1f, 0.1f, 0.1f, 1.0f };
+        vk::ClearValue depthClear;
+        depthClear.depthStencil.depth = 1.f;
+
+        std::array<vk::ClearValue, 2> clearValues = { clearValue, depthClear };
+
+        vk::RenderPassBeginInfo renderPassBeginInfo{};
+        renderPassBeginInfo.renderPass = renderPass;
+        renderPassBeginInfo.renderArea.offset.x = 0;
+        renderPassBeginInfo.renderArea.offset.y = 0;
+        renderPassBeginInfo.renderArea.extent = swapchainExtent;
+        renderPassBeginInfo.framebuffer = frameBuffers[imageIndex];
+        renderPassBeginInfo.clearValueCount = clearValues.size();
+        renderPassBeginInfo.pClearValues = clearValues.data();
+
+        frame->commandBuffer.beginRenderPass(&renderPassBeginInfo, vk::SubpassContents::eInline);
+    }
+
+    void VulkanRenderer::endFrame() {
+        if (!isFrameStarted) return;
+
+        FrameData* frame = getCurrentFrame();
+        frame->commandBuffer.endRenderPass();
+
+        TK_ASSERT(isFrameStarted && "Can't call endFrame while frame is not in progress");
+        frame->commandBuffer.end();
+
+        vk::Semaphore waitSemaphores[] = { frame->presentSemaphore };
+        vk::Semaphore signalSemaphores[] = { frame->renderSemaphore };
+        vk::PipelineStageFlags waitStages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
+
+        vk::SubmitInfo submitInfo{};
+        submitInfo.pWaitDstStageMask = waitStages;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &frame->commandBuffer;
+        submitInfo.pWaitSemaphores = waitSemaphores;
+        submitInfo.waitSemaphoreCount = 1;
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = signalSemaphores;
+
+        TK_ASSERT(device.resetFences(1, &frame->renderFence) == vk::Result::eSuccess);
+        TK_ASSERT(graphicsQueue.submit(1, &submitInfo, frame->renderFence) == vk::Result::eSuccess);
+
+        vk::SwapchainKHR swapchains[] = { swapchain };
+        vk::PresentInfoKHR presentInfo{};
+        presentInfo.pSwapchains = swapchains;
+        presentInfo.swapchainCount = 1;
+        presentInfo.pWaitSemaphores = &frame->renderSemaphore;
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pImageIndices = &this->imageIndex;
+
+        vk::Result result = graphicsQueue.presentKHR(&presentInfo);
+
+        if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || Application::getWindow()->wasResized()) {
+            Application::getWindow()->resetResizedFlag();
+            recreateSwapchain();
+        }
+        else if (result != vk::Result::eSuccess) {
+            TK_ASSERT(false && "Failed to present swapchain image");
+        }
+
+        isFrameStarted = false;
+        ++currentFrame;
     }
 
     void VulkanRenderer::createInstance() {
@@ -192,6 +305,26 @@ namespace Toki {
             TK_ASSERT(device.createFence(&fenceCreateInfo, nullptr, &frames[i].renderFence) == vk::Result::eSuccess);
             TK_ASSERT(device.createSemaphore(&semaphoreCreateInfo, nullptr, &frames[i].presentSemaphore) == vk::Result::eSuccess);
             TK_ASSERT(device.createSemaphore(&semaphoreCreateInfo, nullptr, &frames[i].renderSemaphore) == vk::Result::eSuccess);
+        }
+    }
+
+    void VulkanRenderer::createFrameBuffers() {
+        vk::FramebufferCreateInfo framebufferCreateInfo;
+        framebufferCreateInfo.renderPass = renderPass;
+        framebufferCreateInfo.width = swapchainExtent.width;
+        framebufferCreateInfo.height = swapchainExtent.height;
+        framebufferCreateInfo.layers = 1;
+
+        frameBuffers.resize(swapchainImageViews.size());
+
+        for (uint32_t i = 0; i < swapchainImageViews.size(); ++i) {
+            std::vector<vk::ImageView> attachments = {
+                swapchainImageViews[i],
+                depthBuffer.imageView
+            };
+
+            framebufferCreateInfo.setAttachments(attachments);
+            TK_ASSERT(device.createFramebuffer(&framebufferCreateInfo, nullptr, &frameBuffers[i]) == vk::Result::eSuccess);
         }
     }
 

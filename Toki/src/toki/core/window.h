@@ -19,10 +19,17 @@ namespace Toki {
         };
 
     public:
-        WindowDimensions getWindowDimensions();
+        WindowDimensions getWindowDimensions() const { return dimensions; }
+
+        bool wasResized() { return this->_wasResized; }
+        void resetResizedFlag() { _wasResized = false; }
+
+        static void windowResizedCallback(GLFWwindow* window, int width, int height);
 
     private:
         GLFWwindow* handle;
+        WindowDimensions dimensions;
+        bool _wasResized = false;
     };
 
 }

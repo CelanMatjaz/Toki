@@ -14,6 +14,9 @@ namespace Toki {
         void init();
         void cleanup();
 
+        void beginFrame();
+        void endFrame();
+
         static vk::Instance getInstance() { return instance; }
         static vk::SurfaceKHR getSurface() { return surface; }
         static vk::PhysicalDevice getPhysicalDevice() { return physicalDevice; }
@@ -33,9 +36,15 @@ namespace Toki {
         inline static vk::CommandPool commandPool;
         inline static vk::SwapchainKHR swapchain;
         inline static vk::RenderPass renderPass;
+        inline static vk::CommandBuffer currentCommandBuffer;
 
         inline static vk::Extent2D swapchainExtent;
         inline static vk::Format swapchainImageFormat;
+        inline static vk::Queue graphicsQueue;
+        inline static vk::Queue presentQueue;
+
+        void recreateSwapchain();
+        void cleanupSwapchain();
 
         void createInstance();
         void createSurface();
@@ -43,6 +52,7 @@ namespace Toki {
         void createSwapchain();
         void createRenderPass();
         void createFrames();
+        void createFrameBuffers();
         void createDepthBuffer();
 
         static constexpr uint32_t MAX_FRAMES = 3;
@@ -59,6 +69,11 @@ namespace Toki {
             }
         } frames[MAX_FRAMES];
 
+        uint32_t currentFrame{ 0 };
+        uint32_t imageIndex;
+        bool isFrameStarted = false;
+        FrameData* getCurrentFrame() { return &frames[currentFrame % MAX_FRAMES]; }
+
         struct Image {
             vk::Image image;
             vk::ImageView imageView;
@@ -73,6 +88,7 @@ namespace Toki {
 
         std::vector<vk::Image> swapchainImages;
         std::vector<vk::ImageView> swapchainImageViews;
+        std::vector<vk::Framebuffer> frameBuffers;
 
         Image depthBuffer;
         vk::Format depthFormat;

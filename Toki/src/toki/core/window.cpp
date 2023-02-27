@@ -11,17 +11,19 @@ namespace Toki {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
         window->handle = glfwCreateWindow(width, height, title, nullptr, nullptr);
+        window->dimensions = { width, height };
 
         glfwMakeContextCurrent(window->handle);
         glfwSetWindowUserPointer(window->handle, window.get());
+        glfwSetFramebufferSizeCallback(window->handle, windowResizedCallback);
 
         return window;
     }
 
-    TokiWindow::WindowDimensions TokiWindow::getWindowDimensions() {
-        int width, height;
-        glfwGetWindowSize(handle, &width, &height);
-        return { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
+    void TokiWindow::windowResizedCallback(GLFWwindow* window, int width, int height) {
+        auto w = reinterpret_cast<TokiWindow*>(glfwGetWindowUserPointer(window));
+        w->_wasResized = true;
+        w->dimensions = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
     }
 
 }
