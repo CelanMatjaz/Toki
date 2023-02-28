@@ -27,7 +27,7 @@ namespace Toki {
         static vk::ImageTiling findTiling(vk::Format format);
         static vk::Format findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlagBits features);
         static vk::SurfaceFormatKHR findSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& formats);
-        static uint32_t findMemoryType(uint32_t typeBits);
+        static uint32_t findMemoryType(uint32_t typeBits, vk::MemoryPropertyFlags properties);
 
     private:
         inline static QueueFamilyIndexes queueFamilyIndexes = { UINT32_MAX, UINT32_MAX };

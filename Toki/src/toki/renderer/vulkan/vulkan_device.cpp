@@ -166,15 +166,13 @@ namespace Toki {
         return formats[0];
     }
 
-    uint32_t VulkanDevice::findMemoryType(uint32_t typeBits) {
+    uint32_t VulkanDevice::findMemoryType(uint32_t typeBits, vk::MemoryPropertyFlags properties) {
         vk::PhysicalDeviceMemoryProperties memoryProperties = VulkanRenderer::getPhysicalDevice().getMemoryProperties();
 
         for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
-            if ((typeBits & 1) &&
-                 ((memoryProperties.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal) == vk::MemoryPropertyFlagBits::eDeviceLocal)) {
+            if ((typeBits & (1 << i)) && (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties) {
                 return i;
             }
-            typeBits >>= 1;
         }
 
         TK_ASSERT(false && "Failed to find suitable memory type");

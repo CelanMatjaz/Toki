@@ -68,7 +68,7 @@ namespace Toki {
         vk::PipelineRasterizationStateCreateInfo rasterizerCreateInto;
         rasterizerCreateInto.polygonMode = vk::PolygonMode::eFill; // REVIEW: maybe add to config?
         rasterizerCreateInto.frontFace = vk::FrontFace::eCounterClockwise; // REVIEW: maybe add to config?
-        rasterizerCreateInto.cullMode = vk::CullModeFlagBits::eFront; // REVIEW: maybe add to config?
+        rasterizerCreateInto.cullMode = vk::CullModeFlagBits::eBack; // REVIEW: maybe add to config?
         rasterizerCreateInto.depthClampEnable = VK_FALSE;
         rasterizerCreateInto.rasterizerDiscardEnable = VK_FALSE;
         rasterizerCreateInto.depthBiasEnable = VK_FALSE;
@@ -169,9 +169,21 @@ namespace Toki {
         return descriptorSetLayout;
     }
 
-    vk::DescriptorPool VulkanPipeline::createDescriptorPool(vk::DescriptorType type, uint32_t size) {
-        vk::DescriptorPoolSize poolSize{type, size};
-        vk::DescriptorPoolCreateInfo poolInfo({}, size, 1, &poolSize);
+    vk::DescriptorPool VulkanPipeline::createDescriptorPool(const DestriptorPoolSizes& sizes) {
+        uint32_t maxSets = std::accumulate(sizes.begin(), sizes.end(), 0, [](int val, const DestriptorPoolSize& size) {
+            return val + size.size;
+        });
+
+        std::vector<vk::DescriptorPoolSize> poolSizes(sizes.size());
+
+        for (uint32_t i = 0; i < sizes.size(); ++i) {
+            poolSizes[i].type = sizes[i].type;
+            poolSizes[i].descriptorCount = sizes[i].size;
+        }
+
+        vk::DescriptorPoolCreateInfo poolInfo({}, maxSets, poolSizes.size(), poolSizes.data());
+
+        auto de = VulkanRenderer::getDevice();
 
         vk::DescriptorPool descriptorPool;
         TK_ASSERT(VulkanRenderer::getDevice().createDescriptorPool(&poolInfo, nullptr, &descriptorPool) == vk::Result::eSuccess);

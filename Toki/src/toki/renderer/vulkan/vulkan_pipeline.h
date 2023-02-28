@@ -27,10 +27,16 @@ namespace Toki {
             vk::ShaderStageFlagBits stageFlags;
         };
 
+        struct DestriptorPoolSize {
+            vk::DescriptorType type;
+            uint32_t size;
+        };
+
         using DescriptorSetLayoutData = std::vector<LayoutData>;
+        using DestriptorPoolSizes = std::vector<DestriptorPoolSize>;
 
         static vk::DescriptorSetLayout createDescriptorSetLayout(const DescriptorSetLayoutData& bindings);
-        static vk::DescriptorPool createDescriptorPool(vk::DescriptorType type, uint32_t size);
+        static vk::DescriptorPool createDescriptorPool(const DestriptorPoolSizes& sizes);
         static std::vector<vk::DescriptorSet> createDescriptorSets(vk::DescriptorPool descriptorPool, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts);
     };
 

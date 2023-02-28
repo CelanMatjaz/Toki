@@ -11,10 +11,12 @@
 #include "glm/gtx/euler_angles.hpp"
 #include "glm/gtx/quaternion.hpp"
 
+#include "algorithm"
 #include "array"
 #include "chrono"
 #include "filesystem"
 #include "fstream"
+#include "numeric"
 #include "iostream"
 #include "stdexcept"
 #include "vector"

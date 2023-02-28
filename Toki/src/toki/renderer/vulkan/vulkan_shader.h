@@ -8,7 +8,6 @@ namespace Toki {
     class VulkanShader {
     public:
         ~VulkanShader();
-        VulkanShader() = default;
 
         static std::unique_ptr<VulkanShader> create(std::string vertShaderPath, std::string fragShaderPath, VulkanPipeline::PipelineConfig pipelineConfig);
 
@@ -19,6 +18,7 @@ namespace Toki {
         void recreatePipeline();
 
     private:
+        VulkanShader() = default;
 
         void cleanup();
 

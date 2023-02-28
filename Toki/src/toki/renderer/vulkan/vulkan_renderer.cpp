@@ -111,6 +111,7 @@ namespace Toki {
         renderPassBeginInfo.pClearValues = clearValues.data();
 
         frame->commandBuffer.beginRenderPass(&renderPassBeginInfo, vk::SubpassContents::eInline);
+        currentCommandBuffer = frame->commandBuffer;
     }
 
     void VulkanRenderer::endFrame() {
@@ -347,7 +348,7 @@ namespace Toki {
 
         vk::PhysicalDeviceMemoryProperties memoryProperties = physicalDevice.getMemoryProperties();
         vk::MemoryRequirements memoryRequirements = device.getImageMemoryRequirements(depthBuffer.image);
-        vk::MemoryAllocateInfo memoryAllocateInfo { memoryRequirements.size, VulkanDevice::findMemoryType(memoryRequirements.memoryTypeBits) };
+        vk::MemoryAllocateInfo memoryAllocateInfo { memoryRequirements.size, VulkanDevice::findMemoryType(memoryRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal) };
 
         TK_ASSERT(device.allocateMemory(&memoryAllocateInfo, nullptr, &depthBuffer.memory) == vk::Result::eSuccess);
         device.bindImageMemory(depthBuffer.image, depthBuffer.memory, 0);

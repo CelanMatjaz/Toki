@@ -24,9 +24,13 @@ namespace Toki {
         static vk::CommandPool getCommandPool() { return commandPool; }
         static vk::SwapchainKHR getSwapchain() { return swapchain; }
         static vk::RenderPass getRenderPass() { return renderPass; }
+        static vk::CommandBuffer getCommandBuffer() { return currentCommandBuffer; }
 
         static vk::Extent2D getSwapchainExtent() { return swapchainExtent; }
         static vk::Format getSwapchainFormat() { return swapchainImageFormat; }
+        static vk::Queue getGraphicsQueue() { return graphicsQueue; }
+
+        uint32_t getImageCount() { return swapchainImages.size(); }
 
     private:
         inline static vk::Instance instance;
