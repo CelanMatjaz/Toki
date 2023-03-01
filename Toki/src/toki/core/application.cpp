@@ -17,11 +17,19 @@ namespace Toki {
     }
 
     Application::~Application() {
-        delete  Application::rendererBackend;
+        delete Application::rendererBackend;
     }
 
     void Application::run() {
+        const auto& [windowWidth, windowHeight] = window->getWindowDimensions();
+
         while (running) {
+            glfwPollEvents();
+            if (glfwWindowShouldClose(window->getHandle())) running = false;
+
+            const auto& [windowWidth, windowHeight] = window->getWindowDimensions();
+            if (windowWidth <= 0 || windowHeight <= 0) continue;
+
             float now = glfwGetTime();
             float deltaTime = now - lastFrameTime;
             lastFrameTime = now;
@@ -29,9 +37,6 @@ namespace Toki {
             rendererBackend->beginFrame();
             onUpdate(deltaTime);
             rendererBackend->endFrame();
-
-            glfwPollEvents();
-            if (glfwWindowShouldClose(window->getHandle())) running = false;
         }
     }
 
