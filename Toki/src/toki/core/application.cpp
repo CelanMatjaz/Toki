@@ -14,9 +14,12 @@ namespace Toki {
 
         TK_ASSERT(rendererBackend == nullptr);
         Application::rendererBackend = new VulkanRenderer();
+
+        layerStack = new LayerStack();
     }
 
     Application::~Application() {
+        delete layerStack;
         delete Application::rendererBackend;
     }
 
@@ -35,9 +38,16 @@ namespace Toki {
             lastFrameTime = now;
 
             rendererBackend->beginFrame();
-            onUpdate(deltaTime);
+
+            for (int layerIndex = layerStack->layers.size() - 1; layerIndex >= 0; --layerIndex)
+                layerStack->layers[layerIndex]->onUpdate(deltaTime);
+
             rendererBackend->endFrame();
         }
+    }
+
+    void Application::addLayer(Layer* layer) {
+        layerStack->pushLayer(layer);
     }
 
 }

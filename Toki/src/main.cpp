@@ -3,9 +3,9 @@
 #include "toki/core/toki.h"
 
 
-class TestApplication : public Toki::Application {
+class TestLayer : public Toki::Layer {
 public:
-    TestApplication() : Toki::Application() {
+    TestLayer() : Toki::Layer() {
         float vertexData[] = {
             -0.7f, -0.7f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
             -0.7f, 0.7f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
@@ -26,7 +26,8 @@ public:
         shader = Toki::VulkanShader::create("./shaders/compiled/shader.vert.spv", "./shaders/compiled/shader.frag.spv", config);
 
     }
-    ~TestApplication() {
+
+    ~TestLayer() {
         vk::Device device = Toki::VulkanRenderer::getDevice();
         device.waitIdle();
 
@@ -36,7 +37,6 @@ public:
         device.destroyPipelineLayout(pipelineLayout);
     };
 
-private:
     void onUpdate(float deltaTime) override {
         using namespace Toki;
 
@@ -52,6 +52,7 @@ private:
         cmd.drawIndexed(6, 1, 0, 0, 0);
     }
 
+private:
     std::unique_ptr<Toki::VulkanBuffer> vertexBuffer;
     std::unique_ptr<Toki::VulkanBuffer> indexBuffer;
     std::unique_ptr<Toki::VulkanShader> shader;
@@ -61,7 +62,8 @@ private:
 int main(int argc, const char** argv) {
     glfwInit();
 
-    TestApplication app;
+    Toki::Application app;
+    app.addLayer(new TestLayer());
     app.run();
 
     glfwTerminate();
