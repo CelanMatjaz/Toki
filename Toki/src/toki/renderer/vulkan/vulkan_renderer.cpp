@@ -357,4 +357,29 @@ namespace Toki {
         TK_ASSERT(device.createImageView(&imageViewCreateInfo, nullptr, &depthBuffer.imageView) == vk::Result::eSuccess);
     }
 
+    vk::CommandBuffer VulkanRenderer::startCommandBuffer() {
+        vk::CommandBufferAllocateInfo commandBufferAllocateInfo{ commandPool, vk::CommandBufferLevel::ePrimary, 1 };
+
+        vk::CommandBuffer commandBuffer;
+        TK_ASSERT(device.allocateCommandBuffers(&commandBufferAllocateInfo, &commandBuffer) == vk::Result::eSuccess);
+
+        vk::CommandBufferBeginInfo commandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+        TK_ASSERT(commandBuffer.begin(&commandBufferBeginInfo) == vk::Result::eSuccess);
+
+        return commandBuffer;
+    }
+
+    void VulkanRenderer::endCommandBuffer(vk::CommandBuffer commandBuffer) {
+        commandBuffer.end();
+
+        vk::SubmitInfo submitInfo;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffer;
+
+        graphicsQueue.submit({ submitInfo });
+        graphicsQueue.waitIdle();
+
+        device.freeCommandBuffers(commandPool, 1, &commandBuffer);
+    }
+
 }

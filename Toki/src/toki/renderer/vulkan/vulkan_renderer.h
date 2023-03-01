@@ -59,6 +59,9 @@ namespace Toki {
         void createFrameBuffers();
         void createDepthBuffer();
 
+        static vk::CommandBuffer startCommandBuffer();
+        static void endCommandBuffer(vk::CommandBuffer commandBuffer);
+
         static constexpr uint32_t MAX_FRAMES = 3;
 
         struct FrameData {
