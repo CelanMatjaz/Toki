@@ -2,20 +2,22 @@
 
 #include "toki/core/toki.h"
 
+
 class TestApplication : public Toki::Application {
 public:
     TestApplication() : Toki::Application() {
         float vertexData[] = {
-            0.0f, -0.7f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            -0.7f, -0.7f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
             -0.7f, 0.7f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
             0.7f, 0.7f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+            0.7f, -0.7f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
         };
         vertexBuffer = Toki::VulkanBuffer::createVertexBuffer(sizeof(vertexData), vertexData);
 
-        uint32_t indexData[] = { 0, 1, 2 };
+        uint32_t indexData[] = { 0, 1, 2, 2, 3, 0 };
         indexBuffer = Toki::VulkanBuffer::createIndexBuffer(sizeof(indexData), indexData);
 
-        vk::PipelineLayout pipelineLayout = Toki::VulkanPipeline::createPipelineLayout({}, {});
+        pipelineLayout = Toki::VulkanPipeline::createPipelineLayout({}, {});
 
         Toki::VulkanPipeline::PipelineConfig config;
         config.pipelineLayout = pipelineLayout;
@@ -24,7 +26,15 @@ public:
         shader = Toki::VulkanShader::create("./shaders/compiled/shader.vert.spv", "./shaders/compiled/shader.frag.spv", config);
 
     }
-    ~TestApplication() = default;
+    ~TestApplication() {
+        vk::Device device = Toki::VulkanRenderer::getDevice();
+        device.waitIdle();
+
+        indexBuffer->cleanup();
+        vertexBuffer->cleanup();
+        shader->cleanup();
+        device.destroyPipelineLayout(pipelineLayout);
+    };
 
 private:
     void onUpdate(float deltaTime) override {
@@ -39,12 +49,13 @@ private:
         cmd.bindVertexBuffers(0, { vertexBuffer->getBuffer() }, { 0 }, {});
         cmd.bindIndexBuffer(indexBuffer->getBuffer(), 0, vk::IndexType::eUint32);
 
-        cmd.drawIndexed(3, 1, 0, 0, 0);
+        cmd.drawIndexed(6, 1, 0, 0, 0);
     }
 
     std::unique_ptr<Toki::VulkanBuffer> vertexBuffer;
     std::unique_ptr<Toki::VulkanBuffer> indexBuffer;
     std::unique_ptr<Toki::VulkanShader> shader;
+    vk::PipelineLayout pipelineLayout;
 };
 
 int main(int argc, const char** argv) {
