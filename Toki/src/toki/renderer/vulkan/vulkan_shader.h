@@ -16,11 +16,10 @@ namespace Toki {
         vk::Pipeline getPipeline() const { return pipeline; }
 
         void recreatePipeline();
+        void cleanup();
 
     private:
         VulkanShader() = default;
-
-        void cleanup();
 
         static std::vector<char> loadShaderCode(const std::string& filePath);
         static vk::ShaderModule createShaderModule(const std::string& filePath);

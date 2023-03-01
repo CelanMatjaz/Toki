@@ -2,9 +2,7 @@
 
 namespace Toki {
 
-    VulkanShader::~VulkanShader() {
-        cleanup();
-    }
+    VulkanShader::~VulkanShader() {}
 
     // REVIEW: maybe don't save whole shader code, but load it everytime it's needed?
     std::unique_ptr<VulkanShader> VulkanShader::create(std::string vertShaderPath, std::string fragShaderPath, VulkanPipeline::PipelineConfig pipelineConfig) {
@@ -12,8 +10,9 @@ namespace Toki {
 
         shader->vertShaderModule = VulkanShader::createShaderModule(vertShaderPath);
         shader->fragShaderModule = VulkanShader::createShaderModule(fragShaderPath);
-        pipelineConfig.vertShaderModule = shader->vertShaderModule;
-        pipelineConfig.fragShaderModule = shader->fragShaderModule;
+
+        pipelineConfig.vertShaderModule = &shader->vertShaderModule;
+        pipelineConfig.fragShaderModule = &shader->fragShaderModule;
         shader->pipelineConfig = pipelineConfig;
         shader->recreatePipeline();
 
@@ -30,6 +29,7 @@ namespace Toki {
         vk::Device device = VulkanRenderer::getDevice();
         device.destroyShaderModule(vertShaderModule);
         device.destroyShaderModule(fragShaderModule);
+        device.destroyPipeline(pipeline);
     }
 
     std::vector<char> VulkanShader::loadShaderCode(const std::string& filePath) {

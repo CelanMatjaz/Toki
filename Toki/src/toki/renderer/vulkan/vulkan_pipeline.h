@@ -8,8 +8,8 @@ namespace Toki {
     public:
         struct PipelineConfig {
             vk::PipelineLayout pipelineLayout;
-            vk::ShaderModule vertShaderModule;
-            vk::ShaderModule fragShaderModule;
+            vk::ShaderModule* vertShaderModule;
+            vk::ShaderModule* fragShaderModule;
             std::vector<vk::VertexInputBindingDescription> inputBindingDescriptions;
             std::vector<vk::VertexInputAttributeDescription> inputAttributeDescriptions;
         };

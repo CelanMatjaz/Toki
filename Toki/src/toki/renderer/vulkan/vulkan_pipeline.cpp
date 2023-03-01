@@ -25,14 +25,14 @@ namespace Toki {
         vk::PipelineShaderStageCreateInfo vertShaderStageCreateInfo(
             {},
             vk::ShaderStageFlagBits::eVertex,
-            vertShaderModule,
+            *vertShaderModule,
             "main"
         );
 
         vk::PipelineShaderStageCreateInfo fragShaderStageCreateInfo(
             {},
             vk::ShaderStageFlagBits::eFragment,
-            fragShaderModule,
+            *fragShaderModule,
             "main"
         );
 
@@ -144,7 +144,7 @@ namespace Toki {
 
         vk::Pipeline pipeline;
         TK_ASSERT(VulkanRenderer::getDevice().createGraphicsPipelines({}, 1, &pipelineInfo, nullptr, &pipeline) == vk::Result::eSuccess);
-        return pipeline;
+        return std::move(pipeline);
     }
 
     vk::DescriptorSetLayout VulkanPipeline::createDescriptorSetLayout(const DescriptorSetLayoutData& bindings) {
