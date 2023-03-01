@@ -15,6 +15,12 @@ namespace Toki {
         device.unmapMemory(memory);
     }
 
+    void  VulkanBuffer::cleanup() {
+        vk::Device device = VulkanRenderer::getDevice();
+        device.destroyBuffer(buffer);
+        device.freeMemory(memory);
+    }
+
     std::unique_ptr<VulkanBuffer> VulkanBuffer::create(uint32_t size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties) {
         vk::Device device = VulkanRenderer::getDevice();
         vk::PhysicalDevice physicalDevice = VulkanRenderer::getPhysicalDevice();
@@ -54,6 +60,16 @@ namespace Toki {
         std::unique_ptr<VulkanBuffer> buffer = create(
             size,
             vk::BufferUsageFlagBits::eIndexBuffer,
+            static_cast<vk::MemoryPropertyFlags>(static_cast<uint32_t>(vk::MemoryPropertyFlagBits::eDeviceLocal) | static_cast<uint32_t>(vk::MemoryPropertyFlagBits::eHostVisible))
+        );
+        buffer->setData(size, data);
+        return std::move(buffer);
+    }
+
+    std::unique_ptr<VulkanBuffer> VulkanBuffer::createUniformBuffer(uint32_t size, void* data) {
+        std::unique_ptr<VulkanBuffer> buffer = create(
+            size,
+            vk::BufferUsageFlagBits::eUniformBuffer,
             static_cast<vk::MemoryPropertyFlags>(static_cast<uint32_t>(vk::MemoryPropertyFlagBits::eDeviceLocal) | static_cast<uint32_t>(vk::MemoryPropertyFlagBits::eHostVisible))
         );
         buffer->setData(size, data);
