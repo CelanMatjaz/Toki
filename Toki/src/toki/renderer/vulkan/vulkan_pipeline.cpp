@@ -3,7 +3,7 @@
 namespace Toki {
 
 
-    vk::PipelineLayout VulkanPipeline::createPipelineLayout(
+    uint32_t VulkanPipeline::createPipelineLayout(
         const std::vector<vk::DescriptorSetLayout>& descriptorSetLayouts,
         const std::vector<vk::PushConstantRange>& pushConstants
     ) {
@@ -13,11 +13,18 @@ namespace Toki {
 
         vk::PipelineLayout pipelineLayout;
         TK_ASSERT(VulkanRenderer::getDevice().createPipelineLayout(&pipelineLayoutCreateInfo, nullptr, &pipelineLayout) == vk::Result::eSuccess);
-        return pipelineLayout;
+        pipelineLayouts.emplace_back(pipelineLayout);
+        return pipelineLayouts.size() - 1;
     }
 
-    vk::Pipeline VulkanPipeline::createPipeline(const PipelineConfig& pipelineConfig) {
-        const auto& [pipelineLayout, vertShaderModule, fragShaderModule, inputBindingDescriptions, inputAttributeDescriptions] = pipelineConfig;
+    uint32_t VulkanPipeline::createPipeline(const PipelineConfig& pipelineConfig) {
+        PipelineData data = { _createPipeline(pipelineConfig), pipelineConfig };
+        pipelines.emplace_back(data);
+        return pipelines.size() - 1;
+    }
+
+    vk::Pipeline VulkanPipeline::_createPipeline(const PipelineConfig& pipelineConfig) {
+        const auto& [pipelineLayoutIndex, vertShaderIndex, fragShaderIndex, inputBindingDescriptions, inputAttributeDescriptions] = pipelineConfig;
 
         vk::Extent2D extent = VulkanRenderer::getSwapchainExtent();
         vk::RenderPass renderPass = VulkanRenderer::getRenderPass();
@@ -25,14 +32,14 @@ namespace Toki {
         vk::PipelineShaderStageCreateInfo vertShaderStageCreateInfo(
             {},
             vk::ShaderStageFlagBits::eVertex,
-            *vertShaderModule,
+            shaderModules[vertShaderIndex],
             "main"
         );
 
         vk::PipelineShaderStageCreateInfo fragShaderStageCreateInfo(
             {},
             vk::ShaderStageFlagBits::eFragment,
-            *fragShaderModule,
+            shaderModules[fragShaderIndex],
             "main"
         );
 
@@ -136,7 +143,7 @@ namespace Toki {
         pipelineInfo.pMultisampleState = &multisampleStateCreateInfo;
         pipelineInfo.pColorBlendState = &colorBlendStateCreateInfo;
         pipelineInfo.pDynamicState = &dynamicState;
-        pipelineInfo.layout = pipelineLayout;
+        pipelineInfo.layout = pipelineLayouts[pipelineLayoutIndex];
         pipelineInfo.renderPass = renderPass;
         pipelineInfo.subpass = 0;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
@@ -144,7 +151,7 @@ namespace Toki {
 
         vk::Pipeline pipeline;
         TK_ASSERT(VulkanRenderer::getDevice().createGraphicsPipelines({}, 1, &pipelineInfo, nullptr, &pipeline) == vk::Result::eSuccess);
-        return std::move(pipeline);
+        return pipeline;
     }
 
     vk::DescriptorSetLayout VulkanPipeline::createDescriptorSetLayout(const DescriptorSetLayoutData& bindings) {
@@ -201,4 +208,56 @@ namespace Toki {
         return descriptorSets;
     }
 
+    std::vector<char> VulkanPipeline::loadShaderCode(const std::filesystem::path& filePath) {
+        std::ifstream file(filePath.string(), std::ios::ate | std::ios::binary);
+        uint32_t fileSize = file.tellg();
+        std::vector<char> buffer(fileSize);
+        file.seekg(0);
+        file.read(buffer.data(), fileSize);
+        file.close();
+        return buffer;
+    }
+
+    uint32_t VulkanPipeline::createShaderModule(const std::filesystem::path& filePath) {
+        auto data = loadShaderCode(filePath);
+
+        vk::ShaderModuleCreateInfo shaderModuleCreateInfo{};
+        shaderModuleCreateInfo.codeSize = data.size();
+        shaderModuleCreateInfo.pCode = reinterpret_cast<uint32_t*>(data.data());
+
+        vk::ShaderModule shaderModule;
+        TK_ASSERT(VulkanRenderer::getDevice().createShaderModule(&shaderModuleCreateInfo, nullptr, &shaderModule) == vk::Result::eSuccess);
+        shaderModules.emplace_back(std::move(shaderModule));
+        return shaderModules.size() - 1;
+    }
+
+    void VulkanPipeline::recreatePipelines() {
+        vk::Device device = VulkanRenderer::getDevice();
+        device.waitIdle();
+        for (uint32_t i = 0; i < pipelines.size(); ++i) {
+            device.destroyPipeline(pipelines[i].pipeline);
+            pipelines[i].pipeline = VulkanPipeline::_createPipeline(pipelines[i].config);
+        }
+    }
+
+    const vk::Pipeline VulkanPipeline::getPipeline(uint32_t index) {
+        if (index < pipelines.size())
+            return pipelines[index].pipeline;
+
+        throw std::runtime_error("Pipeline with specified index does not exist");
+    }
+
+    const vk::PipelineLayout VulkanPipeline::getPipelineLayout(uint32_t index) {
+        if (index < pipelineLayouts.size())
+            return pipelineLayouts[index];
+
+        throw std::runtime_error("Pipeline layout with specified index does not exist");
+    }
+
+    void VulkanPipeline::cleanup() {
+        vk::Device device = VulkanRenderer::getDevice();
+        for (const auto& [pipeline, config] : pipelines) device.destroyPipeline(pipeline, nullptr);
+        for (const auto& shaderModule : shaderModules) device.destroyShaderModule(shaderModule, nullptr);
+        for (const auto& pipelineLayout : pipelineLayouts) device.destroyPipelineLayout(pipelineLayout, nullptr);
+    }
 }

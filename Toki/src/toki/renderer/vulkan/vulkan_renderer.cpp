@@ -3,6 +3,7 @@
 #include "tkpch.h"
 #include "toki/core/application.h"
 #include "vulkan_constants.h"
+#include "vulkan_pipeline.h"
 
 namespace Toki {
 
@@ -34,7 +35,6 @@ namespace Toki {
 
         cleanupSwapchain();
 
-
         for (uint32_t i = 0; i < MAX_FRAMES; ++i) {
             frames[i].cleanup();
         }
@@ -53,6 +53,7 @@ namespace Toki {
         createRenderPass();
         createDepthBuffer();
         createFrameBuffers();
+        VulkanPipeline::recreatePipelines();
     }
 
     void VulkanRenderer::cleanupSwapchain() {
@@ -79,7 +80,7 @@ namespace Toki {
 
         if (result == vk::Result::eErrorOutOfDateKHR) {
             recreateSwapchain();
-            return;
+            // return;
         }
         else if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR) {
             throw std::runtime_error("Failed to acquire swapchain image");

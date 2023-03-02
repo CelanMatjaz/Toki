@@ -1,6 +1,7 @@
 #include "application.h"
 
 #include "tkpch.h"
+#include "toki/renderer/vulkan/vulkan_pipeline.h"
 
 namespace Toki {
 
@@ -20,19 +21,12 @@ namespace Toki {
 
     Application::~Application() {
         delete layerStack;
+        VulkanPipeline::cleanup();
         delete Application::rendererBackend;
     }
 
     void Application::run() {
-        const auto& [windowWidth, windowHeight] = window->getWindowDimensions();
-
         while (running) {
-            glfwPollEvents();
-            if (glfwWindowShouldClose(window->getHandle())) running = false;
-
-            const auto& [windowWidth, windowHeight] = window->getWindowDimensions();
-            if (windowWidth <= 0 || windowHeight <= 0) continue;
-
             float now = glfwGetTime();
             float deltaTime = now - lastFrameTime;
             lastFrameTime = now;
@@ -43,11 +37,20 @@ namespace Toki {
                 layerStack->layers[layerIndex]->onUpdate(deltaTime);
 
             rendererBackend->endFrame();
+
+            glfwPollEvents();
+            if (glfwWindowShouldClose(window->getHandle())) running = false;
         }
     }
 
     void Application::addLayer(Layer* layer) {
         layerStack->pushLayer(layer);
+    }
+
+    void Application::onEvent(Event& event) {
+        switch (event.getType()) {
+            // TODO: add events
+        }
     }
 
 }
