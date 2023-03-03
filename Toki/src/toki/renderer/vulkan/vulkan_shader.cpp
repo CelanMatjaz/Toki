@@ -11,7 +11,7 @@ namespace Toki {
         return shader;
     }
 
-    void VulkanShader::bind(vk::CommandBuffer cmd) {
-        cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, VulkanPipeline::getPipeline(pipelineIndex));
+    void VulkanShader::bind(VkCommandBuffer cmd) {
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, VulkanPipeline::getPipeline(pipelineIndex));
     }
 }

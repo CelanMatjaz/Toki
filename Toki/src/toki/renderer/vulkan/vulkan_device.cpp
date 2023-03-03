@@ -6,30 +6,45 @@
 
 namespace Toki {
 
-    vk::Device VulkanDevice::createDevice() {
+    VkDevice VulkanDevice::createDevice() {
         float queuePriority = 0.0f;
-        vk::DeviceQueueCreateInfo deviceQueueCreateInfo{{}, VulkanDevice::queueFamilyIndexes.graphicsQueueIndex, 1, & queuePriority};
+        VkDeviceQueueCreateInfo deviceQueueCreateInfo{};
+        deviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        deviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        deviceQueueCreateInfo.pQueuePriorities = &queuePriority;
+        deviceQueueCreateInfo.queueCount = 1;
+        deviceQueueCreateInfo.queueFamilyIndex = VulkanDevice::queueFamilyIndexes.graphicsQueueIndex;
 
-        vk::PhysicalDeviceFeatures deviceFeatures{};
+        VkPhysicalDeviceFeatures deviceFeatures{};
         deviceFeatures.fillModeNonSolid = true;
         deviceFeatures.wideLines = true;
         deviceFeatures.multiViewport = true;
         deviceFeatures.samplerAnisotropy = true;
 
-        vk::DeviceCreateInfo deviceCreateInfo { {}, deviceQueueCreateInfo, {}, deviceExtensions, & deviceFeatures };
+        VkDeviceCreateInfo deviceCreateInfo{};
+        deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        deviceCreateInfo.pQueueCreateInfos = &deviceQueueCreateInfo;
+        deviceCreateInfo.queueCreateInfoCount = 1;
+        deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
+        deviceCreateInfo.enabledExtensionCount = deviceExtensions.size();
+        deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 
 #ifndef DIST
         TK_ASSERT(VulkanDevice::checkForValidationLayerSupport());
-        deviceCreateInfo.setPEnabledLayerNames(validationLayers);
+        deviceCreateInfo.ppEnabledLayerNames = validationLayers.data();
+        deviceCreateInfo.enabledLayerCount = validationLayers.size();
 #endif
 
         VkDevice device;
-        vkCreateDevice(VulkanRenderer::getPhysicalDevice(), reinterpret_cast<VkDeviceCreateInfo*>(&deviceCreateInfo), nullptr, &device);
-        return vk::Device { device };
+        vkCreateDevice(VulkanRenderer::getPhysicalDevice(), &deviceCreateInfo, nullptr, &device);
+        return device;
     }
 
     bool VulkanDevice::checkForValidationLayerSupport() {
-        std::vector<vk::LayerProperties> instanceLayerProperties = vk::enumerateInstanceLayerProperties();
+        uint32_t layerPropCount;
+        vkEnumerateInstanceLayerProperties(&layerPropCount, nullptr);
+        std::vector<VkLayerProperties> instanceLayerProperties(layerPropCount);
+        vkEnumerateInstanceLayerProperties(&layerPropCount, instanceLayerProperties.data());
 
         for (const auto& layerName : validationLayers) {
             bool layerFound = false;
@@ -46,15 +61,21 @@ namespace Toki {
     }
 
     void VulkanDevice::initQueueFamilyIndexes() {
-        vk::SurfaceKHR surface = VulkanRenderer::getSurface();
-        vk::PhysicalDevice physicalDevice = VulkanRenderer::getPhysicalDevice();
-        std::vector<vk::QueueFamilyProperties> queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
+        VkSurfaceKHR surface = VulkanRenderer::getSurface();
+        VkPhysicalDevice physicalDevice = VulkanRenderer::getPhysicalDevice();
+
+        uint32_t propCount;
+        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &propCount, nullptr);
+        std::vector<VkQueueFamilyProperties> queueFamilyProperties(propCount);
+        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &propCount, queueFamilyProperties.data());
 
         bool foundIndecies = false;
 
         for (uint32_t i = 0; i < queueFamilyProperties.size(); ++i) {
-            if (queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) {
-                VkBool32 presentSupport = physicalDevice.getSurfaceSupportKHR(i, surface);
+            if (queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+
+                VkBool32 presentSupport;
+                vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
 
                 if (!presentSupport) continue;
 
@@ -70,12 +91,13 @@ namespace Toki {
             bool presentFound = false;
 
             for (uint32_t i = 0; i < queueFamilyProperties.size(); ++i) {
-                if (!graphicsFound && queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) {
+                if (!graphicsFound && queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                     queueFamilyIndexes.graphicsQueueIndex = i;
                     bool graphicsFound = true;
                 }
 
-                VkBool32 presentSupport = physicalDevice.getSurfaceSupportKHR(i, surface);
+                VkBool32 presentSupport;
+                vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
 
                 if (!presentFound && presentSupport) {
                     queueFamilyIndexes.presentQueueIndex = i;
@@ -90,12 +112,30 @@ namespace Toki {
         TK_ASSERT(queueFamilyIndexes.presentQueueIndex < UINT32_MAX && queueFamilyIndexes.graphicsQueueIndex < UINT32_MAX);
     }
 
+    void VulkanDevice::initQueueFamilyProperties() {
+        uint32_t count{};
+        vkGetPhysicalDeviceQueueFamilyProperties(VulkanRenderer::getPhysicalDevice(), &count, nullptr);
+        queueFamilyProperties.resize(count);
+        vkGetPhysicalDeviceQueueFamilyProperties(VulkanRenderer::getPhysicalDevice(), &count, queueFamilyProperties.data());
+    }
 
-    vk::Extent2D VulkanDevice::getExtent(vk::SurfaceCapabilitiesKHR capabilities) {
+    std::vector<VkPhysicalDevice> VulkanDevice::enumeratePhysicalDevices() {
+        VkInstance instance = VulkanRenderer::getInstance();
+
+        uint32_t deviceCount;
+        vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+        std::vector<VkPhysicalDevice> physicalDevices(deviceCount);
+        vkEnumeratePhysicalDevices(instance, &deviceCount, physicalDevices.data());
+
+        return physicalDevices;
+    }
+
+
+    VkExtent2D VulkanDevice::getExtent(VkSurfaceCapabilitiesKHR capabilities) {
         const auto [windowWidth, windowHeight] = Application::getWindow()->getWindowDimensions();
 
         if (capabilities.currentExtent.width == std::numeric_limits<uint32_t>::max()) {
-            vk::Extent2D extent;
+            VkExtent2D extent;
             extent.width = std::clamp(windowWidth, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
             extent.height = std::clamp(windowHeight, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
             return extent;
@@ -105,49 +145,53 @@ namespace Toki {
         }
     }
 
-    uint32_t VulkanDevice::getImageCount(vk::SurfaceCapabilitiesKHR capabilities, uint32_t minImageCount) {
+    uint32_t VulkanDevice::getImageCount(VkSurfaceCapabilitiesKHR capabilities, uint32_t minImageCount) {
         if (capabilities.maxImageCount > 0 && minImageCount > capabilities.maxImageCount) {
             return capabilities.maxImageCount;
         }
         return capabilities.minImageCount;
     }
 
-    vk::SurfaceTransformFlagBitsKHR VulkanDevice::getPreTransform(vk::SurfaceCapabilitiesKHR capabilities) {
-        return (capabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity)
-            ? vk::SurfaceTransformFlagBitsKHR::eIdentity
+    VkSurfaceTransformFlagBitsKHR VulkanDevice::getPreTransform(VkSurfaceCapabilitiesKHR capabilities) {
+        return (capabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
+            ? VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
             : capabilities.currentTransform;
     }
 
-    vk::CompositeAlphaFlagBitsKHR VulkanDevice::getCompositeAlpha(vk::SurfaceCapabilitiesKHR capabilities) {
-        return (capabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePreMultiplied) ? vk::CompositeAlphaFlagBitsKHR::ePreMultiplied
-            : (capabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePostMultiplied) ? vk::CompositeAlphaFlagBitsKHR::ePostMultiplied
-            : (capabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::eInherit) ? vk::CompositeAlphaFlagBitsKHR::eInherit
-            : vk::CompositeAlphaFlagBitsKHR::eOpaque;
+    VkCompositeAlphaFlagBitsKHR VulkanDevice::getCompositeAlpha(VkSurfaceCapabilitiesKHR capabilities) {
+        return (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR) ? VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR
+            : (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR) ? VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR
+            : (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR) ? VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR
+            : VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     }
 
-    vk::ImageTiling VulkanDevice::findTiling(vk::Format format) {
-        vk::FormatProperties formatProperties = VulkanRenderer::getPhysicalDevice().getFormatProperties(format);
+    VkImageTiling VulkanDevice::findTiling(VkFormat format) {
+        VkPhysicalDevice physicalDevice = VulkanRenderer::getPhysicalDevice();
 
-        if (formatProperties.linearTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment) {
-            return vk::ImageTiling::eLinear;
+        VkFormatProperties formatProperties;
+        vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &formatProperties);
+
+        if (formatProperties.linearTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+            return VK_IMAGE_TILING_LINEAR;
         }
-        else if (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment) {
-            return vk::ImageTiling::eOptimal;
+        else if (formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+            return VK_IMAGE_TILING_OPTIMAL;
         }
         else {
             TK_ASSERT(false && "Format not supported");
         }
     }
 
-    vk::Format VulkanDevice::findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlagBits features) {
-        vk::PhysicalDevice physicalDevice = VulkanRenderer::getPhysicalDevice();
+    VkFormat VulkanDevice::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlagBits features) {
+        VkPhysicalDevice physicalDevice = VulkanRenderer::getPhysicalDevice();
 
-        for (const vk::Format& format : candidates) {
-            vk::FormatProperties props = physicalDevice.getFormatProperties(format);
-            if (tiling == vk::ImageTiling::eLinear && (props.linearTilingFeatures & features) == features) {
+        for (const VkFormat& format : candidates) {
+            VkFormatProperties props;
+            vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
+            if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
                 return format;
             }
-            else if (tiling == vk::ImageTiling::eOptimal && (props.optimalTilingFeatures & features) == features) {
+            else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
                 return format;
             }
         }
@@ -155,19 +199,22 @@ namespace Toki {
         TK_ASSERT(false && "Failed to find suitable format");
     }
 
-    vk::SurfaceFormatKHR VulkanDevice::findSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& formats) {
-        vk::PhysicalDevice physicalDevice = VulkanRenderer::getPhysicalDevice();
+    VkSurfaceFormatKHR VulkanDevice::findSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& formats) {
+        VkPhysicalDevice physicalDevice = VulkanRenderer::getPhysicalDevice();
 
         for (const auto& availableFormat : formats) {
-            if (availableFormat.format == vk::Format::eB8G8R8A8Srgb && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
+            if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                 return availableFormat;
             }
         }
         return formats[0];
     }
 
-    uint32_t VulkanDevice::findMemoryType(uint32_t typeBits, vk::MemoryPropertyFlags properties) {
-        vk::PhysicalDeviceMemoryProperties memoryProperties = VulkanRenderer::getPhysicalDevice().getMemoryProperties();
+    uint32_t VulkanDevice::findMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties) {
+        VkPhysicalDevice physicalDevice = VulkanRenderer::getPhysicalDevice();
+
+        VkPhysicalDeviceMemoryProperties memoryProperties;
+        vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
 
         for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
             if ((typeBits & (1 << i)) && (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties) {

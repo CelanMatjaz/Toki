@@ -11,25 +11,29 @@ namespace Toki {
             uint32_t presentQueueIndex;
         };
 
-        static vk::Device createDevice();
+        static VkDevice createDevice();
         static bool checkForValidationLayerSupport();
         static void initQueueFamilyIndexes();
+        static void initQueueFamilyProperties();
 
+        static std::vector<VkPhysicalDevice> enumeratePhysicalDevices();
         static QueueFamilyIndexes getQueueFamilyIndexes() { return queueFamilyIndexes; }
+        static  std::vector<VkQueueFamilyProperties> getQueueFamilyProperties() { return queueFamilyProperties; }
 
         // swapchain/image util functions
     public:
-        static vk::Extent2D getExtent(vk::SurfaceCapabilitiesKHR capabilities);
-        static uint32_t getImageCount(vk::SurfaceCapabilitiesKHR capabilities, uint32_t minImageCount = 0); // always min image count
-        static vk::SurfaceTransformFlagBitsKHR getPreTransform(vk::SurfaceCapabilitiesKHR capabilities);
-        static vk::CompositeAlphaFlagBitsKHR getCompositeAlpha(vk::SurfaceCapabilitiesKHR capabilities);
+        static VkExtent2D getExtent(VkSurfaceCapabilitiesKHR capabilities);
+        static uint32_t getImageCount(VkSurfaceCapabilitiesKHR capabilities, uint32_t minImageCount = 0); // always min image count
+        static VkSurfaceTransformFlagBitsKHR getPreTransform(VkSurfaceCapabilitiesKHR capabilities);
+        static VkCompositeAlphaFlagBitsKHR getCompositeAlpha(VkSurfaceCapabilitiesKHR capabilities);
 
-        static vk::ImageTiling findTiling(vk::Format format);
-        static vk::Format findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlagBits features);
-        static vk::SurfaceFormatKHR findSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& formats);
-        static uint32_t findMemoryType(uint32_t typeBits, vk::MemoryPropertyFlags properties);
+        static VkImageTiling findTiling(VkFormat format);
+        static VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlagBits features);
+        static VkSurfaceFormatKHR findSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& formats);
+        static uint32_t findMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties);
 
     private:
         inline static QueueFamilyIndexes queueFamilyIndexes = { UINT32_MAX, UINT32_MAX };
+        inline static std::vector<VkQueueFamilyProperties> queueFamilyProperties;
     };
 }

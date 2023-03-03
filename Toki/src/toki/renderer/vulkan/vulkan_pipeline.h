@@ -10,54 +10,54 @@ namespace Toki {
             uint32_t pipelineLayoutIndex;
             uint32_t vertShaderIndex;
             uint32_t fragShaderIndex;
-            std::vector<vk::VertexInputBindingDescription> inputBindingDescriptions;
-            std::vector<vk::VertexInputAttributeDescription> inputAttributeDescriptions;
+            std::vector<VkVertexInputBindingDescription> inputBindingDescriptions;
+            std::vector<VkVertexInputAttributeDescription> inputAttributeDescriptions;
         };
 
         static uint32_t createPipelineLayout(
-            const std::vector<vk::DescriptorSetLayout>& descriptorSetLayouts,
-            const std::vector<vk::PushConstantRange>& pushConstants
+            const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
+            const std::vector<VkPushConstantRange>& pushConstants
         );
         static uint32_t createPipeline(const PipelineConfig& pipelineConfig);
 
         struct LayoutData {
             uint32_t binding;
-            vk::DescriptorType descriptorType;
+            VkDescriptorType descriptorType;
             uint32_t count;
-            vk::ShaderStageFlagBits stageFlags;
+            VkShaderStageFlagBits stageFlags;
         };
 
         struct DestriptorPoolSize {
-            vk::DescriptorType type;
+            VkDescriptorType type;
             uint32_t size;
         };
 
         using DescriptorSetLayoutData = std::vector<LayoutData>;
         using DestriptorPoolSizes = std::vector<DestriptorPoolSize>;
 
-        static vk::DescriptorSetLayout createDescriptorSetLayout(const DescriptorSetLayoutData& bindings);
-        static vk::DescriptorPool createDescriptorPool(const DestriptorPoolSizes& sizes);
-        static std::vector<vk::DescriptorSet> createDescriptorSets(vk::DescriptorPool descriptorPool, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts);
+        static VkDescriptorSetLayout createDescriptorSetLayout(const DescriptorSetLayoutData& bindings);
+        static VkDescriptorPool createDescriptorPool(const DestriptorPoolSizes& sizes);
+        static std::vector<VkDescriptorSet> createDescriptorSets(VkDescriptorPool descriptorPool, std::vector<VkDescriptorSetLayout> descriptorSetLayouts);
 
         static std::vector<char> loadShaderCode(const std::filesystem::path& filePath);
         static uint32_t createShaderModule(const std::filesystem::path& filePath);
 
         static void recreatePipelines();
-        static const vk::Pipeline getPipeline(uint32_t index);
-        static const vk::PipelineLayout getPipelineLayout(uint32_t index);
+        static const VkPipeline getPipeline(uint32_t index);
+        static const VkPipelineLayout getPipelineLayout(uint32_t index);
         static void cleanup();
 
     private:
-        static vk::Pipeline _createPipeline(const PipelineConfig& pipelineConfig);
+        static VkPipeline _createPipeline(const PipelineConfig& pipelineConfig);
 
         struct PipelineData {
-            vk::Pipeline pipeline;
+            VkPipeline pipeline;
             PipelineConfig config;
         };
 
         inline static std::vector<PipelineData> pipelines;
-        inline static std::vector<vk::PipelineLayout> pipelineLayouts;
-        inline static std::vector<vk::ShaderModule> shaderModules;
+        inline static std::vector<VkPipelineLayout> pipelineLayouts;
+        inline static std::vector<VkShaderModule> shaderModules;
     };
 
 }
