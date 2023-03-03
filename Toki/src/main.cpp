@@ -15,16 +15,18 @@ public:
 
         Toki::VulkanPipeline::PipelineConfig config;
         config.pipelineLayoutIndex = pipelineLayoutIndex;
-        config.inputBindingDescriptions = { { 0, sizeof(float) * 7, vk::VertexInputRate::eVertex } };
-        config.inputAttributeDescriptions = { { 0, 0, vk::Format::eR32G32B32Sfloat, 0 }, { 1, 0, vk::Format::eR32G32B32A32Sfloat, sizeof(float) * 3 } };
+        config.inputBindingDescriptions = { { 0, sizeof(float) * 7, VK_VERTEX_INPUT_RATE_VERTEX } };
+        config.inputAttributeDescriptions = { { 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 }, { 1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(float) * 3 } };
         config.vertShaderIndex = Toki::VulkanPipeline::createShaderModule("./shaders/compiled/shader.vert.spv");
         config.fragShaderIndex = Toki::VulkanPipeline::createShaderModule("./shaders/compiled/shader.frag.spv");
         shader = Toki::VulkanShader::create(config);
+
+        vertexBuffer->setData(sizeof(vertexData), vertexData);
     }
 
     ~TestLayer() {
-        vk::Device device = Toki::VulkanRenderer::getDevice();
-        device.waitIdle();
+        VkDevice device = Toki::VulkanRenderer::getDevice();
+        vkDeviceWaitIdle(device);
         indexBuffer->cleanup();
         vertexBuffer->cleanup();
     };
@@ -33,21 +35,25 @@ public:
         using namespace Toki;
 
         static float a = 0;
-        a += 0.0001f * deltaTime;
+        a += 0.1f * deltaTime;
 
-        for (uint32_t i = 0; i < 4; ++i) {
-            vertexData[i * 7] += a;
-        }
+        if (a > 0.05f) a = 0;
 
-        vertexBuffer->setData(sizeof(vertexData), vertexData);
+        // for (uint32_t i = 0; i < 4; ++i) {
+        //     vertexData[i * 7] += a;
+        // }
 
-        vk::CommandBuffer cmd = VulkanRenderer::getCommandBuffer();
+
+        VkCommandBuffer cmd = VulkanRenderer::getCommandBuffer();
 
         shader->bind(cmd);
-        cmd.bindVertexBuffers(0, { vertexBuffer->getBuffer() }, { 0 }, {});
-        cmd.bindIndexBuffer(indexBuffer->getBuffer(), 0, vk::IndexType::eUint32);
 
-        cmd.drawIndexed(6, 1, 0, 0, 0);
+        VkBuffer vertexBuffers[] = { vertexBuffer->getBuffer() };
+        VkDeviceSize offsets = 0;
+        vkCmdBindVertexBuffers(cmd, 0, 1, vertexBuffers, &offsets);
+        vkCmdBindIndexBuffer(cmd, indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
+
+        vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
     }
 
     float vertexData[28] = {

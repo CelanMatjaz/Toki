@@ -11,7 +11,7 @@ namespace Toki {
 
         static std::unique_ptr<VulkanShader> create(VulkanPipeline::PipelineConfig pipelineConfig);
 
-        void bind(vk::CommandBuffer cmd);
+        void bind(VkCommandBuffer cmd);
 
     private:
         VulkanShader() = default;

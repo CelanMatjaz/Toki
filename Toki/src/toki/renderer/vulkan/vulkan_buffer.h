@@ -14,10 +14,10 @@ namespace Toki {
         void setData(uint32_t size, void* data);
         void cleanup();
 
-        vk::Buffer getBuffer() { return buffer; }
-        vk::DeviceMemory getMemory() { return memory; }
+        VkBuffer getBuffer() { return buffer; }
+        VkDeviceMemory getMemory() { return memory; }
 
-        static std::unique_ptr<VulkanBuffer> create(uint32_t size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
+        static std::unique_ptr<VulkanBuffer> create(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
         static std::unique_ptr<VulkanBuffer> createVertexBuffer(uint32_t size, void* data);
         static std::unique_ptr<VulkanBuffer> createIndexBuffer(uint32_t size, void* data);
         static std::unique_ptr<VulkanBuffer> createUniformBuffer(uint32_t size, void* data);
@@ -26,8 +26,8 @@ namespace Toki {
         VulkanBuffer() = default;
         VulkanBuffer(uint32_t size);
 
-        vk::Buffer buffer;
-        vk::DeviceMemory memory;
+        VkBuffer buffer;
+        VkDeviceMemory memory;
         uint32_t size;
     };
 
