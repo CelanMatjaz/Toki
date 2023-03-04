@@ -4,6 +4,10 @@ namespace Toki {
 
     VulkanBuffer::VulkanBuffer(uint32_t size) : size{ size } {}
 
+    VulkanBuffer::~VulkanBuffer() {
+        cleanup();
+    }
+
     void VulkanBuffer::setData(uint32_t size, void* dataIn) {
         TK_ASSERT(this->size <= size && "Data size is too large");
 
@@ -15,17 +19,30 @@ namespace Toki {
         vkUnmapMemory(device, memory);
     }
 
-    void  VulkanBuffer::cleanup() {
+    void VulkanBuffer::cleanup() {
         VkDevice device = VulkanRenderer::getDevice();
+        if (isMemoryMapped) unmapMemory();
         vkDestroyBuffer(device, buffer, nullptr);
         vkFreeMemory(device, memory, nullptr);
     }
 
-    std::unique_ptr<VulkanBuffer> VulkanBuffer::create(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) {
+    void* VulkanBuffer::mapMemory(uint32_t size) {
+        void* data;
+        TK_ASSERT(vkMapMemory(VulkanRenderer::getDevice(), memory, 0, size, 0, &data) == VK_SUCCESS);
+        isMemoryMapped = true;
+        return data;
+    }
+
+    void VulkanBuffer::unmapMemory() {
+        vkUnmapMemory(VulkanRenderer::getDevice(), memory);
+        isMemoryMapped = false;
+    }
+
+    std::shared_ptr<VulkanBuffer> VulkanBuffer::create(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) {
         VkDevice device = VulkanRenderer::getDevice();
         VkPhysicalDevice physicalDevice = VulkanRenderer::getPhysicalDevice();
 
-        std::unique_ptr<VulkanBuffer> buffer(new VulkanBuffer(size));
+        std::shared_ptr<VulkanBuffer> buffer(new VulkanBuffer(size));
 
         VkBufferCreateInfo bufferInfo{};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -49,34 +66,34 @@ namespace Toki {
         return buffer;
     }
 
-    std::unique_ptr<VulkanBuffer> VulkanBuffer::createVertexBuffer(uint32_t size, void* data) {
-        std::unique_ptr<VulkanBuffer> buffer = create(
+    std::shared_ptr<VulkanBuffer> VulkanBuffer::createVertexBuffer(uint32_t size, void* data) {
+        std::shared_ptr<VulkanBuffer> buffer = create(
             size,
             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
         );
-        buffer->setData(size, data);
-        return std::move(buffer);
+        if (data) buffer->setData(size, data);
+        return buffer;
     }
 
-    std::unique_ptr<VulkanBuffer> VulkanBuffer::createIndexBuffer(uint32_t size, void* data) {
-        std::unique_ptr<VulkanBuffer> buffer = create(
+    std::shared_ptr<VulkanBuffer> VulkanBuffer::createIndexBuffer(uint32_t size, void* data) {
+        std::shared_ptr<VulkanBuffer> buffer = create(
             size,
              VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
         );
-        buffer->setData(size, data);
-        return std::move(buffer);
+        if (data) buffer->setData(size, data);
+        return buffer;
     }
 
-    std::unique_ptr<VulkanBuffer> VulkanBuffer::createUniformBuffer(uint32_t size, void* data) {
-        std::unique_ptr<VulkanBuffer> buffer = create(
+    std::shared_ptr<VulkanBuffer> VulkanBuffer::createUniformBuffer(uint32_t size, void* data) {
+        std::shared_ptr<VulkanBuffer> buffer = create(
             size,
              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
         );
-        buffer->setData(size, data);
-        return std::move(buffer);
+        if (data) buffer->setData(size, data);
+        return buffer;
     }
 
 }
