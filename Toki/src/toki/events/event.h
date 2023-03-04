@@ -13,10 +13,14 @@ namespace Toki {
         Event(EventType type) : type{ type } {}
         virtual ~Event() = default;
 
+        void setHandled() { handled = true; }
+        bool isHandled() { return isHandled; }
+
     public:
         EventType getType() const { return type; }
 
     protected:
         EventType type;
+        bool handled;
     };
 }

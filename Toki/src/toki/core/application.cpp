@@ -51,6 +51,10 @@ namespace Toki {
         switch (event.getType()) {
             // TODO: add events
         }
+
+        for (int i = layerStack->layers.size() - 1; i >= 0 && event.isHandled(); --i) {
+            layerStack->layers[i]->onEvent(event);
+        }
     }
 
 }
