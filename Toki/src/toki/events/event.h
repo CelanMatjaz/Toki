@@ -14,7 +14,7 @@ namespace Toki {
         virtual ~Event() = default;
 
         void setHandled() { handled = true; }
-        bool isHandled() { return isHandled; }
+        bool isHandled() { return handled; }
 
     public:
         EventType getType() const { return type; }
