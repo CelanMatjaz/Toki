@@ -2,9 +2,10 @@ bin
 obj
 MakeFile
 Toki.make
-vendor
 .vs
+vendor
 shaders/compiled
+imgui.ini
 
 Toki.sln
 Toki.vcxproj
