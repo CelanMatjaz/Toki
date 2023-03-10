@@ -131,7 +131,10 @@ namespace Toki {
     }
 
 
-    VkExtent2D VulkanDevice::getExtent(VkSurfaceCapabilitiesKHR capabilities) {
+    VkExtent2D VulkanDevice::getExtent() {
+        VkSurfaceCapabilitiesKHR capabilities;
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VulkanRenderer::getPhysicalDevice(), VulkanRenderer::getSurface(), &capabilities);
+
         const auto [windowWidth, windowHeight] = Application::getWindow()->getWindowDimensions();
 
         if (capabilities.currentExtent.width == std::numeric_limits<uint32_t>::max()) {
@@ -145,20 +148,29 @@ namespace Toki {
         }
     }
 
-    uint32_t VulkanDevice::getImageCount(VkSurfaceCapabilitiesKHR capabilities, uint32_t minImageCount) {
+    uint32_t VulkanDevice::getImageCount(uint32_t minImageCount) {
+        VkSurfaceCapabilitiesKHR capabilities;
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VulkanRenderer::getPhysicalDevice(), VulkanRenderer::getSurface(), &capabilities);
+
         if (capabilities.maxImageCount > 0 && minImageCount > capabilities.maxImageCount) {
             return capabilities.maxImageCount;
         }
         return capabilities.minImageCount;
     }
 
-    VkSurfaceTransformFlagBitsKHR VulkanDevice::getPreTransform(VkSurfaceCapabilitiesKHR capabilities) {
+    VkSurfaceTransformFlagBitsKHR VulkanDevice::getPreTransform() {
+        VkSurfaceCapabilitiesKHR capabilities;
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VulkanRenderer::getPhysicalDevice(), VulkanRenderer::getSurface(), &capabilities);
+
         return (capabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
             ? VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
             : capabilities.currentTransform;
     }
 
-    VkCompositeAlphaFlagBitsKHR VulkanDevice::getCompositeAlpha(VkSurfaceCapabilitiesKHR capabilities) {
+    VkCompositeAlphaFlagBitsKHR VulkanDevice::getCompositeAlpha() {
+        VkSurfaceCapabilitiesKHR capabilities;
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VulkanRenderer::getPhysicalDevice(), VulkanRenderer::getSurface(), &capabilities);
+
         return (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR) ? VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR
             : (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR) ? VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR
             : (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR) ? VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR

@@ -216,7 +216,6 @@ namespace Toki {
     }
 
     void VulkanRenderer::createSwapchain() {
-        std::vector<VkQueueFamilyProperties> queueFamilyProperties = VulkanDevice::getQueueFamilyProperties();
         const auto [graphicsQueueIndex, presentQueueIndex] = VulkanDevice::getQueueFamilyIndexes();
         const auto [windowWidth, windowHeight] = Application::getWindow()->getWindowDimensions();
 
@@ -227,15 +226,12 @@ namespace Toki {
 
         swapchainImageFormat = VulkanDevice::findSurfaceFormat(formats).format;
 
-        VkSurfaceCapabilitiesKHR surfaceCapabilities;
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
-
-        swapchainExtent = VulkanDevice::getExtent(surfaceCapabilities);
+        swapchainExtent = VulkanDevice::getExtent();
 
         VkPresentModeKHR swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR; // TODO: use this for FPS limits later
-        VkSurfaceTransformFlagBitsKHR preTransform = VulkanDevice::getPreTransform(surfaceCapabilities);
-        VkCompositeAlphaFlagBitsKHR compositeAlpha = VulkanDevice::getCompositeAlpha(surfaceCapabilities);
-        uint32_t imageCount = VulkanDevice::getImageCount(surfaceCapabilities);
+        VkSurfaceTransformFlagBitsKHR preTransform = VulkanDevice::getPreTransform();
+        VkCompositeAlphaFlagBitsKHR compositeAlpha = VulkanDevice::getCompositeAlpha();
+        uint32_t imageCount = VulkanDevice::getImageCount();
 
         VkSwapchainCreateInfoKHR swapchainCreateInfo{};
         swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -284,7 +280,7 @@ namespace Toki {
         imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         imageViewCreateInfo.flags = 0;
 
-        for (uint32_t i = 0; i < surfaceCapabilities.minImageCount; ++i) {
+        for (uint32_t i = 0; i < imageCount; ++i) {
             imageViewCreateInfo.image = swapchainImages[i];
             TK_ASSERT(vkCreateImageView(device, &imageViewCreateInfo, nullptr, &swapchainImageViews[i]) == VK_SUCCESS);
         }
@@ -418,7 +414,7 @@ namespace Toki {
             VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
         );
 
-        VkExtent2D extent = VulkanDevice::getExtent(surfaceCapabilities);
+        VkExtent2D extent = VulkanDevice::getExtent();
         VkImageTiling tiling = VulkanDevice::findTiling(depthFormat);
 
         VkImageCreateInfo imageCreateInfo{};
@@ -489,7 +485,7 @@ namespace Toki {
     }
 
     void VulkanRenderer::endCommandBuffer(VkCommandBuffer commandBuffer) {
-        vkEndCommandBuffer(commandBuffer);
+        TK_ASSERT(vkEndCommandBuffer(commandBuffer) == VK_SUCCESS);
 
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

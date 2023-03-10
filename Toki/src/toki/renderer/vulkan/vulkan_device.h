@@ -22,10 +22,10 @@ namespace Toki {
 
         // swapchain/image util functions
     public:
-        static VkExtent2D getExtent(VkSurfaceCapabilitiesKHR capabilities);
-        static uint32_t getImageCount(VkSurfaceCapabilitiesKHR capabilities, uint32_t minImageCount = 0); // always min image count
-        static VkSurfaceTransformFlagBitsKHR getPreTransform(VkSurfaceCapabilitiesKHR capabilities);
-        static VkCompositeAlphaFlagBitsKHR getCompositeAlpha(VkSurfaceCapabilitiesKHR capabilities);
+        static VkExtent2D getExtent();
+        static uint32_t getImageCount(uint32_t minImageCount = 0); // always min image count
+        static VkSurfaceTransformFlagBitsKHR getPreTransform();
+        static VkCompositeAlphaFlagBitsKHR getCompositeAlpha();
 
         static VkImageTiling findTiling(VkFormat format);
         static VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlagBits features);

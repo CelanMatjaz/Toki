@@ -34,6 +34,11 @@ namespace Toki {
 
         uint32_t getImageCount() { return swapchainImages.size(); }
 
+        static VkCommandBuffer startCommandBuffer();
+        static void endCommandBuffer(VkCommandBuffer commandBuffer);
+
+        static constexpr uint32_t MAX_FRAMES = 3;
+
     private:
         inline static VkInstance instance;
         inline static VkSurfaceKHR surface;
@@ -60,11 +65,6 @@ namespace Toki {
         void createFrames();
         void createFrameBuffers();
         void createDepthBuffer();
-
-        static VkCommandBuffer startCommandBuffer();
-        static void endCommandBuffer(VkCommandBuffer commandBuffer);
-
-        static constexpr uint32_t MAX_FRAMES = 3;
 
         struct FrameData {
             VkSemaphore presentSemaphore, renderSemaphore;
