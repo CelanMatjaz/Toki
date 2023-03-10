@@ -5,6 +5,7 @@
 #include "layer_stack.h"
 #include "toki/events/events.h"
 #include "toki/renderer/vulkan/vulkan_renderer.h"
+#include "toki/renderer/imgui/imgui_layer.h"
 
 namespace Toki {
     class Application {
@@ -30,6 +31,8 @@ namespace Toki {
         inline static Application* application = nullptr;
         inline static std::unique_ptr<TokiWindow> window;
         inline static VulkanRenderer* rendererBackend;
+
+        ImGuiLayer* imGuiLayer;
     };
 
 }
