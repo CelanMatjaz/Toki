@@ -1,6 +1,6 @@
 #include "vulkan_texture.h"
 
-#include "vulkan_renderer.h"
+#include "toki/core/application.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -10,10 +10,28 @@ namespace Toki {
         cleanup();
     }
 
-    std::shared_ptr<VulkanTexture> VulkanTexture::create(const std::filesystem::path& filePath) {
+    std::shared_ptr<VulkanTexture> VulkanTexture::create(const std::filesystem::path& filePath, ImageFormat format) {
         int width, height, channels;
-        uint32_t* pixels = (uint32_t*) stbi_load(filePath.generic_string().c_str(), &width, &height, &channels, STBI_rgb_alpha);
-        VkDeviceSize imageSize = width * height * 4;
+
+        int forcedChannels;
+        switch (format) {
+            case SINGLE: {
+                forcedChannels = STBI_grey;
+                break;
+            }
+            case RGB: {
+                forcedChannels = STBI_rgb;
+                break;
+            }
+            case RGBA:
+            default: {
+                forcedChannels = STBI_rgb_alpha;
+                break;
+            }
+        }
+
+        uint32_t* pixels = (uint32_t*) stbi_load(filePath.generic_string().c_str(), &width, &height, &channels, forcedChannels);
+        VkDeviceSize imageSize = width * height * channels;
 
         TK_ASSERT(pixels != nullptr);
         TK_ASSERT(imageSize > 0);
@@ -21,7 +39,8 @@ namespace Toki {
         std::shared_ptr<VulkanTexture> texture = create(
             width,
             height,
-            pixels
+            pixels,
+            format
         );
 
         stbi_image_free(pixels);
@@ -29,34 +48,35 @@ namespace Toki {
         return texture;
     }
 
-    std::shared_ptr<VulkanTexture> VulkanTexture::create(uint32_t width, uint32_t height) {
+    std::shared_ptr<VulkanTexture> VulkanTexture::create(uint32_t width, uint32_t height, ImageFormat format) {
         std::shared_ptr<VulkanTexture> texture = std::make_shared<VulkanTexture>();
+
+        VkFormat textureFormat = getFormatFromEnum(format);
 
         texture->width = width;
         texture->height = height;
-        texture->format = VK_FORMAT_R8G8B8A8_SRGB;
-        texture->image = createImage(width, height, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, texture->memory);
+        texture->format = textureFormat;
+        texture->formatEnum = format;
+        texture->image = createImage(width, height, textureFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, texture->memory);
 
         return texture;
     }
 
-    std::shared_ptr<VulkanTexture> VulkanTexture::create(uint32_t width, uint32_t height, void* data) {
-        std::shared_ptr<VulkanTexture> texture = create(width, height);
-
-        texture->setData(width * height * 4, data);
-
+    std::shared_ptr<VulkanTexture> VulkanTexture::create(uint32_t width, uint32_t height, void* data, ImageFormat format) {
+        std::shared_ptr<VulkanTexture> texture = create(width, height, format);
+        texture->setData(width * height * format, data);
         return texture;
     }
 
     void VulkanTexture::cleanup() {
-        VkDevice device = VulkanRenderer::getDevice();
+        VkDevice device = Application::getVulkanRenderer()->getDevice();
         vkDestroyImageView(device, imageView, nullptr);
         vkDestroyImage(device, image, nullptr);
         vkFreeMemory(device, memory, nullptr);
     }
 
     void VulkanTexture::setData(uint32_t size, void* data) {
-        TK_ASSERT(size == width * height * 4);
+        TK_ASSERT(size == width * height * formatEnum);
 
         std::shared_ptr<VulkanBuffer> stagingBuffer = VulkanBuffer::create(
             size,
@@ -64,18 +84,18 @@ namespace Toki {
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
         );
 
-        VkDevice device = VulkanRenderer::getDevice();
+        VkDevice device = Application::getVulkanRenderer()->getDevice();
         vkDestroyImageView(device, imageView, nullptr);
 
         stagingBuffer->setData(size, data);
         this->transitionLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
         copyBufferToTexture(stagingBuffer.get(), this);
         this->transitionLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        this->imageView = createImageView(this->image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+        this->imageView = createImageView(this->image, getFormatFromEnum(this->formatEnum), VK_IMAGE_ASPECT_COLOR_BIT);
     }
 
     void VulkanTexture::transitionLayout(VkImageLayout oldLayout, VkImageLayout newLayout) {
-        auto commandBuffer = VulkanRenderer::startCommandBuffer();
+        auto commandBuffer = Application::getVulkanRenderer()->getCommandBuffer();;
 
         VkImageMemoryBarrier barrier{};
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -118,12 +138,13 @@ namespace Toki {
             1, &barrier
         );
 
-        VulkanRenderer::endCommandBuffer(commandBuffer);
+        
+        Application::getVulkanRenderer()->endCommandBuffer(commandBuffer);
     }
 
     void VulkanTexture::copyBufferToTexture(VulkanBuffer* buffer, VulkanTexture* texture) {
-        VkDevice device = VulkanRenderer::getDevice();
-        VkCommandBuffer commandBuffer = VulkanRenderer::startCommandBuffer();
+        VkDevice device = Application::getVulkanRenderer()->getDevice();
+        VkCommandBuffer commandBuffer = Application::getVulkanRenderer()->startCommandBuffer();
 
         VkBufferImageCopy region{};
         region.bufferOffset = 0;
@@ -149,11 +170,21 @@ namespace Toki {
             &region
         );
 
-        VulkanRenderer::endCommandBuffer(commandBuffer);
+        Application::getVulkanRenderer()->endCommandBuffer(commandBuffer);
     }
 
     void VulkanTexture::copyBufferToTexture(std::shared_ptr<VulkanBuffer>& buffer, std::shared_ptr<VulkanTexture>& texture) {
         copyBufferToTexture(buffer.get(), texture.get());
+    }
+
+    VkFormat VulkanTexture::getFormatFromEnum(ImageFormat format) {
+        switch (format) {
+            case SINGLE: return VK_FORMAT_R8_SRGB;
+            case RGB: return VK_FORMAT_R8G8B8_SRGB;
+            case RGBA: return VK_FORMAT_R8G8B8A8_SRGB;
+        }
+
+        TK_ASSERT(false && "Wrong format enum in parameter");
     }
 
     VkImage VulkanTexture::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkDeviceMemory& imageMemory) {
@@ -173,7 +204,7 @@ namespace Toki {
         imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         imageInfo.flags = 0;
 
-        VkDevice device = VulkanRenderer::getDevice();
+        VkDevice device = Application::getVulkanRenderer()->getDevice();
         VkImage image;
 
         TK_ASSERT(vkCreateImage(device, &imageInfo, nullptr, &image) == VK_SUCCESS);
@@ -211,22 +242,22 @@ namespace Toki {
         imageViewCreateInfo.image = image;
 
         VkImageView imageView;
-        TK_ASSERT(vkCreateImageView(VulkanRenderer::getDevice(), &imageViewCreateInfo, nullptr, &imageView) == VK_SUCCESS);
+        TK_ASSERT(vkCreateImageView(Application::getVulkanRenderer()->getDevice(), &imageViewCreateInfo, nullptr, &imageView) == VK_SUCCESS);
         return imageView;
     }
 
     VkSampler VulkanTexture::createSampler() {
         VkSamplerCreateInfo samplerInfo{};
         samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-        samplerInfo.magFilter = VK_FILTER_LINEAR;
-        samplerInfo.minFilter = VK_FILTER_LINEAR;
+        samplerInfo.magFilter = VK_FILTER_NEAREST;
+        samplerInfo.minFilter = VK_FILTER_NEAREST;
         samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         samplerInfo.anisotropyEnable = VK_TRUE;
 
         VkPhysicalDeviceProperties properties{};
-        vkGetPhysicalDeviceProperties(VulkanRenderer::getPhysicalDevice(), &properties);
+        vkGetPhysicalDeviceProperties(Application::getVulkanRenderer()->getPhysicalDevice(), &properties);
         samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
         samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
         samplerInfo.unnormalizedCoordinates = VK_FALSE;
@@ -238,7 +269,7 @@ namespace Toki {
         samplerInfo.maxLod = 0.0f;
 
         VkSampler sampler;
-        TK_ASSERT(vkCreateSampler(VulkanRenderer::getDevice(), &samplerInfo, nullptr, &sampler) == VK_SUCCESS);
+        TK_ASSERT(vkCreateSampler(Application::getVulkanRenderer()->getDevice(), &samplerInfo, nullptr, &sampler) == VK_SUCCESS);
 
         return sampler;
     }

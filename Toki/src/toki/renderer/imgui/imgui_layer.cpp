@@ -32,27 +32,29 @@ namespace Toki {
         ImGuiIO& io = ImGui::GetIO();
         ImGui::StyleColorsDark();
 
+        VulkanRenderer* renderer = Application::getVulkanRenderer();
+
         ImGui_ImplGlfw_InitForVulkan(Application::getWindow()->getHandle(), true);
-        ImGui_ImplVulkan_InitInfo init_info = {};
-        init_info.Instance = VulkanRenderer::getInstance();
-        init_info.PhysicalDevice = VulkanRenderer::getPhysicalDevice();
-        init_info.Device = VulkanRenderer::getDevice();
-        init_info.QueueFamily = VulkanDevice::getQueueFamilyIndexes().graphicsQueueIndex;
-        init_info.Queue = VulkanRenderer::getGraphicsQueue();
-        init_info.PipelineCache = VK_NULL_HANDLE;
-        init_info.DescriptorPool = descriptorPool;
-        init_info.Subpass = 0;
-        init_info.MinImageCount = VulkanDevice::getImageCount();
-        init_info.ImageCount = VulkanRenderer::MAX_FRAMES;
-        init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-        init_info.Allocator = nullptr;
-        init_info.CheckVkResultFn = nullptr;
-        ImGui_ImplVulkan_Init(&init_info, VulkanRenderer::getRenderPass());
+        ImGui_ImplVulkan_InitInfo initInfo = {};
+        initInfo.Instance = renderer->getInstance();
+        initInfo.PhysicalDevice = renderer->getPhysicalDevice();
+        initInfo.Device = renderer->getDevice();
+        initInfo.QueueFamily = renderer->getQueueFamilyIndexes().graphicsQueueIndex;
+        initInfo.Queue = renderer->getGraphicsQueue();
+        initInfo.PipelineCache = VK_NULL_HANDLE;
+        initInfo.DescriptorPool = descriptorPool;
+        initInfo.Subpass = 0;
+        initInfo.MinImageCount = VulkanDevice::getImageCount();
+        initInfo.ImageCount = renderer->MAX_FRAMES;
+        initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+        initInfo.Allocator = nullptr;
+        initInfo.CheckVkResultFn = nullptr;
+        ImGui_ImplVulkan_Init(&initInfo, renderer->getRenderPass());
 
         {
-            VkCommandBuffer commandBuffer = VulkanRenderer::startCommandBuffer();
+            VkCommandBuffer commandBuffer = renderer->startCommandBuffer();
             ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
-            VulkanRenderer::endCommandBuffer(commandBuffer);
+            renderer->endCommandBuffer(commandBuffer);
 
             ImGui_ImplVulkan_DestroyFontUploadObjects();
         }
@@ -63,7 +65,7 @@ namespace Toki {
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
 
-        vkDestroyDescriptorPool(VulkanRenderer::getDevice(), descriptorPool, nullptr);
+        vkDestroyDescriptorPool(Application::getVulkanRenderer()->getDevice(), descriptorPool, nullptr);
     }
 
     void ImGuiLayer::onUpdate(float deltaTime) {
@@ -77,7 +79,7 @@ namespace Toki {
 
     void ImGuiLayer::endImGuiFrame() {
         ImGui::Render();
-        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), VulkanRenderer::getCommandBuffer());
+        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), Application::getVulkanRenderer()->getCommandBuffer());
     }
 
 }

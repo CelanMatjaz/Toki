@@ -1,17 +1,19 @@
 #include "vulkan_buffer.h"
 
+#include "toki/core/application.h"
+
 namespace Toki {
 
     VulkanBuffer::VulkanBuffer(uint32_t size) : size{ size } {}
 
     VulkanBuffer::~VulkanBuffer() {
-        cleanup();
+        // cleanup();
     }
 
     void VulkanBuffer::setData(uint32_t size, void* dataIn) {
-        TK_ASSERT(this->size <= size && "Data size is too large");
+        TK_ASSERT(this->size >= size && "Data size is too large", "test");
 
-        VkDevice device = VulkanRenderer::getDevice();
+        VkDevice device = Application::getVulkanRenderer()->getDevice();
 
         void* data;
         TK_ASSERT(vkMapMemory(device, memory, 0, size, 0, &data) == VK_SUCCESS);
@@ -20,7 +22,7 @@ namespace Toki {
     }
 
     void VulkanBuffer::cleanup() {
-        VkDevice device = VulkanRenderer::getDevice();
+        VkDevice device = Application::getVulkanRenderer()->getDevice();
         if (isMemoryMapped) unmapMemory();
         vkDestroyBuffer(device, buffer, nullptr);
         vkFreeMemory(device, memory, nullptr);
@@ -28,19 +30,19 @@ namespace Toki {
 
     void* VulkanBuffer::mapMemory(uint32_t size) {
         void* data;
-        TK_ASSERT(vkMapMemory(VulkanRenderer::getDevice(), memory, 0, size, 0, &data) == VK_SUCCESS);
+        TK_ASSERT(vkMapMemory(Application::getVulkanRenderer()->getDevice(), memory, 0, size, 0, &data) == VK_SUCCESS);
         isMemoryMapped = true;
         return data;
     }
 
     void VulkanBuffer::unmapMemory() {
-        vkUnmapMemory(VulkanRenderer::getDevice(), memory);
+        vkUnmapMemory(Application::getVulkanRenderer()->getDevice(), memory);
         isMemoryMapped = false;
     }
 
     std::shared_ptr<VulkanBuffer> VulkanBuffer::create(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) {
-        VkDevice device = VulkanRenderer::getDevice();
-        VkPhysicalDevice physicalDevice = VulkanRenderer::getPhysicalDevice();
+        VkDevice device = Application::getVulkanRenderer()->getDevice();
+        VkPhysicalDevice physicalDevice = Application::getVulkanRenderer()->getPhysicalDevice();
 
         std::shared_ptr<VulkanBuffer> buffer(new VulkanBuffer(size));
 

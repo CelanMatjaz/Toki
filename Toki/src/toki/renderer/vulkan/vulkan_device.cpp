@@ -6,7 +6,61 @@
 
 namespace Toki {
 
-    VkDevice VulkanDevice::createDevice() {
+    VulkanDevice::VulkanDevice() {
+        createInstance();
+        createSurface();
+        physicalDevice = enumeratePhysicalDevices().front();
+        initQueueFamilyIndexes();
+        initQueueFamilyProperties();
+        createDevice();
+    }
+
+    VulkanDevice::~VulkanDevice() {
+        vkDeviceWaitIdle(deviceHandle);
+        vkDestroyDevice(deviceHandle, nullptr);
+        vkDestroySurfaceKHR(instance, surface, nullptr);
+        vkDestroyInstance(instance, nullptr);
+    }
+
+    void VulkanDevice::createInstance() {
+        VkApplicationInfo appInfo{};
+        appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        appInfo.engineVersion = ENGINE_VERSION;
+        appInfo.pEngineName = ENGINE_NAME;
+        appInfo.pApplicationName = ENGINE_NAME;
+        appInfo.applicationVersion = ENGINE_VERSION;
+        appInfo.apiVersion = VK_API_VERSION_1_3;
+
+        const char** glfwExtensions;
+        uint32_t extensionCount = 0;
+        glfwExtensions = glfwGetRequiredInstanceExtensions(&extensionCount);
+
+        std::vector<VkExtensionProperties> extensions(extensionCount);
+        auto result = vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+
+        VkInstanceCreateInfo instanceCreateInfo{};
+        instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        instanceCreateInfo.flags = 0;
+        instanceCreateInfo.pApplicationInfo = &appInfo;
+        instanceCreateInfo.enabledExtensionCount = extensionCount;
+        instanceCreateInfo.ppEnabledExtensionNames = glfwExtensions;
+        instanceCreateInfo.enabledLayerCount = 0;
+        instanceCreateInfo.ppEnabledLayerNames = nullptr;
+
+    #ifndef DIST
+        TK_ASSERT(VulkanDevice::checkForValidationLayerSupport());
+        instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+        instanceCreateInfo.ppEnabledLayerNames = validationLayers.data();
+    #endif
+
+        TK_ASSERT(vkCreateInstance(&instanceCreateInfo, nullptr, &instance) == VK_SUCCESS);
+    }
+
+    void VulkanDevice::createSurface() {
+        TK_ASSERT(glfwCreateWindowSurface(instance, Application::getNativeWindow(), nullptr, &surface) == VK_SUCCESS);
+    }
+
+    void VulkanDevice::createDevice() {
         float queuePriority = 0.0f;
         VkDeviceQueueCreateInfo deviceQueueCreateInfo{};
         deviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -29,15 +83,13 @@ namespace Toki {
         deviceCreateInfo.enabledExtensionCount = deviceExtensions.size();
         deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 
-#ifndef DIST
+    #ifndef DIST
         TK_ASSERT(VulkanDevice::checkForValidationLayerSupport());
         deviceCreateInfo.ppEnabledLayerNames = validationLayers.data();
         deviceCreateInfo.enabledLayerCount = validationLayers.size();
-#endif
+    #endif
 
-        VkDevice device;
-        vkCreateDevice(VulkanRenderer::getPhysicalDevice(), &deviceCreateInfo, nullptr, &device);
-        return device;
+        TK_ASSERT(vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &deviceHandle) == VK_SUCCESS);
     }
 
     bool VulkanDevice::checkForValidationLayerSupport() {
@@ -61,9 +113,6 @@ namespace Toki {
     }
 
     void VulkanDevice::initQueueFamilyIndexes() {
-        VkSurfaceKHR surface = VulkanRenderer::getSurface();
-        VkPhysicalDevice physicalDevice = VulkanRenderer::getPhysicalDevice();
-
         uint32_t propCount;
         vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &propCount, nullptr);
         std::vector<VkQueueFamilyProperties> queueFamilyProperties(propCount);
@@ -114,14 +163,12 @@ namespace Toki {
 
     void VulkanDevice::initQueueFamilyProperties() {
         uint32_t count{};
-        vkGetPhysicalDeviceQueueFamilyProperties(VulkanRenderer::getPhysicalDevice(), &count, nullptr);
+        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, nullptr);
         queueFamilyProperties.resize(count);
-        vkGetPhysicalDeviceQueueFamilyProperties(VulkanRenderer::getPhysicalDevice(), &count, queueFamilyProperties.data());
+        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, queueFamilyProperties.data());
     }
 
     std::vector<VkPhysicalDevice> VulkanDevice::enumeratePhysicalDevices() {
-        VkInstance instance = VulkanRenderer::getInstance();
-
         uint32_t deviceCount;
         vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
         std::vector<VkPhysicalDevice> physicalDevices(deviceCount);
@@ -133,7 +180,7 @@ namespace Toki {
 
     VkExtent2D VulkanDevice::getExtent() {
         VkSurfaceCapabilitiesKHR capabilities;
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VulkanRenderer::getPhysicalDevice(), VulkanRenderer::getSurface(), &capabilities);
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Application::getVulkanRenderer()->getPhysicalDevice(), Application::getVulkanRenderer()->getSurface(), &capabilities);
 
         const auto [windowWidth, windowHeight] = Application::getWindow()->getWindowDimensions();
 
@@ -148,19 +195,19 @@ namespace Toki {
         }
     }
 
-    uint32_t VulkanDevice::getImageCount(uint32_t minImageCount) {
+    uint32_t VulkanDevice::getImageCount(uint32_t maxImageCount) {
         VkSurfaceCapabilitiesKHR capabilities;
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VulkanRenderer::getPhysicalDevice(), VulkanRenderer::getSurface(), &capabilities);
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Application::getVulkanRenderer()->getPhysicalDevice(), Application::getVulkanRenderer()->getSurface(), &capabilities);
 
-        if (capabilities.maxImageCount > 0 && minImageCount > capabilities.maxImageCount) {
-            return capabilities.maxImageCount;
+        if (maxImageCount > 0 && maxImageCount <= capabilities.maxImageCount) {
+            return maxImageCount;
         }
         return capabilities.minImageCount;
     }
 
     VkSurfaceTransformFlagBitsKHR VulkanDevice::getPreTransform() {
         VkSurfaceCapabilitiesKHR capabilities;
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VulkanRenderer::getPhysicalDevice(), VulkanRenderer::getSurface(), &capabilities);
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Application::getVulkanRenderer()->getPhysicalDevice(), Application::getVulkanRenderer()->getSurface(), &capabilities);
 
         return (capabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
             ? VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
@@ -169,7 +216,7 @@ namespace Toki {
 
     VkCompositeAlphaFlagBitsKHR VulkanDevice::getCompositeAlpha() {
         VkSurfaceCapabilitiesKHR capabilities;
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VulkanRenderer::getPhysicalDevice(), VulkanRenderer::getSurface(), &capabilities);
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Application::getVulkanRenderer()->getPhysicalDevice(), Application::getVulkanRenderer()->getSurface(), &capabilities);
 
         return (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR) ? VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR
             : (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR) ? VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR
@@ -178,7 +225,7 @@ namespace Toki {
     }
 
     VkImageTiling VulkanDevice::findTiling(VkFormat format) {
-        VkPhysicalDevice physicalDevice = VulkanRenderer::getPhysicalDevice();
+        VkPhysicalDevice physicalDevice = Application::getVulkanRenderer()->getPhysicalDevice();
 
         VkFormatProperties formatProperties;
         vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &formatProperties);
@@ -195,7 +242,7 @@ namespace Toki {
     }
 
     VkFormat VulkanDevice::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlagBits features) {
-        VkPhysicalDevice physicalDevice = VulkanRenderer::getPhysicalDevice();
+        VkPhysicalDevice physicalDevice = Application::getVulkanRenderer()->getPhysicalDevice();
 
         for (const VkFormat& format : candidates) {
             VkFormatProperties props;
@@ -212,7 +259,7 @@ namespace Toki {
     }
 
     VkSurfaceFormatKHR VulkanDevice::findSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& formats) {
-        VkPhysicalDevice physicalDevice = VulkanRenderer::getPhysicalDevice();
+        VkPhysicalDevice physicalDevice = Application::getVulkanRenderer()->getPhysicalDevice();
 
         for (const auto& availableFormat : formats) {
             if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
@@ -223,7 +270,7 @@ namespace Toki {
     }
 
     uint32_t VulkanDevice::findMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties) {
-        VkPhysicalDevice physicalDevice = VulkanRenderer::getPhysicalDevice();
+        VkPhysicalDevice physicalDevice = Application::getVulkanRenderer()->getPhysicalDevice();
 
         VkPhysicalDeviceMemoryProperties memoryProperties;
         vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);

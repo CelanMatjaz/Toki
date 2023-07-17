@@ -17,7 +17,7 @@ namespace Toki {
         VulkanShader() = default;
 
         VulkanPipeline::PipelineConfig pipelineConfig;
-        uint32_t pipelineIndex;
+        VkPipeline pipeline;
     };
 
 }

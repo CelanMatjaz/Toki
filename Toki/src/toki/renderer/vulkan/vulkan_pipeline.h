@@ -7,18 +7,19 @@ namespace Toki {
     class VulkanPipeline {
     public:
         struct PipelineConfig {
-            uint32_t pipelineLayoutIndex;
+            VkPipelineLayout pipelineLayout;
             uint32_t vertShaderIndex;
             uint32_t fragShaderIndex;
             std::vector<VkVertexInputBindingDescription> inputBindingDescriptions;
             std::vector<VkVertexInputAttributeDescription> inputAttributeDescriptions;
+            bool wireframe = false;
         };
 
-        static uint32_t createPipelineLayout(
+        static VkPipelineLayout createPipelineLayout(
             const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
             const std::vector<VkPushConstantRange>& pushConstants
         );
-        static uint32_t createPipeline(const PipelineConfig& pipelineConfig);
+        static VkPipeline createPipeline(const PipelineConfig& pipelineConfig);
 
         struct LayoutData {
             uint32_t binding;
@@ -43,8 +44,6 @@ namespace Toki {
         static uint32_t createShaderModule(const std::filesystem::path& filePath);
 
         static void recreatePipelines();
-        static const VkPipeline getPipeline(uint32_t index);
-        static const VkPipelineLayout getPipelineLayout(uint32_t index);
         static void cleanup();
 
     private:
@@ -58,6 +57,8 @@ namespace Toki {
         inline static std::vector<PipelineData> pipelines;
         inline static std::vector<VkPipelineLayout> pipelineLayouts;
         inline static std::vector<VkShaderModule> shaderModules;
+        inline static std::vector<VkDescriptorPool> descriptorPools;
+        inline static std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
     };
 
 }

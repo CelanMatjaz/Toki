@@ -7,10 +7,10 @@ namespace Toki {
 
     class VulkanTexture {
     public:
-        enum class ImageFormat {
-            SINGLE_CHANNEL,
-            RGB,
-            RGBA
+        enum ImageFormat {
+            SINGLE = 1,
+            RGB = 3,
+            RGBA = 4
         };
 
     public:
@@ -22,6 +22,8 @@ namespace Toki {
         static void copyBufferToTexture(std::shared_ptr<VulkanBuffer>& buffer, std::shared_ptr<VulkanTexture>& texture);
         static void copyBufferToTexture(VulkanBuffer* buffer, VulkanTexture* texture);
 
+        static VkFormat getFormatFromEnum(ImageFormat format);
+
         void cleanup();
         void setData(uint32_t size, void* data);
         void transitionLayout(VkImageLayout oldLayout, VkImageLayout newLayout);
@@ -31,9 +33,9 @@ namespace Toki {
         uint32_t getWidth() { return width; }
         uint32_t getHeight() { return height; }
 
-        static std::shared_ptr<VulkanTexture> create(const std::filesystem::path& filePath);
-        static std::shared_ptr<VulkanTexture> create(uint32_t width, uint32_t height);
-        static std::shared_ptr<VulkanTexture> create(uint32_t width, uint32_t height, void* data);
+        static std::shared_ptr<VulkanTexture> create(const std::filesystem::path& filePath, ImageFormat format = RGBA);
+        static std::shared_ptr<VulkanTexture> create(uint32_t width, uint32_t height, ImageFormat format = RGBA);
+        static std::shared_ptr<VulkanTexture> create(uint32_t width, uint32_t height, void* data, ImageFormat format = RGBA);
         static VkSampler createSampler();
 
     private:
@@ -42,6 +44,7 @@ namespace Toki {
         VkImageView imageView;
         VkDeviceMemory memory;
         VkFormat format;
+        ImageFormat formatEnum;
         uint32_t width;
         uint32_t height;
     };

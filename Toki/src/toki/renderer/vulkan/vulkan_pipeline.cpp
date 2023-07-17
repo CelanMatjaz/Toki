@@ -1,8 +1,10 @@
 #include "vulkan_pipeline.h"
 
+#include "toki/core/application.h"
+
 namespace Toki {
 
-    uint32_t VulkanPipeline::createPipelineLayout(
+    VkPipelineLayout VulkanPipeline::createPipelineLayout(
         const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
         const std::vector<VkPushConstantRange>& pushConstants
     ) {
@@ -14,22 +16,16 @@ namespace Toki {
         pipelineLayoutCreateInfo.pushConstantRangeCount = pushConstants.size();
 
         VkPipelineLayout pipelineLayout;
-        TK_ASSERT(vkCreatePipelineLayout(VulkanRenderer::getDevice(), &pipelineLayoutCreateInfo, nullptr, &pipelineLayout) == VK_SUCCESS);
+        TK_ASSERT(vkCreatePipelineLayout(Application::getVulkanRenderer()->getDevice(), &pipelineLayoutCreateInfo, nullptr, &pipelineLayout) == VK_SUCCESS);
         pipelineLayouts.emplace_back(pipelineLayout);
-        return pipelineLayouts.size() - 1;
+        return pipelineLayout;
     }
 
-    uint32_t VulkanPipeline::createPipeline(const PipelineConfig& pipelineConfig) {
-        PipelineData data = { _createPipeline(pipelineConfig), pipelineConfig };
-        pipelines.emplace_back(data);
-        return pipelines.size() - 1;
-    }
+    VkPipeline VulkanPipeline::createPipeline(const PipelineConfig& pipelineConfig) {
+        const auto& [pipelineLayoutIndex, vertShaderIndex, fragShaderIndex, inputBindingDescriptions, inputAttributeDescriptions, wireframe] = pipelineConfig;
 
-    VkPipeline VulkanPipeline::_createPipeline(const PipelineConfig& pipelineConfig) {
-        const auto& [pipelineLayoutIndex, vertShaderIndex, fragShaderIndex, inputBindingDescriptions, inputAttributeDescriptions] = pipelineConfig;
-
-        VkExtent2D extent = VulkanRenderer::getSwapchainExtent();
-        VkRenderPass renderPass = VulkanRenderer::getRenderPass();
+        VkExtent2D extent = Application::getVulkanRenderer()->getSwapchain()->getExtent();
+        VkRenderPass renderPass = Application::getVulkanRenderer()->getRenderPass();
 
         VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo{};
         vertShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -62,8 +58,8 @@ namespace Toki {
         VkViewport pipelineViewport{};
         pipelineViewport.x = 0.0f;
         pipelineViewport.y = 0.0f;
-        pipelineViewport.width = (float) extent.width;
-        pipelineViewport.height = (float) extent.height;
+        pipelineViewport.width = (float)extent.width;
+        pipelineViewport.height = (float)extent.height;
         pipelineViewport.minDepth = 0.0f;
         pipelineViewport.maxDepth = 1.0f;
 
@@ -79,7 +75,7 @@ namespace Toki {
 
         VkPipelineRasterizationStateCreateInfo rasterizerCreateInto{};
         rasterizerCreateInto.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-        rasterizerCreateInto.polygonMode = VK_POLYGON_MODE_FILL; // REVIEW: maybe add to config?
+        rasterizerCreateInto.polygonMode = wireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
         rasterizerCreateInto.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; // REVIEW: maybe add to config?
         rasterizerCreateInto.cullMode = VK_CULL_MODE_BACK_BIT; // REVIEW: maybe add to config?
         rasterizerCreateInto.depthClampEnable = VK_FALSE;
@@ -102,7 +98,7 @@ namespace Toki {
         depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
         depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
         depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
-        depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS; // REVIEW: maybe add to config?
+        depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL; // REVIEW: maybe add to config?
         depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
         depthStencilStateCreateInfo.minDepthBounds = 0.0f;
         depthStencilStateCreateInfo.maxDepthBounds = 1.0f;
@@ -129,12 +125,12 @@ namespace Toki {
         colorBlendStateCreateInfo.blendConstants[2] = 0.0f;
         colorBlendStateCreateInfo.blendConstants[3] = 0.0f;
 
-        VkDynamicState states[] = { VK_DYNAMIC_STATE_LINE_WIDTH };
+        std::vector<VkDynamicState> states = { VK_DYNAMIC_STATE_LINE_WIDTH, VK_DYNAMIC_STATE_VIEWPORT };
 
         VkPipelineDynamicStateCreateInfo dynamicState{};
         dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-        dynamicState.pDynamicStates = states;
-        dynamicState.dynamicStateCount = 1;
+        dynamicState.pDynamicStates = states.data();
+        dynamicState.dynamicStateCount = states.size();
 
         VkGraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -147,14 +143,14 @@ namespace Toki {
         pipelineInfo.pMultisampleState = &multisampleStateCreateInfo;
         pipelineInfo.pColorBlendState = &colorBlendStateCreateInfo;
         pipelineInfo.pDynamicState = &dynamicState;
-        pipelineInfo.layout = pipelineLayouts[pipelineLayoutIndex];
+        pipelineInfo.layout = pipelineConfig.pipelineLayout;
         pipelineInfo.renderPass = renderPass;
         pipelineInfo.subpass = 0;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
         pipelineInfo.pDepthStencilState = &depthStencilStateCreateInfo;
 
         VkPipeline pipeline;
-        TK_ASSERT(vkCreateGraphicsPipelines(VulkanRenderer::getDevice(), nullptr, 1, &pipelineInfo, nullptr, &pipeline) == VK_SUCCESS);
+        TK_ASSERT(vkCreateGraphicsPipelines(Application::getVulkanRenderer()->getDevice(), nullptr, 1, &pipelineInfo, nullptr, &pipeline) == VK_SUCCESS);
         return pipeline;
     }
 
@@ -172,20 +168,18 @@ namespace Toki {
             layoutBindings.push_back(binding);
         }
 
-        VkDescriptorSetLayoutCreateInfo layoutInfo;
+        VkDescriptorSetLayoutCreateInfo layoutInfo{};
         layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         layoutInfo.pBindings = layoutBindings.data();
         layoutInfo.bindingCount = layoutBindings.size();
 
         VkDescriptorSetLayout descriptorSetLayout;
-        TK_ASSERT(vkCreateDescriptorSetLayout(VulkanRenderer::getDevice(), &layoutInfo, nullptr, &descriptorSetLayout) == VK_SUCCESS);
+        TK_ASSERT(vkCreateDescriptorSetLayout(Application::getVulkanRenderer()->getDevice(), &layoutInfo, nullptr, &descriptorSetLayout) == VK_SUCCESS);
         return descriptorSetLayout;
     }
 
     VkDescriptorPool VulkanPipeline::createDescriptorPool(const DestriptorPoolSizes& sizes) {
-        uint32_t maxSets = std::accumulate(sizes.begin(), sizes.end(), 0, [](int val, const DestriptorPoolSize& size) {
-            return val + size.size;
-        });
+        uint32_t maxSets = std::accumulate(sizes.begin(), sizes.end(), 0, [](int val, const DestriptorPoolSize& size) { return val + size.size; });
 
         std::vector<VkDescriptorPoolSize> poolSizes(sizes.size());
 
@@ -201,7 +195,7 @@ namespace Toki {
         poolInfo.maxSets = maxSets;
 
         VkDescriptorPool descriptorPool;
-        TK_ASSERT(vkCreateDescriptorPool(VulkanRenderer::getDevice(), &poolInfo, nullptr, &descriptorPool) == VK_SUCCESS);
+        TK_ASSERT(vkCreateDescriptorPool(Application::getVulkanRenderer()->getDevice(), &poolInfo, nullptr, &descriptorPool) == VK_SUCCESS);
         return descriptorPool;
     }
 
@@ -213,7 +207,7 @@ namespace Toki {
         allocInfo.pSetLayouts = descriptorSetLayouts.data();
 
         std::vector<VkDescriptorSet> descriptorSets(descriptorSetLayouts.size());
-        TK_ASSERT(vkAllocateDescriptorSets(VulkanRenderer::getDevice(), &allocInfo, descriptorSets.data()) == VK_SUCCESS);
+        TK_ASSERT(vkAllocateDescriptorSets(Application::getVulkanRenderer()->getDevice(), &allocInfo, descriptorSets.data()) == VK_SUCCESS);
         return descriptorSets;
     }
 
@@ -236,39 +230,35 @@ namespace Toki {
         shaderModuleCreateInfo.pCode = reinterpret_cast<uint32_t*>(data.data());
 
         VkShaderModule shaderModule;
-        TK_ASSERT(vkCreateShaderModule(VulkanRenderer::getDevice(), &shaderModuleCreateInfo, nullptr, &shaderModule) == VK_SUCCESS);
+        TK_ASSERT(vkCreateShaderModule(Application::getVulkanRenderer()->getDevice(), &shaderModuleCreateInfo, nullptr, &shaderModule) == VK_SUCCESS);
         shaderModules.emplace_back(std::move(shaderModule));
         return shaderModules.size() - 1;
     }
 
     void VulkanPipeline::recreatePipelines() {
-        VkDevice device = VulkanRenderer::getDevice();
+        VkDevice device = Application::getVulkanRenderer()->getDevice();
 
         vkDeviceWaitIdle(device);
         for (uint32_t i = 0; i < pipelines.size(); ++i) {
             vkDestroyPipeline(device, pipelines[i].pipeline, nullptr);
-            pipelines[i].pipeline = VulkanPipeline::_createPipeline(pipelines[i].config);
+            pipelines[i].pipeline = VulkanPipeline::createPipeline(pipelines[i].config);
         }
     }
 
-    const VkPipeline VulkanPipeline::getPipeline(uint32_t index) {
-        if (index < pipelines.size())
-            return pipelines[index].pipeline;
-
-        throw std::runtime_error("Pipeline with specified index does not exist");
-    }
-
-    const VkPipelineLayout VulkanPipeline::getPipelineLayout(uint32_t index) {
-        if (index < pipelineLayouts.size())
-            return pipelineLayouts[index];
-
-        throw std::runtime_error("Pipeline layout with specified index does not exist");
-    }
-
     void VulkanPipeline::cleanup() {
-        VkDevice device = VulkanRenderer::getDevice();
-        for (const auto& [pipeline, config] : pipelines) vkDestroyPipeline(device, pipeline, nullptr);
-        for (const auto& shaderModule : shaderModules) vkDestroyShaderModule(device, shaderModule, nullptr);
-        for (const auto& pipelineLayout : pipelineLayouts) vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+        // VkDevice device = Application::getVulkanRenderer()->getDevice();
+        // vkDeviceWaitIdle(device);
+        // for (const auto& [pipeline, config] : pipelines)
+        //     vkDestroyPipeline(device, pipeline, nullptr);
+        // for (const auto& shaderModule : shaderModules)
+        //     vkDestroyShaderModule(device, shaderModule, nullptr);
+        // for (const auto& pipelineLayout : pipelineLayouts)
+        //     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+        // for (const auto& descriptorSetLayout : descriptorSetLayouts)
+        //     vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+        // for (const auto& descriptorPool : descriptorPools)
+        //     vkDestroyDescriptorPool(device, descriptorPool, nullptr);
     }
+
+
 }

@@ -1,69 +1,66 @@
 #pragma once
 
 #include "tkpch.h"
+#include "toki/renderer/renderer_api.h"
 #include "vulkan_device.h"
+#include "vulkan_swapchain.h"
 
 namespace Toki {
+    class VulkanDevice;
 
-    class VulkanRenderer {
+    class VulkanRenderer : public RendererAPI {
     public:
         VulkanRenderer();
         ~VulkanRenderer();
 
-        void init();
-        void cleanup();
+        void init() override;
+        void shutdown() override;
 
-        void beginFrame();
-        void endFrame();
+        void beginFrame() override;
+        void endFrame() override;
 
-        static VkInstance getInstance() { return instance; }
-        static VkSurfaceKHR getSurface() { return surface; }
-        static VkPhysicalDevice getPhysicalDevice() {
-            int a = 0;
-            return physicalDevice;
-        }
-        static VkDevice getDevice() { return device; }
-        static VkCommandPool getCommandPool() { return commandPool; }
-        static VkSwapchainKHR getSwapchain() { return swapchain; }
-        static VkRenderPass getRenderPass() { return renderPass; }
-        static VkCommandBuffer getCommandBuffer() { return currentCommandBuffer; }
+        void onResize() override;
 
-        static VkExtent2D getSwapchainExtent() { return swapchainExtent; }
-        static VkFormat getSwapchainFormat() { return swapchainImageFormat; }
-        static VkQueue getGraphicsQueue() { return graphicsQueue; }
+        VkInstance getInstance() { return device->getInstance(); }
+        VkSurfaceKHR getSurface() { return device->getSurface(); }
+        VkPhysicalDevice getPhysicalDevice() { return device->getPhysicalDevice(); }
+        VkDevice getDevice() { return device->getDevice(); }
 
-        uint32_t getImageCount() { return swapchainImages.size(); }
+        VulkanSwapchain* getSwapchain() { return swapchain; }
 
-        static VkCommandBuffer startCommandBuffer();
-        static void endCommandBuffer(VkCommandBuffer commandBuffer);
+        VkCommandPool getCommandPool() { return commandPool; }
+        VkRenderPass getRenderPass() { return renderPass; }
+        VkCommandBuffer getCommandBuffer() { return getCurrentFrame()->commandBuffer; }
+        VkQueue getGraphicsQueue() { return graphicsQueue; }
+        auto getQueueFamilyIndexes() { return device->getQueueFamilyIndexes(); }
+
+        VkCommandBuffer startCommandBuffer();
+        void endCommandBuffer(VkCommandBuffer commandBuffer);
+
+        void beginRenderPass();
+        void beginRenderPass(const VkRenderPassBeginInfo& renderPassBeginInfo);
+        void endRenderPass();
+
+        void createFrameBuffers(VkRenderPass renderPass);
 
         static constexpr uint32_t MAX_FRAMES = 3;
 
     private:
-        inline static VkInstance instance;
-        inline static VkSurfaceKHR surface;
-        inline static VkPhysicalDevice physicalDevice;
-        inline static VkDevice device;
-        inline static VkCommandPool commandPool;
-        inline static VkSwapchainKHR swapchain;
-        inline static VkRenderPass renderPass;
-        inline static VkCommandBuffer currentCommandBuffer;
+        VulkanDevice* device;
+        VulkanSwapchain* swapchain;
 
-        inline static VkExtent2D swapchainExtent;
-        inline static VkFormat swapchainImageFormat;
-        inline static VkQueue graphicsQueue;
-        inline static VkQueue presentQueue;
+        VkCommandPool commandPool;
+        VkRenderPass renderPass;
+        VkCommandBuffer currentCommandBuffer;
 
-        void recreateSwapchain();
-        void cleanupSwapchain();
+        VkQueue graphicsQueue;
+        VkQueue presentQueue;
 
-        void createInstance();
-        void createSurface();
+        std::vector<VkFramebuffer> frameBuffers;
+
         void createCommandPool();
-        void createSwapchain();
         void createRenderPass();
         void createFrames();
-        void createFrameBuffers();
         void createDepthBuffer();
 
         struct FrameData {
@@ -72,9 +69,10 @@ namespace Toki {
             VkCommandBuffer commandBuffer;
 
             void cleanup() {
-                vkDestroyFence(device, renderFence, nullptr);
-                vkDestroySemaphore(device, presentSemaphore, nullptr);
-                vkDestroySemaphore(device, renderSemaphore, nullptr);
+                // VkDevice device = Application::getVulkanRenderer()->getDevice();
+                // vkDestroyFence(device, renderFence, nullptr);
+                // vkDestroySemaphore(device, presentSemaphore, nullptr);
+                // vkDestroySemaphore(device, renderSemaphore, nullptr);
             }
         } frames[MAX_FRAMES];
 
@@ -83,24 +81,6 @@ namespace Toki {
         bool isFrameStarted = false;
         FrameData* getCurrentFrame() { return &frames[currentFrame % MAX_FRAMES]; }
 
-        struct Image {
-            VkImage image;
-            VkImageView imageView;
-            VkDeviceMemory memory;
-
-            void cleanup() {
-                vkDestroyImage(device, image, nullptr);
-                vkDestroyImageView(device, imageView, nullptr);
-                vkFreeMemory(device, memory, nullptr);
-            }
-        };
-
-        std::vector<VkImage> swapchainImages;
-        std::vector<VkImageView> swapchainImageViews;
-        std::vector<VkFramebuffer> frameBuffers;
-
-        Image depthBuffer;
-        VkFormat depthFormat;
     };
 
 }

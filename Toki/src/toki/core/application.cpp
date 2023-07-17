@@ -5,7 +5,7 @@
 
 namespace Toki {
 
-    Application::Application() {
+    Application::Application(RendererAPI::API api) {
         glfwInit();
 
         TK_ASSERT(application == nullptr);
@@ -14,7 +14,17 @@ namespace Toki {
         window = TokiWindow::createWindow("Window", 1280, 720, true);
 
         TK_ASSERT(rendererBackend == nullptr);
-        Application::rendererBackend = new VulkanRenderer();
+        Application::rendererApi = api;
+        switch (api) {
+            case RendererAPI::API::VULKAN:
+                Application::rendererBackend = new VulkanRenderer();
+                break;
+            case RendererAPI::API::NONE:
+            default:
+                TK_ASSERT(false && "No renderer api provided");
+        }
+
+        rendererBackend->init();
 
         layerStack = new LayerStack();
         imGuiLayer = new ImGuiLayer();
@@ -27,6 +37,7 @@ namespace Toki {
         delete imGuiLayer;
         VulkanPipeline::cleanup();
         delete Application::rendererBackend;
+        glfwTerminate();
     }
 
     void Application::run() {

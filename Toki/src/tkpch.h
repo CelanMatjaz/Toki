@@ -24,4 +24,4 @@
 #define ENGINE_NAME "Toki"
 #define ENGINE_VERSION 1
 
-#define TK_ASSERT(arg) if(arg); else throw std::runtime_error(std::string{ "Assertion error "} + std::string{ __FILE__ } + std::string{ ":" } + std::string{ std::to_string(__LINE__) } + std::string { "\n   " } /* + std::string { #__VA_ARGS__  } */);
+#define TK_ASSERT(assertCondition, ...) if(assertCondition); else throw std::runtime_error(std::format("Assertion error {}:{} - {}\n", __FILE__, __LINE__, #assertCondition));
