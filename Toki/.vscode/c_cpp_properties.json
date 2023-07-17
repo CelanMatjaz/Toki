@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Win64",
+            "includePath": [
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/vendor/glfw/include",
+                "${workspaceFolder}/vendor/imgui",
+                "${workspaceFolder}/vendor/imgui/backends",
+                "${workspaceFolder}/vendor/stb",
+                "${workspaceFolder}/vendor/fmt/include",
+                "${env:VULKAN_SDK}/Include"
+            ],
+            "defines": ["DEBUG", "UNICODE", "_UNICODE", "VK_VERSION_1_0"],
+            "windowsSdkVersion": "10.0.22000.0",
+            "compilerPath": "C:/Program Files/w64devkit/bin/g++.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "${default}"
+        }
+    ],
+    "version": 4
+}

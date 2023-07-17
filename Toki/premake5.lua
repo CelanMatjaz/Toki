@@ -29,7 +29,7 @@ project "Toki"
         "./vendor/glm/",
         "./vendor/imgui",
         "./vendor/imgui/backends",
-        "./vendor/stb/"
+        "./vendor/stb/",
     }
 
     libdirs { 
@@ -42,6 +42,7 @@ project "Toki"
         "imgui",
         "glfw",
         "vulkan-1",
+        "spirv-cross-reflect"
     }
 
     filter "system:windows" 
