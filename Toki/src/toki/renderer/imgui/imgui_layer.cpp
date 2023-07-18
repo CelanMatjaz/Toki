@@ -49,7 +49,7 @@ namespace Toki {
         initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
         initInfo.Allocator = nullptr;
         initInfo.CheckVkResultFn = nullptr;
-        ImGui_ImplVulkan_Init(&initInfo, renderer->getRenderPass());
+        ImGui_ImplVulkan_Init(&initInfo, renderer->getSwapchain()->getRenderPass());
 
         {
             VkCommandBuffer commandBuffer = renderer->startCommandBuffer();

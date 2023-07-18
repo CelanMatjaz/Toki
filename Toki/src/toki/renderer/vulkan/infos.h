@@ -37,7 +37,7 @@ namespace Toki {
             VkSemaphoreCreateInfo semaphoreCreateInfo();
             VkCommandPoolCreateInfo commandPoolCreateInfo(VkCommandPoolCreateFlags flags, const uint32_t& queueFamilyIndex);
             VkSwapchainCreateInfoKHR swapchainCreateInfo();
-            VkFramebufferCreateInfo framebufferCreateInfo(const VkRenderPass& renderPass, const uint32_t& width, const uint32_t& height, const uint32_t& layers = 1);
+            VkFramebufferCreateInfo framebufferCreateInfo(const VkRenderPass& renderPass, const uint32_t& width, const uint32_t& height, const uint32_t& layers = 1, const std::vector<VkImageView>& attachments = {});
             VkCommandBufferAllocateInfo commandBufferAllocateInfo(VkCommandPool commandPool, uint32_t count = 1, VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
             VkCommandBufferBeginInfo commandBufferBeginInfo(VkCommandBufferUsageFlagBits flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
             VkSubmitInfo submitInfo(const std::vector<VkCommandBuffer>& commandBuffers, const VkPipelineStageFlags waitStages);

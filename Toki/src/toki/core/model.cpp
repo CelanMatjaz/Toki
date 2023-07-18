@@ -1,5 +1,7 @@
 #include "model.h"
 
+#include "toki/assets/load_obj.h"
+
 namespace Toki {
 
     Model::Model() {
@@ -22,7 +24,15 @@ namespace Toki {
     }
 
     void Model::loadModelFromObj(std::filesystem::path path) {
+        const std::string pathToFile = path.string();
+        GeometryData geometry = loadObj(pathToFile.c_str());
 
+        loadModelData(
+            geometry.vertexData.data(),
+            geometry.vertexData.size() * sizeof(Vertex),
+            geometry.indexData.data(),
+            geometry.indexData.size() * sizeof(uint32_t)
+        );
     }
 
     InstanceData* Model::addInstance(const InstanceData* instanceData) {
@@ -45,5 +55,4 @@ namespace Toki {
         vkCmdBindIndexBuffer(cmd, indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
         vkCmdDrawIndexed(cmd, nIndexes, nInstances, 0, 0, 0);
     }
-
 }

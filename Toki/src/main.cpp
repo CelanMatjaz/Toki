@@ -3,12 +3,7 @@
 #include "spirv_cross/spirv_reflect.hpp"
 
 // temp code
-struct Vertex {
-    glm::vec3 position{ 0.0f, 0.0f, 0.0f };
-    glm::vec2 uv{ 0.0f, 0.0f };
-};
-
-Vertex vertexData[4] = {
+Toki::Vertex vertexData[4] = {
     { { -1.0f, -1.0f, 0.0f }, { 0.0f, 0.0f } },
     { { -1.0f, 1.0f, 0.0f }, { 0.0f, 1.0f } },
     { { 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f } },
@@ -17,7 +12,7 @@ Vertex vertexData[4] = {
 
 uint32_t indexData[] = {
     0, 1, 2, 2, 3, 0,
-    3, 2, 1, 3, 1, 0,
+    // 3, 2, 1, 3, 1, 0,
 };
 
 struct UniformData {
@@ -51,16 +46,14 @@ public:
         Toki::VulkanPipeline::PipelineConfig config{};
         config.vertShaderIndex = Toki::VulkanPipeline::createShaderModule("./shaders/compiled/basic.vert.spv");
         config.fragShaderIndex = Toki::VulkanPipeline::createShaderModule("./shaders/compiled/basic.frag.spv");
-        // config.vertShaderIndex = Toki::VulkanPipeline::createShaderModule("./shaders/compiled/shader.vert.spv");
-        // config.fragShaderIndex = Toki::VulkanPipeline::createShaderModule("./shaders/compiled/shader.frag.spv");
         config.pipelineLayout = pipelineLayout;
         config.inputBindingDescriptions = {
-            { 0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX },
+            { 0, sizeof(Toki::Vertex), VK_VERTEX_INPUT_RATE_VERTEX },
             { 1, sizeof(InstanceData), VK_VERTEX_INPUT_RATE_INSTANCE },
         };
         config.inputAttributeDescriptions = {
-            { 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position) },
-            { 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv) },
+            { 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Toki::Vertex, position) },
+            { 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Toki::Vertex, uv) },
             { 2, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(InstanceData, position) },
             { 3, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(InstanceData, scale) },
             { 4, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(InstanceData, rotation) },
@@ -78,12 +71,23 @@ public:
         singleInstance.color = { 1.0, 1.0, 0, 1.0 };
         model.addInstance(&singleInstance);
 
+        cubeModel.loadModelFromObj("assets/models/cube.obj");
+
+        singleInstance.position = glm::vec3{ 0.0f };
+        singleInstance.scale = glm::vec3{ 1.0f };
+        singleInstance.color = { 1.0f, 0.0f, 1.0f, 1.0f };
+        cubeModel.addInstance(&singleInstance);
+
         camera.moveForward(-20);
+
+        vkGetPhysicalDeviceProperties(Application::getVulkanRenderer()->getPhysicalDevice(), &properties);
     }
 
     Toki::InstanceData singleInstance = { { 2.0f, 2.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } };
 
     Toki::Model model;
+    Toki::Model cubeModel;
+    VkPhysicalDeviceProperties properties{};
 
 
     ~TestLayer() {
@@ -99,7 +103,6 @@ public:
 
         vkDestroyPipeline(device, pipeline, nullptr);
         vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-
     }
 
     void onImGuiUpdate(float deltaTime) override {
@@ -111,8 +114,36 @@ public:
         uint32_t currentTime = glfwGetTime();
 
         ImGui::Begin("Stats");
-        ImGui::Text("%.5f ms/frame", prevDelta);
+
+        auto mapDeviceType = [](VkPhysicalDeviceType type) {
+            switch (type) {
+                case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU: return "Integrated GPU";
+                case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU: return "Discrete GPU";
+                case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU: return "Virtual GPU";
+                case VK_PHYSICAL_DEVICE_TYPE_CPU: return "CPU";
+                case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+                default:
+                    return "Other";
+            }
+            };
+
+        ImGui::Text("Device:  %s", properties.deviceName);
+        ImGui::Text("Version: %i", properties.driverVersion);
+        ImGui::Text("Type:    %s", mapDeviceType(properties.deviceType));
+        ImGui::NewLine();
+
+        ImGui::Text("%.5f ms/frame", prevDelta * 1000);
         ImGui::Text("%i FPS", fps);
+
+
+
+        static const char* presentModeStrings[] = { "FIFO", "FIFO_RELAXED", "IMMEDIATE", "MAILBOX" };
+        static VkPresentModeKHR stuff[] = { VK_PRESENT_MODE_FIFO_KHR, VK_PRESENT_MODE_FIFO_RELAXED_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR,VK_PRESENT_MODE_MAILBOX_KHR };
+        static int selectedItem = 0;
+        if (ImGui::Combo("Present mode", &selectedItem, presentModeStrings, 4)) {
+            Toki::Application::getVulkanRenderer()->recreateSwapchain(stuff[selectedItem]);
+        }
+
         ImGui::End();
 
         ++frameCount;
@@ -159,7 +190,7 @@ public:
 
         auto dimensions = Toki::Application::getWindow()->getWindowDimensions();
 
-        if (0) {
+        if (1) {
             if (glfwGetKey(win, GLFW_KEY_A) == GLFW_PRESS) {
                 camera.moveLeft(+speed * deltaTime);
             }
@@ -185,7 +216,7 @@ public:
                 glfwSetCursorPos(win, dimensions.width / 2, dimensions.height / 2);
             }
 
-            if (!cursorInFocus && glfwGetMouseButton(win, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS) {
+            if (!cursorInFocus && glfwGetMouseButton(win, GLFW_MOUSE_BUTTON_3) == GLFW_PRESS) {
                 cursorInFocus = true;
                 glfwSetCursorPos(win, dimensions.width / 2, dimensions.height / 2);
                 glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -213,7 +244,12 @@ public:
         pipelineViewport.maxDepth = 1.0f;
         vkCmdSetViewport(cmd, 0, 1, &pipelineViewport);
 
+        VkRect2D pipelineScissor{};
+        pipelineScissor.extent = Toki::Application::getVulkanRenderer()->getSwapchain()->getExtent();
+        vkCmdSetScissor(cmd, 0, 1, &pipelineScissor);
+
         model.draw(cmd);
+        cubeModel.draw(cmd);
     }
 
 };

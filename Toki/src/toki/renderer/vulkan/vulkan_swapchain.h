@@ -1,6 +1,8 @@
 #pragma once
 
 #include "tkpch.h"
+#include "vulkan_render_pass.h"
+#include "vulkan_frame_buffer.h"
 
 namespace Toki {
 
@@ -32,11 +34,17 @@ namespace Toki {
         VkFormat getDepthFormat() const { return depthFormat; }
         const std::vector<VkImageView>& getImageViews() const { return imageViews; }
         const Image& getDepthBuffer() const { return depthBuffer; }
+        VkRenderPass getRenderPass() const { return renderPass.getRenderPass(); }
+        VulkanRenderPass getRenderPassHandle() const { return renderPass; }
+        std::vector<VulkanFrameBuffer> getFrameBuffers() { return frameBuffers; }
 
     private:
         void create(VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR);
         void cleanup();
         void createDepthBuffer();
+
+        void createRenderPass();
+        void createFrameBuffers();
 
         VkSwapchainKHR swapchain;
         VkExtent2D extent;
@@ -47,6 +55,9 @@ namespace Toki {
 
         Image depthBuffer;
         VkFormat depthFormat;
+
+        VulkanRenderPass renderPass;
+        std::vector<VulkanFrameBuffer> frameBuffers;
     };
 
 }

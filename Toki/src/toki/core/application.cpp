@@ -77,6 +77,8 @@ namespace Toki {
 
         imGuiLayer->onEvent(event);
 
+        if (event.isHandled()) return;
+
         for (int i = layerStack->layers.size() - 1; i >= 0 && event.isHandled(); --i) {
             layerStack->layers[i]->onEvent(event);
             if (event.isHandled()) break;

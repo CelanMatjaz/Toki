@@ -25,7 +25,7 @@ namespace Toki {
         const auto& [pipelineLayoutIndex, vertShaderIndex, fragShaderIndex, inputBindingDescriptions, inputAttributeDescriptions, wireframe] = pipelineConfig;
 
         VkExtent2D extent = Application::getVulkanRenderer()->getSwapchain()->getExtent();
-        VkRenderPass renderPass = Application::getVulkanRenderer()->getRenderPass();
+        VkRenderPass renderPass = Application::getVulkanRenderer()->getSwapchain()->getRenderPass();
 
         VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo{};
         vertShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -77,7 +77,7 @@ namespace Toki {
         rasterizerCreateInto.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         rasterizerCreateInto.polygonMode = wireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
         rasterizerCreateInto.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; // REVIEW: maybe add to config?
-        rasterizerCreateInto.cullMode = VK_CULL_MODE_BACK_BIT; // REVIEW: maybe add to config?
+        rasterizerCreateInto.cullMode = VK_CULL_MODE_NONE; // REVIEW: maybe add to config?
         rasterizerCreateInto.depthClampEnable = VK_FALSE;
         rasterizerCreateInto.rasterizerDiscardEnable = VK_FALSE;
         rasterizerCreateInto.depthBiasEnable = VK_FALSE;
@@ -125,7 +125,7 @@ namespace Toki {
         colorBlendStateCreateInfo.blendConstants[2] = 0.0f;
         colorBlendStateCreateInfo.blendConstants[3] = 0.0f;
 
-        std::vector<VkDynamicState> states = { VK_DYNAMIC_STATE_LINE_WIDTH, VK_DYNAMIC_STATE_VIEWPORT };
+        std::vector<VkDynamicState> states = { VK_DYNAMIC_STATE_LINE_WIDTH, VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
         VkPipelineDynamicStateCreateInfo dynamicState{};
         dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;

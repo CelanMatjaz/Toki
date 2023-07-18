@@ -25,6 +25,7 @@ namespace Toki {
         void resetResizedFlag() { _wasResized = false; }
 
         static void windowResizedCallback(GLFWwindow* window, int width, int height);
+        static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
     private:
         GLFWwindow* handle;

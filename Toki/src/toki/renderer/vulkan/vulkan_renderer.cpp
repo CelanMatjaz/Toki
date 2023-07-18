@@ -23,8 +23,6 @@ namespace Toki {
         vkGetDeviceQueue(getDevice(), presentQueueIndex, 0, &presentQueue);
         createCommandPool();
         createFrames();
-        createRenderPass();
-        createFrameBuffers(this->renderPass);
     }
 
     void VulkanRenderer::shutdown() {
@@ -70,7 +68,7 @@ namespace Toki {
         TK_ASSERT(vkBeginCommandBuffer(frame->commandBuffer, &commandBufferBeginInfo) == VK_SUCCESS);
 
         VkClearValue clearValue{};
-        clearValue.color = { 0.1f, 0.1f, 0.1f, 1.0f };
+        clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
         VkClearValue depthClear;
         depthClear.depthStencil.depth = 1.f;
 
@@ -78,16 +76,15 @@ namespace Toki {
 
         VkRenderPassBeginInfo renderPassBeginInfo{};
         renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassBeginInfo.renderPass = renderPass;
+        renderPassBeginInfo.renderPass = swapchain->getRenderPass();
         renderPassBeginInfo.renderArea.offset.x = 0;
         renderPassBeginInfo.renderArea.offset.y = 0;
         renderPassBeginInfo.renderArea.extent = swapchain->getExtent();
-        renderPassBeginInfo.framebuffer = frameBuffers[imageIndex];
+        renderPassBeginInfo.framebuffer = swapchain->getFrameBuffers()[imageIndex].getFrameBuffer();
         renderPassBeginInfo.clearValueCount = clearValues.size();
         renderPassBeginInfo.pClearValues = clearValues.data();
 
-        vkCmdBeginRenderPass(frame->commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-        currentCommandBuffer = frame->commandBuffer;
+        swapchain->getRenderPassHandle().beginRenderPass(frame->commandBuffer, &renderPassBeginInfo);
     }
 
     void VulkanRenderer::endFrame() {
@@ -95,7 +92,7 @@ namespace Toki {
         VkDevice device = this->device->getDevice();
 
         FrameData* frame = getCurrentFrame();
-        vkCmdEndRenderPass(frame->commandBuffer);
+        swapchain->getRenderPassHandle().endRenderPass(frame->commandBuffer);
 
         TK_ASSERT(isFrameStarted && "Can't call endFrame while frame is not in progress");
         vkEndCommandBuffer(frame->commandBuffer);
@@ -128,9 +125,10 @@ namespace Toki {
 
         VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
 
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || Application::getWindow()->wasResized()) {
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || Application::getWindow()->wasResized() || shouldRecreateSwapchain) {
             Application::getWindow()->resetResizedFlag();
-            swapchain->recreate();
+            swapchain->recreate(newPresentMode);
+            shouldRecreateSwapchain = false;
         }
         else if (result != VK_SUCCESS) {
             TK_ASSERT(false && "Failed to present swapchain image");
@@ -142,42 +140,11 @@ namespace Toki {
 
     void VulkanRenderer::onResize() {
         swapchain->recreate();
-
-        vkDestroyRenderPass(getDevice(), renderPass, nullptr);
-        createRenderPass();
     }
 
     void VulkanRenderer::createCommandPool() {
         VkCommandPoolCreateInfo commandPoolCreateInfo = Infos::Renderer::commandPoolCreateInfo(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, device->getQueueFamilyIndexes().graphicsQueueIndex);
         TK_ASSERT(vkCreateCommandPool(device->getDevice(), &commandPoolCreateInfo, nullptr, &commandPool) == VK_SUCCESS);
-    }
-
-    void VulkanRenderer::createRenderPass() {
-        const auto [graphicsQueueIndex, presentQueueIndex] = device->getQueueFamilyIndexes();
-
-        VkAttachmentDescription colorAttachment = Infos::RenderPass::colorAttachmentDescription(swapchain->getImageFormat());
-        VkAttachmentDescription depthAttachment = Infos::RenderPass::depthAttachmentDescription(swapchain->getDepthFormat());
-
-        VkAttachmentReference colorReference{};
-        colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        colorReference.attachment = 0;
-
-        VkAttachmentReference depthAttachmentRef{};
-        depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-        depthAttachmentRef.attachment = 1;
-
-        std::vector<VkAttachmentReference>colorAttachmentReferences = { colorReference };
-
-        VkSubpassDescription subpass = Infos::RenderPass::subpassDescription(colorAttachmentReferences, depthAttachmentRef);
-        VkSubpassDependency colorDependency = Infos::RenderPass::colorSubpassDependency();
-        VkSubpassDependency depthDependency = Infos::RenderPass::depthSubpassDependency();
-
-        std::vector<VkAttachmentDescription> attachments = { colorAttachment, depthAttachment };
-        std::vector<VkSubpassDependency> dependencies = { colorDependency, depthDependency };
-        std::vector<VkSubpassDescription> subpasses = { subpass };
-
-        VkRenderPassCreateInfo renderPassCreateInfo = Infos::RenderPass::renderPassCreateInfo(attachments, dependencies, subpasses);
-        TK_ASSERT(vkCreateRenderPass(device->getDevice(), &renderPassCreateInfo, nullptr, &renderPass) == VK_SUCCESS);
     }
 
     void VulkanRenderer::createFrames() {
@@ -220,54 +187,6 @@ namespace Toki {
         TK_ASSERT(vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) == VK_SUCCESS);
         TK_ASSERT(vkQueueWaitIdle(graphicsQueue) == VK_SUCCESS);
         vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-    }
-
-    void VulkanRenderer::beginRenderPass() {
-        VkClearValue clearValue{};
-        clearValue.color = { 0.1f, 0.1f, 0.1f, 1.0f };
-        VkClearValue depthClear;
-        depthClear.depthStencil.depth = 1.f;
-
-        std::array<VkClearValue, 2> clearValues = { clearValue, depthClear };
-
-        VkRenderPassBeginInfo renderPassBeginInfo{};
-        renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassBeginInfo.renderPass = renderPass;
-        renderPassBeginInfo.renderArea.offset.x = 0;
-        renderPassBeginInfo.renderArea.offset.y = 0;
-        renderPassBeginInfo.renderArea.extent = swapchain->getExtent();
-        renderPassBeginInfo.framebuffer = frameBuffers[imageIndex];
-        renderPassBeginInfo.clearValueCount = clearValues.size();
-        renderPassBeginInfo.pClearValues = clearValues.data();
-
-        beginRenderPass(renderPassBeginInfo);
-    }
-
-    void VulkanRenderer::beginRenderPass(const VkRenderPassBeginInfo& renderPassBeginInfo) {
-        vkCmdBeginRenderPass(currentCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    }
-
-    void VulkanRenderer::endRenderPass() {
-        vkCmdEndRenderPass(currentCommandBuffer);
-    }
-
-    void VulkanRenderer::createFrameBuffers(VkRenderPass renderPass) {
-        VkDevice device = getDevice();
-        VkExtent2D extent = swapchain->getExtent();
-        VkFramebufferCreateInfo framebufferCreateInfo = Infos::Renderer::framebufferCreateInfo(renderPass, extent.width, extent.height);
-        frameBuffers.resize(swapchain->getImageCount());
-
-        for (uint32_t i = 0; i < swapchain->getImageCount(); ++i) {
-            std::vector<VkImageView> attachments = {
-                swapchain->getImageViews()[i],
-                swapchain->getDepthBuffer().imageView
-            };
-
-            framebufferCreateInfo.pAttachments = attachments.data();
-            framebufferCreateInfo.attachmentCount = attachments.size();
-
-            TK_ASSERT(vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &frameBuffers[i]) == VK_SUCCESS);
-        }
     }
 
 }

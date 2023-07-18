@@ -3,6 +3,7 @@
 #include "toki/core/application.h"
 #include "vulkan_device.h"
 #include "infos.h"
+#include "vulkan_image.h"
 
 namespace Toki {
 
@@ -64,7 +65,7 @@ namespace Toki {
             swapchainCreateInfo.pQueueFamilyIndices = queueFamilyIndecies;
         }
 
-        TK_ASSERT(vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapchain) == VK_SUCCESS);
+        TK_ASSERT_VK_RESULT(vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapchain));
 
         vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
         images.resize(imageCount);
@@ -73,18 +74,26 @@ namespace Toki {
         imageViews.resize(imageCount);
         VkImageViewCreateInfo imageViewCreateInfo = Infos::Container::imageViewCreateInfo(nullptr, imageFormat);
 
+
         for (uint32_t i = 0; i < imageCount; ++i) {
-            imageViewCreateInfo.image = images[i];
-            TK_ASSERT(vkCreateImageView(device, &imageViewCreateInfo, nullptr, &imageViews[i]) == VK_SUCCESS);
+            imageViews[i] = VulkanImage::createImageView(imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, images[i]);
         }
 
         createDepthBuffer();
+        createRenderPass();
+        createFrameBuffers();
     }
 
     void VulkanSwapchain::cleanup() {
         VkDevice device = Application::getVulkanRenderer()->getDevice();
 
         vkDeviceWaitIdle(device);
+
+        for (uint32_t i = 0; i < VulkanRenderer::MAX_FRAMES; ++i) {
+            frameBuffers[i].cleanup();
+        }
+
+        renderPass.cleanup();
 
         for (auto& imageView : imageViews) {
             vkDestroyImageView(device, imageView, nullptr);
@@ -131,12 +140,41 @@ namespace Toki {
 
         VkMemoryAllocateInfo memoryAllocateInfo = Infos::Container::memoryAllocateInfo(memoryRequirements.size, VulkanDevice::findMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT));
 
-        TK_ASSERT(vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &depthBuffer.memory) == VK_SUCCESS);
-        TK_ASSERT(vkBindImageMemory(device, depthBuffer.image, depthBuffer.memory, 0) == VK_SUCCESS);
+        TK_ASSERT_VK_RESULT(vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &depthBuffer.memory));
+        TK_ASSERT_VK_RESULT(vkBindImageMemory(device, depthBuffer.image, depthBuffer.memory, 0));
 
         VkImageViewCreateInfo imageViewCreateInfo = Infos::Container::imageViewCreateInfo(depthBuffer.image, depthFormat);
         imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-        TK_ASSERT(vkCreateImageView(device, &imageViewCreateInfo, nullptr, &depthBuffer.imageView) == VK_SUCCESS);
+        TK_ASSERT_VK_RESULT(vkCreateImageView(device, &imageViewCreateInfo, nullptr, &depthBuffer.imageView));
     }
+
+    void VulkanSwapchain::createRenderPass() {
+        VulkanRenderPass::RenderPassSpec renderPassSpec;
+        renderPassSpec.attachments = {
+            VulkanRenderPass::createColorAttachmentDescription(imageFormat),
+            VulkanRenderPass::createDepthAttachmentDescription(depthFormat)
+        };
+        renderPassSpec.dependencies = {
+            Infos::RenderPass::colorSubpassDependency(),
+            Infos::RenderPass::depthSubpassDependency()
+        };
+        VulkanRenderPass::AttachmentReferences attachmentReferences;
+        attachmentReferences.addColorReference(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        attachmentReferences.addDepthReference(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+        renderPassSpec.subpasses = {
+            VulkanRenderPass::createSubpassDescription(attachmentReferences)
+        };
+
+        renderPass = VulkanRenderPass::create(renderPassSpec);
+    }
+
+    void VulkanSwapchain::createFrameBuffers() {
+        frameBuffers.resize(VulkanRenderer::MAX_FRAMES);
+
+        for (uint32_t i = 0; i < VulkanRenderer::MAX_FRAMES; ++i) {
+            frameBuffers[i] = VulkanFrameBuffer::create(renderPass.getRenderPass(), extent, { imageViews[i], depthBuffer.imageView });
+        }
+    }
+
 
 }

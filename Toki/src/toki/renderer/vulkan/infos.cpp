@@ -204,13 +204,15 @@ namespace Toki {
                 return swapchainCreateInfo;
             }
 
-            VkFramebufferCreateInfo framebufferCreateInfo(const VkRenderPass& renderPass, const uint32_t& width, const uint32_t& height, const uint32_t& layers) {
+            VkFramebufferCreateInfo framebufferCreateInfo(const VkRenderPass& renderPass, const uint32_t& width, const uint32_t& height, const uint32_t& layers, const std::vector<VkImageView>& attachments) {
                 VkFramebufferCreateInfo framebufferCreateInfo{};
                 framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
                 framebufferCreateInfo.renderPass = renderPass;
                 framebufferCreateInfo.width = width;
                 framebufferCreateInfo.height = height;
                 framebufferCreateInfo.layers = layers;
+                framebufferCreateInfo.attachmentCount = attachments.size();
+                framebufferCreateInfo.pAttachments = attachments.data();
                 return framebufferCreateInfo;
             }
 

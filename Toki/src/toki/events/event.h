@@ -5,7 +5,7 @@ namespace Toki {
     public:
         enum class EventType {
             None,
-            KeyPressed, KeyReleased,
+            KeyPressed, KeyReleased, KeyRepeat,
             MouseButtonPressed, MouseMoved, MouseScrolled,
             WindowResized, WindowMinimized, WindowMaximized
         };
@@ -21,6 +21,6 @@ namespace Toki {
 
     protected:
         EventType type;
-        bool handled;
+        bool handled = false;
     };
 }

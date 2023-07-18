@@ -4,6 +4,20 @@
 
 namespace Toki {
 
+    struct Vertex {
+        glm::vec3 position{};
+        glm::vec2 uv{};
+        glm::vec3 normal{};
+
+        bool operator==(const Vertex& other) const {
+            return position == other.position /* && color == other.color */ && normal == other.normal && uv == other.uv;
+        }
+
+        bool operator!=(const Vertex& other) const {
+            return position != other.position /* || color != other.color */ || normal != other.normal || uv != other.uv;
+        }
+    };
+
     struct InstanceData {
         glm::vec3 position;
         glm::vec3 scale;

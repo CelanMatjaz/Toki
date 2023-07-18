@@ -18,6 +18,7 @@ namespace Toki {
         glfwMakeContextCurrent(window->handle);
         glfwSetWindowUserPointer(window->handle, Application::getApplication());
         glfwSetFramebufferSizeCallback(window->handle, windowResizedCallback);
+        glfwSetKeyCallback(window->handle, keyCallback);
 
         return window;
     }
@@ -28,6 +29,27 @@ namespace Toki {
         app->getWindow()->_wasResized = true;
         WindowResizeEvent event(width, height);
         app->onEvent(event);
+    }
+
+    void TokiWindow::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+        auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
+        switch (action) {
+            case GLFW_PRESS: {
+                KeyPressedEvent event(key, scancode, mods);
+                app->onEvent(event);
+                break;
+            }
+            case GLFW_RELEASE: {
+                KeyReleasedEvent event(key, scancode, mods);
+                app->onEvent(event);
+                break;
+            }
+            case GLFW_REPEAT: {
+                KeyRepeatEvent event(key, scancode, mods);
+                app->onEvent(event);
+                break;
+            }
+        }
     }
 
 }

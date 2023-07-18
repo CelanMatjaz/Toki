@@ -29,7 +29,6 @@ namespace Toki {
         VulkanSwapchain* getSwapchain() { return swapchain; }
 
         VkCommandPool getCommandPool() { return commandPool; }
-        VkRenderPass getRenderPass() { return renderPass; }
         VkCommandBuffer getCommandBuffer() { return getCurrentFrame()->commandBuffer; }
         VkQueue getGraphicsQueue() { return graphicsQueue; }
         auto getQueueFamilyIndexes() { return device->getQueueFamilyIndexes(); }
@@ -37,11 +36,10 @@ namespace Toki {
         VkCommandBuffer startCommandBuffer();
         void endCommandBuffer(VkCommandBuffer commandBuffer);
 
-        void beginRenderPass();
-        void beginRenderPass(const VkRenderPassBeginInfo& renderPassBeginInfo);
-        void endRenderPass();
-
-        void createFrameBuffers(VkRenderPass renderPass);
+        void recreateSwapchain(VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR) {
+            shouldRecreateSwapchain = true;
+            newPresentMode = presentMode;
+        }
 
         static constexpr uint32_t MAX_FRAMES = 3;
 
@@ -50,7 +48,6 @@ namespace Toki {
         VulkanSwapchain* swapchain;
 
         VkCommandPool commandPool;
-        VkRenderPass renderPass;
         VkCommandBuffer currentCommandBuffer;
 
         VkQueue graphicsQueue;
@@ -61,7 +58,6 @@ namespace Toki {
         void createCommandPool();
         void createRenderPass();
         void createFrames();
-        void createDepthBuffer();
 
         struct FrameData {
             VkSemaphore presentSemaphore, renderSemaphore;
@@ -79,6 +75,8 @@ namespace Toki {
         uint32_t currentFrame{ 0 };
         uint32_t imageIndex;
         bool isFrameStarted = false;
+        bool shouldRecreateSwapchain = false;
+        VkPresentModeKHR newPresentMode;
         FrameData* getCurrentFrame() { return &frames[currentFrame % MAX_FRAMES]; }
 
     };

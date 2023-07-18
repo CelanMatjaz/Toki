@@ -5,11 +5,6 @@
 
 namespace Toki {
 
-    class KeyEvent : public Event {
-    private:
-        uint32_t keyCode;
-    };
-
     class MouseMoveEvent : public Event {
     public:
         MouseMoveEvent(float deltaX, float deltaY) : Event{ EventType::MouseMoved }, deltaX{ deltaX }, deltaY{ deltaY } {};
@@ -31,11 +26,13 @@ namespace Toki {
     };
 
     class MouseButtonPressedEvent : public Event {
-        MouseButtonPressedEvent(int key) : Event{ EventType::MouseButtonPressed }, key{ key } {};
+        MouseButtonPressedEvent(int key, float x, float y) : Event{ EventType::MouseButtonPressed }, key{ key }, x{ x }, y{ y } {};
 
-        int ketKey() { return key; }
+        int getKey() { return key; }
     private:
         int key;
+        float x;
+        float y;
     };
 
     class WindowResizeEvent : public Event {
@@ -48,5 +45,41 @@ namespace Toki {
     private:
         int width;
         int height;
+    };
+
+    class KeyEvent : public Event {
+    public:
+        KeyEvent(int key, int scancode, int mods) :
+            Event{ EventType::None }, key{ key }, scancode{ scancode }, mods{ mods } {}
+
+        int getKey() { return key; }
+        int getScancode() { return scancode; }
+        int getMods() { return mods; }
+
+    private:
+        int key;
+        int scancode;
+        int mods;
+    };
+
+    class KeyPressedEvent : public KeyEvent {
+    public:
+        KeyPressedEvent(int key, int scancode, int mods) : KeyEvent(key, scancode, mods) {
+            type = EventType::KeyPressed;
+        }
+    };
+
+    class KeyReleasedEvent : public KeyEvent {
+    public:
+        KeyReleasedEvent(int key, int scancode, int mods) : KeyEvent(key, scancode, mods) {
+            type = EventType::KeyReleased;
+        }
+    };
+
+    class KeyRepeatEvent : public KeyEvent {
+    public:
+        KeyRepeatEvent(int key, int scancode, int mods) : KeyEvent(key, scancode, mods) {
+            type = EventType::KeyRepeat;
+        }
     };
 }
