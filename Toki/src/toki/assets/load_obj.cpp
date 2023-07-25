@@ -1,3 +1,4 @@
+#include "tkpch.h"
 #include "load_obj.h"
 
 #include "random"
@@ -94,28 +95,25 @@ namespace Toki {
                 while (!ss.eof()) {
                     std::string temp(100, 0);
                     ss.getline(temp.data(), temp.size(), ' ');
-                    // std::cout << temp << ' ';
 
                     int8_t firstSlash = temp.find('/');
                     int8_t secondSlash = temp.find('/', firstSlash + 1);
 
                     if (firstSlash == -1) { // only 1 entry per vertex
-                        vertexComponentIndexes.emplace_back((glm::ivec3) { std::stoi(temp), 0, 0 });
+                        glm::ivec3 newVert = { std::stoi(temp), 0, 0 };
+                        vertexComponentIndexes.emplace_back(newVert);
                     }
                     else if (secondSlash == -1) { // only 2 entries per vertex
-                        vertexComponentIndexes.emplace_back((glm::ivec3) {
-                            std::stoi(temp.substr(0, firstSlash)), std::stoi(temp.substr(firstSlash + 1)), 0
-                        });
+                        glm::ivec3 newVert = { std::stoi(temp.substr(0, firstSlash)), std::stoi(temp.substr(firstSlash + 1)), 0 };
+                        vertexComponentIndexes.emplace_back(newVert);
                     }
                     else if (secondSlash - firstSlash == 1) { // no uv per vertex
-                        vertexComponentIndexes.emplace_back((glm::ivec3) {
-                            std::stoi(temp.substr(0, firstSlash)), 0, std::stoi(temp.substr(firstSlash + 1))
-                        });
+                        glm::ivec3 newVert = { std::stoi(temp.substr(0, firstSlash)), 0, std::stoi(temp.substr(firstSlash + 1)) };
+                        vertexComponentIndexes.emplace_back(newVert);
                     }
                     else if (secondSlash - firstSlash > 1) { // all 3 values
-                        vertexComponentIndexes.emplace_back((glm::ivec3) {
-                            std::stoi(temp.substr(0, firstSlash)), std::stoi(temp.substr(firstSlash + 1, secondSlash - firstSlash)), std::stoi(temp.substr(secondSlash + 1))
-                        });
+                        glm::ivec3 newVert = { std::stoi(temp.substr(0, firstSlash)), std::stoi(temp.substr(firstSlash + 1, secondSlash - firstSlash)), std::stoi(temp.substr(secondSlash + 1)) };
+                        vertexComponentIndexes.emplace_back(newVert);
                     }
                 }
 
@@ -141,11 +139,6 @@ namespace Toki {
                 }
             }
         }
-
-        std::cout << positions.size() << '\n';
-        std::cout << normals.size() << '\n';
-        std::cout << uvs.size() << '\n';
-        std::cout << indexes.size() << '\n';
 
         return model;
     }

@@ -1,3 +1,4 @@
+#include "tkpch.h"
 #include "vulkan_renderer.h"
 
 #include "tkpch.h"
@@ -49,8 +50,8 @@ namespace Toki {
         TK_ASSERT(vkWaitForFences(device, 1, &frame->renderFence, VK_TRUE, timeout) == VK_SUCCESS);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-            swapchain->recreate();
-            // return;
+            swapchain->recreate(newPresentMode);
+            return;
         }
         else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
             throw std::runtime_error("Failed to acquire swapchain image");
@@ -68,7 +69,7 @@ namespace Toki {
         TK_ASSERT(vkBeginCommandBuffer(frame->commandBuffer, &commandBufferBeginInfo) == VK_SUCCESS);
 
         VkClearValue clearValue{};
-        clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
+        clearValue.color = { 0.01f, 0.01f, 0.01f, 1.0f };
         VkClearValue depthClear;
         depthClear.depthStencil.depth = 1.f;
 
@@ -139,7 +140,7 @@ namespace Toki {
     }
 
     void VulkanRenderer::onResize() {
-        swapchain->recreate();
+        swapchain->recreate(newPresentMode);
     }
 
     void VulkanRenderer::createCommandPool() {

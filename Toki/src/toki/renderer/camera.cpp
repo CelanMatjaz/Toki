@@ -1,3 +1,4 @@
+#include "tkpch.h"
 #include "camera.h"
 
 #include "toki/core/application.h"
@@ -9,11 +10,11 @@ namespace Toki {
         : projection{ cameraProjection }, type{ cameraType }, position{ position } {
 
         auto [width, height] = Application::getWindow()->getWindowDimensions();
-        float aspectRatio = (float)width / height;
+        aspectRatio = (float) width / height;
 
         switch (projection) {
             case CameraProjection::PERSPECTIVE:
-                setPerspective(glm::radians(60.0f), aspectRatio, 0.1f, 1000.0f);
+                setPerspective(fov, aspectRatio, near, far);
                 break;
             case CameraProjection::ORTHOGRAPHIC:
             default: {
@@ -103,6 +104,13 @@ namespace Toki {
 
     void Camera::updateProjectionMatrix() {
         projectionMatrix[1][1] *= -1;
+    }
+
+    void Camera::onEvent(Event& event) {
+        if (event.getType() == Event::EventType::WindowResized) {
+            WindowResizeEvent* e = (WindowResizeEvent*) &event;
+            setPerspective(fov, (float) e->getWidth() / e->getHeight(), near, far);
+        }
     }
 
 }

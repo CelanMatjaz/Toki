@@ -1,3 +1,5 @@
+#include "tkpch.h"
+
 #include "vulkan_texture.h"
 
 #include "toki/core/application.h"
@@ -78,16 +80,18 @@ namespace Toki {
     void VulkanTexture::setData(uint32_t size, void* data) {
         TK_ASSERT(size == width * height * formatEnum);
 
-        std::shared_ptr<VulkanBuffer> stagingBuffer = VulkanBuffer::create(
-            size,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-        );
+        VulkanBufferSpecification spec{};
+        spec.size = size;
+        spec.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        spec.properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+        auto stagingBuffer = VulkanBuffer::create(&spec);
 
         VkDevice device = Application::getVulkanRenderer()->getDevice();
         vkDestroyImageView(device, imageView, nullptr);
 
-        stagingBuffer->setData(size, data);
+        VulkanBufferData stagingData{ size, data };
+        stagingBuffer->setData(&stagingData);
         this->transitionLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
         copyBufferToTexture(stagingBuffer.get(), this);
         this->transitionLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -95,7 +99,7 @@ namespace Toki {
     }
 
     void VulkanTexture::transitionLayout(VkImageLayout oldLayout, VkImageLayout newLayout) {
-        auto commandBuffer = Application::getVulkanRenderer()->getCommandBuffer();;
+        auto commandBuffer = Application::getVulkanRenderer()->startCommandBuffer();
 
         VkImageMemoryBarrier barrier{};
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -138,7 +142,7 @@ namespace Toki {
             1, &barrier
         );
 
-        
+
         Application::getVulkanRenderer()->endCommandBuffer(commandBuffer);
     }
 

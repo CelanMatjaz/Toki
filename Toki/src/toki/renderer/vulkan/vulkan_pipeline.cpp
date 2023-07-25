@@ -1,3 +1,4 @@
+#include "tkpch.h"
 #include "vulkan_pipeline.h"
 
 #include "toki/core/application.h"
@@ -58,8 +59,8 @@ namespace Toki {
         VkViewport pipelineViewport{};
         pipelineViewport.x = 0.0f;
         pipelineViewport.y = 0.0f;
-        pipelineViewport.width = (float)extent.width;
-        pipelineViewport.height = (float)extent.height;
+        pipelineViewport.width = (float) extent.width;
+        pipelineViewport.height = (float) extent.height;
         pipelineViewport.minDepth = 0.0f;
         pipelineViewport.maxDepth = 1.0f;
 
@@ -77,7 +78,7 @@ namespace Toki {
         rasterizerCreateInto.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         rasterizerCreateInto.polygonMode = wireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
         rasterizerCreateInto.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; // REVIEW: maybe add to config?
-        rasterizerCreateInto.cullMode = VK_CULL_MODE_NONE; // REVIEW: maybe add to config?
+        rasterizerCreateInto.cullMode = VK_CULL_MODE_BACK_BIT; // REVIEW: maybe add to config?
         rasterizerCreateInto.depthClampEnable = VK_FALSE;
         rasterizerCreateInto.rasterizerDiscardEnable = VK_FALSE;
         rasterizerCreateInto.depthBiasEnable = VK_FALSE;
@@ -211,12 +212,12 @@ namespace Toki {
         return descriptorSets;
     }
 
-    std::vector<char> VulkanPipeline::loadShaderCode(const std::filesystem::path& filePath) {
+    std::vector<uint32_t> VulkanPipeline::loadShaderCode(const std::filesystem::path& filePath) {
         std::ifstream file(filePath.string(), std::ios::ate | std::ios::binary);
         uint32_t fileSize = file.tellg();
-        std::vector<char> buffer(fileSize);
+        std::vector<uint32_t> buffer(fileSize);
         file.seekg(0);
-        file.read(buffer.data(), fileSize);
+        file.read((char*) buffer.data(), fileSize);
         file.close();
         return buffer;
     }

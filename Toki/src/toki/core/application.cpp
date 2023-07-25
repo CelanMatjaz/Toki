@@ -1,3 +1,4 @@
+#include "tkpch.h"
 #include "application.h"
 
 #include "tkpch.h"
@@ -71,17 +72,12 @@ namespace Toki {
     }
 
     void Application::onEvent(Event& event) {
-        switch (event.getType()) {
-            // TODO: add events
-        }
-
         imGuiLayer->onEvent(event);
 
         if (event.isHandled()) return;
 
-        for (int i = layerStack->layers.size() - 1; i >= 0 && event.isHandled(); --i) {
+        for (int i = layerStack->layers.size() - 1; i >= 0 && !event.isHandled(); --i) {
             layerStack->layers[i]->onEvent(event);
-            if (event.isHandled()) break;
         }
     }
 

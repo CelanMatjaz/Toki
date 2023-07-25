@@ -76,7 +76,7 @@ namespace Toki {
         uint32_t imageIndex;
         bool isFrameStarted = false;
         bool shouldRecreateSwapchain = false;
-        VkPresentModeKHR newPresentMode;
+        VkPresentModeKHR newPresentMode = VK_PRESENT_MODE_FIFO_KHR;
         FrameData* getCurrentFrame() { return &frames[currentFrame % MAX_FRAMES]; }
 
     };

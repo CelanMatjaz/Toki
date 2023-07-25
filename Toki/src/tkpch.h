@@ -20,9 +20,4 @@
 #include "stdexcept"
 #include "vector"
 
-// TODO: move later
-#define ENGINE_NAME "Toki"
-#define ENGINE_VERSION 1
-
-#define TK_ASSERT(assertCondition, ...) if(assertCondition); else throw std::runtime_error(std::format("Assertion error {}:{} - {}\n", __FILE__, __LINE__, #assertCondition))
-#define TK_ASSERT_VK_RESULT(vkFunction) if(vkFunction == VK_SUCCESS); else throw std::runtime_error(std::format("Assertion error {}-{}:{}", #vkFunction, __FILE__, __LINE__))
+#include "toki/core/core.h"

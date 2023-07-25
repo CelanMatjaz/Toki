@@ -5,33 +5,43 @@
 
 namespace Toki {
 
+    struct VulkanBufferData {
+        uint32_t size;
+        void* data;
+    };
+
+    struct VulkanBufferSpecification {
+        VkDeviceSize size;
+        VkBufferUsageFlags usage;
+        VkMemoryPropertyFlags properties;
+    };
+
     class VulkanBuffer {
     public:
+        VulkanBuffer() = default;
+        VulkanBuffer(VkDeviceSize size);
         ~VulkanBuffer();
 
-        void setData(uint32_t size, void* data);
-        void cleanup();
+        void setData(VulkanBufferData* data);
+
+        void* mapMemory();
+        void unmapMemory();
 
         VkBuffer getBuffer() { return buffer; }
         VkDeviceMemory getMemory() { return memory; }
 
-        void* mapMemory(uint32_t size);
-        void unmapMemory();
-
-        static std::shared_ptr<VulkanBuffer> create(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
-        static std::shared_ptr<VulkanBuffer> createVertexBuffer(uint32_t size, void* data = nullptr);
-        static std::shared_ptr<VulkanBuffer> createIndexBuffer(uint32_t size, void* data = nullptr);
-        static std::shared_ptr<VulkanBuffer> createUniformBuffer(uint32_t size, void* data = nullptr);
+        static TkRef<VulkanBuffer> create(VulkanBufferSpecification* spec);
+        static TkRef<VulkanBuffer> createStatic(VulkanBufferSpecification* spec, VulkanBufferData* data);
+        static void copyBuffer(TkRef<VulkanBuffer> src, TkRef<VulkanBuffer> dst, uint32_t size);
 
     private:
-        VulkanBuffer() = default;
-        VulkanBuffer(uint32_t size);
+        void cleanup();
 
-        VkBuffer buffer;
-        VkDeviceMemory memory;
-        uint32_t size;
-
+        uint32_t size = 0;
+        VkBuffer buffer{};
+        VkDeviceMemory memory{};
         bool isMemoryMapped = false;
+        void* mappedData = nullptr;
     };
 
 }

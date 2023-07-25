@@ -1,3 +1,4 @@
+#include "tkpch.h"
 #include "model.h"
 
 #include "toki/assets/load_obj.h"
@@ -5,21 +6,27 @@
 namespace Toki {
 
     Model::Model() {
-        instances = new InstanceData[maxInstances];
-        instanceBuffer = VulkanBuffer::createVertexBuffer(sizeof(InstanceData) * maxInstances);
+        instances = new InstanceData[maxInstances]();
+        Toki::VulkanBufferSpecification instanceBufferSpec{ maxInstances * sizeof(InstanceData), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
+        instanceBuffer = VulkanBuffer::create(&instanceBufferSpec);
+        Toki::InstanceData singleInstance = { { 0.f, 0, 0.f } };
+        VulkanBufferData data1(sizeof(InstanceData), &singleInstance);
+        instanceBuffer->setData(&data1);
     }
 
     Model::~Model() {
-        // instanceBuffer->cleanup();
-        // indexBuffer->cleanup();
-        // vertexBuffer->cleanup();
-
         delete[] instances;
     }
 
     void Model::loadModelData(void* vertexData, uint32_t vertexDataSize, void* indexData, uint32_t indexDataSize) {
-        vertexBuffer = VulkanBuffer::createVertexBuffer(vertexDataSize, vertexData);
-        indexBuffer = VulkanBuffer::createIndexBuffer(indexDataSize, indexData);
+        Toki::VulkanBufferSpecification vertexBufferSpec{ vertexDataSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
+        vertexBuffer = VulkanBuffer::create(&vertexBufferSpec);
+        VulkanBufferData vertexDataA(vertexDataSize, vertexData);
+        vertexBuffer->setData(&vertexDataA);
+        Toki::VulkanBufferSpecification indexBufferSpec{ indexDataSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
+        indexBuffer = VulkanBuffer::create(&indexBufferSpec);
+        VulkanBufferData indexDataA(indexDataSize, indexData);
+        indexBuffer->setData(&indexDataA);
         nIndexes = indexDataSize / sizeof(uint32_t);
     }
 
@@ -35,18 +42,20 @@ namespace Toki {
         );
     }
 
-    InstanceData* Model::addInstance(const InstanceData* instanceData) {
-        TK_ASSERT(nInstances < maxInstances - 1);
-        memcpy(&instances[nInstances], instanceData, sizeof(InstanceData));
+    void Model::setInstances(VulkanBufferData* data) {
+        instanceBuffer->setData(data);
+        nInstances = data->size / sizeof(InstanceData);
+    }
+
+    InstanceData* Model::addInstance(const InstanceData& instanceData) {
+        TK_ASSERT(nInstances < maxInstances);
+
+        instances[nInstances] = instanceData;
         ++nInstances;
-
-        instanceBuffer->setData(sizeof(InstanceData) * nInstances, instances);
-
         return &instances[nInstances - 1];
     }
 
     void Model::draw(VkCommandBuffer cmd) {
-        instanceBuffer->setData(sizeof(InstanceData) * nInstances, instances);
         VkBuffer buffers[] = { vertexBuffer->getBuffer() };
         VkBuffer instances[] = { instanceBuffer->getBuffer() };
         VkDeviceSize offsets[] = { 0 };

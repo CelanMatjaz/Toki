@@ -5,17 +5,30 @@ layout (location = 1) out vec2 outUv;
 
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec2 uv;
+layout (location = 2) in vec3 normal;
 
-layout (location = 2) in vec3 instancePosition;
-layout (location = 3) in vec3 instanceScale;
-layout (location = 4) in vec3 instanceRotation;
-layout (location = 5) in vec4 instanceColor;
+layout (location = 3) in vec3 instancePosition;
+layout (location = 4) in vec3 instanceScale;
+layout (location = 5) in vec3 instanceRotation;
+layout (location = 6) in vec4 instanceColor;
 
 layout(push_constant) uniform constants {
 	mat4 mvp;
 } PushConstants;
 
+struct Light {
+    vec3 position;
+    vec4 color;
+};
+
+layout(set = 0, binding = 0) uniform LightData {
+    Light lights[8];
+    uint lightCount;
+    float ambientLight;
+} lightData;
+
 void main() {
+    // POSITION
     mat3 rotX, rotY, rotZ;
 
     // X axis rotation
@@ -48,6 +61,15 @@ void main() {
     vec4 instancePos = vec4(instancePosition + (localPosition ), 1.0);
 
     gl_Position = PushConstants.mvp * instancePos;
-    outColor = instanceColor;
-    outUv = outUv;
+    // POSITION
+
+    // COLOR
+    vec3 direction = lightData.lights[0].position - position;
+    vec3 normalWorldSpace = normalize((direction) * normal);
+    float lightIntensity = lightData.ambientLight + max(dot(normalWorldSpace, normalize(direction)), 0);
+
+    outColor = lightIntensity * (instanceColor * lightData.lights[0].color);
+    // COLOR
+
+    outUv = uv;
 }

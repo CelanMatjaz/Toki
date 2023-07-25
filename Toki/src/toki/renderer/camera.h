@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tkpch.h"
+#include "toki/events/event.h"
 
 namespace Toki {
 
@@ -42,6 +43,8 @@ namespace Toki {
         const glm::mat4& getProjection() { return projectionMatrix; }
 
         void updateViewMatrix();
+
+        void onEvent(Event& event);
     protected:
         void updateProjectionMatrix();
 
@@ -52,6 +55,11 @@ namespace Toki {
 
         CameraProjection projection;
         CameraType type;
+
+        float fov = glm::radians(60.0f);
+        float aspectRatio;
+        float near = 0.1f;
+        float far = 1000.0f;
     };
 
 }

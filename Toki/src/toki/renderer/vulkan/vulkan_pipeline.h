@@ -40,7 +40,7 @@ namespace Toki {
         static VkDescriptorPool createDescriptorPool(const DestriptorPoolSizes& sizes);
         static std::vector<VkDescriptorSet> createDescriptorSets(VkDescriptorPool descriptorPool, std::vector<VkDescriptorSetLayout> descriptorSetLayouts);
 
-        static std::vector<char> loadShaderCode(const std::filesystem::path& filePath);
+        static std::vector<uint32_t> loadShaderCode(const std::filesystem::path& filePath);
         static uint32_t createShaderModule(const std::filesystem::path& filePath);
 
         static void recreatePipelines();

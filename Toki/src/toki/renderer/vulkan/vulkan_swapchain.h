@@ -37,6 +37,7 @@ namespace Toki {
         VkRenderPass getRenderPass() const { return renderPass.getRenderPass(); }
         VulkanRenderPass getRenderPassHandle() const { return renderPass; }
         std::vector<VulkanFrameBuffer> getFrameBuffers() { return frameBuffers; }
+        float getExtentAspectRatio() { return extent.width / extent.height; }
 
     private:
         void create(VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR);
