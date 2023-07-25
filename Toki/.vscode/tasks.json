@@ -4,10 +4,8 @@
             "type": "cppbuild",
             "label": "build-debug",
             "command": "make",
-            "args": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
+            "args": ["config=\"debug_win64\""],
+            "options": {},
             "problemMatcher": ["$gcc"],
             "group": {
                 "kind": "build",

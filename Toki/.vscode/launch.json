@@ -8,7 +8,7 @@
             "name": "Debugger",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/Debug/Toki/Toki.exe",
+            "program": "${workspaceFolder}/bin/debug/toki/toki.exe",
             "MIMode": "gdb",
             "miDebuggerPath": "C:/Program Files/w64devkit/bin/gdb.exe",
             "cwd": "${workspaceFolder}",

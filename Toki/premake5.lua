@@ -1,13 +1,24 @@
 VULKAN_SDK = os.getenv("VULKAN_SDK")
 
-workspace "Toki"
+workspace "toki"
     architecture "x86_64"
     language "C++"
     cppdialect "C++20"
-    configurations { "Debug", "Release" }
-    platforms { "Win64" }
+    configurations { "debug", "release" }
+    platforms { "win64" }
 
-project "Toki"
+group "dependencies"
+	include "./vendor/glfw"
+	include "./vendor/imgui"
+	-- include "./vendor/stb"
+	-- include "./vendor/glm"
+group ""
+
+group "core"
+	include "../toki"
+group ""
+
+project "toki"
     kind "ConsoleApp"
     language "C++"
     cppdialect "C++20"
@@ -15,6 +26,10 @@ project "Toki"
     targetdir("bin/%{cfg.buildcfg}/%{prj.name}")
 
     prebuildcommands { "make -f ./shaders.make" }
+    prelinkcommands {
+        "make -C ./vendor/glfw config=release_win64",
+        "make -C ./vendor/imgui config=release_win64"
+    }
 
     files {
         "src/**.cpp",
@@ -25,7 +40,6 @@ project "Toki"
         "./src",
         VULKAN_SDK .. "/Include",
         "./vendor/glfw/include",
-        "./vendor/glfw/include",
         "./vendor/glm/",
         "./vendor/imgui",
         "./vendor/imgui/backends",
@@ -34,15 +48,14 @@ project "Toki"
 
     libdirs { 
         VULKAN_SDK .. "/Lib",
-        "./vendor/glfw/bin/Release",
-        "./vendor/imgui/bin/Release",
+        "./vendor/glfw/bin/release",
+        "./vendor/imgui/bin/release",
     }
 
     links {
         "imgui",
         "glfw",
         "vulkan-1",
-        "spirv-cross-reflect"
     }
 
     filter "system:windows" 
@@ -50,12 +63,12 @@ project "Toki"
             "gdi32",
         }
 
-    filter "configurations:Debug"
+    filter "configurations:debug"
         optimize "Debug"
         symbols "On"
         defines { "DEBUG", "UNICODE" }
 
-    filter "configurations:Release"
+    filter "configurations:release"
         defines { "NDEBUG", "UNICODE" }
         optimize "On"        
 
