@@ -4,10 +4,8 @@
             "type": "cppbuild",
             "label": "build-debug",
             "command": "make",
-            "args": [],
-            "options": {
-                "cwd": "${workspaceFolder}/Toki"
-            },
+            "args": ["config=\"debug_win64\""],
+            "options": {},
             "problemMatcher": ["$gcc"],
             "group": {
                 "kind": "build",
@@ -16,11 +14,19 @@
             "detail": "Build for debug"
         },
         {
-            "label": "compile-shaders",
-            "type": "shell",
-            "command": "node",
-            "args": ["./scripts/compileShaders.js"],
-            "problemMatcher": []
+            "type": "cppbuild",
+            "label": "build-release",
+            "command": "make",
+            "args": ["config=\"release_win64\""],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": ["$gcc"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Build for debug"
         }
     ],
     "version": "2.0.0"

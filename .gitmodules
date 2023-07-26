@@ -1,6 +1,3 @@
-[submodule "Toki/vendor/glfw"]
-	path = Toki/vendor/glfw
-	url = https://github.com/CelanMatjaz/glfw
 [submodule "Toki/vendor/imgui"]
 	path = Toki/vendor/imgui
 	url = https://github.com/CelanMatjaz/imgui
@@ -10,3 +7,6 @@
 [submodule "Toki/vendor/glm"]
 	path = Toki/vendor/glm
 	url = https://github.com/CelanMatjaz/glm
+[submodule "toki/vendor/glfw"]
+	path = toki/vendor/glfw
+	url = https://github.com/CelanMatjaz/glfw

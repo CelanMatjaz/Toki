@@ -8,10 +8,10 @@
             "name": "Debugger",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/Toki/bin/Debug/Toki/Toki.exe",
+            "program": "${workspaceFolder}/bin/Debug-Win64-x86_64/Toki.exe",
             "MIMode": "gdb",
-            "miDebuggerPath": "C:/Program Files/w64devkit/bin/gdb.exe",
-            "cwd": "${workspaceFolder}",
+            "miDebuggerPath": "gdb.exe",
+            "cwd": "${workspaceFolder}/toki",
             "preLaunchTask": "build-debug",
             "externalConsole": false,
             "setupCommands": [
