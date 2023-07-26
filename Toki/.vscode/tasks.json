@@ -5,7 +5,9 @@
             "label": "build-debug",
             "command": "make",
             "args": ["config=\"debug_win64\""],
-            "options": {},
+            "options": {
+                "cwd": ".."
+            },
             "problemMatcher": ["$gcc"],
             "group": {
                 "kind": "build",
@@ -19,7 +21,7 @@
             "command": "make",
             "args": ["config=\"release_win64\""],
             "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": ".."
             },
             "problemMatcher": ["$gcc"],
             "group": {

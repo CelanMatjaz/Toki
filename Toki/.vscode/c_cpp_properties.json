@@ -13,7 +13,7 @@
             ],
             "defines": ["DEBUG", "UNICODE", "_UNICODE", "VK_VERSION_1_0"],
             "windowsSdkVersion": "10.0.22000.0",
-            "compilerPath": "C:/Program Files/w64devkit/bin/g++.exe",
+            "compilerPath": "g++.exe",
             "cStandard": "c17",
             "cppStandard": "c++20",
             "intelliSenseMode": "${default}"

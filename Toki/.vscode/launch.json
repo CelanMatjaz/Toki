@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/../bin/Debug-Win64-x86_64/Toki.exe",
             "MIMode": "gdb",
-            "miDebuggerPath": "C:/Program Files/w64devkit/bin/gdb.exe",
+            "miDebuggerPath": "gdb.exe",
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "build-debug",
             "externalConsole": false,
