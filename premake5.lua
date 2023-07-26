@@ -9,12 +9,14 @@ workspace "Workspace"
 
 outputdir = path.getabsolute("bin/%{cfg.buildcfg}-%{cfg.platform}-%{cfg.architecture}")
 
-group "Dependencies"
-    include "./toki/vendor/imgui"
-	include "./toki/vendor/glfw"
-group ""
+startproject "Toki"
 
 group "Engine"
     include "Toki"
+group ""
+
+group "Dependencies"
+    include "./toki/vendor/imgui"
+	include "./toki/vendor/glfw"
 group ""
 

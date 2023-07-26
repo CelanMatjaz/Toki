@@ -1,4 +1,4 @@
-import { finalPremakeExec, downloadPremake } from './premake.ts';
+import { finalPremakeExec, downloadPremake } from "./download_premake.ts";
 import * as path from "https://deno.land/std@0.195.0/path/mod.ts";
 
 // Download premake if not already in vendor folder

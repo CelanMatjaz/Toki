@@ -26,8 +26,7 @@ export async function downloadPremake() {
         }
 
         console.log(`Downloading and extracting file ${premakeDownloadUrl}...`);
-        await unZipFromURL(premakeDownloadUrl, './temp');
-        console.log();
+        await unZipFromURL(premakeDownloadUrl, "./temp");
     }
 
     {

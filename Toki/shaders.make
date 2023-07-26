@@ -3,7 +3,10 @@ VERT_SHADERS_COMPILED = $(patsubst ./shaders/raw/%.vert, ./shaders/compiled/%.ve
 FRAG_SHADERS_RAW = $(shell find ./shaders/raw -type f -name "*.frag")
 FRAG_SHADERS_COMPILED = $(patsubst ./shaders/raw/%.frag, ./shaders/compiled/%.frag.spv, $(FRAG_SHADERS_RAW))
 
-all: $(VERT_SHADERS_COMPILED) $(FRAG_SHADERS_COMPILED)
+all: compiled_folder $(VERT_SHADERS_COMPILED) $(FRAG_SHADERS_COMPILED)
+
+compiled_folder:
+	mkdir -p ./shaders/compiled
 
 shaders/compiled/%.spv: ./shaders/raw/%
-	@ ${VULKAN_SDK}/Bin/glslc.exe $< -o $@
+	${VULKAN_SDK}/Bin/glslc.exe $< -o $@
