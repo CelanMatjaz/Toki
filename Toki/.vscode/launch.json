@@ -10,9 +10,32 @@
             "request": "launch",
             "program": "${workspaceFolder}/../bin/Debug-Win64-x86_64/Toki.exe",
             "MIMode": "gdb",
-            "miDebuggerPath": "gdb.exe",
             "cwd": "${workspaceFolder}",
+            "miDebuggerPath": "gdb.exe",
             "preLaunchTask": "build-debug",
+            "externalConsole": false,
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "Launch Release",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/../bin/Release-Win64-x86_64/Toki.exe",
+            "MIMode": "gdb",
+            "cwd": "${workspaceFolder}",
+            "miDebuggerPath": "gdb.exe",
+            "preLaunchTask": "build-release",
             "externalConsole": false,
             "setupCommands": [
                 {

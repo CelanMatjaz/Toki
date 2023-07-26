@@ -4,10 +4,7 @@
             "type": "cppbuild",
             "label": "build-debug",
             "command": "make",
-            "args": ["config=\"debug_win64\""],
-            "options": {
-                "cwd": ".."
-            },
+            "args": ["-C", ".."],
             "problemMatcher": ["$gcc"],
             "group": {
                 "kind": "build",
@@ -19,10 +16,7 @@
             "type": "cppbuild",
             "label": "build-release",
             "command": "make",
-            "args": ["config=\"release_win64\""],
-            "options": {
-                "cwd": ".."
-            },
+            "args": ["-C", "..", "config=\"release_win64\""],
             "problemMatcher": ["$gcc"],
             "group": {
                 "kind": "build",
