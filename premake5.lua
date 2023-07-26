@@ -8,6 +8,7 @@ workspace "Workspace"
     architecture "x64"
 
 outputdir = path.getabsolute("bin/%{cfg.buildcfg}-%{cfg.platform}-%{cfg.architecture}")
+outputdirObj = path.getabsolute("bin-int/%{cfg.buildcfg}-%{cfg.platform}-%{cfg.architecture}")
 
 startproject "Toki"
 

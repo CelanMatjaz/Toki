@@ -6,6 +6,7 @@ project "Toki"
     cppdialect "C++20"
 
     targetdir(outputdir)
+    objdir(outputdirObj .. '/%{prj.name}')
 
     prebuildcommands { "make -f ./shaders.make" }
 

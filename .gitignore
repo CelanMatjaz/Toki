@@ -1,4 +1,5 @@
 bin
+bin-int
 .vs
 Makefile
 Workspace.sln
