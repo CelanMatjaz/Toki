@@ -58,9 +58,11 @@ private:
     int nInstancesX = 1;
     int nInstancesY = 1;
     bool randomParams = false;
+    float instanceDistances[2] = { 4.0f, 4.0f };
 
     // Model
-    Toki::Model loadedModel;
+    Toki::Model loadedModel[2];
+    int selectedModel = 0;
 
     // Misc
     VkPhysicalDeviceProperties properties{};

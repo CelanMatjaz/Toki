@@ -6,7 +6,7 @@
 namespace Toki {
 
     struct VulkanBufferData {
-        uint32_t size;
+        VkDeviceSize size;
         void* data;
     };
 

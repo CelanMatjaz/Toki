@@ -54,10 +54,11 @@ ProgLayer::ProgLayer() {
 
     pipeline = Toki::VulkanPipeline::createPipeline(config);
 
-    loadedModel.loadModelFromObj("assets/models/spongebob_high_poly_tris.obj");
+    loadedModel[0].loadModelFromObj("assets/models/spongebob_high_poly_tris.obj");
+    loadedModel[1].loadModelFromObj("assets/models/Satelite.obj");
     resetInstances(1, 1, 0, 0, randomParams);
     Toki::VulkanBufferData instanceData{ sizeof(Toki::InstanceData), instances };
-    loadedModel.setInstances(&instanceData);
+    loadedModel[selectedModel].setInstances(&instanceData);
 
     camera.moveForward(-20);
 
@@ -170,15 +171,30 @@ void ProgLayer::onImGuiUpdate(float deltaTime) {
     ImGui::ColorEdit4("Light color", (float*) &light->lights[0].color);
     ImGui::NewLine();
 
+    auto updateInstances = [this]() {
+        resetInstances(nInstancesX, nInstancesY, instanceDistances[0], instanceDistances[1], randomParams);
+        Toki::VulkanBufferData instanceData{ nInstancesX * nInstancesY * sizeof(Toki::InstanceData), instances };
+        loadedModel[selectedModel].setInstances(&instanceData);
+    };
+
     ImGui::SeparatorText("Instances");
-    ImGui::SliderInt("Instance count X direction", &nInstancesX, 1, 32);
-    ImGui::SliderInt("Instance count Z direction", &nInstancesY, 1, 32);
-    ImGui::Checkbox("Random parameters", &randomParams);
+    if (ImGui::SliderInt("Instance count X direction", &nInstancesX, 1, 32))
+        updateInstances();
+
+    if (ImGui::SliderInt("Instance count Z direction", &nInstancesY, 1, 32))
+        updateInstances();
+
+    if (ImGui::SliderFloat2("Instance distances", instanceDistances, 1.0f, 10.0f))
+        updateInstances();
+
+    if (ImGui::Checkbox("Random parameters", &randomParams))
+        updateInstances();
+
+    if (ImGui::Combo("Model", &selectedModel, "Spongebob\0Satellite\0"))
+        updateInstances();
 
     if (ImGui::Button("Reload instances")) {
-        resetInstances(nInstancesX, nInstancesY, 4.0f, 4.0f, randomParams);
-        Toki::VulkanBufferData instanceData{ nInstancesX * nInstancesY * sizeof(Toki::InstanceData), instances };
-        loadedModel.setInstances(&instanceData);
+        updateInstances();
     }
 
     ImGui::End();
@@ -264,7 +280,7 @@ void ProgLayer::onUpdate(float deltaTime) {
     pipelineScissor.extent = Toki::Application::getVulkanRenderer()->getSwapchain()->getExtent();
     vkCmdSetScissor(cmd, 0, 1, &pipelineScissor);
 
-    loadedModel.draw(cmd);
+    loadedModel[selectedModel].draw(cmd);
 }
 
 void ProgLayer::onEvent(Toki::Event& e) {
@@ -275,8 +291,8 @@ void ProgLayer::resetInstances(uint32_t nX, uint32_t nY, float distanceX, float 
     if (instances) delete[] instances;
     instances = new Toki::InstanceData[nX * nY]();
 
-    float halfTotalDistanceX = nX > 1 ? nX * distanceX / 2 : 0;
-    float halfTotalDistanceY = nY > 1 ? nY * distanceY / 2 : 0;
+    float halfTotalDistanceX = nX > 1 ? (nX - 1) * distanceX / 2 : 0;
+    float halfTotalDistanceY = nY > 1 ? (nY - 1) * distanceY / 2 : 0;
 
     for (uint32_t y = 0; y < nY; ++y) {
         for (uint32_t x = 0; x < nX; ++x) {
