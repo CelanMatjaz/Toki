@@ -10,3 +10,6 @@
 [submodule "Toki/vendor/GLFW"]
 	path = Toki/vendor/GLFW
 	url = https://github.com/CelanMatjaz/glfw
+[submodule "Toki/vendor/SPIRV-Cross"]
+	path = Toki/vendor/SPIRV-Cross
+	url = https://github.com/CelanMatjaz/SPIRV-Cross
