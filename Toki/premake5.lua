@@ -1,39 +1,44 @@
-VULKAN_SDK = os.getenv("VULKAN_SDK")
-
 project "Toki"
-    kind "ConsoleApp"
+    kind "StaticLib"
     language "C++"
     cppdialect "C++20"
+	staticruntime "off"
+    
 
-    targetdir(outputdir)
-    objdir(outputdirObj .. '/%{prj.name}')
-
-    prebuildcommands { "make -f ./shaders.make" }
+    targetdir(projectOutputDir)
+    objdir(projectOutputDirObj)
 
     files {
         "src/**.cpp",
         "src/**.h",
+        "vendor/stb/std_image.h",
+        "vendor/glm/glm/**.hpp",
+        "vendor/glm/glm/**.inl"
     }
 
     includedirs {
         "src",
-        VULKAN_SDK .. "/Include",
-        "vendor/glfw/include",
-        "vendor/glm/",
-        "vendor/imgui",
-        "vendor/imgui/backends",
-        "vendor/stb/",
+        includes["vulkan"],
+        includes["glfw"],
+        includes["glm"],
+        includes["imgui"],
+        includes["imgui-backends"],
+        includes["spirv-cross"],
+        includes["stb"]
     }
 
     libdirs { 
-        VULKAN_SDK .. "/Lib",
-        outputdir
+        linkDirs["vulkan"],
+        linkDirs["glfw"],
+        linkDirs["imgui"],
+        linkDirs["spirv-cross"]      
     }
 
     links {
-        "vulkan-1",
-        "GLFW",
-        "ImGui"
+        linkLibs["vulkan"],
+        linkLibs["glfw"],
+        linkLibs["imgui"],
+        linkLibs["spirv-cross"]
     }
 
     filter "configurations:Debug"

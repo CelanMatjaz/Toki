@@ -4,3 +4,4 @@ bin-int
 Makefile
 Workspace.sln
 scripts/.vscode
+vendor

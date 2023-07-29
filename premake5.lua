@@ -1,4 +1,4 @@
-VULKAN_SDK = os.getenv("VULKAN_SDK")
+include("premake.paths.lua")
 
 workspace "Workspace"
     language "C++"
@@ -6,9 +6,6 @@ workspace "Workspace"
     configurations { "Debug", "Release" }
     platforms { "Win64" }
     architecture "x64"
-
-outputdir = path.getabsolute("bin/%{cfg.buildcfg}-%{cfg.platform}-%{cfg.architecture}")
-outputdirObj = path.getabsolute("bin-int/%{cfg.buildcfg}-%{cfg.platform}-%{cfg.architecture}")
 
 startproject "Toki"
 
@@ -19,5 +16,6 @@ group ""
 group "Dependencies"
     include "./toki/vendor/imgui"
 	include "./toki/vendor/glfw"
+	include "./toki/vendor/spirv-cross"
 group ""
 
