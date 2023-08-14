@@ -23,6 +23,7 @@ public:
 
     struct PushConstant {
         glm::mat4 mvp;
+        uint32_t textureIndex;
     };
 
     ProgLayer();
@@ -41,7 +42,8 @@ private:
 
     // Textures
     Toki::TkRef<Toki::VulkanTexture> noTexture;
-    Toki::TkRef<Toki::VulkanTexture> testTexture;
+    Toki::TkRef<Toki::VulkanTexture> testTexture1;
+    Toki::TkRef<Toki::VulkanTexture> testTexture2;
 
     // Uniform data
     VkDescriptorSet descriptorSetLights;

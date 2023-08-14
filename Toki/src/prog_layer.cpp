@@ -28,7 +28,8 @@ ProgLayer::ProgLayer() {
 
     uint32_t data[] = { 0xffff00ff, 0xff000000, 0xff000000, 0xffff00ff };
     noTexture = Toki::VulkanTexture::create(2, 2, data);
-    testTexture = Toki::VulkanTexture::create("./assets/textures/spongebob.png");
+    testTexture1 = Toki::VulkanTexture::create("./assets/textures/spongebob.png");
+    testTexture2 = Toki::VulkanTexture::create("./assets/textures/sphere_emoji.png");
 
     sampler = Toki::VulkanTexture::createSampler();
 
@@ -55,7 +56,7 @@ ProgLayer::ProgLayer() {
     pipeline = Toki::VulkanPipeline::createPipeline(config);
 
     loadedModel[0].loadModelFromObj("assets/models/spongebob_high_poly_tris.obj");
-    loadedModel[1].loadModelFromObj("assets/models/Satelite.obj");
+    loadedModel[1].loadModelFromObj("assets/models/sphere.obj");
     resetInstances(1, 1, 0, 0, randomParams);
     Toki::VulkanBufferData instanceData{ sizeof(Toki::InstanceData), instances };
     loadedModel[selectedModel].setInstances(&instanceData);
@@ -99,7 +100,8 @@ ProgLayer::ProgLayer() {
             descriptorImageInfos[i].sampler = sampler;
         }
 
-        descriptorImageInfos[0].imageView = testTexture->getImageView();
+        descriptorImageInfos[0].imageView = testTexture1->getImageView();
+        descriptorImageInfos[1].imageView = testTexture2->getImageView();
 
         VkWriteDescriptorSet descriptorWrites{};
         descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -149,7 +151,7 @@ void ProgLayer::onImGuiUpdate(float deltaTime) {
     ImGui::SeparatorText("Statistics");
 
     ImGui::Text("Device:  %s", properties.deviceName);
-    ImGui::Text("Version: %i", properties.driverVersion);
+    // ImGui::Text("Version: %i", properties.driverVersion);
     ImGui::Text("Type:    %s", mapDeviceType(properties.deviceType));
     ImGui::NewLine();
 
@@ -160,7 +162,7 @@ void ProgLayer::onImGuiUpdate(float deltaTime) {
 
     static VkPresentModeKHR stuff[] = { VK_PRESENT_MODE_FIFO_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR };
     static int selectedItem = 0;
-    if (ImGui::Combo("Present mode", &selectedItem, presentModeStrings, 2)) {
+    if (ImGui::Combo("Frame cap", &selectedItem, presentModeStrings, 2)) {
         Toki::Application::getVulkanRenderer()->recreateSwapchain(stuff[selectedItem]);
     }
     ImGui::NewLine();
@@ -265,6 +267,7 @@ void ProgLayer::onUpdate(float deltaTime) {
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
     PushConstant push{ camera.getProjection() * camera.getView() * glm::mat4(1.0f) };
+    push.textureIndex = selectedModel;
     vkCmdPushConstants(cmd, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstant), &push);
 
     VkViewport pipelineViewport{};

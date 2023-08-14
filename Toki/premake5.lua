@@ -23,7 +23,6 @@ project "Toki"
         includes["glm"],
         includes["imgui"],
         includes["imgui-backends"],
-        includes["spirv-cross"],
         includes["stb"]
     }
 
@@ -31,14 +30,12 @@ project "Toki"
         linkDirs["vulkan"],
         linkDirs["glfw"],
         linkDirs["imgui"],
-        linkDirs["spirv-cross"]      
     }
 
     links {
         linkLibs["vulkan"],
         linkLibs["glfw"],
-        linkLibs["imgui"],
-        linkLibs["spirv-cross"]
+        linkLibs["imgui"]
     }
 
     filter "configurations:Debug"

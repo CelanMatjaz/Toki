@@ -15,7 +15,6 @@ group ""
 
 group "Dependencies"
     include "./toki/vendor/imgui"
-	include "./toki/vendor/glfw"
-	include "./toki/vendor/spirv-cross"
+	include "./toki/vendor/glfw
 group ""
 

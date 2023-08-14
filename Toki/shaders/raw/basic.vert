@@ -2,6 +2,7 @@
 
 layout (location = 0) out vec4 outColor;
 layout (location = 1) out vec2 outUv;
+layout (location = 2) out uint outTextureIndex;
 
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec2 uv;
@@ -14,6 +15,7 @@ layout (location = 6) in vec4 instanceColor;
 
 layout(push_constant) uniform constants {
 	mat4 mvp;
+    uint textureIndex;
 } PushConstants;
 
 struct Light {
@@ -72,4 +74,6 @@ void main() {
     // COLOR
 
     outUv = uv;
+
+    outTextureIndex = PushConstants.textureIndex;
 }
