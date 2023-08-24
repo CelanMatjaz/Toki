@@ -1,12 +1,1 @@
-bin
-obj
-MakeFile
-Toki.make
-.vs
-shaders/compiled
 imgui.ini
-
-Toki.sln
-Toki.vcxproj
-Toki.vcxproj.filters
-Toki.vcxproj.user

@@ -1,36 +1,42 @@
 #pragma once
 
-#include "tkpch.h"
+#include "core/core.h"
+#include "core/engine.h"
+#include "string"
 
 namespace Toki {
 
-    class TokiWindow {
+    struct WindowConfig {
+        std::string title = "Window";
+        uint16_t width = 1280, height = 720;
+        bool resizable = false;
+    };
+
+    class Engine;
+
+    class Window {
     public:
-        TokiWindow() = default;
-        ~TokiWindow() = default;
+        static Ref<Window> create(const WindowConfig& windowConfig, Engine* engine);
 
-        static std::unique_ptr<TokiWindow> createWindow(const char* title, uint32_t width, uint32_t height, bool resizable = false);
+        Window(const WindowConfig& windowConfig, Engine* engine);
+        virtual ~Window() = default;
 
-        GLFWwindow* getHandle() { return handle; }
+        virtual void pollEvents() = 0;
+        virtual bool shouldClose() = 0;
+        virtual void* getHandle() = 0;
 
-    private:
-        struct WindowDimensions {
-            uint32_t width, height;
-        };
+        bool wasResized() { return wasResizedFlag; }
+        void resetWasResized() { wasResizedFlag = false; }
+        void setWasResized(bool newValue) { wasResizedFlag = newValue; }
 
-    public:
-        WindowDimensions getWindowDimensions() const { return dimensions; }
+        uint16_t getWidth() { return width; }
+        uint16_t getHeight() { return height; }
 
-        bool wasResized() { return this->_wasResized; }
-        void resetResizedFlag() { _wasResized = false; }
-
-        static void windowResizedCallback(GLFWwindow* window, int width, int height);
-        static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-
-    private:
-        GLFWwindow* handle;
-        WindowDimensions dimensions;
-        bool _wasResized = false;
+    protected:
+        Engine* engine;
+        uint16_t width, height;
+        bool resizable;
+        bool wasResizedFlag = false;
     };
 
 }

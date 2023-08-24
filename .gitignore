@@ -1,7 +1,4 @@
-bin
-bin-int
-.vs
-Makefile
-Workspace.sln
-scripts/.vscode
-vendor
+.vscode
+.xmake
+build
+vsxmake2022

@@ -1,21 +1,21 @@
 {
     "configurations": [
         {
-            "name": "Win32",
+            "name": "Demo Win64_Debug",
+            "compileCommands": ".vscode/compile_commands.json",
             "includePath": [
                 "${workspaceFolder}/Toki/src",
-                "${workspaceFolder}/Toki/vendor/glfw/include",
-                "${workspaceFolder}/Toki/vendor/imgui/",
-                "${workspaceFolder}/Toki/vendor/imgui/backends",
-                "${workspaceFolder}/Toki/vendor/stb/",
-                "${env:VULKAN_SDK}/Include"
+                "vendor/glfw/include",
+                "vendor/imgui/",
+                "vendor/imgui/backends",
+                "vendor/stb/",
+                "vendor/spdlog/include",
+                "vendor/glm",
+                "${env:VULKAN_SDK}/Include",
+                "${workspaceFolder}/Toki/src/toki"
             ],
-            "defines": ["DEBUG", "UNICODE", "_UNICODE"],
-            "windowsSdkVersion": "10.0.22000.0",
-            "compilerPath": "cl.exe",
-            "cStandard": "c17",
-            "cppStandard": "c++20",
-            "intelliSenseMode": "windows-msvc-x64"
+            "cppStandard": "c++23",
+            "intelliSenseMode": "gcc-x64"
         }
     ],
     "version": 4
