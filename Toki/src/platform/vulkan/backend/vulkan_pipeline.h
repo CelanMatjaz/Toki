@@ -4,6 +4,7 @@
 #include "vulkan/vulkan.h"
 #include "renderer/shader.h"
 #include "platform/vulkan/backend/vulkan_pipeline.h"
+#include "unordered_map"
 
 namespace Toki {
 
@@ -21,7 +22,7 @@ namespace Toki {
     struct PipelineConfig {
         ShaderType type = ShaderType::None;
         VkPipelineLayout layout;
-        VkShaderModule moduleSpirv[std::to_underlying(ShaderStage::SHADER_STAGE_MAX_ENUM)];
+        std::unordered_map<ShaderStage, VkShaderModule> moduleSpirv;
         std::vector<VkVertexInputBindingDescription> inputBindingDescriptions;
         std::vector<VkVertexInputAttributeDescription> inputAttributeDescriptions;
         PipelineOptions options{};

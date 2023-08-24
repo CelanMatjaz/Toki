@@ -29,10 +29,8 @@ target("demo")
         set_symbols("debug")
         set_optimize("none")
         set_runtimes("MDd")
-    end
-
-    if is_mode("release") then
-        add_defines("NDEBUG")
+    elseif is_mode("release") then
+        add_defines("DEBUG")
         set_optimize("fastest")
         set_symbols("hidden")
         set_runtimes("MD")
@@ -81,10 +79,8 @@ target("toki")
         set_optimize("none")
         set_runtimes("MDd")
         add_links("spirv-cross-cored", "shaderc_sharedd", "spirv-cross-glsld")
-    end
-
-    if is_mode("release") then
-        add_defines("NDEBUG")
+    elseif is_mode("release") then
+        add_defines("DEBUG")
         set_optimize("fastest")
         set_symbols("hidden")
         set_runtimes("MD")

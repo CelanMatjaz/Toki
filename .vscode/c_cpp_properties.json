@@ -14,6 +14,7 @@
                 "${env:VULKAN_SDK}/Include",
                 "${workspaceFolder}/Toki/src/toki"
             ],
+            "defines": [],
             "cppStandard": "c++23",
             "intelliSenseMode": "gcc-x64"
         }

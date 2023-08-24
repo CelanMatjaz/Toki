@@ -4,9 +4,9 @@
 #include "vulkan/vulkan.h"
 #include "platform/vulkan/backend/vulkan_pipeline.h"
 #include "platform/vulkan/backend/vulkan_render_pass.h"
+#include "unordered_map"
 #include "spirv_cross/spirv_reflect.hpp"
 #include "shaderc/shaderc.hpp"
-#include "unordered_map"
 
 namespace Toki {
 
@@ -30,9 +30,8 @@ namespace Toki {
 
         void initGraphics();
 
-        VkShaderModule reflect(ShaderStage stage, std::string_view shaderCode);
+        VkShaderModule reflect(ShaderStage stage, const std::vector<uint32_t> spirv);
 
-        static VkShaderStageFlagBits getVulkanShaderStage(ShaderStage stage); // TODO: remove
         static shaderc_shader_kind getShadercShaderKind(ShaderStage stage);
 
         static std::unordered_map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> getDescriptorSetBindings(ShaderStage stage, spirv_cross::Compiler& compiler, VkDescriptorType descriptorType);

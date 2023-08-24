@@ -35,13 +35,13 @@ namespace Toki {
         VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo{};
         vertShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         vertShaderStageCreateInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-        vertShaderStageCreateInfo.module = config.moduleSpirv[std::to_underlying(ShaderStage::Vertex)];
+        vertShaderStageCreateInfo.module = config.moduleSpirv[ShaderStage::Vertex];
         vertShaderStageCreateInfo.pName = "main";
 
         VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo{};
         fragShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         fragShaderStageCreateInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-        fragShaderStageCreateInfo.module = config.moduleSpirv[std::to_underlying(ShaderStage::Fragment)];
+        fragShaderStageCreateInfo.module = config.moduleSpirv[ShaderStage::Fragment];
         fragShaderStageCreateInfo.pName = "main";
 
         std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages = {

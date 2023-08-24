@@ -41,21 +41,17 @@ namespace Toki {
     }
 
     void VulkanShader::initGraphics() {
-        auto shaderCode = ShaderLoader::loadRaw(config.path);
-
-        constexpr uint32_t vertexStageIndex = std::to_underlying(ShaderStage::Vertex);
-        constexpr uint32_t fragmentStageIndex = std::to_underlying(ShaderStage::Fragment);
-
-        std::cout << "Loading shader file " << std::filesystem::absolute(config.path) << '\n';
+        auto shaderCode = ShaderLoader::load(config.path);
+        auto binaries = ShaderLoader::loadCompiledBinaries(config.path);
 
         // Assert stages in file
-        TK_ASSERT(!shaderCode[vertexStageIndex].empty(), "Vertex shader (#vert|#vertex) is required in shader file");
-        TK_ASSERT(!shaderCode[fragmentStageIndex].empty(), "Fragment shader (#frag|#fragment|#pixel) is required in shader file");
+        TK_ASSERT(!binaries[ShaderStage::Vertex].empty(), "Vertex shader (#vert|#vertex) is required in shader file");
+        TK_ASSERT(!binaries[ShaderStage::Fragment].empty(), "Fragment shader (#frag|#fragment|#pixel) is required in shader file");
 
         std::vector<uint32_t> moduleConfigs[std::to_underlying(ShaderStage::SHADER_STAGE_MAX_ENUM)];
 
-        auto fragmentModuleSpirv = reflect(ShaderStage::Fragment, shaderCode[fragmentStageIndex]);
-        auto vertexModuleSpirv = reflect(ShaderStage::Vertex, shaderCode[vertexStageIndex]);
+        auto fragmentModuleSpirv = reflect(ShaderStage::Fragment, binaries[ShaderStage::Fragment]);
+        auto vertexModuleSpirv = reflect(ShaderStage::Vertex, binaries[ShaderStage::Vertex]);
 
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
         pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -69,35 +65,19 @@ namespace Toki {
         PipelineConfig pipelineConfig{};
         pipelineConfig.type = config.type;
         pipelineConfig.layout = pipelineLayout;
-        pipelineConfig.moduleSpirv[vertexStageIndex] = vertexModuleSpirv;
-        pipelineConfig.moduleSpirv[fragmentStageIndex] = fragmentModuleSpirv;
+        pipelineConfig.moduleSpirv[ShaderStage::Vertex] = vertexModuleSpirv;
+        pipelineConfig.moduleSpirv[ShaderStage::Fragment] = fragmentModuleSpirv;
         pipelineConfig.inputAttributeDescriptions = mapAttributeDescriptions(config.attributeDescriptions);
         pipelineConfig.inputBindingDescriptions = mapBindingDescriptions(config.bindingDescriptions);
         pipelineConfig.renderPass = ((VulkanFramebuffer*) config.framebuffer.get())->getRenderPass();
 
         pipeline = Pipeline::create(pipelineConfig);
 
-        vkDestroyShaderModule(VulkanRenderer::device(), pipelineConfig.moduleSpirv[vertexStageIndex], nullptr);
-        vkDestroyShaderModule(VulkanRenderer::device(), pipelineConfig.moduleSpirv[fragmentStageIndex], nullptr);
+        vkDestroyShaderModule(VulkanRenderer::device(), pipelineConfig.moduleSpirv[ShaderStage::Vertex], nullptr);
+        vkDestroyShaderModule(VulkanRenderer::device(), pipelineConfig.moduleSpirv[ShaderStage::Fragment], nullptr);
     }
 
-    VkShaderModule VulkanShader::reflect(ShaderStage stage, std::string_view shaderCode) {
-        shaderc::Compiler spirvCompiler;
-        shaderc::CompileOptions options;
-        options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
-
-    #ifdef NDEBUG
-        options.SetOptimizationLevel(shaderc_optimization_level_performance);
-    #else
-        options.SetOptimizationLevel(shaderc_optimization_level_zero);
-    #endif
-
-        options.SetSourceLanguage(shaderc_source_language::shaderc_source_language_glsl);
-
-        shaderc::SpvCompilationResult spirvModule = spirvCompiler.CompileGlslToSpv(shaderCode.data(), getShadercShaderKind(stage), "Shader", options);
-        TK_ASSERT(spirvModule.GetCompilationStatus() == shaderc_compilation_status::shaderc_compilation_status_success, std::format("Error compiling shader code from file {}\n\t{}", std::filesystem::absolute(config.path).string(), spirvModule.GetErrorMessage()));
-
-        std::vector<uint32_t> spirv(spirvModule.begin(), spirvModule.end());
+    VkShaderModule VulkanShader::reflect(ShaderStage stage, const std::vector<uint32_t> spirv) {
         spirv_cross::Compiler compiler(spirv);
         spirv_cross::ShaderResources resources = compiler.get_shader_resources();
 
@@ -177,15 +157,6 @@ namespace Toki {
         }
     }
 
-    VkShaderStageFlagBits VulkanShader::getVulkanShaderStage(ShaderStage stage) {
-        switch (stage) {
-            case ShaderStage::Vertex: return VK_SHADER_STAGE_VERTEX_BIT;
-            case ShaderStage::Fragment: return VK_SHADER_STAGE_FRAGMENT_BIT;
-        }
-
-        return VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
-    }
-
     shaderc_shader_kind VulkanShader::getShadercShaderKind(ShaderStage stage) {
         switch (stage) {
             case ShaderStage::Vertex: return shaderc_shader_kind::shaderc_glsl_vertex_shader;
@@ -199,7 +170,7 @@ namespace Toki {
         spirv_cross::ShaderResources resources = compiler.get_shader_resources();
         spirv_cross::SmallVector<spirv_cross::Resource> resourceArray;
         std::unordered_map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> bindings;
-        VkShaderStageFlagBits stageFlag = getVulkanShaderStage(stage);
+        VkShaderStageFlagBits stageFlag = mapShaderStage(stage);
 
         switch (descriptorType) {
             case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
@@ -236,7 +207,7 @@ namespace Toki {
     std::vector<VkPushConstantRange> VulkanShader::getPushConstants(ShaderStage stage, spirv_cross::Compiler& compiler) {
         spirv_cross::ShaderResources resources = compiler.get_shader_resources();
         std::vector<VkPushConstantRange> constants;
-        VkShaderStageFlagBits stageFlag = getVulkanShaderStage(stage);
+        VkShaderStageFlagBits stageFlag = mapShaderStage(stage);
 
         VkPhysicalDeviceProperties props;
         vkGetPhysicalDeviceProperties(VulkanRenderer::physicalDevice(), &props);

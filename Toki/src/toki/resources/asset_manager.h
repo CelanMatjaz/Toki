@@ -1,43 +1,37 @@
-// #pragma once
+#pragma once
 
-// #include "core/core.h"
-// #include "filesystem"
+#include "core/core.h"
+#include "filesystem"
 
-// namespace Toki {
+namespace Toki {
 
-//     enum class AssetType {
-//         None,
-//         Shader,
-//         Texture,
-//     };
 
-//     class AssetManager {
-//     private:
-//         AssetManager();
+    class AssetManager {
+    private:
+        static inline Scope<AssetManager> manager;
 
-//     public:
-//         const AssetManager* get();
+    public:
+        static const AssetManager* get();
 
-//         void loadAsset(AssetType assetType, std::filesystem::path assetPath);
+        AssetManager();
+        ~AssetManager() = default;
 
-//         // Asets paths
-//         const std::filesystem::path getAssetsPath() const { return assetsPath; }
-//         const std::filesystem::path getShadersPath() const { return shadersPath; }
-//         const std::filesystem::path getTexturesPath() const { return texturesPath; }
+        const std::filesystem::path getAssetsPath() const { return assetsPath; }
+        const std::filesystem::path getShadersPath() const { return shadersPath; }
+        const std::filesystem::path getTexturesPath() const { return texturesPath; }
 
-//         // Cache paths
-//         const std::filesystem::path getCachePath() const { return cachePath; }
-//         const std::filesystem::path getShadersSCachePath() const { return shadersCachePath; }
+        const std::filesystem::path getCachePath() const { return cachePath; }
+        const std::filesystem::path getShadersCachePath() const { return shadersCachePath; }
 
-//     private:
-//         std::filesystem::path assetsPath;
-//         std::filesystem::path shadersPath;
-//         std::filesystem::path texturesPath;
+    private:
+        // Asset paths
+        std::filesystem::path assetsPath;
+        std::filesystem::path shadersPath;
+        std::filesystem::path texturesPath;
 
-//         std::filesystem::path cachePath;
-//         std::filesystem::path shadersCachePath;
+        // Cache paths
+        std::filesystem::path cachePath;
+        std::filesystem::path shadersCachePath;
+    };
 
-//         Scope<AssetManager> assetManager;
-//     };
-
-// }
+}
