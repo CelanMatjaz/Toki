@@ -1,7 +1,15 @@
 {
+    "xmake.debugConfigType": "default",
+    "cmake.configureOnOpen": false,
+    "xmake.customDebugConfig": {
+        "stopAtEntry": false,
+        "console": "external"
+    },
     "files.associations": {
-        "array": "cpp",
+        "stack": "cpp",
+        "utility": "cpp",
         "algorithm": "cpp",
+        "array": "cpp",
         "atomic": "cpp",
         "bit": "cpp",
         "cctype": "cpp",
@@ -9,8 +17,10 @@
         "chrono": "cpp",
         "clocale": "cpp",
         "cmath": "cpp",
+        "codecvt": "cpp",
         "compare": "cpp",
         "concepts": "cpp",
+        "condition_variable": "cpp",
         "cstdarg": "cpp",
         "cstddef": "cpp",
         "cstdint": "cpp",
@@ -19,6 +29,7 @@
         "cstring": "cpp",
         "ctime": "cpp",
         "cwchar": "cpp",
+        "deque": "cpp",
         "exception": "cpp",
         "filesystem": "cpp",
         "format": "cpp",
@@ -39,10 +50,13 @@
         "memory": "cpp",
         "mutex": "cpp",
         "new": "cpp",
+        "numeric": "cpp",
         "optional": "cpp",
         "ostream": "cpp",
         "random": "cpp",
+        "ranges": "cpp",
         "ratio": "cpp",
+        "regex": "cpp",
         "set": "cpp",
         "span": "cpp",
         "sstream": "cpp",
@@ -57,7 +71,7 @@
         "typeinfo": "cpp",
         "unordered_map": "cpp",
         "unordered_set": "cpp",
-        "utility": "cpp",
+        "variant": "cpp",
         "vector": "cpp",
         "xfacet": "cpp",
         "xhash": "cpp",
@@ -75,5 +89,25 @@
         "xtr1common": "cpp",
         "xtree": "cpp",
         "xutility": "cpp"
+    },
+    "editor.semanticTokenColorCustomizations": {
+        "[Monokai Night]": {
+            "rules": {
+                "templateType": {
+                    "foreground": "#A6E22E",
+                    "fontStyle": ""
+                },
+                "type": {
+                    "foreground": "#66D9EF",
+                    "fontStyle": ""
+                }
+            }
+        }
+    },
+    "workbench.colorCustomizations": {
+        "list.errorForeground": "#75b3bb",
+        "list.warningForeground": "#00d9ff",
+        "gitDecoration.modifiedResourceForeground": "#26dfa7",
+        "gitDecoration.untrackedResourceForeground": "#47899c"
     }
 }
