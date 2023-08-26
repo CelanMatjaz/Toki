@@ -1,6 +1,8 @@
 #pragma once
 
 #include "vulkan/vulkan.h"
+#include "platform/vulkan/vulkan_buffer.h"
+#include "platform/vulkan/backend/vulkan_image.h"
 
 namespace Toki {
 
@@ -23,11 +25,22 @@ namespace Toki {
         VkImageView getView() { return view; }
         VkFormat getFormat() { return format; }
 
+        uint32_t getWidth() { return extent.width; };
+        uint32_t getHeight() { return extent.height; };
+
+        void setData(uint32_t size, void* data);
+
+        void transitionLayout(VkImageLayout oldLayout, VkImageLayout newLayout);
+        void copyBufferToTexture(VulkanBuffer* buffer, VulkanImage* texture);
+
+        static VkSampler createSampler();
+
     private:
         VkImage image = VK_NULL_HANDLE;
         VkImageView view = VK_NULL_HANDLE;
         VkDeviceMemory memory = VK_NULL_HANDLE;
         VkFormat format;
+        VkExtent3D extent;
 
         bool isWrapped = false;
     };

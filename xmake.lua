@@ -22,7 +22,7 @@ target("demo")
     set_rundir("Toki-Renderer")
     add_deps("toki")
     set_group("demo")
-    add_defines("GLM_FORCE_RADIANS", "GLM_FORCE_DEPTH_ZERO_TO_ONE")
+    add_defines("GLM_FORCE_RADIANS", "GLM_FORCE_DEPTH_ZERO_TO_ONE", "STB_IMAGE_IMPLEMENTATION", "STB_IMAGE_STATIC")
 
     if is_mode("debug") then
         add_defines("DEBUG")
@@ -71,7 +71,7 @@ target("toki")
     add_links("vulkan-1")
     set_prefixname("")
     set_extension(".lib")
-    add_defines("GLM_FORCE_RADIANS", "GLM_FORCE_DEPTH_ZERO_TO_ONE")
+    add_defines("GLM_FORCE_RADIANS", "GLM_FORCE_DEPTH_ZERO_TO_ONE", "STB_IMAGE_IMPLEMENTATION", "STB_IMAGE_STATIC")
 
     if is_mode("debug") then
         add_defines("DEBUG")

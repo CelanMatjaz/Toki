@@ -25,7 +25,16 @@ namespace Toki {
         static uint32_t currentFrameIndex() { return context->currentFrame; }
         static VkDescriptorPool descriptorPool() { return context->descriptorPool; }
 
+        static VkSampler sampler() { return context->sampler; }
+        static Ref<VulkanImage> defaultTexture() { return context->noTexture; }
+        static Ref<VulkanUniformBuffer> defaultUniform() { return context->noBuffer; }
+
+        static Ref<VulkanContext> getContext() { return context; }
+
         static VkCommandBuffer commandBuffer() { return context->getCurrentFrame()->commandBuffer; }
+
+        static VkCommandBuffer beginSingleUseCommands();
+        static void endSingleUseCommands(VkCommandBuffer commandBuffer);
 
     private:
         static Ref<VulkanContext> context;

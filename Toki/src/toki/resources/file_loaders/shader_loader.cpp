@@ -78,9 +78,9 @@ namespace Toki {
 
         std::string shaderBasename = path.stem().string();
 
-    #ifndef NDEBUG
+#ifndef NDEBUG
         shaderBasename += "-debug";
-    #endif
+#endif
 
         std::string shaderSource = loadShaderSourceFile(path);
         auto shaderSourceHash = std::hash<std::string>{}(shaderSource);
@@ -113,9 +113,6 @@ namespace Toki {
                         compiledBinaries[(ShaderStage) stageIndex] = { };
                         compiledBinaries[(ShaderStage) stageIndex].resize(spirvSize / 4);
                         shaderBin.read((char*) compiledBinaries[(ShaderStage) stageIndex].data(), spirvSize);
-                        int aa = shaderBin.gcount();
-                        int bb = compiledBinaries[(ShaderStage) stageIndex].size();
-                        int b = 0;
                     }
 
                     return compiledBinaries;
@@ -132,11 +129,11 @@ namespace Toki {
         options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
         options.SetSourceLanguage(shaderc_source_language::shaderc_source_language_glsl);
 
-    #ifdef NDEBUG
+#ifdef NDEBUG
         options.SetOptimizationLevel(shaderc_optimization_level_performance);
-    #else
+#else
         options.SetOptimizationLevel(shaderc_optimization_level_zero);
-    #endif
+#endif
 
         for (const auto& [stage, sourceString] : shaderSources) {
             shaderc::SpvCompilationResult spirvModule = spirvCompiler.CompileGlslToSpv(sourceString, getShadercShaderKind(stage), (const char*) path.c_str(), options);

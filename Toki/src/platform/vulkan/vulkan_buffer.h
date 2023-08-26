@@ -6,7 +6,7 @@
 namespace Toki {
     class VulkanBuffer {
     public:
-        VulkanBuffer(const BufferConfig& config, VkBufferUsageFlagBits usage);
+        VulkanBuffer(const BufferConfig& config, VkBufferUsageFlagBits usage, VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         ~VulkanBuffer();
 
         void setData(uint32_t dataSize, void* data);

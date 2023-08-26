@@ -2,7 +2,7 @@
 #include "filesystem"
 #include "toki.h"
 
-class TempLayer: public Toki::Layer {
+class TempLayer : public Toki::Layer {
 public:
     TempLayer() {}
 
@@ -26,34 +26,37 @@ public:
         shaderConfig.type = Toki::ShaderType::Graphics;
         // locaiton, binding, format, offset
         shaderConfig.attributeDescriptions = {
-            { 0, 0, VertexFormat::Float2, 0 },
-            { 1, 1, VertexFormat::Float2, 0 }
+            { 0, 0, VertexFormat::Float3, offsetof(Toki::Vertex, position) },
+            { 1, 0, VertexFormat::Float2, offsetof(Toki::Vertex, uv)},
+            { 2, 0, VertexFormat::Float3, offsetof(Toki::Vertex, normal) },
+            { 3, 1, VertexFormat::Float3, 0 }
         };
         // binding, stride, inputRate
         shaderConfig.bindingDescriptions = {
-            { 0, 2 * sizeof(float), VertexInputRate::Vertex },
-            { 1, 2 * sizeof(float), VertexInputRate::Instance }
+            { 0, sizeof(Toki::Vertex), VertexInputRate::Vertex },
+            { 1, sizeof(glm::vec3), VertexInputRate::Instance }
         };
         shader = Toki::Shader::create(shaderConfig);
 
         {
-            glm::vec2 positions[3] = {
-                { 0.0f, -0.2f },
-                { -0.2f, 0.2f },
-                { 0.2f, 0.2f },
+            Vertex positions[3] = {
+                { { 0.0f, -0.2f, 0.0f }, {}, {} },
+                { { -0.2f, 0.2f, 0.0f }, {}, {} },
+                { { 0.2f, 0.2f, 0.0f }, {}, {} },
             };
 
             VertexBufferConfig vertexBufferConfig{};
             vertexBufferConfig.size = sizeof(positions);
+            vertexBufferConfig.binding = 0;
             vertexBuffer = VertexBuffer::create(vertexBufferConfig);
             vertexBuffer->setData(sizeof(positions), positions);
         }
 
         {
-            glm::vec2 instancePositions[3] = {
-                { 0.0f, -0.5f },
-                { -0.5f, 0.5f },
-                { 0.5f, 0.5f },
+            glm::vec3 instancePositions[3] = {
+                { 0.0f, -0.5f, 0.0f },
+                { -0.5f, 0.5f, 0.0f },
+                { 0.5f, 0.5f, 0.0f },
             };
 
             VertexBufferConfig instanceBufferConfig{};
@@ -74,16 +77,32 @@ public:
         }
 
         {
-            glm::vec4 addedColor = { .2, .2, .2, 1 };
+            struct {
+                glm::vec4 addedColor = { .2, .2, .2, 1 };
+                uint32_t textureIndex = 0;
+            } color;
 
             UniformBufferConfig uniformBufferConfig{};
-            uniformBufferConfig.size = sizeof(glm::vec4);
+            uniformBufferConfig.size = sizeof(color);
             uniformBuffer = UniformBuffer::create(uniformBufferConfig);
-            uniformBuffer->setData(sizeof(addedColor), &addedColor);
+            uniformBuffer->setData(sizeof(color), &color);
         }
 
+        {
+            Toki::TextureConfig textureConfig{};
+            textureConfig.path = "assets/textures/spongebob.png";
+            texture = Toki::Texture::create(textureConfig);
+        }
+
+        model = Geometry::create();
+        model->loadFromObj("assets/models/spongebob_high_poly_tris.obj");
 
     }
+
+    struct Push {
+        glm::mat4 mvp;
+        glm::vec2 offsetPositions{ .0, .0 };
+    };
 
     void onUpdate(float deltaTime) override {
         framebuffer->bind();
@@ -92,9 +111,12 @@ public:
         Toki::RendererCommand::setViewport({ 0, 0 }, { 1280, 720 });
         Toki::RendererCommand::setScissor({ 0, 0 }, { 1280, 720 });
 
-        glm::vec2 offsetPositions{ .0, .0 };
+        Push push;
+        push.mvp = glm::perspective(glm::radians(90.0f), 1280 / 720.0f, 0.0f, 1000.0f) * glm::mat4{ 1 }*glm::scale(glm::translate(glm::mat4{ 1.0f }, { 0.0f, 0.0f, -3.0f }), { .4f, .4f, .4f });
+        // push.mvp = glm::mat4(1);
+        push.mvp[1][1] *= -1;
 
-        Toki::RendererCommand::setConstant(shader, Toki::ShaderStage::Vertex, sizeof(glm::vec2), &offsetPositions);
+        Toki::RendererCommand::setConstant(shader, sizeof(Push), &push);
 
         static float added1 = 0;
         static float added2 = 0;
@@ -107,14 +129,15 @@ public:
         if (added2 > 1) added2 -= 1;
         if (added3 > 1) added3 -= 1;
 
+        //glm::vec4 addedColor = { added1, added2, added3, 1 };
+        //uniformBuffer->setData(sizeof(addedColor), &addedColor);
 
-
-        glm::vec4 addedColor = { added1, added2, added3, 1 };
-        uniformBuffer->setData(sizeof(addedColor), &addedColor);
-
-        Toki::RendererCommand::setUniform(shader, uniformBuffer, Toki::ShaderStage::Fragment, 0, 0);
+        Toki::RendererCommand::setUniform(shader, uniformBuffer, 0, 0);
+        Toki::RendererCommand::setTexture(shader, texture, 0, 0, 1);
 
         Toki::RendererCommand::drawInstanced({ vertexBuffer, instanceBuffer }, indexBuffer, 3);
+
+        Toki::RendererCommand::draw(model);
 
         framebuffer->unbind();
     }
@@ -126,6 +149,10 @@ private:
     Toki::Ref<Toki::VertexBuffer> instanceBuffer;
     Toki::Ref<Toki::UniformBuffer> uniformBuffer;
     Toki::Ref<Toki::IndexBuffer> indexBuffer;
+
+    Toki::Ref<Toki::Texture> texture;
+
+    Toki::Ref<Toki::Geometry> model;
 };
 
 int main(int argc, char** argv) {

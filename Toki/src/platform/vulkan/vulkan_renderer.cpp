@@ -89,4 +89,35 @@ namespace Toki {
         context->currentFrame = ++context->currentFrame % VulkanContext::MAX_FRAMES;
     }
 
+    VkCommandBuffer VulkanRenderer::beginSingleUseCommands() {
+        VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
+        commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        commandBufferAllocateInfo.commandPool = context->commandPool;
+        commandBufferAllocateInfo.commandBufferCount = 1;
+        commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+        VkCommandBuffer commandBuffer;
+        TK_ASSERT_VK_RESULT(vkAllocateCommandBuffers(context->device, &commandBufferAllocateInfo, &commandBuffer), "");
+
+        VkCommandBufferBeginInfo commandBufferBeginInfo{};
+        commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        TK_ASSERT_VK_RESULT(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo), "");
+
+        return commandBuffer;
+    }
+
+    void VulkanRenderer::endSingleUseCommands(VkCommandBuffer commandBuffer) {
+        TK_ASSERT_VK_RESULT(vkEndCommandBuffer(commandBuffer), "");
+
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffer;
+
+        TK_ASSERT_VK_RESULT(vkQueueSubmit(context->graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE), "");
+        TK_ASSERT_VK_RESULT(vkQueueWaitIdle(context->graphicsQueue), "");
+        vkFreeCommandBuffers(context->device, context->commandPool, 1, &commandBuffer);
+    }
+
 }

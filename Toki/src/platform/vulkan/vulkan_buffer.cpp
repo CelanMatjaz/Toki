@@ -6,7 +6,7 @@
 
 namespace Toki {
 
-    VulkanBuffer::VulkanBuffer(const BufferConfig& config, VkBufferUsageFlagBits usage) : config(config) {
+    VulkanBuffer::VulkanBuffer(const BufferConfig& config, VkBufferUsageFlagBits usage, VkMemoryPropertyFlags properties) : config(config) {
         VkDevice device = VulkanRenderer::device();
         VkPhysicalDevice physicalDevice = VulkanRenderer::physicalDevice();
 
@@ -24,7 +24,7 @@ namespace Toki {
         VkMemoryAllocateInfo memoryAllocInfo{};
         memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         memoryAllocInfo.allocationSize = memoryRequirements.size;
-        memoryAllocInfo.memoryTypeIndex = VulkanUtils::findMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        memoryAllocInfo.memoryTypeIndex = VulkanUtils::findMemoryType(memoryRequirements.memoryTypeBits, properties);
 
         TK_ASSERT_VK_RESULT(vkAllocateMemory(device, &memoryAllocInfo, nullptr, &memory), "Could not allocate memory");
         TK_ASSERT_VK_RESULT(vkBindBufferMemory(device, buffer, memory, 0), "Could not bind buffer memory");

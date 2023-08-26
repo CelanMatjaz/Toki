@@ -2,11 +2,14 @@
 
 #include "renderer/shader.h"
 #include "vulkan/vulkan.h"
+#include "platform/vulkan/backend/vulkan_descriptor_set.h"
 #include "platform/vulkan/backend/vulkan_pipeline.h"
 #include "platform/vulkan/backend/vulkan_render_pass.h"
 #include "unordered_map"
 #include "spirv_cross/spirv_reflect.hpp"
 #include "shaderc/shaderc.hpp"
+#include "renderer/buffer.h"
+#include "renderer/texture.h"
 
 namespace Toki {
 
@@ -18,8 +21,11 @@ namespace Toki {
         virtual void reload() override;
 
         VkPipelineLayout getPipelineLayout() { return pipelineLayout; }
-        VkDescriptorSet getDescriptorSet(ShaderStage stage, uint32_t set) { return descriptorSets[std::to_underlying(stage)][set]; }
-        std::vector<VkDescriptorSet> getDescriptorSets(ShaderStage stage);
+        void setUniform(Ref<UniformBuffer> uniformBuffer, uint32_t binding, uint32_t set = 0, uint32_t index = 0);
+        void setTexture(Ref<Texture> texture, uint32_t binding, uint32_t set = 0, uint32_t index = 0);
+
+        VkDescriptorSet getSet(uint32_t set);
+        VkShaderStageFlagBits getContantStageFlags() { return (VkShaderStageFlagBits) contantStageFlags; }
 
         VkPipelineBindPoint getPipelineBindPoint();
 
@@ -34,18 +40,20 @@ namespace Toki {
 
         static shaderc_shader_kind getShadercShaderKind(ShaderStage stage);
 
-        static std::unordered_map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> getDescriptorSetBindings(ShaderStage stage, spirv_cross::Compiler& compiler, VkDescriptorType descriptorType);
-        static std::vector<VkPushConstantRange> getPushConstants(ShaderStage stage, spirv_cross::Compiler& compiler);
+        void getDescriptorSetBindings(ShaderStage stage, spirv_cross::Compiler& compiler, VkDescriptorType descriptorType);
+        void getPushConstants(ShaderStage stage, spirv_cross::Compiler& compiler);
 
         static std::vector<VkVertexInputBindingDescription> mapBindingDescriptions(std::vector<VertexBindingDescription> bindingDescriptions);
         static std::vector<VkVertexInputAttributeDescription> mapAttributeDescriptions(std::vector<VertexAttributeDescription> attributeDescriptions);
 
         std::vector<VkPushConstantRange> pushConstants;
-        std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
-        std::vector<VkDescriptorSet> descriptorSets[std::to_underlying(ShaderStage::SHADER_STAGE_MAX_ENUM)];
+        std::unordered_map<uint32_t, VulkanDescriptorSet> descriptorSets;
+        std::unordered_map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> setLayoutBindings;
         VkPipelineLayout pipelineLayout;
         VkPipelineBindPoint bindPoint;
         Ref<VulkanRenderPass> renderPass;
+
+        uint32_t contantStageFlags = 0;
     };
 
 }

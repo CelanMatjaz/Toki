@@ -21,10 +21,6 @@ namespace Toki {
     }
 
     VulkanShader::~VulkanShader() {
-        for (const auto& layout : descriptorSetLayouts) {
-            vkDestroyDescriptorSetLayout(VulkanRenderer::device(), layout, nullptr);
-        }
-
         vkDestroyPipelineLayout(VulkanRenderer::device(), pipelineLayout, nullptr);
     }
 
@@ -48,10 +44,15 @@ namespace Toki {
         TK_ASSERT(!binaries[ShaderStage::Vertex].empty(), "Vertex shader (#vert|#vertex) is required in shader file");
         TK_ASSERT(!binaries[ShaderStage::Fragment].empty(), "Fragment shader (#frag|#fragment|#pixel) is required in shader file");
 
-        std::vector<uint32_t> moduleConfigs[std::to_underlying(ShaderStage::SHADER_STAGE_MAX_ENUM)];
-
         auto fragmentModuleSpirv = reflect(ShaderStage::Fragment, binaries[ShaderStage::Fragment]);
         auto vertexModuleSpirv = reflect(ShaderStage::Vertex, binaries[ShaderStage::Vertex]);
+
+        std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
+
+        for (const auto& [set, bindings] : setLayoutBindings) {
+            descriptorSets.emplace(set, bindings);
+            descriptorSetLayouts.emplace_back(descriptorSets[set].getLayout());
+        }
 
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
         pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -81,54 +82,11 @@ namespace Toki {
         spirv_cross::Compiler compiler(spirv);
         spirv_cross::ShaderResources resources = compiler.get_shader_resources();
 
-        auto uniforms = getDescriptorSetBindings(stage, compiler, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-        auto samplers = getDescriptorSetBindings(stage, compiler, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-        pushConstants = getPushConstants(stage, compiler);
+        getDescriptorSetBindings(stage, compiler, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        getDescriptorSetBindings(stage, compiler, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        getPushConstants(stage, compiler);
 
-        std::unordered_map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> sets;
-        for (const auto& [set, uniformBindings] : uniforms) {
-            if (!sets.contains(set))
-                sets[set] = {};
-
-            for (const auto& binding : uniformBindings) {
-                sets[set].emplace_back(binding);
-            }
-        }
-
-        for (const auto& [set, samplerBindings] : samplers) {
-            if (!sets.contains(set))
-                sets[set] = {};
-
-            for (const auto& binding : samplerBindings) {
-                sets[set].emplace_back(binding);
-            }
-        }
-
-        std::vector<VkDescriptorSetLayout> layouts;
-
-        for (const auto& [set, bindings] : sets) {
-            VkDescriptorSetLayoutCreateInfo layoutInfo{};
-            layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-            layoutInfo.pBindings = bindings.data();
-            layoutInfo.bindingCount = bindings.size();
-
-            VkDescriptorSetLayout descriptorSetLayout;
-            TK_ASSERT_VK_RESULT(vkCreateDescriptorSetLayout(VulkanRenderer::device(), &layoutInfo, nullptr, &descriptorSetLayout), std::format("Could not create descriptor set layout for set {}", set));
-            layouts.emplace_back(descriptorSetLayout);
-            descriptorSetLayouts.emplace_back(descriptorSetLayout);
-        }
-
-        descriptorSets[std::to_underlying(stage)].resize(layouts.size());
-
-        if (layouts.size()) {
-            VkDescriptorSetAllocateInfo descriptorSetAllocateInfo{};
-            descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-            descriptorSetAllocateInfo.descriptorPool = VulkanRenderer::descriptorPool();
-            descriptorSetAllocateInfo.descriptorSetCount = layouts.size();
-            descriptorSetAllocateInfo.pSetLayouts = layouts.data();
-
-            TK_ASSERT_VK_RESULT(vkAllocateDescriptorSets(VulkanRenderer::device(), &descriptorSetAllocateInfo, descriptorSets[std::to_underlying(stage)].data()), "Could not allocate descriptor sets");
-        }
+        auto stageFlag = mapShaderStage(stage);
 
         VkShaderModuleCreateInfo shaderModuleCreateInfo{};
         shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -141,14 +99,17 @@ namespace Toki {
         return shaderModule;
     }
 
-    std::vector<VkDescriptorSet> VulkanShader::getDescriptorSets(ShaderStage stage) {
-        std::vector<VkDescriptorSet> sets;
+    void VulkanShader::setUniform(Ref<UniformBuffer> uniformBuffer, uint32_t binding, uint32_t set, uint32_t index) {
+        descriptorSets[set].setUniformBuffer((VulkanUniformBuffer*) uniformBuffer.get(), binding, index);
+    }
 
-        for (const auto& set : descriptorSets[std::to_underlying(stage)]) {
-            sets.emplace_back(set);
-        }
+    void VulkanShader::setTexture(Ref<Texture> texture, uint32_t binding, uint32_t set, uint32_t index) {
+        descriptorSets[set].setTexture((VulkanTexture*) texture.get(), binding, index);
+    }
 
-        return std::move(sets);
+    VkDescriptorSet VulkanShader::getSet(uint32_t set) {
+        TK_ASSERT(descriptorSets.contains(set), "No desciptor set exists for stage");
+        return descriptorSets[set].getHandle();
     }
 
     VkPipelineBindPoint VulkanShader::getPipelineBindPoint() {
@@ -166,10 +127,10 @@ namespace Toki {
         return shaderc_shader_kind::shaderc_glsl_infer_from_source;
     }
 
-    std::unordered_map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> VulkanShader::getDescriptorSetBindings(ShaderStage stage, spirv_cross::Compiler& compiler, VkDescriptorType descriptorType) {
+    void VulkanShader::getDescriptorSetBindings(ShaderStage stage, spirv_cross::Compiler& compiler, VkDescriptorType descriptorType) {
         spirv_cross::ShaderResources resources = compiler.get_shader_resources();
         spirv_cross::SmallVector<spirv_cross::Resource> resourceArray;
-        std::unordered_map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> bindings;
+
         VkShaderStageFlagBits stageFlag = mapShaderStage(stage);
 
         switch (descriptorType) {
@@ -180,7 +141,8 @@ namespace Toki {
                 resourceArray = resources.sampled_images;
                 break;
             default:
-                return {};
+                TK_ASSERT(false, std::format("Decriptor type {} is not supported\n", (int) descriptorType));
+                return;
         }
 
         for (const auto& resource : resourceArray) {
@@ -188,8 +150,8 @@ namespace Toki {
             const auto& typeArray = compiler.get_type(resource.type_id);
 
             uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            if (!bindings.contains(set)) {
-                bindings[set] = {};
+            if (!setLayoutBindings.contains(set)) {
+                setLayoutBindings[set] = {};
             }
 
             VkDescriptorSetLayoutBinding binding{};
@@ -198,13 +160,21 @@ namespace Toki {
             binding.descriptorType = descriptorType;
             binding.stageFlags = stageFlag;
 
-            bindings[set].emplace_back(binding);
-        }
+            if (setLayoutBindings[set].size() <= binding.binding) {
+                setLayoutBindings[set].resize(binding.binding + 1);
+                setLayoutBindings[set][binding.binding] = binding;
+            }
+            else {
+                TK_ASSERT(setLayoutBindings[set][binding.binding].descriptorType == binding.descriptorType, std::format("Descriptor binding {} descriptor types do not match in all shader stages\n\tShader file: {}", binding.binding, config.path.string()));
+                TK_ASSERT(setLayoutBindings[set][binding.binding].descriptorCount == binding.descriptorCount, std::format("Descriptor binding {} descriptor counts do not match in all shader stages\n\tShader file: {}", binding.binding, config.path.string()));
 
-        return bindings;
+                setLayoutBindings[set][binding.binding].stageFlags |= stageFlag;
+
+            }
+        }
     }
 
-    std::vector<VkPushConstantRange> VulkanShader::getPushConstants(ShaderStage stage, spirv_cross::Compiler& compiler) {
+    void VulkanShader::getPushConstants(ShaderStage stage, spirv_cross::Compiler& compiler) {
         spirv_cross::ShaderResources resources = compiler.get_shader_resources();
         std::vector<VkPushConstantRange> constants;
         VkShaderStageFlagBits stageFlag = mapShaderStage(stage);
@@ -220,12 +190,12 @@ namespace Toki {
             range.size = compiler.get_declared_struct_size(elementType);
             range.stageFlags = stageFlag;
 
+            contantStageFlags = contantStageFlags | stageFlag;
+
             TK_ASSERT(range.size <= props.limits.maxPushConstantsSize, std::format("Push constant size is too big and not supported by the GPU ({}), max size: {}", range.size, props.limits.maxPushConstantsSize));
 
-            constants.emplace_back(range);
+            pushConstants.emplace_back(range);
         }
-
-        return constants;
     }
 
     std::vector<VkVertexInputBindingDescription> VulkanShader::mapBindingDescriptions(std::vector<VertexBindingDescription> bindingDescriptions) {

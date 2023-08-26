@@ -1,6 +1,7 @@
 #pragma once
 
 #include "toki/renderer/texture.h"
+#include "platform/vulkan/backend/vulkan_image.h"
 
 namespace Toki {
 
@@ -10,7 +11,12 @@ namespace Toki {
         VulkanTexture(const TextureConfig& config);
         ~VulkanTexture();
 
+         Ref<VulkanImage> getHandle() { return imageHandle; }
+
     private:
+        VkFormat format;
+
+        Ref<VulkanImage> imageHandle;
     };
 
 }

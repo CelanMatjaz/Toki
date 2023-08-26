@@ -48,6 +48,10 @@ namespace Toki {
         VkQueue graphicsQueue;
         VkQueue presentQueue;
 
+        VkSampler sampler;
+        Ref<VulkanImage> noTexture;
+        Ref<VulkanUniformBuffer> noBuffer;
+
         struct FrameData {
             VkSemaphore presentSemaphore = VK_NULL_HANDLE;
             VkSemaphore renderSemaphore = VK_NULL_HANDLE;

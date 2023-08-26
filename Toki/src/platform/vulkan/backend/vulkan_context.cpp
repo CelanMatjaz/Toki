@@ -4,6 +4,7 @@
 #include "vulkan_pipeline.h"
 #include "core/assert.h"
 #include "core/engine.h"
+#include "renderer/renderer_command.h"
 
 namespace Toki {
 
@@ -36,10 +37,29 @@ namespace Toki {
         vkGetDeviceQueue(device, queueFamilyIndexes.presentQueueIndex, 0, &presentQueue);
 
         swapchain = createRef<VulkanSwapchain>();
+
+        sampler = VulkanImage::createSampler();
+
+        VulkanImageConfig imageConfig{};
+        imageConfig.format = VK_FORMAT_R8G8B8A8_SRGB;
+        imageConfig.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        imageConfig.extent = { 2, 2, 1 };
+        noTexture = createRef<VulkanImage>(imageConfig);
+
+        uint32_t data[] = { 0xffff00ff, 0xff000000, 0xff000000, 0xffff00ff };
+        noTexture->setData(sizeof(data), data);
+
+        UniformBufferConfig uniformBufferConfig{};
+        uniformBufferConfig.size = 1;
+        noBuffer = createRef<VulkanUniformBuffer>(uniformBufferConfig);
     }
 
     void VulkanContext::shutdown() {
         vkDeviceWaitIdle(device);
+
+        vkDestroySampler(device, sampler, nullptr);
+        noTexture.reset();
+        noBuffer.reset();
 
         swapchain.reset();
 

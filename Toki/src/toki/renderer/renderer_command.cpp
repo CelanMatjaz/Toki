@@ -4,6 +4,7 @@
 #include "platform/vulkan/vulkan_renderer.h"
 #include "platform/vulkan/vulkan_buffer.h"
 #include "platform/vulkan/vulkan_shader.h"
+#include "platform/vulkan/vulkan_texture.h"
 #include "unordered_map"
 
 namespace Toki {
@@ -40,6 +41,10 @@ namespace Toki {
         vkCmdDrawIndexed(VulkanRenderer::commandBuffer(), indexBuffer->getIndexCount(), 1, 0, 0, 0);
     }
 
+    void RendererCommand::draw(Ref<Geometry> geometry) {
+        RendererCommand::draw(geometry->getVertexBuffer(), geometry->getIndexBuffer());
+    }
+
     void RendererCommand::drawInstanced(std::vector<Ref<VertexBuffer>> vertexBuffers, Ref<IndexBuffer> indexBuffer, uint32_t instanceCount) {
         std::unordered_map<uint32_t, std::vector<VkBuffer>> bufferMap;
 
@@ -63,34 +68,27 @@ namespace Toki {
         vkCmdDrawIndexed(commandBuffer, indexBuffer->getIndexCount(), instanceCount, 0, 0, 0);
     }
 
-    void RendererCommand::setConstant(Ref<Shader> shader, ShaderStage stage, uint32_t dataSize, const void* data) {
-        vkCmdPushConstants(VulkanRenderer::commandBuffer(), ((VulkanShader*) shader.get())->getPipelineLayout(), VulkanShader::mapShaderStage(stage), 0, dataSize, data);
+    void RendererCommand::setConstant(Ref<Shader> shader, uint32_t dataSize, const void* data) {
+        VulkanShader* vulkanShader = (VulkanShader*) shader.get();
+        vkCmdPushConstants(VulkanRenderer::commandBuffer(), ((VulkanShader*) shader.get())->getPipelineLayout(), vulkanShader->getContantStageFlags(), 0, dataSize, data);
     }
 
-    void RendererCommand::setUniform(Ref<Shader> shader, Ref<UniformBuffer> uniformBuffer, ShaderStage stage, uint32_t binding, uint32_t set) {
+    void RendererCommand::setUniform(Ref<Shader> shader, Ref<UniformBuffer> uniformBuffer, uint32_t binding, uint32_t index, uint32_t set) {
         VulkanShader* vulkanShader = (VulkanShader*) shader.get();
         VulkanUniformBuffer* vulkanUniform = (VulkanUniformBuffer*) uniformBuffer.get();
+        vulkanShader->setUniform(uniformBuffer, binding, set, index);
+        VkDescriptorSet descriptorSet = vulkanShader->getSet(set);
+        vkCmdBindDescriptorSets(VulkanRenderer::commandBuffer(), vulkanShader->getPipelineBindPoint(), vulkanShader->getPipelineLayout(), set, 1, &descriptorSet, 0, nullptr);
+    }
 
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = vulkanUniform->getBuffer();
-        bufferInfo.offset = 0;
-        bufferInfo.range = vulkanUniform->getSize();
+    static std::vector<VkDescriptorImageInfo> descriptorImageInfos(32);
 
-        VkWriteDescriptorSet descriptorWrite{};
-        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.pNext = nullptr;
-        descriptorWrite.dstSet = vulkanShader->getDescriptorSet(stage, set);
-        descriptorWrite.dstBinding = 0;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pBufferInfo = &bufferInfo;
-
-        vkUpdateDescriptorSets(VulkanRenderer::device(), 1, &descriptorWrite, 0, nullptr);
-
-        auto sets = vulkanShader->getDescriptorSets(stage);
-
-        vkCmdBindDescriptorSets(VulkanRenderer::commandBuffer(), vulkanShader->getPipelineBindPoint(), vulkanShader->getPipelineLayout(), 0, sets.size(), sets.data(), 0, nullptr);
+    void RendererCommand::setTexture(Ref<Shader> shader, Ref<Texture> texture, uint32_t binding, uint32_t index, uint32_t set) {
+        VulkanShader* vulkanShader = (VulkanShader*) shader.get();
+        VulkanTexture* vulkanTexture = (VulkanTexture*) texture.get();
+        vulkanShader->setTexture(texture, binding, set, index);
+        VkDescriptorSet descriptorSet = vulkanShader->getSet(set);
+        vkCmdBindDescriptorSets(VulkanRenderer::commandBuffer(), vulkanShader->getPipelineBindPoint(), vulkanShader->getPipelineLayout(), set, 1, &descriptorSet, 0, nullptr);
     }
 
 }
