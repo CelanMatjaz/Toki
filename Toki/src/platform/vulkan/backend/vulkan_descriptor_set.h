@@ -25,8 +25,8 @@ namespace Toki {
         void setUniformBuffer(VulkanUniformBuffer* uniformBuffer, uint32_t binding, uint32_t index = 0);
         void setTexture(VulkanTexture* texture, uint32_t binding, uint32_t index = 0);
 
-        VkDescriptorSet getHandle() { return set; }
-        VkDescriptorSetLayout getLayout() { return layout; }
+        VkDescriptorSet getHandle() const { return set; }
+        VkDescriptorSetLayout getLayout() const { return layout; }
 
     private:
         void initBindings();

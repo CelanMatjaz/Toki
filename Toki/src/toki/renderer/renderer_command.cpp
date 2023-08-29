@@ -45,7 +45,7 @@ namespace Toki {
         RendererCommand::draw(geometry->getVertexBuffer(), geometry->getIndexBuffer());
     }
 
-    void RendererCommand::drawInstanced(std::vector<Ref<VertexBuffer>> vertexBuffers, Ref<IndexBuffer> indexBuffer, uint32_t instanceCount) {
+    void RendererCommand::drawInstanced(const std::vector<Ref<VertexBuffer>>& vertexBuffers, Ref<IndexBuffer> indexBuffer, uint32_t instanceCount) {
         std::unordered_map<uint32_t, std::vector<VkBuffer>> bufferMap;
 
         for (const auto& vertexBuffer : vertexBuffers) {
@@ -68,6 +68,10 @@ namespace Toki {
         vkCmdDrawIndexed(commandBuffer, indexBuffer->getIndexCount(), instanceCount, 0, 0, 0);
     }
 
+    void RendererCommand::drawInstanced(Ref<Geometry> geometry, Ref<VertexBuffer> instanceBuffer, uint32_t instanceCount) {
+        drawInstanced({ geometry->getVertexBuffer(), instanceBuffer }, geometry->getIndexBuffer(), instanceCount);
+    }
+
     void RendererCommand::setConstant(Ref<Shader> shader, uint32_t dataSize, const void* data) {
         VulkanShader* vulkanShader = (VulkanShader*) shader.get();
         vkCmdPushConstants(VulkanRenderer::commandBuffer(), ((VulkanShader*) shader.get())->getPipelineLayout(), vulkanShader->getContantStageFlags(), 0, dataSize, data);
@@ -80,8 +84,6 @@ namespace Toki {
         VkDescriptorSet descriptorSet = vulkanShader->getSet(set);
         vkCmdBindDescriptorSets(VulkanRenderer::commandBuffer(), vulkanShader->getPipelineBindPoint(), vulkanShader->getPipelineLayout(), set, 1, &descriptorSet, 0, nullptr);
     }
-
-    static std::vector<VkDescriptorImageInfo> descriptorImageInfos(32);
 
     void RendererCommand::setTexture(Ref<Shader> shader, Ref<Texture> texture, uint32_t binding, uint32_t index, uint32_t set) {
         VulkanShader* vulkanShader = (VulkanShader*) shader.get();

@@ -39,10 +39,11 @@ public:
         shader = Toki::Shader::create(shaderConfig);
 
         {
-            Vertex positions[3] = {
-                { { 0.0f, -0.2f, 0.0f }, {}, {} },
-                { { -0.2f, 0.2f, 0.0f }, {}, {} },
-                { { 0.2f, 0.2f, 0.0f }, {}, {} },
+            Vertex positions[] = {
+                { { -10.0f, -1.0f, -10.0f }, {1.0f, 1.0f }, {} },
+                { { 10.0f, -1.0f, -10.0f }, {1.0f, 0.0f}, {} },
+                { { -10.0f, 0.0f, 10.0f }, {0.0f, 1.0f}, {} },
+                { { 10.0f, 0.0f, 10.0f }, {0.0f, 0.0f}, {} },
             };
 
             VertexBufferConfig vertexBufferConfig{};
@@ -53,10 +54,10 @@ public:
         }
 
         {
-            glm::vec3 instancePositions[3] = {
+            glm::vec3 instancePositions[] = {
                 { 0.0f, -0.5f, 0.0f },
-                { -0.5f, 0.5f, 0.0f },
-                { 0.5f, 0.5f, 0.0f },
+                // { -0.5f, 0.5f, 0.0f },
+                // { 0.5f, 0.5f, 0.0f },
             };
 
             VertexBufferConfig instanceBufferConfig{};
@@ -67,11 +68,11 @@ public:
         }
 
         {
-            uint32_t indicies[] = { 0, 1, 2 };
+            uint32_t indicies[] = { 2, 1, 0, 1, 2, 3 };
 
             IndexBufferConfig indexBufferConfig{};
-            indexBufferConfig.size = 3 * sizeof(uint32_t);
-            indexBufferConfig.indexCount = 3;
+            indexBufferConfig.size = sizeof(indicies);
+            indexBufferConfig.indexCount = sizeof(indicies) / sizeof(uint32_t);
             indexBuffer = IndexBuffer::create(indexBufferConfig);
             indexBuffer->setData(sizeof(indicies), indicies);
         }
@@ -97,6 +98,12 @@ public:
         model = Geometry::create();
         model->loadFromObj("assets/models/spongebob_high_poly_tris.obj");
 
+
+
+        camera = Toki::createRef<CameraController>(
+            glm::perspective(glm::radians(60.0f), 1280 / 720.f, 0.0f, 1000.0f)
+        );
+
     }
 
     struct Push {
@@ -111,9 +118,14 @@ public:
         Toki::RendererCommand::setViewport({ 0, 0 }, { 1280, 720 });
         Toki::RendererCommand::setScissor({ 0, 0 }, { 1280, 720 });
 
+        static float rotation = 0;
+
+        camera->onUpdate();
+
         Push push;
-        push.mvp = glm::perspective(glm::radians(90.0f), 1280 / 720.0f, 0.0f, 1000.0f) * glm::mat4{ 1 }*glm::scale(glm::translate(glm::mat4{ 1.0f }, { 0.0f, 0.0f, -3.0f }), { .4f, .4f, .4f });
-        // push.mvp = glm::mat4(1);
+        // push.mvp = camera->getProjection() * camera->getView() *
+        push.mvp = camera->getProjection() *
+            glm::scale(glm::translate(glm::mat4{ 1.0f }, { 0.0f, 0.0f, -5.0f }), { .4f, .4f, .4f });
         push.mvp[1][1] *= -1;
 
         Toki::RendererCommand::setConstant(shader, sizeof(Push), &push);
@@ -129,15 +141,12 @@ public:
         if (added2 > 1) added2 -= 1;
         if (added3 > 1) added3 -= 1;
 
-        //glm::vec4 addedColor = { added1, added2, added3, 1 };
-        //uniformBuffer->setData(sizeof(addedColor), &addedColor);
-
         Toki::RendererCommand::setUniform(shader, uniformBuffer, 0, 0);
         Toki::RendererCommand::setTexture(shader, texture, 0, 0, 1);
 
-        Toki::RendererCommand::drawInstanced({ vertexBuffer, instanceBuffer }, indexBuffer, 3);
+        Toki::RendererCommand::drawInstanced({ vertexBuffer ,instanceBuffer }, indexBuffer);
 
-        Toki::RendererCommand::draw(model);
+        Toki::RendererCommand::drawInstanced(model, instanceBuffer);
 
         framebuffer->unbind();
     }
@@ -153,6 +162,8 @@ private:
     Toki::Ref<Toki::Texture> texture;
 
     Toki::Ref<Toki::Geometry> model;
+
+    Toki::Ref<Toki::CameraController> camera;
 };
 
 int main(int argc, char** argv) {

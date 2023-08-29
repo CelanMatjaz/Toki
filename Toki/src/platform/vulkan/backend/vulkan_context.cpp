@@ -43,10 +43,11 @@ namespace Toki {
         VulkanImageConfig imageConfig{};
         imageConfig.format = VK_FORMAT_R8G8B8A8_SRGB;
         imageConfig.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-        imageConfig.extent = { 2, 2, 1 };
+        imageConfig.extent = { 1, 1, 1 };
         noTexture = createRef<VulkanImage>(imageConfig);
 
-        uint32_t data[] = { 0xffff00ff, 0xff000000, 0xff000000, 0xffff00ff };
+        // uint32_t data[] = { 0xffff00ff, 0xff000000, 0xff000000, 0xffff00ff };
+        uint32_t data[] = { 0xffff00ff };
         noTexture->setData(sizeof(data), data);
 
         UniformBufferConfig uniformBufferConfig{};

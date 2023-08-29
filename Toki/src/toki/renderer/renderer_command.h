@@ -23,7 +23,7 @@ namespace Toki {
         static void draw(Ref<Geometry> geometry);
         // static void draw(std::vector<Ref<VertexBuffer>> vertexBuffers, Ref<IndexBuffer> indexBuffer);
 
-        static void drawInstanced(std::vector<Ref<VertexBuffer>> vertexBuffers, Ref<IndexBuffer> indexBuffer, uint32_t instanceCount = 1);
+        static void drawInstanced(const std::vector<Ref<VertexBuffer>>& vertexBuffers, Ref<IndexBuffer> indexBuffer, uint32_t instanceCount = 1);
         static void drawInstanced(Ref<Geometry> geometry, Ref<VertexBuffer> instanceBuffer, uint32_t instanceCount = 1);
 
         static void setConstant(Ref<Shader> shader, uint32_t dataSize, const void* data);

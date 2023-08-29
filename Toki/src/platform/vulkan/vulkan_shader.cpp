@@ -25,7 +25,15 @@ namespace Toki {
     }
 
     void VulkanShader::bind() {
-        vkCmdBindPipeline(VulkanRenderer::commandBuffer(), bindPoint, pipeline->getHandle());
+        std::vector<VkDescriptorSet> sets;
+        for (const auto& [setIndex, set] : descriptorSets) {
+            sets.push_back(set.getHandle());
+        }
+
+        VkCommandBuffer cmd = VulkanRenderer::commandBuffer();
+
+        vkCmdBindDescriptorSets(cmd, bindPoint, pipelineLayout, 0, sets.size(), sets.data(), 0, nullptr);
+        vkCmdBindPipeline(cmd, bindPoint, pipeline->getHandle());
     }
 
     void VulkanShader::reload() {

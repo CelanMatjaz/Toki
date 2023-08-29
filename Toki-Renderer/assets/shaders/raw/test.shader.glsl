@@ -16,7 +16,10 @@ layout(push_constant) uniform constants {
 
 void main() {
     outUv = uv;
-    gl_Position = PushConstants.mvp * vec4(position.x + instancePosition.x + PushConstants.offsetPosition.x, position.y + instancePosition.y + PushConstants.offsetPosition.y, 0.0, 1.0);
+    gl_Position = PushConstants.mvp * vec4(
+        position.x + instancePosition.x + PushConstants.offsetPosition.x, 
+        position.y + instancePosition.y + PushConstants.offsetPosition.y, 
+        position.z + instancePosition.z  , 1.0);
 }
 
 // ---------------------------
