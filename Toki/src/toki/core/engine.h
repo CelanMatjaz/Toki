@@ -5,6 +5,7 @@
 #include "layer.h"
 #include "vector"
 #include "chrono"
+#include "renderer/imgui/imgui_layer.h"
 
 namespace Toki {
 
@@ -30,6 +31,7 @@ namespace Toki {
         static inline Engine* engine;
         static inline Ref<Window> window;
         std::vector<Ref<Layer>> layers;
+        Ref<ImGuiLayer> imguiLayer;
 
         std::chrono::steady_clock::time_point lastFrameTime;
     };

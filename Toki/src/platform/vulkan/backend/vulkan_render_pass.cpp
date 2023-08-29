@@ -79,7 +79,7 @@ namespace Toki {
         attachmentDescription.storeOp = VulkanUtils::mapStoreOp(attachment.storeOp);
         attachmentDescription.stencilLoadOp = VulkanUtils::mapLoadOp(attachment.loadOp);
         attachmentDescription.stencilStoreOp = VulkanUtils::mapStoreOp(attachment.storeOp);
-        attachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        attachmentDescription.initialLayout = (attachment.initialLayout == InitialLayout::Undefined ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR); // TODO: create mapping functioon
         attachmentDescription.finalLayout = isSwapchainAttachment ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         return attachmentDescription;

@@ -26,12 +26,17 @@ namespace Toki {
 		DontCare, Load, Clear
 	};
 
+	enum class InitialLayout {
+		Undefined, Present
+	};
+
 	struct Attachment {
 		Format format;
 		Samples samples = Samples::Sample1;
 		AttachmentLoadOp loadOp = AttachmentLoadOp::DontCare;
 		AttachmentStoreOp storeOp = AttachmentStoreOp::Store;
 		RenderTarget target = RenderTarget::Texture;
+		InitialLayout initialLayout = InitialLayout::Undefined;
 	};
 
 	struct FramebufferConfig {

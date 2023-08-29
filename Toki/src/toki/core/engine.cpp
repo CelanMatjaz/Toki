@@ -15,6 +15,9 @@ namespace Toki {
         window = Window::create(windowConfig, this);
 
         Renderer::initRenderer();
+
+        imguiLayer = ImGuiLayer::create();
+        imguiLayer->onAttach();
     }
 
     Engine::~Engine() {
@@ -22,6 +25,9 @@ namespace Toki {
         for (uint32_t i = 0; i < layerCount; ++i) {
             popLayer();
         }
+
+        imguiLayer->onDetach();
+        imguiLayer.reset();
 
         Renderer::shutdownRenderer();
     }
@@ -36,6 +42,13 @@ namespace Toki {
 
             for (int32_t i = layers.size() - 1; i >= 0; --i) {
                 layers[i]->onUpdate(deltaTime);
+            }
+
+            { // ImGui rendering
+                imguiLayer->startImGuiFrame();
+                for (int layerIndex = layers.size() - 1; layerIndex >= 0; --layerIndex)
+                    layers[layerIndex]->renderImGui();
+                imguiLayer->endImGuiFrame();
             }
 
             Renderer::getRenderer()->endFrame();

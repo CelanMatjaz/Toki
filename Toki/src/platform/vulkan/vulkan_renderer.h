@@ -17,6 +17,7 @@ namespace Toki {
         virtual void beginFrame() override;
         virtual void endFrame() override;
 
+        static VkInstance instance() { return context->instance; }
         static VkDevice device() { return context->device; }
         static VkPhysicalDevice physicalDevice() { return context->physicalDevice; }
         static VkSurfaceKHR surface() { return context->surface; }
@@ -24,6 +25,8 @@ namespace Toki {
         static auto swapchain() { return context->swapchain; }
         static uint32_t currentFrameIndex() { return context->currentFrame; }
         static VkDescriptorPool descriptorPool() { return context->descriptorPool; }
+        static VkQueue graphicsQueue() { return context->graphicsQueue; }
+        static VkRenderPass renderPass() { return context->renderPass->getHandle(); }
 
         static VkSampler sampler() { return context->sampler; }
         static Ref<VulkanImage> defaultTexture() { return context->noTexture; }

@@ -11,6 +11,7 @@
                 "vendor/stb/",
                 "vendor/spdlog/include",
                 "vendor/glm",
+                "vendor/imgui",
                 "${env:VULKAN_SDK}/Include",
                 "${workspaceFolder}/Toki/src/toki"
             ],

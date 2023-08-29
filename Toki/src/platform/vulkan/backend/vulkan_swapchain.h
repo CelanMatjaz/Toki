@@ -26,8 +26,6 @@ namespace Toki {
         VkSwapchainKHR swapchain = VK_NULL_HANDLE;
         VkExtent2D extent;
         VkFormat imageFormat;
-
-
     };
 
 }

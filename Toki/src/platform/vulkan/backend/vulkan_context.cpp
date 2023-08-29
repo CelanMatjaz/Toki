@@ -53,6 +53,11 @@ namespace Toki {
         UniformBufferConfig uniformBufferConfig{};
         uniformBufferConfig.size = 1;
         noBuffer = createRef<VulkanUniformBuffer>(uniformBufferConfig);
+
+        VulkanRenderPassConfig vulkanRenderPassConfig;
+        vulkanRenderPassConfig.colorAttachments = { { Format::RGBA8 } };
+        vulkanRenderPassConfig.depthAttachment = createRef<Attachment>(Format::Depth);
+        renderPass = createRef<VulkanRenderPass>(vulkanRenderPassConfig);
     }
 
     void VulkanContext::shutdown() {
@@ -61,6 +66,7 @@ namespace Toki {
         vkDestroySampler(device, sampler, nullptr);
         noTexture.reset();
         noBuffer.reset();
+        renderPass.reset();
 
         swapchain.reset();
 

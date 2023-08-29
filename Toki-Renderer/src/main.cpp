@@ -1,6 +1,7 @@
 #include "iostream"
 #include "filesystem"
 #include "toki.h"
+#include "imgui.h"
 
 class TempLayer : public Toki::Layer {
 public:
@@ -149,6 +150,12 @@ public:
         Toki::RendererCommand::drawInstanced(model, instanceBuffer);
 
         framebuffer->unbind();
+    }
+
+    void renderImGui() override {
+        ImGui::Begin("Stats");
+        ImGui::Text("Test");
+        ImGui::End();
     }
 
 private:
