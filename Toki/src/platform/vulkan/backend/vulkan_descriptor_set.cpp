@@ -16,7 +16,7 @@ namespace Toki {
                     setBindings[i] = { DescriptorSetBindingType::Uniform, bindings[i].descriptorCount };
                     break;
                 case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-                    setBindings[i] = { DescriptorSetBindingType::Sampler2D, bindings[i].descriptorCount };
+                    setBindings[i] = { DescriptorSetBindingType::CombinedImageSampler, bindings[i].descriptorCount };
                     break;
                 default:
                     TK_ASSERT(false, std::format("Descriptor type {} is not supported", (int) bindings[i].descriptorType));
@@ -68,7 +68,7 @@ namespace Toki {
     }
 
     void VulkanDescriptorSet::setTexture(VulkanTexture* texture, uint32_t binding, uint32_t index) {
-        TK_ASSERT(setBindings[binding].type == DescriptorSetBindingType::Sampler2D, std::format("Trying to set a descriptor Sampler2D to some other type: {}", std::to_underlying(setBindings[binding].type)));
+        TK_ASSERT(setBindings[binding].type == DescriptorSetBindingType::CombinedImageSampler, std::format("Trying to set a descriptor CombinedImageSampler to some other type: {}", std::to_underlying(setBindings[binding].type)));
         TK_ASSERT(setBindings.contains(binding), std::format("Binding {} does not exist on shader", binding));
         TK_ASSERT(setBindings[binding].size > index, std::format("Index out of bounds. Trying to set array index {} on a binding of size {}", index, setBindings[binding].size));
 
@@ -96,6 +96,8 @@ namespace Toki {
         descriptorWrite.dstArrayElement = 0;
         descriptorWrite.descriptorCount = 1;
 
+        std::vector<std::vector<VkDescriptorBufferInfo>> bufferInfos;
+        std::vector<std::vector<VkDescriptorImageInfo>> imageInfos;
         std::vector<VkWriteDescriptorSet> descriptorWrites;
 
         for (const auto& [bindingKey, binding] : setBindings) {
@@ -106,40 +108,40 @@ namespace Toki {
                     bufferInfo.offset = 0;
                     bufferInfo.range = 1;
 
-                    std::vector<VkDescriptorBufferInfo> bufferInfos(binding.size, bufferInfo);
+                    std::vector<VkDescriptorBufferInfo> newBufferInfos(binding.size, bufferInfo);
+                    bufferInfos.emplace_back(newBufferInfos);
 
                     descriptorWrite.dstBinding = bindingKey;
                     descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                    descriptorWrite.pBufferInfo = bufferInfos.data();
-                    descriptorWrite.descriptorCount = bufferInfos.size();
+                    descriptorWrite.pBufferInfo = bufferInfos.back().data();
+                    descriptorWrite.descriptorCount = bufferInfos.back().size();
 
                     descriptorWrites.push_back(descriptorWrite);
 
-                    vkUpdateDescriptorSets(VulkanRenderer::device(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
-
                     break;
                 }
-                case DescriptorSetBindingType::Sampler2D: {
+                case DescriptorSetBindingType::CombinedImageSampler: {
                     VkDescriptorImageInfo imageInfo{};
                     imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
                     imageInfo.imageView = VulkanRenderer::defaultTexture()->getView();
                     imageInfo.sampler = VulkanRenderer::sampler();
 
-                    std::vector<VkDescriptorImageInfo> imageInfos(binding.size, imageInfo);
+                    std::vector<VkDescriptorImageInfo> newImageInfos(binding.size, imageInfo);
+                    imageInfos.emplace_back(newImageInfos);
 
                     descriptorWrite.dstBinding = bindingKey;
                     descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                    descriptorWrite.pImageInfo = imageInfos.data();
-                    descriptorWrite.descriptorCount = imageInfos.size();
+                    descriptorWrite.pImageInfo = imageInfos.back().data();
+                    descriptorWrite.descriptorCount = imageInfos.back().size();
 
                     descriptorWrites.push_back(descriptorWrite);
-
-                    vkUpdateDescriptorSets(VulkanRenderer::device(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 
                     break;
                 }
             }
         }
+
+        vkUpdateDescriptorSets(VulkanRenderer::device(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
     }
 
 }
