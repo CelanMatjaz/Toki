@@ -13,6 +13,12 @@ namespace Toki {
 
     struct EngineConfig {
         std::filesystem::path workingDirectory;
+        struct WindowConfig {
+            std::string title = "Window";
+            uint32_t width = 1280;
+            uint32_t height = 720;
+            bool resizable = false;
+        } windowConfig;
     };
 
     class Engine {

@@ -2,6 +2,9 @@
 #include "vulkan_texture.h"
 #include "core/assert.h"
 #include "platform/vulkan/backend/vulkan_image.h"
+#define STB_IMAGE_STATIC
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 namespace Toki {
 

@@ -99,11 +99,7 @@ public:
         model = Geometry::create();
         model->loadFromObj("assets/models/spongebob_high_poly_tris.obj");
 
-
-
-        camera = Toki::createRef<CameraController>(
-            glm::perspective(glm::radians(60.0f), 1280 / 720.f, 0.0f, 1000.0f)
-        );
+        camera = Toki::createRef<CameraController>(glm::radians(60.0f), 1280 / 720.f, 0.1f, 1000.0f);
 
     }
 
@@ -123,11 +119,12 @@ public:
 
         camera->onUpdate();
 
+
+
         Push push;
-        // push.mvp = camera->getProjection() * camera->getView() *
-        push.mvp = camera->getProjection() *
+        push.mvp = camera->getProjection() * camera->getView() *
+            // push.mvp = camera->getProjection() *
             glm::scale(glm::translate(glm::mat4{ 1.0f }, { 0.0f, 0.0f, -5.0f }), { .4f, .4f, .4f });
-        push.mvp[1][1] *= -1;
 
         Toki::RendererCommand::setConstant(shader, sizeof(Push), &push);
 
@@ -145,7 +142,7 @@ public:
         Toki::RendererCommand::setUniform(shader, uniformBuffer, 0, 0);
         Toki::RendererCommand::setTexture(shader, texture, 0, 0, 1);
 
-        Toki::RendererCommand::drawInstanced({ vertexBuffer ,instanceBuffer }, indexBuffer);
+        // Toki::RendererCommand::drawInstanced({ vertexBuffer ,instanceBuffer }, indexBuffer);
 
         Toki::RendererCommand::drawInstanced(model, instanceBuffer);
 
@@ -154,7 +151,11 @@ public:
 
     void renderImGui() override {
         ImGui::Begin("Stats");
-        ImGui::Text("Test");
+
+        ImGui::DragFloat3("Front", (float*) &camera->getFront(), -1.0f, 1.0f);
+        ImGui::DragFloat3("Left", (float*) &camera->getLeft(), -1.0f, 1.0f);
+        ImGui::DragFloat3("Up", (float*) &camera->getUp(), -1.0f, 1.0f);
+
         ImGui::End();
     }
 
@@ -176,7 +177,9 @@ private:
 int main(int argc, char** argv) {
 
     Toki::EngineConfig config{};
+    config.windowConfig.resizable = true;
     config.workingDirectory = std::filesystem::absolute(argc == 1 ? std::filesystem::path(".") : argv[1]);
+
 
     Toki::Engine app(config);
 

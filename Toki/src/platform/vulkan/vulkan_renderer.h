@@ -26,7 +26,6 @@ namespace Toki {
         static uint32_t currentFrameIndex() { return context->currentFrame; }
         static VkDescriptorPool descriptorPool() { return context->descriptorPool; }
         static VkQueue graphicsQueue() { return context->graphicsQueue; }
-        static VkRenderPass renderPass() { return context->renderPass->getHandle(); }
 
         static VkSampler sampler() { return context->sampler; }
         static Ref<VulkanImage> defaultTexture() { return context->noTexture; }

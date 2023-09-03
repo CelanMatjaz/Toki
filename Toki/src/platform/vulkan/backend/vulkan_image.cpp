@@ -5,6 +5,10 @@
 #include "platform/vulkan/vulkan_buffer.h"
 #include "toki/core/assert.h"
 
+#define STB_IMAGE_STATIC
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 namespace Toki {
 
     VulkanImage::VulkanImage(const VulkanImageConfig& config) {
@@ -64,6 +68,7 @@ namespace Toki {
         imageViewCreateInfo.subresourceRange.levelCount = 1;
         imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
         imageViewCreateInfo.subresourceRange.layerCount = 1;
+        imageViewCreateInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
         imageViewCreateInfo.image = image;
         imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 

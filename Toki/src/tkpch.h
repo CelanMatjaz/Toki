@@ -9,9 +9,6 @@
 #include "glm/gtx/euler_angles.hpp"
 #include "glm/gtx/quaternion.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 #include "algorithm"
 #include "array"
 #include "chrono"

@@ -3,6 +3,7 @@
 #include "core/core.h"
 #include "vector"
 #include "glm/glm.hpp"
+#include "texture.h"
 
 namespace Toki {
 

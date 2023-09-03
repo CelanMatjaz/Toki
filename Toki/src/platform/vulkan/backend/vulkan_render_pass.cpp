@@ -10,6 +10,7 @@ namespace Toki {
     VulkanRenderPass::VulkanRenderPass(VulkanRenderPassConfig& config) {
         std::vector<VkAttachmentDescription> attachments(config.colorAttachments.size() + 1);
         std::vector<VkAttachmentReference> attachmentRefs(config.colorAttachments.size());
+        std::vector<VkSubpassDependency> subpassDependencies(config.colorAttachments.size() + 1);
 
         uint32_t swapchainTargets = 0;
 
@@ -18,6 +19,7 @@ namespace Toki {
             attachments[i] = createColorAttachmentDescription(config.colorAttachments[i], config.colorAttachments[i].target == RenderTarget::Swapchain);
             attachmentRefs[i].attachment = i;
             attachmentRefs[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            subpassDependencies[i] = createColorDependency();
             if (isSwapchainTarget) ++swapchainTargets;
         }
 
@@ -29,6 +31,7 @@ namespace Toki {
         VkAttachmentReference depthAttachmentRef{};
         if (hasDepthAttachment) {
             attachments.back() = createDepthAttachmentDescription(*config.depthAttachment.get());
+            subpassDependencies.back() = createDepthDependency();
             depthAttachmentRef.attachment = attachments.size() - 1;
             depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
         }
@@ -42,26 +45,14 @@ namespace Toki {
             subpass.pDepthStencilAttachment = &depthAttachmentRef;
         }
 
-        VkSubpassDependency dependency{};
-        dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-        dependency.dstSubpass = 0;
-        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-        dependency.srcAccessMask = 0;
-        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-        if (hasDepthAttachment) {
-            dependency.dstAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-        }
-
         VkRenderPassCreateInfo renderPassCreateInfo{};
         renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         renderPassCreateInfo.attachmentCount = attachmentCount;
         renderPassCreateInfo.pAttachments = attachments.data();
         renderPassCreateInfo.subpassCount = 1;
         renderPassCreateInfo.pSubpasses = &subpass;
-        renderPassCreateInfo.dependencyCount = 1;
-        renderPassCreateInfo.pDependencies = &dependency;
+        renderPassCreateInfo.dependencyCount = attachmentCount;
+        renderPassCreateInfo.pDependencies = subpassDependencies.data();
 
         TK_ASSERT_VK_RESULT(vkCreateRenderPass(VulkanRenderer::device(), &renderPassCreateInfo, nullptr, &handle), "Could not create render pass");
     }
@@ -77,8 +68,8 @@ namespace Toki {
         attachmentDescription.samples = VulkanUtils::mapSamples(attachment.samples);
         attachmentDescription.loadOp = VulkanUtils::mapLoadOp(attachment.loadOp);
         attachmentDescription.storeOp = VulkanUtils::mapStoreOp(attachment.storeOp);
-        attachmentDescription.stencilLoadOp = VulkanUtils::mapLoadOp(attachment.loadOp);
-        attachmentDescription.stencilStoreOp = VulkanUtils::mapStoreOp(attachment.storeOp);
+        attachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        attachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         attachmentDescription.initialLayout = (attachment.initialLayout == InitialLayout::Undefined ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR); // TODO: create mapping functioon
         attachmentDescription.finalLayout = isSwapchainAttachment ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
@@ -88,8 +79,32 @@ namespace Toki {
     VkAttachmentDescription VulkanRenderPass::createDepthAttachmentDescription(const Attachment& attachment) {
         VkAttachmentDescription attachmentDescription = createColorAttachmentDescription(attachment);
         attachmentDescription.format = VulkanUtils::findDepthFormat();
+        attachmentDescription.stencilLoadOp = VulkanUtils::mapLoadOp(attachment.loadOp);
+        attachmentDescription.stencilStoreOp = VulkanUtils::mapStoreOp(attachment.storeOp);
         attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
         return attachmentDescription;
+    }
+
+    VkSubpassDependency VulkanRenderPass::createColorDependency() {
+        VkSubpassDependency colorDependency{};
+        colorDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+        colorDependency.dstSubpass = 0;
+        colorDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        colorDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        colorDependency.srcAccessMask = VK_ACCESS_NONE;
+        colorDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        return colorDependency;
+    }
+
+    VkSubpassDependency VulkanRenderPass::createDepthDependency() {
+        VkSubpassDependency depthDependency{};
+        depthDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+        depthDependency.dstSubpass = 0;
+        depthDependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        depthDependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        depthDependency.srcAccessMask = VK_ACCESS_NONE;
+        depthDependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        return depthDependency;
     }
 
 }

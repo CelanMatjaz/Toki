@@ -6,6 +6,9 @@
 #include "renderer/texture.h"
 #include "renderer/renderer_command.h"
 
+#include "renderer/camera/camera.h"
+#include "renderer/camera/camera_controller.h"
+
 #include "resources/geometry.h"
 
 #include "glm/glm.hpp"

@@ -11,8 +11,7 @@ namespace Toki {
         if (!engine)
             engine = this;
 
-        WindowConfig windowConfig{};
-        window = Window::create(windowConfig, this);
+        window = Window::create(*((WindowConfig*) &config.windowConfig), this);
 
         Renderer::initRenderer();
 

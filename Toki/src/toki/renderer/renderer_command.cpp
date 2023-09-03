@@ -15,6 +15,8 @@ namespace Toki {
         viewport.y = position.y;
         viewport.width = extent.x;
         viewport.height = extent.y;
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
         vkCmdSetViewport(VulkanRenderer::commandBuffer(), 0, 1, &viewport);
     }
 

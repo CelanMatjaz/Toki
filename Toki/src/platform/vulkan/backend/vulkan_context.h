@@ -52,7 +52,6 @@ namespace Toki {
         VkSampler sampler;
         Ref<VulkanImage> noTexture;
         Ref<VulkanUniformBuffer> noBuffer;
-        Ref<VulkanRenderPass> renderPass;
 
         struct FrameData {
             VkSemaphore presentSemaphore = VK_NULL_HANDLE;
