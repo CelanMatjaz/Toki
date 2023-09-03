@@ -83,16 +83,18 @@ namespace Toki {
         VulkanShader* vulkanShader = (VulkanShader*) shader.get();
         VulkanUniformBuffer* vulkanUniform = (VulkanUniformBuffer*) uniformBuffer.get();
         vulkanShader->setUniform(uniformBuffer, binding, set, index);
-        VkDescriptorSet descriptorSet = vulkanShader->getSet(set);
-        vkCmdBindDescriptorSets(VulkanRenderer::commandBuffer(), vulkanShader->getPipelineBindPoint(), vulkanShader->getPipelineLayout(), set, 1, &descriptorSet, 0, nullptr);
     }
 
     void RendererCommand::setTexture(Ref<Shader> shader, Ref<Texture> texture, uint32_t binding, uint32_t index, uint32_t set) {
         VulkanShader* vulkanShader = (VulkanShader*) shader.get();
         VulkanTexture* vulkanTexture = (VulkanTexture*) texture.get();
         vulkanShader->setTexture(texture, binding, set, index);
-        VkDescriptorSet descriptorSet = vulkanShader->getSet(set);
-        vkCmdBindDescriptorSets(VulkanRenderer::commandBuffer(), vulkanShader->getPipelineBindPoint(), vulkanShader->getPipelineLayout(), set, 1, &descriptorSet, 0, nullptr);
+    }
+
+    void RendererCommand::bindSets(Ref<Shader> shader, uint32_t firstSet) {
+        VulkanShader* vulkanShader = (VulkanShader*) shader.get();
+        std::vector<VkDescriptorSet> descriptorSets = vulkanShader->getSets();
+        vkCmdBindDescriptorSets(VulkanRenderer::commandBuffer(), vulkanShader->getPipelineBindPoint(), vulkanShader->getPipelineLayout(), firstSet, descriptorSets.size() - firstSet, &descriptorSets[firstSet], 0, nullptr);
     }
 
 }

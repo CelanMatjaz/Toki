@@ -4,6 +4,13 @@
 #include "imgui.h"
 
 class TempLayer : public Toki::Layer {
+    struct InstanceData {
+        alignas(glm::vec4) glm::vec3 position{ 0.0f, 0.0f, 0.0f };
+        alignas(glm::vec4) glm::vec3 rotation{ 0.0f, 0.0f, 0.0f };
+        alignas(glm::vec4) glm::vec3 scale{ 1.0f, 1.0f, 1.0f };
+        alignas(glm::vec4) glm::vec4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+    };
+
 public:
     TempLayer() {}
 
@@ -30,12 +37,17 @@ public:
             { 0, 0, VertexFormat::Float3, offsetof(Toki::Vertex, position) },
             { 1, 0, VertexFormat::Float2, offsetof(Toki::Vertex, uv)},
             { 2, 0, VertexFormat::Float3, offsetof(Toki::Vertex, normal) },
-            { 3, 1, VertexFormat::Float3, 0 }
+            { 3, 1, VertexFormat::Float3, offsetof(InstanceData, position) },
+            { 4, 1, VertexFormat::Float3, offsetof(InstanceData, rotation) },
+            { 5, 1, VertexFormat::Float3, offsetof(InstanceData, scale) },
+            { 6, 1, VertexFormat::Float4, offsetof(InstanceData, color) },
         };
+
+
         // binding, stride, inputRate
         shaderConfig.bindingDescriptions = {
             { 0, sizeof(Toki::Vertex), VertexInputRate::Vertex },
-            { 1, sizeof(glm::vec3), VertexInputRate::Instance }
+            { 1, sizeof(InstanceData), VertexInputRate::Instance }
         };
         shader = Toki::Shader::create(shaderConfig);
 
@@ -55,17 +67,15 @@ public:
         }
 
         {
-            glm::vec3 instancePositions[] = {
-                { 0.0f, -0.5f, 0.0f },
-                // { -0.5f, 0.5f, 0.0f },
-                // { 0.5f, 0.5f, 0.0f },
+            InstanceData instances[] = {
+                { { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } }
             };
 
             VertexBufferConfig instanceBufferConfig{};
-            instanceBufferConfig.size = sizeof(instancePositions);
+            instanceBufferConfig.size = sizeof(instances);
             instanceBufferConfig.binding = 1;
             instanceBuffer = VertexBuffer::create(instanceBufferConfig);
-            instanceBuffer->setData(sizeof(instancePositions), instancePositions);
+            instanceBuffer->setData(sizeof(instances), instances);
         }
 
         {
@@ -79,15 +89,35 @@ public:
         }
 
         {
-            struct {
-                glm::vec4 addedColor = { .2, .2, .2, 1 };
-                uint32_t textureIndex = 0;
-            } color;
+
+            struct LightData {
+                alignas(4) uint32_t lightCount = 0;
+                alignas(4) float ambientLight = 0.01f;
+            } lightData;
+
+            lightData.lightCount = 1;
+            lightData.ambientLight = 0.1f;
 
             UniformBufferConfig uniformBufferConfig{};
-            uniformBufferConfig.size = sizeof(color);
-            uniformBuffer = UniformBuffer::create(uniformBufferConfig);
-            uniformBuffer->setData(sizeof(color), &color);
+            uniformBufferConfig.size = sizeof(LightData);
+            uniformBufferLightData = UniformBuffer::create(uniformBufferConfig);
+            uniformBufferLightData->setData(sizeof(LightData), &lightData);
+        }
+
+        {
+            struct Light {
+                glm::vec3 position;
+                glm::vec4 color;
+            };
+
+            Light lights[8];
+
+            lights[0] = { { 10.0f, 0.0f, 10.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } };
+
+            UniformBufferConfig uniformBufferConfig{};
+            uniformBufferConfig.size = sizeof(lights);
+            uniformBufferLights = UniformBuffer::create(uniformBufferConfig);
+            uniformBufferLights->setData(sizeof(lights), &lights);
         }
 
         {
@@ -105,7 +135,7 @@ public:
 
     struct Push {
         glm::mat4 mvp;
-        glm::vec2 offsetPositions{ .0, .0 };
+        uint32_t textureIndex = 0;
     };
 
     void onUpdate(float deltaTime) override {
@@ -121,26 +151,18 @@ public:
 
 
 
-        Push push;
+        Push push{};
         push.mvp = camera->getProjection() * camera->getView() *
             // push.mvp = camera->getProjection() *
             glm::scale(glm::translate(glm::mat4{ 1.0f }, { 0.0f, 0.0f, -5.0f }), { .4f, .4f, .4f });
 
         Toki::RendererCommand::setConstant(shader, sizeof(Push), &push);
 
-        static float added1 = 0;
-        static float added2 = 0;
-        static float added3 = 0;
-        added1 += ((.00001));
-        added2 += ((.0002));
-        added3 += ((.003));
-
-        if (added1 > 1) added1 -= 1;
-        if (added2 > 1) added2 -= 1;
-        if (added3 > 1) added3 -= 1;
-
-        Toki::RendererCommand::setUniform(shader, uniformBuffer, 0, 0);
+        Toki::RendererCommand::setUniform(shader, uniformBufferLightData, 0, 0, 0);
+        Toki::RendererCommand::setUniform(shader, uniformBufferLights, 1, 0, 0);
         Toki::RendererCommand::setTexture(shader, texture, 0, 0, 1);
+
+        Toki::RendererCommand::bindSets(shader);
 
         // Toki::RendererCommand::drawInstanced({ vertexBuffer ,instanceBuffer }, indexBuffer);
 
@@ -150,13 +172,54 @@ public:
     }
 
     void renderImGui() override {
+        static uint32_t fps = 0;
+        static uint32_t frameCount = 0;
+        static auto prevTime = std::chrono::high_resolution_clock::now();
+
+        auto now = std::chrono::high_resolution_clock::now();
+        float deltaTime = std::chrono::duration<float>(now - prevTime).count();
+        prevTime = now;
+
+        static float accDelta = deltaTime;
+        accDelta += deltaTime;
+        ++frameCount;
+
         ImGui::Begin("Stats");
 
-        ImGui::DragFloat3("Front", (float*) &camera->getFront(), -1.0f, 1.0f);
-        ImGui::DragFloat3("Left", (float*) &camera->getLeft(), -1.0f, 1.0f);
-        ImGui::DragFloat3("Up", (float*) &camera->getUp(), -1.0f, 1.0f);
+        ImGui::Text("%.5f ms/frame", deltaTime * 1000);
+        ImGui::Text("%i FPS", fps);
 
+        if (accDelta >= 1.0f) {
+            fps = frameCount;
+            frameCount = 0;
+            accDelta = 0;
+        }
         ImGui::End();
+    }
+
+    InstanceData* instances = nullptr;
+
+    void resetInstances(uint32_t nX, uint32_t nY, float distanceX, float distanceY, bool randomParams) {
+        if (instances) delete[] instances;
+        instances = new InstanceData[nX * nY]();
+
+        float halfTotalDistanceX = nX > 1 ? (nX - 1) * distanceX / 2 : 0;
+        float halfTotalDistanceY = nY > 1 ? (nY - 1) * distanceY / 2 : 0;
+
+        for (uint32_t y = 0; y < nY; ++y) {
+            for (uint32_t x = 0; x < nX; ++x) {
+                instances[x + y * nX].position = { x * distanceX - halfTotalDistanceX, 0.0f, y * distanceY - halfTotalDistanceY };
+
+                InstanceData* temp = &instances[x + y * nX];
+
+                if (!randomParams) continue;
+
+                // instances[x + y * nX].rotation = { glm::radians(rand() % 180 - 90.0f), glm::radians(rand() % 180 / 1.0f), glm::radians(rand() % 180 - 90.0f) };
+                instances[x + y * nX].rotation = { 0.0f, glm::radians(rand() % 180 / 1.0f), 0.0f };
+                instances[x + y * nX].scale = { rand() % 200 / 100.0f, rand() % 200 / 100.0f, rand() % 200 / 100.0f };
+                instances[x + y * nX].color = { rand() % 256 / 256.0f, rand() % 256 / 256.0f, rand() % 256 / 256.0f, 1.0f };
+            }
+        }
     }
 
 private:
@@ -164,7 +227,8 @@ private:
     Toki::Ref<Toki::Framebuffer> framebuffer;
     Toki::Ref<Toki::VertexBuffer> vertexBuffer;
     Toki::Ref<Toki::VertexBuffer> instanceBuffer;
-    Toki::Ref<Toki::UniformBuffer> uniformBuffer;
+    Toki::Ref<Toki::UniformBuffer> uniformBufferLightData;
+    Toki::Ref<Toki::UniformBuffer> uniformBufferLights;
     Toki::Ref<Toki::IndexBuffer> indexBuffer;
 
     Toki::Ref<Toki::Texture> texture;

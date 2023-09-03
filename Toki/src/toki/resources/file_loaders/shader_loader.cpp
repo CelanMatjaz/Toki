@@ -11,7 +11,7 @@
 namespace Toki {
 
     static auto getSubstringAfterNewline = [](const std::string& str) {
-        return str.substr(str.find_first_of('\n'));
+        return str.substr(str.find_first_of('#', 1));
     };
 
     static shaderc_shader_kind getShadercShaderKind(ShaderStage stage) {
@@ -137,7 +137,12 @@ namespace Toki {
 
         for (const auto& [stage, sourceString] : shaderSources) {
             shaderc::SpvCompilationResult spirvModule = spirvCompiler.CompileGlslToSpv(sourceString, getShadercShaderKind(stage), (const char*) path.c_str(), options);
-            TK_ASSERT(spirvModule.GetCompilationStatus() == shaderc_compilation_status::shaderc_compilation_status_success, std::format("Error compiling shader code from file {}\n\t{}", std::filesystem::absolute(path).string(), spirvModule.GetErrorMessage()));
+            std::cout << "---------------------------------\n";
+            std::cout << sourceString << '\n';
+            std::cout << "---------------------------------\n";
+            TK_ASSERT(
+                spirvModule.GetCompilationStatus() == shaderc_compilation_status::shaderc_compilation_status_success,
+                std::format("Error compiling shader code from file {}\n\t{}", std::filesystem::absolute(path).string(), spirvModule.GetErrorMessage()));
             compiledBinaries[stage] = { spirvModule.begin(), spirvModule.end() };
         }
 

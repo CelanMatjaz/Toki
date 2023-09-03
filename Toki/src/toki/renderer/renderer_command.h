@@ -29,6 +29,8 @@ namespace Toki {
         static void setConstant(Ref<Shader> shader, uint32_t dataSize, const void* data);
         static void setUniform(Ref<Shader> shader, Ref<UniformBuffer> uniformBuffer, uint32_t binding, uint32_t index = 0, uint32_t set = 0);
         static void setTexture(Ref<Shader> shader, Ref<Texture> texture, uint32_t binding, uint32_t index = 0, uint32_t set = 0);
+
+        static void bindSets(Ref<Shader> shader, uint32_t firstSet = 0);
     };
 
 }

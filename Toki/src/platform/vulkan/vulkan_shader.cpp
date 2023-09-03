@@ -32,7 +32,6 @@ namespace Toki {
 
         VkCommandBuffer cmd = VulkanRenderer::commandBuffer();
 
-        vkCmdBindDescriptorSets(cmd, bindPoint, pipelineLayout, 0, sets.size(), sets.data(), 0, nullptr);
         vkCmdBindPipeline(cmd, bindPoint, pipeline->getHandle());
     }
 
@@ -55,11 +54,13 @@ namespace Toki {
         auto fragmentModuleSpirv = reflect(ShaderStage::Fragment, binaries[ShaderStage::Fragment]);
         auto vertexModuleSpirv = reflect(ShaderStage::Vertex, binaries[ShaderStage::Vertex]);
 
-        std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
+        std::vector<VkDescriptorSetLayout> descriptorSetLayouts(setLayoutBindings.size());
+        sets.resize(setLayoutBindings.size());
 
         for (const auto& [set, bindings] : setLayoutBindings) {
             descriptorSets.emplace(set, bindings);
-            descriptorSetLayouts.emplace_back(descriptorSets[set].getLayout());
+            sets[set] = descriptorSets[set].getHandle();
+            descriptorSetLayouts[set] = descriptorSets[set].getLayout();
         }
 
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
@@ -116,7 +117,7 @@ namespace Toki {
     }
 
     VkDescriptorSet VulkanShader::getSet(uint32_t set) {
-        TK_ASSERT(descriptorSets.contains(set), "No desciptor set exists for stage");
+        TK_ASSERT(descriptorSets.contains(set), std::format("Descriptor set {} does not exist", set));
         return descriptorSets[set].getHandle();
     }
 
@@ -170,15 +171,15 @@ namespace Toki {
 
             if (setLayoutBindings[set].size() <= binding.binding) {
                 setLayoutBindings[set].resize(binding.binding + 1);
-                setLayoutBindings[set][binding.binding] = binding;
             }
-            else {
-                TK_ASSERT(setLayoutBindings[set][binding.binding].descriptorType == binding.descriptorType, std::format("Descriptor binding {} descriptor types do not match in all shader stages\n\tShader file: {}", binding.binding, config.path.string()));
-                TK_ASSERT(setLayoutBindings[set][binding.binding].descriptorCount == binding.descriptorCount, std::format("Descriptor binding {} descriptor counts do not match in all shader stages\n\tShader file: {}", binding.binding, config.path.string()));
 
-                setLayoutBindings[set][binding.binding].stageFlags |= stageFlag;
+            setLayoutBindings[set][binding.binding] = binding;
 
-            }
+            TK_ASSERT(setLayoutBindings[set][binding.binding].descriptorType == binding.descriptorType, std::format("Descriptor binding {} descriptor types do not match in all shader stages\n\tShader file: {}", binding.binding, config.path.string()));
+            TK_ASSERT(setLayoutBindings[set][binding.binding].descriptorCount == binding.descriptorCount, std::format("Descriptor binding {} descriptor counts do not match in all shader stages\n\tShader file: {}", binding.binding, config.path.string()));
+
+            setLayoutBindings[set][binding.binding].stageFlags |= stageFlag;
+
         }
     }
 

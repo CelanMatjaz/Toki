@@ -25,6 +25,7 @@ namespace Toki {
         void setTexture(Ref<Texture> texture, uint32_t binding, uint32_t set = 0, uint32_t index = 0);
 
         VkDescriptorSet getSet(uint32_t set);
+        const std::vector<VkDescriptorSet>& getSets() const { return sets; };
         VkShaderStageFlagBits getContantStageFlags() { return (VkShaderStageFlagBits) contantStageFlags; }
 
         VkPipelineBindPoint getPipelineBindPoint();
@@ -49,6 +50,7 @@ namespace Toki {
         std::vector<VkPushConstantRange> pushConstants;
         std::unordered_map<uint32_t, VulkanDescriptorSet> descriptorSets;
         std::unordered_map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> setLayoutBindings;
+        std::vector<VkDescriptorSet> sets;
         VkPipelineLayout pipelineLayout;
         VkPipelineBindPoint bindPoint;
         Ref<VulkanRenderPass> renderPass;

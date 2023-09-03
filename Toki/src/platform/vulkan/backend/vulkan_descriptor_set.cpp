@@ -77,8 +77,6 @@ namespace Toki {
         imageInfo.imageView = texture->getHandle()->getView();
         imageInfo.sampler = VulkanRenderer::sampler();
 
-        std::vector<VkDescriptorImageInfo > asd(setBindings[binding].size, imageInfo);
-
         VkWriteDescriptorSet descriptorWrite{};
         descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrite.dstSet = set;
