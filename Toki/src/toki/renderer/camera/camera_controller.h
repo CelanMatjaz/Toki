@@ -10,13 +10,15 @@ namespace Toki {
         CameraController(float fov, float aspect, float near, float far);
         CameraController(float left, float right, float bottom, float top, float near, float far);
 
-        void onUpdate();
+        void onUpdate(float deltaTime);
 
         void updateView();
 
         const glm::vec3& getFront() const { return front; }
         const glm::vec3& getLeft() const { return left; }
         const glm::vec3& getUp() const { return up; }
+
+        void setPosition(const glm::vec3& position);
 
     private:
         glm::vec3 position{ 0.0f };

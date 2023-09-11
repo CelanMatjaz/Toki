@@ -10,6 +10,7 @@
 #include "renderer/camera/camera_controller.h"
 
 #include "resources/geometry.h"
+#include "resources/file_loaders/model_loader.h"
 
 #include "glm/glm.hpp"
 #include "glm/gtx/transform.hpp"

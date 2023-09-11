@@ -62,8 +62,6 @@ namespace Toki {
         std::ifstream file(path.string(), std::ios::ate | std::ios::binary);
         uint32_t fileSize = file.tellg();
 
-        std::cout << std::format("{} {} \t - {}\n", fileSize, (fileSize / sizeof(uint32_t)), path.string());
-
         std::vector<uint32_t> buffer(fileSize / sizeof(uint32_t));
         file.seekg(0);
         file.read((char*) buffer.data(), fileSize);
@@ -137,9 +135,6 @@ namespace Toki {
 
         for (const auto& [stage, sourceString] : shaderSources) {
             shaderc::SpvCompilationResult spirvModule = spirvCompiler.CompileGlslToSpv(sourceString, getShadercShaderKind(stage), (const char*) path.c_str(), options);
-            std::cout << "---------------------------------\n";
-            std::cout << sourceString << '\n';
-            std::cout << "---------------------------------\n";
             TK_ASSERT(
                 spirvModule.GetCompilationStatus() == shaderc_compilation_status::shaderc_compilation_status_success,
                 std::format("Error compiling shader code from file {}\n\t{}", std::filesystem::absolute(path).string(), spirvModule.GetErrorMessage()));

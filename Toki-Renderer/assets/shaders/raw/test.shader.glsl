@@ -64,13 +64,13 @@ void main() {
     mat3 rotationMat = rotZ * rotY * rotX;
 
     vec3 localPosition = vec3(position * instanceScale * rotationMat);
-    vec4 instancePos = vec4(instancePosition + (localPosition ), 1.0);
+    vec4 instancePos = vec4(instancePosition + localPosition, 1.0);
 
     gl_Position = PushConstants.mvp * instancePos;
     // POSITION
 
     // COLOR
-    vec3 direction = lights.lights[0].position - position;
+    vec3 direction = lights.lights[0].position - vec3(instancePos);
     vec3 normalWorldSpace = normalize(normal);
     float lightIntensity = max(dot(normalWorldSpace, normalize(direction)), 0);
 
