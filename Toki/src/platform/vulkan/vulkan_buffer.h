@@ -10,6 +10,7 @@ namespace Toki {
         ~VulkanBuffer();
 
         void setData(uint32_t dataSize, void* data);
+        void* readData();
 
         VkBuffer getBuffer() { return buffer; }
         uint32_t getSize() { return config.size; }

@@ -100,6 +100,18 @@ namespace Toki {
         this->transitionLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
 
+    glm::ivec2 VulkanImage::readPixel(uint32_t x, uint32_t y) {
+        BufferConfig bufferConfig{};
+        bufferConfig.size = sizeof(glm::ivec2);
+        VulkanBuffer stagingBuffer(bufferConfig, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+        this->transitionLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+        copyTextureToBuffer(&stagingBuffer, this, { 1, 1, 1 }, { (int) x, (int) y, 0 });
+        this->transitionLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+        return (glm::ivec2) (*((glm::ivec2*) stagingBuffer.readData()));
+    }
+
     void VulkanImage::transitionLayout(VkImageLayout oldLayout, VkImageLayout newLayout) {
         auto commandBuffer = VulkanRenderer::beginSingleUseCommands();
 
@@ -130,6 +142,18 @@ namespace Toki {
             barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
             sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
             destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        }
+        else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+            barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+            destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        }
+        else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
+            barrier.srcAccessMask = 0;
+            barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+            sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         }
         else {
             throw std::invalid_argument("Unsupported layout transition!");
@@ -170,6 +194,26 @@ namespace Toki {
             1,
             &region
         );
+
+        VulkanRenderer::endSingleUseCommands(commandBuffer);
+    }
+
+    void VulkanImage::copyTextureToBuffer(VulkanBuffer* buffer, VulkanImage* texture, const VkExtent3D& extent, const VkOffset3D& offset) {
+        VkDevice device = VulkanRenderer::device();
+        VkCommandBuffer commandBuffer = VulkanRenderer::beginSingleUseCommands();
+
+        VkBufferImageCopy region{};
+        region.bufferOffset = 0;
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+        region.imageOffset = offset;
+        region.imageExtent = extent;
+
+        vkCmdCopyImageToBuffer(commandBuffer, texture->getImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer->getBuffer(), 1, &region);
 
         VulkanRenderer::endSingleUseCommands(commandBuffer);
     }

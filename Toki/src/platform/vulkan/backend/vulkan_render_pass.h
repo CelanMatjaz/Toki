@@ -16,6 +16,7 @@ namespace Toki {
         ~VulkanRenderPass();
 
         VkRenderPass getHandle() { return handle; }
+        uint32_t getColorAttachmentCount() { return colorAttachmentsCount; }
 
     private:
         static VkAttachmentDescription createColorAttachmentDescription(const Attachment& attachment, bool isSwapchainAttachment = false);
@@ -24,6 +25,7 @@ namespace Toki {
         static VkSubpassDependency createDepthDependency();
 
         VkRenderPass handle = VK_NULL_HANDLE;
+        uint32_t colorAttachmentsCount = 0;
     };
 
 }

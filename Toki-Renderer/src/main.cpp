@@ -9,6 +9,7 @@ class TempLayer : public Toki::Layer {
         alignas(glm::vec4) glm::vec3 rotation{ 0.0f, 0.0f, 0.0f };
         alignas(glm::vec4) glm::vec3 scale{ 1.0f, 1.0f, 1.0f };
         alignas(glm::vec4) glm::vec4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+        alignas(glm::ivec2) glm::ivec2 id{ 0, 0 };
     };
 
     struct Light {
@@ -31,7 +32,8 @@ public:
         framebufferConfig.clearColor = { 0.01f, 0.01f, 0.01f, 1.0f };
         framebufferConfig.depthAttachment = createRef<Attachment>(Format::Depth, Samples::Sample1, AttachmentLoadOp::Clear, AttachmentStoreOp::DontCare);
         framebufferConfig.colorAttachments = {
-            { Format::RGBA8, Samples::Sample1, AttachmentLoadOp::Clear, AttachmentStoreOp::Store, RenderTarget::Swapchain }
+            { Format::RGBA8, Samples::Sample1, AttachmentLoadOp::Clear, AttachmentStoreOp::Store, RenderTarget::Swapchain },
+            { Format::R32G32i, Samples::Sample1, AttachmentLoadOp::Clear, AttachmentStoreOp::Store, RenderTarget::Texture }
         };
         framebuffer = Framebuffer::create(framebufferConfig);
 
@@ -48,6 +50,7 @@ public:
             { 4, 1, VertexFormat::Float3, offsetof(InstanceData, rotation) },
             { 5, 1, VertexFormat::Float3, offsetof(InstanceData, scale) },
             { 6, 1, VertexFormat::Float4, offsetof(InstanceData, color) },
+            { 7, 1, VertexFormat::Int2, offsetof(InstanceData, id) },
         };
 
         // binding, stride, inputRate
@@ -56,6 +59,15 @@ public:
             { 1, sizeof(InstanceData), VertexInputRate::Instance }
         };
         shader = Toki::Shader::create(shaderConfig);
+
+
+
+
+        Toki::ShaderConfig outlineShaderConfig = shaderConfig;
+        outlineShaderConfig.properties.cullMode = Toki::CullMode::Front;
+        outlineShaderConfig.properties.wireframe = true;
+        outlineShaderConfig.path = "assets/shaders/raw/geometry_pick.shader.glsl";
+        outlineShader = Toki::Shader::create(outlineShaderConfig);
 
         {
             struct LightData {
@@ -145,8 +157,36 @@ public:
 
         // Toki::RendererCommand::drawInstanced(model, instanceBuffer, nInstancesX * nInstancesY);
 
+
+
+        glm::ivec2 pixel = framebuffer->readPixel(1, 1280 / 2, 720 / 2, 0);
+
+
+        // std::cout << std::format("geometry id: {}, instance id: {}\n", pixel.r, pixel.g);
+
+
+        if (pixel.g < 99999 && rendering == 2) {
+            outlineShader->bind();
+
+            struct OutlinePush {
+                glm::mat4 mvp;
+                glm::vec4 color;
+            } outlinePush;
+
+            outlinePush.mvp = camera->getProjection() * camera->getView() * glm::mat4{ 1.0f };
+            outlinePush.color = outlineColor;
+
+            Toki::RendererCommand::setConstant(outlineShader, sizeof(OutlinePush), &outlinePush);
+            Toki::RendererCommand::setLineWidth(5.0f);
+            Toki::RendererCommand::drawInstanced({ vertexBuffer, instanceBuffer }, indexBuffer, 1, pixel.g);
+        }
+
+
         framebuffer->unbind();
+
     }
+
+    glm::vec4 outlineColor = { 0.7f, 0.4f, 0.1f, 1.0f };
 
     void renderImGui() override {
         static uint32_t fps = 0;
@@ -168,12 +208,6 @@ public:
         ImGui::Text("%i B", totalBufferMemorySize);
         ImGui::Text("%.5f kB", totalBufferMemorySize / 1024.0f);
 
-        auto updateInstances = [this]() {
-            resetInstances(nInstancesX, nInstancesY, instanceDistances[0], instanceDistances[1], randomParams);
-            instanceBuffer->setData(nInstancesX * nInstancesY * sizeof(InstanceData) * 1, instances);
-            // loadedModel[selectedModel].setInstances(&instanceData);
-        };
-
         ImGui::SeparatorText("Instances");
         if (ImGui::SliderInt("Instance count X direction", &nInstancesX, 1, 32))
             shouldResetBuffers = true;
@@ -184,19 +218,11 @@ public:
         if (ImGui::SliderFloat2("Instance distances", instanceDistances, 1.0f, 10.0f))
             shouldResetBuffers = true;
 
-        // if (ImGui::Checkbox("Random parameters", &randomParams))
-        //     updateInstances();
-
-        // if (ImGui::Combo("Model", &selectedModel, "Spongebob\0Satellite\0"))
-        //     updateInstances();
-
         if (ImGui::Combo("Rendering", &rendering, "Single call\0Batch rendering\0Instanced\0")) {
             shouldResetBuffers = true;
         }
 
-        if (ImGui::Button("Reload instances")) {
-            updateInstances();
-        }
+        ImGui::ColorEdit4("Outline color", (float*) &outlineColor);
 
         if (accDelta >= 1.0f) {
             fps = frameCount;
@@ -215,7 +241,7 @@ public:
 
     bool shouldResetBuffers = false;
 
-    int rendering = 0;
+    int rendering = 2;
     uint32_t totalBufferMemorySize = 0;
 
     void draw() {
@@ -401,6 +427,8 @@ public:
                     for (uint32_t x = 0; x < nInstancesX; ++x) {
                         uint32_t instanceIndex = x + y * nInstancesX;
                         instances[instanceIndex].position = { x * instanceDistances[0] - halfTotalDistanceX, 0.0f, y * instanceDistances[1] - halfTotalDistanceY };
+                        instances[instanceIndex].id.r = 1;
+                        instances[instanceIndex].id.g = instanceIndex;
                     }
                 }
 
@@ -413,28 +441,6 @@ public:
         }
     }
 
-    void resetInstances(uint32_t nX, uint32_t nY, float distanceX, float distanceY, bool randomParams) {
-        if (instances) delete[] instances;
-        instances = new InstanceData[nX * nY]();
-
-        float halfTotalDistanceX = nX > 1 ? (nX - 1) * distanceX / 2 : 0;
-        float halfTotalDistanceY = nY > 1 ? (nY - 1) * distanceY / 2 : 0;
-
-        for (uint32_t y = 0; y < nY; ++y) {
-            for (uint32_t x = 0; x < nX; ++x) {
-                instances[x + y * nX].position = { x * distanceX - halfTotalDistanceX, 0.0f, y * distanceY - halfTotalDistanceY };
-
-                InstanceData* temp = &instances[x + y * nX];
-
-                if (!randomParams) continue;
-
-                // instances[x + y * nX].rotation = { glm::radians(rand() % 180 - 90.0f), glm::radians(rand() % 180 / 1.0f), glm::radians(rand() % 180 - 90.0f) };
-                instances[x + y * nX].rotation = { 0.0f, glm::radians(rand() % 180 / 1.0f), 0.0f };
-                instances[x + y * nX].scale = { rand() % 200 / 100.0f, rand() % 200 / 100.0f, rand() % 200 / 100.0f };
-                instances[x + y * nX].color = { rand() % 256 / 256.0f, rand() % 256 / 256.0f, rand() % 256 / 256.0f, 1.0f };
-            }
-        }
-    }
 
 private:
     Toki::Ref<Toki::Shader> shader;
@@ -444,6 +450,8 @@ private:
     Toki::Ref<Toki::UniformBuffer> uniformBufferLightData;
     Toki::Ref<Toki::UniformBuffer> uniformBufferLights;
     Toki::Ref<Toki::IndexBuffer> indexBuffer;
+
+    Toki::Ref<Toki::Shader> outlineShader;
 
     Toki::Ref<Toki::Texture> texture;
 

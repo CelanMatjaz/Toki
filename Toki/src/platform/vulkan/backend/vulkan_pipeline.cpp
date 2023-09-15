@@ -1,6 +1,7 @@
 #include "tkpch.h"
 #include "vulkan_pipeline.h"
 #include "platform/vulkan/vulkan_renderer.h"
+#include "platform/vulkan/backend/vulkan_utils.h"
 #include "core/assert.h"
 #include "core/engine.h"
 
@@ -30,7 +31,7 @@ namespace Toki {
     void GraphicsPipeline::create() {
         auto window = Engine::getWindow();
         VkExtent2D extent = { window->getWidth(), window->getHeight() };
-        const PipelineOptions options = config.options;
+        const PipelineProperties props = config.properties;
 
         VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo{};
         vertShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -57,7 +58,7 @@ namespace Toki {
 
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo{};
         inputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-        inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST; // REVIEW: maybe add to config?
+        inputAssemblyStateCreateInfo.topology = VulkanUtils::mapTopology(props.topology);
         inputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
 
         VkViewport pipelineViewport{};
@@ -80,9 +81,9 @@ namespace Toki {
 
         VkPipelineRasterizationStateCreateInfo rasterizerCreateInto{};
         rasterizerCreateInto.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-        rasterizerCreateInto.polygonMode = options.wireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
-        rasterizerCreateInto.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; // REVIEW: maybe add to config?
-        rasterizerCreateInto.cullMode = VK_CULL_MODE_BACK_BIT; // REVIEW: maybe add to config?
+        rasterizerCreateInto.polygonMode = props.wireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
+        rasterizerCreateInto.frontFace = VulkanUtils::mapFrontFace(props.frontFace);
+        rasterizerCreateInto.cullMode = VulkanUtils::mapCullMode(props.cullMode);
         rasterizerCreateInto.depthClampEnable = VK_FALSE;
         rasterizerCreateInto.rasterizerDiscardEnable = VK_FALSE;
         rasterizerCreateInto.depthBiasEnable = VK_FALSE;
@@ -119,12 +120,14 @@ namespace Toki {
         colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
         colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
+        std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(config.renderPass->getColorAttachmentCount(), colorBlendAttachment);
+
         VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo{};
         colorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
         colorBlendStateCreateInfo.logicOpEnable = VK_FALSE;
         colorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_COPY;
-        colorBlendStateCreateInfo.attachmentCount = 1;
-        colorBlendStateCreateInfo.pAttachments = &colorBlendAttachment;
+        colorBlendStateCreateInfo.attachmentCount = colorBlendAttachments.size();
+        colorBlendStateCreateInfo.pAttachments = colorBlendAttachments.data();
         colorBlendStateCreateInfo.blendConstants[0] = 0.0f;
         colorBlendStateCreateInfo.blendConstants[1] = 0.0f;
         colorBlendStateCreateInfo.blendConstants[2] = 0.0f;
@@ -149,7 +152,7 @@ namespace Toki {
         pipelineInfo.pColorBlendState = &colorBlendStateCreateInfo;
         pipelineInfo.pDynamicState = &dynamicState;
         pipelineInfo.layout = config.layout;
-        pipelineInfo.renderPass = config.renderPass;
+        pipelineInfo.renderPass = config.renderPass->getHandle();
         pipelineInfo.subpass = 0;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
         pipelineInfo.pDepthStencilState = &depthStencilStateCreateInfo;

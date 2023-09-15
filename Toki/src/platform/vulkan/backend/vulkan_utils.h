@@ -27,6 +27,9 @@ namespace Toki {
         static VkAttachmentLoadOp mapLoadOp(AttachmentLoadOp loadOp);
         static VkAttachmentStoreOp mapStoreOp(AttachmentStoreOp storeOp);
         static VkFormat mapVertexFormat(VertexFormat format);
+        static VkPrimitiveTopology mapTopology(PrimitiveTopology topology);
+        static VkFrontFace mapFrontFace(FrontFace frontFace);
+        static VkCullModeFlags mapCullMode(CullMode cullMode);
 
     public:
         inline static const std::vector<const char*> validationLayers = {

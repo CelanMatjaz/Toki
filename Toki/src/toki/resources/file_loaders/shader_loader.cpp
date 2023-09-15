@@ -133,6 +133,8 @@ namespace Toki {
         options.SetOptimizationLevel(shaderc_optimization_level_zero);
 #endif
 
+        std::cout << std::format("Recompiling shaders from file {}\n", path.string());
+
         for (const auto& [stage, sourceString] : shaderSources) {
             shaderc::SpvCompilationResult spirvModule = spirvCompiler.CompileGlslToSpv(sourceString, getShadercShaderKind(stage), (const char*) path.c_str(), options);
             TK_ASSERT(

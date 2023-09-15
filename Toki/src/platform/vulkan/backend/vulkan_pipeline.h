@@ -4,6 +4,7 @@
 #include "vulkan/vulkan.h"
 #include "renderer/shader.h"
 #include "platform/vulkan/backend/vulkan_pipeline.h"
+#include "platform/vulkan/backend/vulkan_render_pass.h"
 #include "unordered_map"
 
 namespace Toki {
@@ -25,8 +26,8 @@ namespace Toki {
         std::unordered_map<ShaderStage, VkShaderModule> moduleSpirv;
         std::vector<VkVertexInputBindingDescription> inputBindingDescriptions;
         std::vector<VkVertexInputAttributeDescription> inputAttributeDescriptions;
-        PipelineOptions options{};
-        VkRenderPass renderPass = VK_NULL_HANDLE;
+        PipelineProperties properties{};
+        Ref<VulkanRenderPass> renderPass;
     };
 
     class Pipeline {

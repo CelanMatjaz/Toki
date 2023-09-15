@@ -152,8 +152,9 @@ namespace Toki {
 
     VkFormat VulkanUtils::mapFormat(Format format) {
         switch (format) {
-            case Format::R8: return VK_FORMAT_R8_SRGB;
             case Format::RGBA8: return VK_FORMAT_B8G8R8A8_SRGB;
+            case Format::R32: return VK_FORMAT_R32_SFLOAT;
+            case Format::R32G32i: return VK_FORMAT_R32G32_SINT;
             case Format::Depth: return findDepthFormat();
         }
 
@@ -199,9 +200,40 @@ namespace Toki {
             case VertexFormat::Float2: return VK_FORMAT_R32G32_SFLOAT;
             case VertexFormat::Float3: return VK_FORMAT_R32G32B32_SFLOAT;
             case VertexFormat::Float4: return VK_FORMAT_R32G32B32A32_SFLOAT;
+            case VertexFormat::Int1: return VK_FORMAT_R32_SINT;
+            case VertexFormat::Int2: return VK_FORMAT_R32G32_SINT;
+            case VertexFormat::Int3: return VK_FORMAT_R32G32B32_SINT;
+            case VertexFormat::Int4: return VK_FORMAT_R32G32B32A32_SINT;
         }
 
         return VK_FORMAT_UNDEFINED;
+    }
+
+    VkPrimitiveTopology VulkanUtils::mapTopology(PrimitiveTopology topology) {
+        switch (topology) {
+            case PrimitiveTopology::PointList: return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+            case PrimitiveTopology::LineList: return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+            case PrimitiveTopology::LineStrip: return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+            case PrimitiveTopology::TriangleList: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+            case PrimitiveTopology::TriangleStrip: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+            case PrimitiveTopology::TriangleFan: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
+        }
+    }
+
+    VkFrontFace VulkanUtils::mapFrontFace(FrontFace frontFace) {
+        switch (frontFace) {
+            case FrontFace::CounterClockwise: return VK_FRONT_FACE_COUNTER_CLOCKWISE;
+            case FrontFace::Clockwise: return VK_FRONT_FACE_CLOCKWISE;
+        }
+    }
+
+    VkCullModeFlags VulkanUtils::mapCullMode(CullMode cullMode) {
+        switch (cullMode) {
+            case CullMode::None: return VK_CULL_MODE_NONE;
+            case CullMode::Front: return VK_CULL_MODE_FRONT_BIT;
+            case CullMode::Back: return VK_CULL_MODE_BACK_BIT;
+            case CullMode::FrontAndBack: return VK_CULL_MODE_FRONT_AND_BACK;
+        }
     }
 
 }

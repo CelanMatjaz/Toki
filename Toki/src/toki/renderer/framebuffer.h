@@ -12,7 +12,7 @@ namespace Toki {
 	};
 
 	enum class Format {
-		RGBA8, R8, Depth
+		RGBA8, R32, R32G32i, Depth
 	};
 
 	enum class Samples {
@@ -57,6 +57,7 @@ namespace Toki {
 
 		virtual void bind() = 0;
 		virtual void unbind() = 0;
+		virtual glm::ivec2 readPixel(uint32_t attachmentIndex, uint32_t x, uint32_t y, uint32_t z) = 0;
 
 		void setClearColor(glm::vec4 color = { 0.1f, 0.1f, 0.1f, 0.1f }) {
 			config.clearColor = color;

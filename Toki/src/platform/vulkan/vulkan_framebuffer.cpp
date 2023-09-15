@@ -46,6 +46,10 @@ namespace Toki {
         vkCmdEndRenderPass(VulkanRenderer::commandBuffer());
     }
 
+    glm::ivec2 VulkanFramebuffer::readPixel(uint32_t attachmentIndex, uint32_t x, uint32_t y, uint32_t z) {
+        return attachments[VulkanRenderer::currentFrameIndex()][attachmentIndex]->readPixel(x, y);
+    }
+
     void VulkanFramebuffer::create() {
         VulkanRenderPassConfig vulkanRenderPassConfig;
         vulkanRenderPassConfig.colorAttachments = config.colorAttachments;
@@ -55,7 +59,18 @@ namespace Toki {
         bool hasDepthAttachment = config.depthAttachment.get() != nullptr;
         uint32_t nAttachments = hasDepthAttachment ? config.colorAttachments.size() + 1 : config.colorAttachments.size();
 
-        auto createFramebuffer = [nAttachments, config = this->config, hasDepthAttachment](std::vector<Ref<VulkanImage>>& attachments, VkFramebuffer* framebuffer, VkRenderPass* renderPass, uint32_t index = 0) {
+        std::vector<Ref<VulkanImage>> textureAttachments(config.colorAttachments.size());
+
+        for (uint32_t i = 0; i < config.colorAttachments.size(); ++i) {
+            if (config.colorAttachments[i].target == RenderTarget::Swapchain) continue;
+            VulkanImageConfig vulkanImageConfig{};
+            vulkanImageConfig.extent = { config.width, config.height, 1 };
+            vulkanImageConfig.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT;
+            vulkanImageConfig.format = VulkanUtils::mapFormat(config.colorAttachments[i].format);
+            textureAttachments[i] = createRef<VulkanImage>(vulkanImageConfig);
+        }
+
+        auto createFramebuffer = [nAttachments, config = this->config, hasDepthAttachment, textureAttachments](std::vector<Ref<VulkanImage>>& attachments, VkFramebuffer* framebuffer, VkRenderPass* renderPass, uint32_t index = 0) {
             std::vector<VkImageView> imageViews(nAttachments);
             uint32_t swapchainTargetAttachmentCount = 0;
 
@@ -77,8 +92,7 @@ namespace Toki {
                     TK_ASSERT(++swapchainTargetAttachmentCount <= 1, "Framebuffer is limited to only 1 swapchain attachment texture");
                 }
                 else {
-                    vulkanImageConfig.format = VulkanUtils::mapFormat(config.colorAttachments[i].format);
-                    attachments.emplace_back(createRef<VulkanImage>(vulkanImageConfig));
+                    attachments.emplace_back(textureAttachments[i]);
                     imageViews[i] = attachments[i]->getView();
                 }
             }

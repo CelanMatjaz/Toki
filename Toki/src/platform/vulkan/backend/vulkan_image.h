@@ -9,7 +9,7 @@ namespace Toki {
     struct VulkanImageConfig {
         VkFormat format;
         VkExtent3D extent;
-        VkImageUsageFlagBits usage;
+        VkImageUsageFlags usage;
         VkMemoryPropertyFlags memoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
         uint32_t mips = 1;
@@ -29,9 +29,11 @@ namespace Toki {
         uint32_t getHeight() { return extent.height; };
 
         void setData(uint32_t size, void* data);
+        glm::ivec2 readPixel(uint32_t x, uint32_t y);
 
         void transitionLayout(VkImageLayout oldLayout, VkImageLayout newLayout);
         void copyBufferToTexture(VulkanBuffer* buffer, VulkanImage* texture);
+        void copyTextureToBuffer(VulkanBuffer* buffer, VulkanImage* texture, const VkExtent3D& extent, const VkOffset3D& offset = { 0, 0, 0 });
 
         static VkSampler createSampler();
 

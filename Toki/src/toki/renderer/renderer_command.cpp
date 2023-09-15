@@ -27,6 +27,10 @@ namespace Toki {
         vkCmdSetScissor(VulkanRenderer::commandBuffer(), 0, 1, &scissor);
     }
 
+    void RendererCommand::setLineWidth(const float& width) {
+        vkCmdSetLineWidth(VulkanRenderer::commandBuffer(), width);
+    }
+
     void RendererCommand::draw(Ref<VertexBuffer> vertexBuffer) {
         vertexBuffer->bind();
         vkCmdDraw(VulkanRenderer::commandBuffer(), ((VulkanVertexBuffer*) vertexBuffer.get())->getBinding(), 1, 0, 0);
@@ -47,7 +51,7 @@ namespace Toki {
         RendererCommand::draw(geometry->getVertexBuffer(), geometry->getIndexBuffer());
     }
 
-    void RendererCommand::drawInstanced(const std::vector<Ref<VertexBuffer>>& vertexBuffers, Ref<IndexBuffer> indexBuffer, uint32_t instanceCount) {
+    void RendererCommand::drawInstanced(const std::vector<Ref<VertexBuffer>>& vertexBuffers, Ref<IndexBuffer> indexBuffer, uint32_t instanceCount, uint32_t firstInstance) {
         std::unordered_map<uint32_t, std::vector<VkBuffer>> bufferMap;
 
         for (const auto& vertexBuffer : vertexBuffers) {
@@ -67,7 +71,7 @@ namespace Toki {
 
         indexBuffer->bind();
 
-        vkCmdDrawIndexed(commandBuffer, indexBuffer->getIndexCount(), instanceCount, 0, 0, 0);
+        vkCmdDrawIndexed(commandBuffer, indexBuffer->getIndexCount(), instanceCount, 0, 0, firstInstance);
     }
 
     void RendererCommand::drawInstanced(Ref<Geometry> geometry, Ref<VertexBuffer> instanceBuffer, uint32_t instanceCount) {

@@ -46,6 +46,15 @@ namespace Toki {
         vkUnmapMemory(device, memory);
     }
 
+    void* VulkanBuffer::readData() {
+        VkDevice device = VulkanRenderer::device();
+        void* data;
+        TK_ASSERT_VK_RESULT(vkMapMemory(device, memory, 0, config.size, 0, &mappedData), "Could not map memory");
+        memcpy(data, mappedData, config.size);
+        vkUnmapMemory(device, memory);
+        return data;
+    }
+
 #pragma region VulkanVertexBuffer
 
     VulkanVertexBuffer::VulkanVertexBuffer(const VertexBufferConfig& config)

@@ -4,6 +4,7 @@
 layout (location = 0) out vec4 outColor;
 layout (location = 1) out vec2 outUv;
 layout (location = 2) out uint outTextureIndex;
+layout (location = 3) out ivec2 outInstanceID;
 
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec2 uv;
@@ -13,6 +14,7 @@ layout (location = 3) in vec3 instancePosition;
 layout (location = 4) in vec3 instanceRotation;
 layout (location = 5) in vec3 instanceScale;
 layout (location = 6) in vec4 instanceColor;
+layout (location = 7) in ivec2 id;
 
 layout(push_constant) uniform constants {
 	mat4 mvp;
@@ -80,6 +82,8 @@ void main() {
     outUv = uv;
 
     outTextureIndex = PushConstants.textureIndex;
+    
+    outInstanceID = id;
 }
 
 // ---------------------------
@@ -88,13 +92,16 @@ void main() {
 #version 450
 
 layout (location = 0) out vec4 outFragColor;
+layout (location = 1) out ivec2 outInstanceID;
 
 layout (location = 0) in vec4 color;
 layout (location = 1) in vec2 uv;
 layout (location = 2) in flat uint textureIndex;
+layout (location = 3) in flat ivec2 instanceID;
 
 layout(set = 1, binding = 0) uniform sampler2D texSampler[32];
 
 void main() {
     outFragColor = texture(texSampler[textureIndex], vec2(uv.x, -uv.y)) * color;
+    outInstanceID = instanceID;
 }

@@ -7,7 +7,7 @@
 
 namespace Toki {
 
-    VulkanRenderPass::VulkanRenderPass(VulkanRenderPassConfig& config) {
+    VulkanRenderPass::VulkanRenderPass(VulkanRenderPassConfig& config) : colorAttachmentsCount(config.colorAttachments.size()) {
         std::vector<VkAttachmentDescription> attachments(config.colorAttachments.size() + 1);
         std::vector<VkAttachmentReference> attachmentRefs(config.colorAttachments.size());
         std::vector<VkSubpassDependency> subpassDependencies(config.colorAttachments.size() + 1);

@@ -21,8 +21,9 @@ namespace Toki {
 
         virtual void bind() override;
         virtual void unbind() override;
+        virtual glm::ivec2 readPixel(uint32_t attachmentIndex, uint32_t x, uint32_t y, uint32_t z) override;
 
-        VkRenderPass getRenderPass() { return renderPass->getHandle(); }
+        Ref<VulkanRenderPass> getRenderPass() { return renderPass; }
 
     private:
         void create();

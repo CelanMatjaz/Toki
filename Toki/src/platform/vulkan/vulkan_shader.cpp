@@ -80,6 +80,7 @@ namespace Toki {
         pipelineConfig.inputAttributeDescriptions = mapAttributeDescriptions(config.attributeDescriptions);
         pipelineConfig.inputBindingDescriptions = mapBindingDescriptions(config.bindingDescriptions);
         pipelineConfig.renderPass = ((VulkanFramebuffer*) config.framebuffer.get())->getRenderPass();
+        pipelineConfig.properties = config.properties;
 
         pipeline = Pipeline::create(pipelineConfig);
 
@@ -191,6 +192,7 @@ namespace Toki {
         VkPhysicalDeviceProperties props;
         vkGetPhysicalDeviceProperties(VulkanRenderer::physicalDevice(), &props);
 
+        // TODO: fix multiple constants in multiple stages
         for (const auto& constant : resources.push_constant_buffers) {
             const auto& elementType = compiler.get_type(constant.base_type_id);
 

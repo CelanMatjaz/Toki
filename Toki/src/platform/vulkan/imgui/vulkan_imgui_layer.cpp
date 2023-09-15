@@ -68,7 +68,7 @@ namespace Toki {
         initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
         initInfo.Allocator = nullptr;
         initInfo.CheckVkResultFn = nullptr;
-        ImGui_ImplVulkan_Init(&initInfo, framebuffer->getRenderPass());
+        ImGui_ImplVulkan_Init(&initInfo, framebuffer->getRenderPass()->getHandle());
 
         {
             VkCommandBuffer commandBuffer = VulkanRenderer::beginSingleUseCommands();

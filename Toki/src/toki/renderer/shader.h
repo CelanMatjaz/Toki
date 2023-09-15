@@ -23,7 +23,8 @@ namespace Toki {
     };
 
     enum class VertexFormat {
-        Float1, Float2, Float3, Float4
+        Float1, Float2, Float3, Float4,
+        Int1, Int2, Int3, Int4
     };
 
     struct VertexAttributeDescription {
@@ -39,12 +40,32 @@ namespace Toki {
         VertexInputRate inputRate;
     };
 
+    enum class PrimitiveTopology {
+        PointList, LineList, LineStrip, TriangleList, TriangleStrip, TriangleFan
+    };
+
+    enum class FrontFace {
+        CounterClockwise, Clockwise
+    };
+
+    enum class CullMode {
+        None, Front, Back, FrontAndBack
+    };
+
+    struct PipelineProperties {
+        bool wireframe = false;
+        PrimitiveTopology topology = PrimitiveTopology::TriangleList;
+        FrontFace frontFace = FrontFace::CounterClockwise;
+        CullMode cullMode = CullMode::Back;
+    };
+
     struct ShaderConfig {
         ShaderType type = ShaderType::None;
         std::filesystem::path path;
         std::vector<VertexAttributeDescription> attributeDescriptions;
         std::vector<VertexBindingDescription> bindingDescriptions;
         Ref<Framebuffer> framebuffer;
+        PipelineProperties properties{};
     };
 
     class Shader {
