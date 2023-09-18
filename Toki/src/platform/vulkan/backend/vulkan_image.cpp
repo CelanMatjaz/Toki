@@ -100,16 +100,16 @@ namespace Toki {
         this->transitionLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
 
-    glm::ivec2 VulkanImage::readPixel(uint32_t x, uint32_t y) {
+    float VulkanImage::readPixel(uint32_t x, uint32_t y) {
         BufferConfig bufferConfig{};
-        bufferConfig.size = sizeof(glm::ivec2);
+        bufferConfig.size = sizeof(float);
         VulkanBuffer stagingBuffer(bufferConfig, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
         this->transitionLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
         copyTextureToBuffer(&stagingBuffer, this, { 1, 1, 1 }, { (int) x, (int) y, 0 });
         this->transitionLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-        return (glm::ivec2) (*((glm::ivec2*) stagingBuffer.readData()));
+        return (float) (*((float*) stagingBuffer.readData()));
     }
 
     void VulkanImage::transitionLayout(VkImageLayout oldLayout, VkImageLayout newLayout) {

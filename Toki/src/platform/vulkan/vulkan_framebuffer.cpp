@@ -46,7 +46,7 @@ namespace Toki {
         vkCmdEndRenderPass(VulkanRenderer::commandBuffer());
     }
 
-    glm::ivec2 VulkanFramebuffer::readPixel(uint32_t attachmentIndex, uint32_t x, uint32_t y, uint32_t z) {
+    float VulkanFramebuffer::readPixel(uint32_t attachmentIndex, uint32_t x, uint32_t y, uint32_t z) {
         return attachments[VulkanRenderer::currentFrameIndex()][attachmentIndex]->readPixel(x, y);
     }
 

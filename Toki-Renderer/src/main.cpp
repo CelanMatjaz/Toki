@@ -2,6 +2,7 @@
 #include "filesystem"
 #include "toki.h"
 #include "imgui.h"
+#include "bitset"
 
 class TempLayer : public Toki::Layer {
     struct InstanceData {
@@ -9,7 +10,7 @@ class TempLayer : public Toki::Layer {
         alignas(glm::vec4) glm::vec3 rotation{ 0.0f, 0.0f, 0.0f };
         alignas(glm::vec4) glm::vec3 scale{ 1.0f, 1.0f, 1.0f };
         alignas(glm::vec4) glm::vec4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
-        alignas(glm::ivec2) glm::ivec2 id{ 0, 0 };
+        alignas(glm::vec4) float id{ 0 };
     };
 
     struct Light {
@@ -33,7 +34,7 @@ public:
         framebufferConfig.depthAttachment = createRef<Attachment>(Format::Depth, Samples::Sample1, AttachmentLoadOp::Clear, AttachmentStoreOp::DontCare);
         framebufferConfig.colorAttachments = {
             { Format::RGBA8, Samples::Sample1, AttachmentLoadOp::Clear, AttachmentStoreOp::Store, RenderTarget::Swapchain },
-            { Format::R32G32i, Samples::Sample1, AttachmentLoadOp::Clear, AttachmentStoreOp::Store, RenderTarget::Texture }
+            { Format::R32, Samples::Sample1, AttachmentLoadOp::Clear, AttachmentStoreOp::Store, RenderTarget::Texture }
         };
         framebuffer = Framebuffer::create(framebufferConfig);
 
@@ -50,7 +51,7 @@ public:
             { 4, 1, VertexFormat::Float3, offsetof(InstanceData, rotation) },
             { 5, 1, VertexFormat::Float3, offsetof(InstanceData, scale) },
             { 6, 1, VertexFormat::Float4, offsetof(InstanceData, color) },
-            { 7, 1, VertexFormat::Int2, offsetof(InstanceData, id) },
+            { 7, 1, VertexFormat::Float1, offsetof(InstanceData, id) },
         };
 
         // binding, stride, inputRate
@@ -100,7 +101,6 @@ public:
         }
 
         model = Geometry::create();
-        model->loadFromObj("assets/models/spongebob_high_poly_tris.obj");
         model->loadFromObj(modelPath);
 
         camera = Toki::createRef<CameraController>(glm::radians(60.0f), 1280 / 720.f, 0.1f, 1000.0f);
@@ -109,7 +109,8 @@ public:
         resetBuffers();
     }
 
-    std::filesystem::path modelPath = "assets/models/sphere.obj";
+    // std::filesystem::path modelPath = "assets/models/sphere.obj";
+    std::filesystem::path modelPath = "assets/models/spongebob_high_poly_tris.obj";
 
     struct Push {
         glm::mat4 mvp;
@@ -159,13 +160,14 @@ public:
 
 
 
-        glm::ivec2 pixel = framebuffer->readPixel(1, 1280 / 2, 720 / 2, 0);
+        float pixel = framebuffer->readPixel(1, 1280 / 2, 720 / 2, 0);
+        uint16_t meshId = ((uint32_t) pixel) >> 16;
+        uint16_t instanceId = (uint16_t) pixel;
+
+        std::cout << std::format("mesh id: {}, instance id: {}\n", meshId, instanceId);
 
 
-        // std::cout << std::format("geometry id: {}, instance id: {}\n", pixel.r, pixel.g);
-
-
-        if (pixel.g < 99999 && rendering == 2) {
+        if (meshId > 0 && instanceId < 99999 && rendering == 2) {
             outlineShader->bind();
 
             struct OutlinePush {
@@ -177,8 +179,13 @@ public:
             outlinePush.color = outlineColor;
 
             Toki::RendererCommand::setConstant(outlineShader, sizeof(OutlinePush), &outlinePush);
-            Toki::RendererCommand::setLineWidth(5.0f);
-            Toki::RendererCommand::drawInstanced({ vertexBuffer, instanceBuffer }, indexBuffer, 1, pixel.g);
+            Toki::RendererCommand::setLineWidth(7.0f);
+            Toki::RendererCommand::drawInstanced({ vertexBuffer, instanceBuffer }, indexBuffer, 1, instanceId);
+
+            outlinePush.color = { UINT8_MAX - outlinePush.color.r, UINT8_MAX - outlinePush.color.g, UINT8_MAX - outlinePush.color.b, 1.0 };
+            Toki::RendererCommand::setConstant(outlineShader, sizeof(OutlinePush), &outlinePush);
+            Toki::RendererCommand::setLineWidth(3.0f);
+            Toki::RendererCommand::drawInstanced({ vertexBuffer, instanceBuffer }, indexBuffer, 1, instanceId);
         }
 
 
@@ -425,10 +432,9 @@ public:
 
                 for (uint32_t y = 0; y < nInstancesY; ++y) {
                     for (uint32_t x = 0; x < nInstancesX; ++x) {
-                        uint32_t instanceIndex = x + y * nInstancesX;
+                        uint16_t instanceIndex = x + y * nInstancesX;
                         instances[instanceIndex].position = { x * instanceDistances[0] - halfTotalDistanceX, 0.0f, y * instanceDistances[1] - halfTotalDistanceY };
-                        instances[instanceIndex].id.r = 1;
-                        instances[instanceIndex].id.g = instanceIndex;
+                        instances[instanceIndex].id = (1 << 16) | instanceIndex;
                     }
                 }
 

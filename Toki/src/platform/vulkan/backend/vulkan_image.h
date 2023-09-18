@@ -29,7 +29,7 @@ namespace Toki {
         uint32_t getHeight() { return extent.height; };
 
         void setData(uint32_t size, void* data);
-        glm::ivec2 readPixel(uint32_t x, uint32_t y);
+        float readPixel(uint32_t x, uint32_t y);
 
         void transitionLayout(VkImageLayout oldLayout, VkImageLayout newLayout);
         void copyBufferToTexture(VulkanBuffer* buffer, VulkanImage* texture);

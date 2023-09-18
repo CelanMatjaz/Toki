@@ -11,7 +11,7 @@ layout (location = 3) in vec3 instancePosition;
 layout (location = 4) in vec3 instanceRotation;
 layout (location = 5) in vec3 instanceScale;
 layout (location = 6) in vec4 instanceColor;
-layout (location = 7) in ivec2 id;
+layout (location = 7) in float id;
 
 layout(push_constant) uniform constants {
 	mat4 mvp;
