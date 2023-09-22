@@ -1,8 +1,16 @@
 #pragma once
 
 #include "vulkan/vulkan.h"
-#include "GLFW/glfw3.h"
 #include "imgui.h"
+
+#ifdef TK_WIN32
+#define _WIN32_WINNT 0x0A00
+#include "Windows.h"
+#include "WinUser.h"
+#include "vulkan/vulkan_win32.h"
+#else
+#include "GLFW/glfw3.h"
+#endif
 
 #include "glm/glm.hpp"
 #include "glm/gtx/transform.hpp"

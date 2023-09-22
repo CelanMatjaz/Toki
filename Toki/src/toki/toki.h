@@ -12,6 +12,8 @@
 #include "resources/geometry.h"
 #include "resources/file_loaders/model_loader.h"
 
+#include "input/input.h"
+
 #include "glm/glm.hpp"
 #include "glm/gtx/transform.hpp"
 #include "glm/gtx/euler_angles.hpp"

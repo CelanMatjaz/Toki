@@ -1,15 +1,16 @@
 #pragma once
 
 namespace Toki {
+
+    enum class EventType {
+        None,
+        KeyPress, KeyRelease, KeyRepeat,
+        MouseButtonPress, MouseButtonRelease, MouseButtonDoubleClick, MouseMove, MouseScroll, MouseEnter, MouseLeave,
+        WindowResize, WindowFocus, WindowMinimize, WindowMaximize
+    };
+
     class Event {
     public:
-        enum class EventType {
-            None,
-            KeyPressed, KeyReleased, KeyRepeat,
-            MouseButtonPressed, MouseMoved, MouseScrolled,
-            WindowResized, WindowMinimized, WindowMaximized
-        };
-
         Event(EventType type) : type{ type } {}
         virtual ~Event() = default;
 

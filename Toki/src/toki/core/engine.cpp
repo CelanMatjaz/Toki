@@ -3,6 +3,8 @@
 #include "assert.h"
 #include "renderer/renderer.h"
 
+#include "platform/windows/windows_window.h"
+
 namespace Toki {
 
     Engine::Engine(const EngineConfig& config) {
@@ -11,12 +13,15 @@ namespace Toki {
         if (!engine)
             engine = this;
 
-        window = Window::create(*((WindowConfig*) &config.windowConfig), this);
+        window = Window::create(config.windowConfig, this);
 
         Renderer::initRenderer();
 
         imguiLayer = ImGuiLayer::create();
         imguiLayer->onAttach();
+
+        isInit = true;
+        window->showWindow();
     }
 
     Engine::~Engine() {
@@ -65,6 +70,22 @@ namespace Toki {
         TK_ASSERT(layers.size(), "There are no layers on layer stack");
         layers[layers.size() - 1]->onDetach();
         layers.erase(layers.end() - 1);
+    }
+
+    void Engine::onEvent(Event& event) {
+        if (!isInit) return;
+
+        imguiLayer->onEvent(event);
+
+        if (event.isHandled()) return;
+
+        for (int32_t i = layers.size() - 1; i >= 0 && !event.isHandled(); --i) {
+            layers[i]->onEvent(event);
+        }
+
+        if (event.getType() == EventType::MouseMove) return;
+
+        std::cout << "event - " << std::to_underlying(event.getType()) << '\n';
     }
 
 }

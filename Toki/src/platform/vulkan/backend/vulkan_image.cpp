@@ -101,6 +101,8 @@ namespace Toki {
     }
 
     float VulkanImage::readPixel(uint32_t x, uint32_t y) {
+        if (x < 0 || x >= extent.width || y < 0 || y >= extent.height) return 0;
+
         BufferConfig bufferConfig{};
         bufferConfig.size = sizeof(float);
         VulkanBuffer stagingBuffer(bufferConfig, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);

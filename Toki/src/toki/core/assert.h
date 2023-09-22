@@ -17,7 +17,7 @@ namespace Toki {
 {                                                                       \
     if(expression);                                                     \
     else {                                                              \
-        reportAssert(#expression, __FILE__, __LINE__, message);         \
+        Toki::reportAssert(#expression, __FILE__, __LINE__, message);         \
         __debugbreak();                                                 \
         exit(1);                                                        \
     }                                                                   \

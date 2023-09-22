@@ -10,15 +10,15 @@ namespace Toki {
 
     }
 
-    CameraController::CameraController(float fov, float aspect, float near, float far) {
-        projectionMatrix = glm::perspective(fov, aspect, near, far);
+    CameraController::CameraController(float fov, float aspect, float nearP, float farP) {
+        projectionMatrix = glm::perspective(fov, aspect, nearP, farP);
         projectionMatrix[1][1] *= -1;
 
         updateView();
     }
 
-    CameraController::CameraController(float left, float right, float bottom, float top, float near, float far) {
-        projectionMatrix = glm::ortho(left, right, bottom, top, near, far);
+    CameraController::CameraController(float left, float right, float bottom, float top, float nearP, float farP) {
+        projectionMatrix = glm::ortho(left, right, bottom, top, nearP, farP);
     }
 
     void CameraController::onUpdate(float deltaTime) {

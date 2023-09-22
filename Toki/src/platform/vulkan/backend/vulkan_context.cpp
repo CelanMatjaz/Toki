@@ -83,19 +83,21 @@ namespace Toki {
         appInfo.applicationVersion = 1;
         appInfo.apiVersion = VK_API_VERSION_1_3;
 
-        const char** glfwExtensions;
-        uint32_t extensionCount = 0;
-        glfwExtensions = glfwGetRequiredInstanceExtensions(&extensionCount);
+        uint32_t extensionCount = 2;
+        const std::array<const char*, 2> win_extensions = {
+            "VK_KHR_surface",
+            "VK_KHR_win32_surface"
+        };
 
-        std::vector<VkExtensionProperties> extensions(extensionCount);
+        std::vector<VkExtensionProperties> extensions(win_extensions.size());
         auto result = vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
         VkInstanceCreateInfo instanceCreateInfo{};
         instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         instanceCreateInfo.flags = 0;
         instanceCreateInfo.pApplicationInfo = &appInfo;
-        instanceCreateInfo.enabledExtensionCount = extensionCount;
-        instanceCreateInfo.ppEnabledExtensionNames = glfwExtensions;
+        instanceCreateInfo.enabledExtensionCount = extensions.size();
+        instanceCreateInfo.ppEnabledExtensionNames = win_extensions.data();
         instanceCreateInfo.enabledLayerCount = 0;
         instanceCreateInfo.ppEnabledLayerNames = nullptr;
 
@@ -109,7 +111,16 @@ namespace Toki {
     }
 
     void VulkanContext::createSurface() {
+#ifdef TK_WIN32
+        VkWin32SurfaceCreateInfoKHR surfaceCreateInfo{};
+        surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+        surfaceCreateInfo.pNext = NULL;
+        surfaceCreateInfo.hinstance = GetModuleHandle(nullptr);
+        surfaceCreateInfo.hwnd = (HWND) Engine::getWindow()->getHandle();
+        TK_ASSERT_VK_RESULT(vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface), "Could not create Vulkan window surface");
+#else 
         TK_ASSERT_VK_RESULT(glfwCreateWindowSurface(instance, (GLFWwindow*) Engine::getWindow()->getHandle(), nullptr, &surface), "Could not create Vulkan window surface");
+#endif        
     }
 
     void VulkanContext::createDevice() {

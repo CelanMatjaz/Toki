@@ -13,9 +13,10 @@
                 "vendor/glm",
                 "vendor/imgui",
                 "${env:VULKAN_SDK}/Include",
+                "vendor/spdlog/include",
                 "${workspaceFolder}/Toki/src/toki"
             ],
-            "defines": [],
+            "defines": ["UNICODE"],
             "cppStandard": "c++23",
             "intelliSenseMode": "gcc-x64"
         }

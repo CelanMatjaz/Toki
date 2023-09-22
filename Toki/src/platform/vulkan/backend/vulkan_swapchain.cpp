@@ -31,7 +31,7 @@ namespace Toki {
 
         auto format = VulkanUtils::findSurfaceFormat();
 
-        extent = { windowWidth, windowHeight };
+        extent = VulkanUtils::getExtent();
         imageFormat = format.format;
 
         VkPresentModeKHR swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR;

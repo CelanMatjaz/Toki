@@ -2,16 +2,23 @@
 #include "window.h"
 #include "core/engine.h"
 
+#ifdef TK_GLFW
+
 namespace Toki {
 
-    TokiWindow::TokiWindow(const WindowConfig& windowConfig, Engine* engine) : Window(windowConfig, engine) {
+    TokiWindow::TokiWindow(const WindowConfig& windowConfig, void* engine) : Window(windowConfig, engine) {
         if (nWindows == 0) glfwInit();
         ++nWindows;
 
         glfwWindowHint(GLFW_RESIZABLE, windowConfig.resizable ? GLFW_TRUE : GLFW_FALSE);
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-        window = glfwCreateWindow(windowConfig.width, windowConfig.height, windowConfig.title.c_str(), nullptr, nullptr);
+        std::string title(windowConfig.title.size(), ' ');
+        for (uint32_t i = 0; i < windowConfig.title.size(); ++i) {
+            title[i] = (char) windowConfig.title[i];
+        }
+
+        window = glfwCreateWindow(windowConfig.width, windowConfig.height, title.c_str(), nullptr, nullptr);
 
         glfwMakeContextCurrent(window);
         glfwSetWindowUserPointer(window, this);
@@ -20,6 +27,10 @@ namespace Toki {
     }
 
     TokiWindow::~TokiWindow() {
+
+    }
+
+    void TokiWindow::showWindow() {
 
     }
 
@@ -46,3 +57,5 @@ namespace Toki {
 
 
 }
+
+#endif

@@ -13,12 +13,7 @@ namespace Toki {
 
     struct EngineConfig {
         std::filesystem::path workingDirectory;
-        struct WindowConfig {
-            std::string title = "Window";
-            uint32_t width = 1280;
-            uint32_t height = 720;
-            bool resizable = false;
-        } windowConfig;
+        WindowConfig windowConfig;
     };
 
     class Engine {
@@ -30,6 +25,7 @@ namespace Toki {
 
         void pushLayer(Ref<Layer> layer);
         void popLayer();
+        void onEvent(Event& event);
 
         static Ref<Window> getWindow() { return window; }
 
@@ -39,6 +35,7 @@ namespace Toki {
         std::vector<Ref<Layer>> layers;
         Ref<ImGuiLayer> imguiLayer;
 
+        bool isInit = false;
         std::chrono::steady_clock::time_point lastFrameTime;
     };
 

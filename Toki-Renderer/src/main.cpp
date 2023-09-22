@@ -28,8 +28,8 @@ public:
 
         FramebufferConfig framebufferConfig{};
         framebufferConfig.target = RenderTarget::Swapchain;
-        framebufferConfig.width = 1280;
-        framebufferConfig.height = 720;
+        framebufferConfig.width = Engine::getWindow()->getWidth();
+        framebufferConfig.height = Engine::getWindow()->getHeight();
         framebufferConfig.clearColor = { 0.01f, 0.01f, 0.01f, 1.0f };
         framebufferConfig.depthAttachment = createRef<Attachment>(Format::Depth, Samples::Sample1, AttachmentLoadOp::Clear, AttachmentStoreOp::DontCare);
         framebufferConfig.colorAttachments = {
@@ -129,7 +129,6 @@ public:
         Toki::RendererCommand::setViewport({ 0, 0 }, { 1280, 720 });
         Toki::RendererCommand::setScissor({ 0, 0 }, { 1280, 720 });
 
-
         static float rotation = 0;
 
         lights[0].position = { glm::cos(glm::radians(rotation)) * 10, 4.0f, glm::sin(glm::radians(rotation)) * 10 };
@@ -160,12 +159,12 @@ public:
 
 
 
-        float pixel = framebuffer->readPixel(1, 1280 / 2, 720 / 2, 0);
+        auto mousePosition = Toki::Input::getMousePosition();
+        // std::cout << mousePosition.x << ' ' << mousePosition.y << '\n';
+
+        float pixel = framebuffer->readPixel(1, mousePosition.x, mousePosition.y, 0);
         uint16_t meshId = ((uint32_t) pixel) >> 16;
         uint16_t instanceId = (uint16_t) pixel;
-
-        std::cout << std::format("mesh id: {}, instance id: {}\n", meshId, instanceId);
-
 
         if (meshId > 0 && instanceId < 99999 && rendering == 2) {
             outlineShader->bind();
@@ -467,7 +466,6 @@ private:
 };
 
 int main(int argc, char** argv) {
-
     Toki::EngineConfig config{};
     config.windowConfig.resizable = false;
     config.workingDirectory = std::filesystem::absolute(argc == 1 ? std::filesystem::path(".") : argv[1]);

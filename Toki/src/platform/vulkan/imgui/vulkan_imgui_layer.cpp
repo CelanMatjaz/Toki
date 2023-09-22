@@ -3,8 +3,17 @@
 #include "core/engine.h"
 #include "platform/vulkan/vulkan_renderer.h"
 #include "platform/vulkan/backend/vulkan_utils.h"
-#include "backends/imgui_impl_glfw.h"
+
 #include "backends/imgui_impl_vulkan.h"
+
+#ifdef TK_WIN32
+#include "backends/imgui_impl_win32.h"
+#endif
+
+#ifdef TK_GLFW
+#include "backends/imgui_impl_glfw.h"
+#endif
+
 
 namespace Toki {
 
@@ -16,8 +25,8 @@ namespace Toki {
     void VulkanImGuiLayer::onAttach() {
         FramebufferConfig framebufferConfig{};
         framebufferConfig.target = RenderTarget::Swapchain;
-        framebufferConfig.width = 1280;
-        framebufferConfig.height = 720;
+        framebufferConfig.width = Engine::getWindow()->getWidth();
+        framebufferConfig.height = Engine::getWindow()->getHeight();
         framebufferConfig.clearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
         // framebufferConfig.depthAttachment = createRef<Attachment>(Format::Depth, Samples::Sample1, AttachmentLoadOp::Clear, AttachmentStoreOp::DontCare);
         framebufferConfig.colorAttachments = {
@@ -53,7 +62,14 @@ namespace Toki {
         ImGuiIO& io = ImGui::GetIO();
         ImGui::StyleColorsDark();
 
+#ifdef TK_WIN32
+        ImGui_ImplWin32_Init((HWND) Engine::getWindow()->getHandle());
+#endif
+
+#ifdef TK_GLFW
         ImGui_ImplGlfw_InitForVulkan((GLFWwindow*) Engine::getWindow()->getHandle(), true);
+#endif
+
         ImGui_ImplVulkan_InitInfo initInfo = {};
         initInfo.Instance = VulkanRenderer::instance();
         initInfo.PhysicalDevice = VulkanRenderer::physicalDevice();
@@ -68,6 +84,7 @@ namespace Toki {
         initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
         initInfo.Allocator = nullptr;
         initInfo.CheckVkResultFn = nullptr;
+
         ImGui_ImplVulkan_Init(&initInfo, framebuffer->getRenderPass()->getHandle());
 
         {
@@ -81,7 +98,15 @@ namespace Toki {
 
     void VulkanImGuiLayer::onDetach() {
         ImGui_ImplVulkan_Shutdown();
+
+#ifdef TK_WIN32
+        ImGui_ImplWin32_Shutdown();
+#endif
+
+#ifdef TK_GLFW
         ImGui_ImplGlfw_Shutdown();
+#endif
+
         ImGui::DestroyContext();
 
         vkDestroyDescriptorPool(VulkanRenderer::device(), descriptorPool, nullptr);
@@ -91,7 +116,15 @@ namespace Toki {
         framebuffer->bind();
 
         ImGui_ImplVulkan_NewFrame();
+
+#ifdef TK_WIN32
+        ImGui_ImplWin32_NewFrame();
+#endif
+
+#ifdef TK_GLFW
         ImGui_ImplGlfw_NewFrame();
+#endif
+
         ImGui::NewFrame();
     }
 
