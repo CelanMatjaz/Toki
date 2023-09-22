@@ -1,7 +1,8 @@
 #pragma once
 
-#include "tkpch.h"
 #include "event.h"
+#include "cstdint"
+#include "input/scancodes.h"
 
 namespace Toki {
 
@@ -38,10 +39,6 @@ namespace Toki {
 
     private:
         int16_t delta;
-    };
-
-    enum class MouseButton {
-        Left, Right, Middle
     };
 
     class MouseButtonEvent {

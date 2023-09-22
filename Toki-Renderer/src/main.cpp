@@ -446,6 +446,12 @@ public:
         }
     }
 
+    void onEvent(Toki::Event& event) override {
+        if (event.getType() == Toki::EventType::KeyPress) {
+            Toki::KeyPressEvent* e = (Toki::KeyPressEvent*) &event;
+            std::cout << std::format("Key: {}, Scancode: {}\n", e->getKey(), e->getScancode());
+        }
+    }
 
 private:
     Toki::Ref<Toki::Shader> shader;

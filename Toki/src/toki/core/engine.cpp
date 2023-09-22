@@ -79,13 +79,10 @@ namespace Toki {
 
         if (event.isHandled()) return;
 
-        for (int32_t i = layers.size() - 1; i >= 0 && !event.isHandled(); --i) {
+        for (int32_t i = layers.size() - 1; i >= 0; --i) {
             layers[i]->onEvent(event);
+            if (event.isHandled()) return;
         }
-
-        if (event.getType() == EventType::MouseMove) return;
-
-        std::cout << "event - " << std::to_underlying(event.getType()) << '\n';
     }
 
 }

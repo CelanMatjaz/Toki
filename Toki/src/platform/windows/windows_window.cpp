@@ -128,8 +128,8 @@ namespace Toki {
                 break;
             }
             case WM_KEYDOWN: {
-                uint16_t repeatCount = lParam;
-                if (repeatCount) {
+                uint16_t repeatCount = (uint16_t) lParam;
+                if (repeatCount && (lParam >> 30) & 1) {
                     KeyRepeatEvent e(wParam, (lParam >> 16) & 0b1111111, getKeyMods(), repeatCount);
                     ((Engine*) TokiWindowsWindow::engine)->onEvent(e);
                     break;

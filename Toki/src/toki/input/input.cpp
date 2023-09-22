@@ -2,6 +2,7 @@
 #include "input.h"
 #include "core/assert.h"
 #include "core/engine.h"
+#include "scancodes.h"
 
 #ifdef TK_WIN32
 #include "Windows.h"
@@ -12,13 +13,12 @@
 namespace Toki {
 
     bool Input::isKeyPressed(ScanCode scanCode) {
-        // TODO: implement
-
-        return false;
+        return GetAsyncKeyState(mapToWindowsKeyCode(scanCode));
     }
 
     bool Input::isKeyPressed(KeyCode keyCode) {
         // TODO: implement
+
 
 
         return false;

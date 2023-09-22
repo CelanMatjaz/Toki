@@ -81,7 +81,6 @@ namespace Toki {
         SCAN_F22,
         SCAN_F23,
         SCAN_F24,
-        SCAN_F25,
 
         SCAN_ESCAPE,
         SCAN_ENTER,
@@ -138,5 +137,6 @@ namespace Toki {
     };
 
     ScanCode mapKeyCode(KeyCode code, std::unordered_map<KeyCode, ScanCode> layoutMap);
+    int mapToWindowsKeyCode(ScanCode scanCode);
 
 }

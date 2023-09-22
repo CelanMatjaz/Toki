@@ -14,6 +14,8 @@
 
 #include "input/input.h"
 
+#include "events/events.h"
+
 #include "glm/glm.hpp"
 #include "glm/gtx/transform.hpp"
 #include "glm/gtx/euler_angles.hpp"
