@@ -10,6 +10,6 @@ namespace Toki {
         return createRef<VulkanFramebuffer>(config);
     }
 
-    Framebuffer::Framebuffer(const FramebufferConfig& config) : config(std::move(config)) {}
+    Framebuffer::Framebuffer(const FramebufferConfig& config) : config(config) {}
 
 }

@@ -9,9 +9,10 @@ namespace Toki {
     public:
 
         VulkanTexture(const TextureConfig& config);
+        VulkanTexture(Ref<VulkanImage> image);
         ~VulkanTexture();
 
-         Ref<VulkanImage> getHandle() { return imageHandle; }
+        Ref<VulkanImage> getHandle() { return imageHandle; }
 
     private:
         VkFormat format;

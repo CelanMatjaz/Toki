@@ -19,7 +19,7 @@ namespace Toki {
         static void setLineWidth(const float& width);
 
         static void draw(Ref<VertexBuffer> vertexBuffer);
-        static void draw(Ref<VertexBuffer> vertexBuffer, uint32_t vertecies);
+        static void draw(Ref<VertexBuffer> vertexBuffer, uint32_t vertexCount);
         static void draw(Ref<VertexBuffer> vertexBuffer, Ref<IndexBuffer> indexBuffer);
         static void draw(Ref<Geometry> geometry);
         // static void draw(std::vector<Ref<VertexBuffer>> vertexBuffers, Ref<IndexBuffer> indexBuffer);

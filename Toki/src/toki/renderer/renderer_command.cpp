@@ -36,9 +36,9 @@ namespace Toki {
         vkCmdDraw(VulkanRenderer::commandBuffer(), ((VulkanVertexBuffer*) vertexBuffer.get())->getBinding(), 1, 0, 0);
     }
 
-    void RendererCommand::draw(Ref<VertexBuffer> vertexBuffer, uint32_t verteciesCount) {
+    void RendererCommand::draw(Ref<VertexBuffer> vertexBuffer, uint32_t vertexCount) {
         vertexBuffer->bind();
-        vkCmdDraw(VulkanRenderer::commandBuffer(), verteciesCount, 1, 0, 0);
+        vkCmdDraw(VulkanRenderer::commandBuffer(), vertexCount, 1, 0, 0);
     }
 
     void RendererCommand::draw(Ref<VertexBuffer> vertexBuffer, Ref<IndexBuffer> indexBuffer) {

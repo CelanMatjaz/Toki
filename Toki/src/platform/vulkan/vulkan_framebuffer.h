@@ -22,6 +22,8 @@ namespace Toki {
         virtual void bind() override;
         virtual void unbind() override;
         virtual float readPixel(uint32_t attachmentIndex, uint32_t x, uint32_t y, uint32_t z) override;
+        virtual Ref<Texture> getAttachment(uint32_t attachmentIndex) override;
+        virtual Ref<Texture> getDepthAttachment() override;
 
         Ref<VulkanRenderPass> getRenderPass() { return renderPass; }
 
@@ -31,6 +33,7 @@ namespace Toki {
 
         Ref<VulkanRenderPass> renderPass;
         std::vector<Ref<VulkanImage>> attachments[VulkanContext::MAX_FRAMES];
+        Ref<VulkanImage> depthAttachment;
         VkFramebuffer framebuffers[VulkanContext::MAX_FRAMES];
     };
 

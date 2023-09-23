@@ -33,10 +33,16 @@ public:
         framebufferConfig.clearColor = { 0.01f, 0.01f, 0.01f, 1.0f };
         framebufferConfig.depthAttachment = createRef<Attachment>(Format::Depth, Samples::Sample1, AttachmentLoadOp::Clear, AttachmentStoreOp::DontCare);
         framebufferConfig.colorAttachments = {
-            { Format::RGBA8, Samples::Sample1, AttachmentLoadOp::Clear, AttachmentStoreOp::Store, RenderTarget::Swapchain },
+            { Format::RGBA8, Samples::Sample1, AttachmentLoadOp::Clear, AttachmentStoreOp::Store, RenderTarget::Texture },
             { Format::R32, Samples::Sample1, AttachmentLoadOp::Clear, AttachmentStoreOp::Store, RenderTarget::Texture }
         };
         framebuffer = Framebuffer::create(framebufferConfig);
+
+        framebufferConfig.depthAttachment.reset();
+        framebufferConfig.colorAttachments = {
+            { Format::R32, Samples::Sample1, AttachmentLoadOp::Clear, AttachmentStoreOp::Store, RenderTarget::Swapchain },
+        };
+        testFramebuffer = Framebuffer::create(framebufferConfig);
 
         Toki::ShaderConfig shaderConfig{};
         shaderConfig.framebuffer = framebuffer;
@@ -70,6 +76,21 @@ public:
         outlineShaderConfig.path = "assets/shaders/raw/geometry_pick.shader.glsl";
         outlineShader = Toki::Shader::create(outlineShaderConfig);
 
+        Toki::ShaderConfig singleQuadShaderConfig = shaderConfig;
+        singleQuadShaderConfig.attributeDescriptions = {
+            { 0, 0, VertexFormat::Float3, offsetof(Toki::Vertex, position) },
+            { 1, 0, VertexFormat::Float2, offsetof(Toki::Vertex, uv)},
+            { 2, 0, VertexFormat::Float3, offsetof(Toki::Vertex, normal) },
+        };
+        singleQuadShaderConfig.bindingDescriptions = {
+            { 0, sizeof(Toki::Vertex), VertexInputRate::Vertex }
+        };
+        singleQuadShaderConfig.framebuffer = testFramebuffer;
+        singleQuadShaderConfig.properties.cullMode = Toki::CullMode::None;
+        singleQuadShaderConfig.properties.wireframe = false;
+        singleQuadShaderConfig.path = "assets/shaders/raw/single_quad.shader.glsl";
+        singleQuadShader = Toki::Shader::create(singleQuadShaderConfig);
+
         {
             struct LightData {
                 alignas(4) uint32_t lightCount = 0;
@@ -95,10 +116,43 @@ public:
         }
 
         {
+            UniformBufferConfig uniformBufferConfig{};
+            uniformBufferConfig.size = sizeof(float);
+            lighthting = UniformBuffer::create(uniformBufferConfig);
+            lighthting->setData(sizeof(float), &brightness);
+        }
+
+        {
             Toki::TextureConfig textureConfig{};
             textureConfig.path = "assets/textures/spongebob.png";
             texture = Toki::Texture::create(textureConfig);
         }
+
+        {
+            Toki::Vertex vertecies[4] = {
+                { { -1,-1,0 }, { 0,0 }, { 0,0,-1 } },
+                { { 1,-1,0 }, { 1,0 }, { 0,0,-1 } },
+                { { 1,1,0 }, { 1,1 }, { 0,0,-1 } },
+                { { -1,1,0 }, { 0,1 }, { 0,0,-1 } },
+            };
+
+            Toki::VertexBufferConfig vertexBufferConfig{};
+            vertexBufferConfig.size = sizeof(vertecies);
+            vertexBufferConfig.binding = 0;
+            singleQuadVertexBuffer = Toki::VertexBuffer::create(vertexBufferConfig);
+            singleQuadVertexBuffer->setData(vertexBufferConfig.size, vertecies);
+        }
+
+        {
+            uint32_t indecies[6] = { 0, 2, 1, 0, 3, 2 };
+
+            Toki::IndexBufferConfig indexBufferConfig{};
+            indexBufferConfig.size = sizeof(indecies);
+            indexBufferConfig.indexCount = 6;
+            singleQuadIndexBuffer = Toki::IndexBuffer::create(indexBufferConfig);
+            singleQuadIndexBuffer->setData(indexBufferConfig.size, indecies);
+        }
+
 
         model = Geometry::create();
         model->loadFromObj(modelPath);
@@ -140,25 +194,6 @@ public:
 
         draw();
 
-        // Push push{};
-        // push.mvp = camera->getProjection() * camera->getView() *
-        //     // push.mvp = camera->getProjection() *
-        //     glm::scale(glm::translate(glm::mat4{ 1.0f }, { 0.0f, 0.0f, -5.0f }), { .4f, .4f, .4f });
-
-        // Toki::RendererCommand::setConstant(shader, sizeof(Push), &push);
-
-        // Toki::RendererCommand::setUniform(shader, uniformBufferLightData, 0, 0, 0);
-        // Toki::RendererCommand::setUniform(shader, uniformBufferLights, 1, 0, 0);
-        // Toki::RendererCommand::setTexture(shader, texture, 0, 0, 1);
-
-        // Toki::RendererCommand::bindSets(shader);
-
-        // // Toki::RendererCommand::drawInstanced({ vertexBuffer ,instanceBuffer }, indexBuffer);
-
-        // Toki::RendererCommand::drawInstanced(model, instanceBuffer, nInstancesX * nInstancesY);
-
-
-
         auto mousePosition = Toki::Input::getMousePosition();
         // std::cout << mousePosition.x << ' ' << mousePosition.y << '\n';
 
@@ -189,6 +224,33 @@ public:
 
 
         framebuffer->unbind();
+
+
+
+        if (1) {
+            auto idTexture = framebuffer->getAttachment(0);
+
+            testFramebuffer->bind();
+
+            singleQuadShader->bind();
+
+            Toki::RendererCommand::setViewport({ 0, 0 }, { 1280, 720 });
+            Toki::RendererCommand::setScissor({ 0, 0 }, { 1280, 720 });
+
+            struct SingleQuadPush {
+                glm::mat4 mvp;
+            } singleQuadPush;
+
+            singleQuadPush.mvp = glm::ortho(1.0f, -1.0f, -1.0f, 1.0f) * glm::lookAt(glm::vec3{ 0.0f, 0.0f, -1.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f });
+
+            Toki::RendererCommand::setTexture(singleQuadShader, idTexture, 0, 0, 0);
+            Toki::RendererCommand::setUniform(singleQuadShader, lighthting, 1, 0, 0);
+            Toki::RendererCommand::bindSets(singleQuadShader, 0);
+            Toki::RendererCommand::setConstant(singleQuadShader, sizeof(singleQuadPush), &singleQuadPush);
+            Toki::RendererCommand::draw(singleQuadVertexBuffer, singleQuadIndexBuffer);
+
+            testFramebuffer->unbind();
+        }
 
     }
 
@@ -229,6 +291,10 @@ public:
         }
 
         ImGui::ColorEdit4("Outline color", (float*) &outlineColor);
+
+        if (ImGui::SliderFloat("Brightness", &brightness, 0.1f, 2.0f)) {
+            lighthting->setData(sizeof(float), &brightness);
+        }
 
         if (accDelta >= 1.0f) {
             fps = frameCount;
@@ -456,11 +522,19 @@ public:
 private:
     Toki::Ref<Toki::Shader> shader;
     Toki::Ref<Toki::Framebuffer> framebuffer;
+    Toki::Ref<Toki::Framebuffer> testFramebuffer;
     Toki::Ref<Toki::VertexBuffer> vertexBuffer;
     Toki::Ref<Toki::VertexBuffer> instanceBuffer;
     Toki::Ref<Toki::UniformBuffer> uniformBufferLightData;
     Toki::Ref<Toki::UniformBuffer> uniformBufferLights;
     Toki::Ref<Toki::IndexBuffer> indexBuffer;
+
+
+    Toki::Ref<Toki::VertexBuffer> singleQuadVertexBuffer;
+    Toki::Ref<Toki::IndexBuffer> singleQuadIndexBuffer;
+    Toki::Ref<Toki::Shader> singleQuadShader;
+    Toki::Ref<Toki::UniformBuffer> lighthting;
+    float brightness = 1.0f;
 
     Toki::Ref<Toki::Shader> outlineShader;
 

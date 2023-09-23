@@ -57,6 +57,8 @@ namespace Toki {
         PrimitiveTopology topology = PrimitiveTopology::TriangleList;
         FrontFace frontFace = FrontFace::CounterClockwise;
         CullMode cullMode = CullMode::Back;
+        bool enableDepthTest = true;
+        bool enableStencilTest = false;
     };
 
     struct ShaderConfig {

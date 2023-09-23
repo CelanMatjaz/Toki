@@ -58,6 +58,8 @@ namespace Toki {
 		virtual void bind() = 0;
 		virtual void unbind() = 0;
 		virtual float readPixel(uint32_t attachmentIndex, uint32_t x, uint32_t y, uint32_t z) = 0;
+		virtual Ref<Texture> getAttachment(uint32_t attachmentIndex) = 0;
+		virtual Ref<Texture> getDepthAttachment() = 0;
 
 		void setClearColor(glm::vec4 color = { 0.1f, 0.1f, 0.1f, 0.1f }) {
 			config.clearColor = color;

@@ -26,16 +26,19 @@ namespace Toki {
             isClassRegistered = true;
         }
 
+
         HMENU menu;
-        DWORD windowStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+        windowStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
         if (windowConfig.resizable) windowStyle |= WS_THICKFRAME;
 
+        RECT rect = { 0, 0, (LONG) windowConfig.width, (LONG) windowConfig.height };
+        AdjustWindowRect(&rect, windowStyle, false);
         handle = CreateWindowEx(
             0,
             WINDOW_CLASS_NAME,
             windowConfig.title.c_str(),
             windowStyle, // TODO: add support for customization
-            CW_USEDEFAULT, CW_USEDEFAULT, windowConfig.width, windowConfig.height,
+            CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top,
 
             console, // TODO: add condition for console app and window app
             nullptr, // TODO: add support for custom menu
@@ -95,12 +98,12 @@ namespace Toki {
         if (ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam))
             return true;
 
-
         switch (uMsg) {
             case WM_SIZE: {
-                RECT dimensions{};
-                GetWindowRect(hwnd, &dimensions);
-                ((Engine*) TokiWindowsWindow::engine)->getWindow()->setDimensions(dimensions.right - dimensions.left, dimensions.bottom - dimensions.top);
+                RECT rect{};
+                GetClientRect(hwnd, &rect);
+                // std::cout << std::format("width {}, height {}\n", rect.right - rect.left, rect.bottom - rect.top);
+                ((Engine*) TokiWindowsWindow::engine)->getWindow()->setDimensions(rect.right - rect.left, rect.bottom - rect.top);
 
                 switch (wParam) {
                     case SIZE_RESTORED: {
@@ -179,6 +182,7 @@ namespace Toki {
                 ((Engine*) TokiWindowsWindow::engine)->onEvent(e);
                 break;
             }
+            case WM_QUIT:
             case WM_CLOSE: {
                 ((TokiWindowsWindow*) ((Engine*) TokiWindowsWindow::engine)->getWindow().get())->shouldWindowClose = true;
             }

@@ -1,6 +1,7 @@
 #include "tkpch.h"
 #include "vulkan_framebuffer.h"
 #include "platform/vulkan/vulkan_renderer.h"
+#include "platform/vulkan/vulkan_texture.h"
 #include "platform/vulkan/backend/vulkan_utils.h"
 #include "core/core.h"
 #include "core/assert.h"
@@ -50,6 +51,16 @@ namespace Toki {
         return attachments[VulkanRenderer::currentFrameIndex()][attachmentIndex]->readPixel(x, y);
     }
 
+    Ref<Texture> VulkanFramebuffer::getAttachment(uint32_t attachmentIndex) {
+        TK_ASSERT(attachmentIndex < attachments[VulkanRenderer::currentFrameIndex()].size(), std::format("Attachment index {} out of bounds", attachmentIndex));
+        return createRef<VulkanTexture>(attachments[VulkanRenderer::currentFrameIndex()][attachmentIndex]);
+    }
+
+    Ref<Texture> VulkanFramebuffer::getDepthAttachment() {
+        TK_ASSERT(depthAttachment.get(), "No depth attachment on framebuffer");
+        return createRef<VulkanTexture>(depthAttachment);
+    }
+
     void VulkanFramebuffer::create() {
         VulkanRenderPassConfig vulkanRenderPassConfig;
         vulkanRenderPassConfig.colorAttachments = config.colorAttachments;
@@ -65,7 +76,7 @@ namespace Toki {
             if (config.colorAttachments[i].target == RenderTarget::Swapchain) continue;
             VulkanImageConfig vulkanImageConfig{};
             vulkanImageConfig.extent = { config.width, config.height, 1 };
-            vulkanImageConfig.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT;
+            vulkanImageConfig.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
             vulkanImageConfig.format = VulkanUtils::mapFormat(config.colorAttachments[i].format);
             textureAttachments[i] = createRef<VulkanImage>(vulkanImageConfig);
         }
@@ -114,6 +125,10 @@ namespace Toki {
             VkRenderPass renderPass = this->renderPass->getHandle();
             createFramebuffer(attachments[i], &framebuffers[i], &renderPass, i);
             if (config.target == RenderTarget::Texture) break;
+        }
+
+        if (hasDepthAttachment) {
+            depthAttachment = attachments->back();
         }
     }
 

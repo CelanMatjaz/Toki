@@ -47,6 +47,10 @@ namespace Toki {
         stbi_image_free(pixels);
     }
 
+    VulkanTexture::VulkanTexture(Ref<VulkanImage> image) : imageHandle(image) {
+
+    }
+
     VulkanTexture::~VulkanTexture() {
 
     }
