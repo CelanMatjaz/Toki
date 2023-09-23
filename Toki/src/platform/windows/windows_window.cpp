@@ -12,7 +12,6 @@ namespace Toki {
         TokiWindowsWindow::engine = engine;
 
         HMODULE hInstance = GetModuleHandle(nullptr);
-        auto console = GetConsoleWindow();
 
         if (!isClassRegistered) {
             WNDCLASS windowClass = { };
@@ -40,7 +39,7 @@ namespace Toki {
             windowStyle, // TODO: add support for customization
             CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top,
 
-            console, // TODO: add condition for console app and window app
+            nullptr, // TODO: add condition for console app and window app
             nullptr, // TODO: add support for custom menu
             hInstance,
             nullptr
