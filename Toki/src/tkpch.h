@@ -9,7 +9,7 @@
 #include "WinUser.h"
 #include "vulkan/vulkan_win32.h"
 #else
-#include "GLFW/glfw3.h"
+
 #endif
 
 #include "glm/glm.hpp"

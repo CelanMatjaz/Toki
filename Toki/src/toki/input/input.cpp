@@ -7,7 +7,7 @@
 #ifdef TK_WIN32
 #include "Windows.h"
 #else 
-#include "glfw/glfw3.h"
+
 #endif
 
 namespace Toki {
