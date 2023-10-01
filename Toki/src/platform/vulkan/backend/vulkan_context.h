@@ -2,7 +2,7 @@
 
 #include "vulkan/vulkan.h"
 #include "platform/vulkan/backend/vulkan_swapchain.h"
-#include "platform/vulkan/backend/vulkan_render_pass.h"
+#include "platform/vulkan/vulkan_render_pass.h"
 
 namespace Toki {
 

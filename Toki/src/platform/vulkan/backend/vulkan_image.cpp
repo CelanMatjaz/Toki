@@ -16,6 +16,7 @@ namespace Toki {
         VkImageLayout imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
         format = config.format;
+        extent = config.extent;
 
         if (config.usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
         {
@@ -32,8 +33,6 @@ namespace Toki {
         TK_ASSERT(aspectMask > 0, "Aspect mask is not valid!");
 
         VkDevice device = VulkanRenderer::device();
-
-        extent = config.extent;
 
         VkImageCreateInfo imageCreateInfo{};
         imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

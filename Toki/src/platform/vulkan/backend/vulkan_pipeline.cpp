@@ -102,13 +102,18 @@ namespace Toki {
 
         VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo{};
         depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-        depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
-        depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
-        depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL; // REVIEW: maybe add to config?
+        depthStencilStateCreateInfo.depthTestEnable = props.enableDepthTest;
+        depthStencilStateCreateInfo.depthWriteEnable = props.enableDepthWrite;
+        depthStencilStateCreateInfo.depthCompareOp = VulkanUtils::mapCompareOp(props.depthCompareOp);
         depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
         depthStencilStateCreateInfo.minDepthBounds = 0.0f;
         depthStencilStateCreateInfo.maxDepthBounds = 1.0f;
-        depthStencilStateCreateInfo.stencilTestEnable = VK_FALSE;
+
+        if (props.enableStencilTest) {
+            depthStencilStateCreateInfo.stencilTestEnable = VK_TRUE;
+            depthStencilStateCreateInfo.back = VulkanUtils::mapStencilOpState(props.back);
+            depthStencilStateCreateInfo.front = VulkanUtils::mapStencilOpState(props.front);
+        }
 
         VkPipelineColorBlendAttachmentState colorBlendAttachment{};
         colorBlendAttachment.blendEnable = VK_FALSE;
@@ -120,7 +125,7 @@ namespace Toki {
         colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
         colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-        std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(config.renderPass->getColorAttachmentCount(), colorBlendAttachment);
+        std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(((VulkanRenderPass*) config.renderPass.get())->getColorAttachmentCount(props.subpass), colorBlendAttachment);
 
         VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo{};
         colorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -152,8 +157,8 @@ namespace Toki {
         pipelineInfo.pColorBlendState = &colorBlendStateCreateInfo;
         pipelineInfo.pDynamicState = &dynamicState;
         pipelineInfo.layout = config.layout;
-        pipelineInfo.renderPass = config.renderPass->getHandle();
-        pipelineInfo.subpass = 0;
+        pipelineInfo.renderPass = ((VulkanRenderPass*) config.renderPass.get())->getHandle();
+        pipelineInfo.subpass = props.subpass;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
         pipelineInfo.pDepthStencilState = &depthStencilStateCreateInfo;
 

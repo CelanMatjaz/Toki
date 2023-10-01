@@ -28,6 +28,7 @@ namespace Toki {
         void onEvent(Event& event);
 
         static Ref<Window> getWindow() { return window; }
+        static Engine* getEngine() { return engine; }
 
     private:
         static inline Engine* engine;

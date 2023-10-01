@@ -19,7 +19,7 @@ layout(push_constant) uniform constants {
 } PushConstants;
 
 void main() {
-    gl_Position = PushConstants.mvp * vec4(position + instancePosition, 1.0);
+    gl_Position = PushConstants.mvp * vec4((position + instancePosition) + normal * 0.03, 1.0);
     outColor = PushConstants.color;
 }
 

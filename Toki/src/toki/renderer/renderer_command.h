@@ -32,6 +32,8 @@ namespace Toki {
         static void setTexture(Ref<Shader> shader, Ref<Texture> texture, uint32_t binding, uint32_t index = 0, uint32_t set = 0);
 
         static void bindSets(Ref<Shader> shader, uint32_t firstSet = 0);
+
+        static void nextSubpass();
     };
 
 }

@@ -1,6 +1,7 @@
 #include "tkpch.h"
 #include "toki/core/engine.h"
 #include "toki/core/assert.h"
+#include "toki/events/events.h"
 #include "vulkan_swapchain.h"
 #include "vulkan_utils.h"
 #include <platform/vulkan/vulkan_renderer.h>
@@ -8,14 +9,18 @@
 namespace Toki {
 
     VulkanSwapchain::VulkanSwapchain(VkPresentModeKHR presentMode) {
-        recreate(presentMode);
+        create();
     }
 
     VulkanSwapchain::~VulkanSwapchain() {
         destroy();
     }
 
-    void VulkanSwapchain::recreate(VkPresentModeKHR presentMode) {
+    void VulkanSwapchain::recreate() {
+        create();
+    }
+
+    void VulkanSwapchain::create(VkPresentModeKHR presentMode) {
         VkDevice device = VulkanRenderer::device();
         VkPhysicalDevice physicalDevice = Toki::VulkanRenderer::physicalDevice();
         VkSurfaceKHR surface = Toki::VulkanRenderer::surface();
@@ -96,20 +101,16 @@ namespace Toki {
             images[i] = createRef<VulkanImage>(swapchainImages[i], imageView, imageFormat);
         }
 
-        VulkanImageConfig imageConfig{};
-        imageConfig.format = VulkanUtils::findDepthFormat();
-        imageConfig.tiling = VulkanUtils::findTiling(imageConfig.format);
-        imageConfig.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-        imageConfig.extent = { extent.width, extent.height, 1 };
-        depthBuffer = createRef<VulkanImage>(imageConfig);
+        for (const auto& framebuffer : framebuffers) {
+            framebuffer->resize(extent.width, extent.height, 1);
+        }
     }
 
     void VulkanSwapchain::destroy() {
         VkDevice device = Toki::VulkanRenderer::device();
 
         vkDestroySwapchainKHR(device, swapchain, nullptr);
-
-        depthBuffer.reset();
+        swapchain = VK_NULL_HANDLE;
     }
 
 }

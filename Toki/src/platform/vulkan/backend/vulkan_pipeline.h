@@ -3,8 +3,8 @@
 #include "core/core.h"
 #include "vulkan/vulkan.h"
 #include "renderer/shader.h"
+#include "platform/vulkan/vulkan_render_pass.h"
 #include "platform/vulkan/backend/vulkan_pipeline.h"
-#include "platform/vulkan/backend/vulkan_render_pass.h"
 #include "unordered_map"
 
 namespace Toki {
@@ -27,7 +27,7 @@ namespace Toki {
         std::vector<VkVertexInputBindingDescription> inputBindingDescriptions;
         std::vector<VkVertexInputAttributeDescription> inputAttributeDescriptions;
         PipelineProperties properties{};
-        Ref<VulkanRenderPass> renderPass;
+        Ref<RenderPass> renderPass;
     };
 
     class Pipeline {

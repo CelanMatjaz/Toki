@@ -23,16 +23,19 @@ namespace Toki {
     }
 
     void VulkanImGuiLayer::onAttach() {
+        RenderPassConfig renderPassConfig{};
+        renderPassConfig.nSubpasses = 1;
+        renderPassConfig.attachments = {
+            { Format::RGBA8, Samples::Sample1, AttachmentLoadOp::Load, AttachmentStoreOp::Store, RenderTarget::Swapchain, false, InitialLayout::Present }
+        };
+        renderPass = RenderPass::create(renderPassConfig);
+
         FramebufferConfig framebufferConfig{};
-        framebufferConfig.target = RenderTarget::Swapchain;
+        framebufferConfig.renderPass = renderPass;
         framebufferConfig.width = Engine::getWindow()->getWidth();
         framebufferConfig.height = Engine::getWindow()->getHeight();
         framebufferConfig.clearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-        // framebufferConfig.depthAttachment = createRef<Attachment>(Format::Depth, Samples::Sample1, AttachmentLoadOp::Clear, AttachmentStoreOp::DontCare);
-        framebufferConfig.colorAttachments = {
-            { Format::RGBA8, Samples::Sample1, AttachmentLoadOp::Load, AttachmentStoreOp::Store, RenderTarget::Swapchain, InitialLayout::Present }
-        };
-        framebuffer = createRef<VulkanFramebuffer>(framebufferConfig);
+        framebuffer = Framebuffer::create(framebufferConfig);
 
         std::vector<VkDescriptorPoolSize> poolSizes = {
              { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
@@ -85,7 +88,7 @@ namespace Toki {
         initInfo.Allocator = nullptr;
         initInfo.CheckVkResultFn = nullptr;
 
-        ImGui_ImplVulkan_Init(&initInfo, framebuffer->getRenderPass()->getHandle());
+        ImGui_ImplVulkan_Init(&initInfo, ((VulkanRenderPass*) renderPass.get())->getHandle());
 
         {
             VkCommandBuffer commandBuffer = VulkanRenderer::beginSingleUseCommands();

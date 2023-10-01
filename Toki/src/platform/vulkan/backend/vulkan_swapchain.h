@@ -3,6 +3,7 @@
 #include "vulkan/vulkan.h"
 #include "core/core.h"
 #include "vulkan_image.h"
+#include "renderer/framebuffer.h"
 #include "vector"
 
 namespace Toki {
@@ -12,7 +13,8 @@ namespace Toki {
         VulkanSwapchain(VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR);
         ~VulkanSwapchain();
 
-        void recreate(VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR);
+        void recreate();
+        void create(VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR);
         void destroy();
 
         VkSwapchainKHR getHandle() { return swapchain; }
@@ -20,7 +22,7 @@ namespace Toki {
         VkFormat getFormat() { return imageFormat; }
 
         std::vector<Ref<VulkanImage>> images;
-        Ref<VulkanImage> depthBuffer;
+        std::vector<Ref<Framebuffer>> framebuffers;
 
     private:
         VkSwapchainKHR swapchain = VK_NULL_HANDLE;

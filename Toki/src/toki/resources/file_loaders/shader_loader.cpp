@@ -214,23 +214,3 @@ namespace Toki {
         return std::move(buffer);
     }
 }
-
-
-/*
-
-        shaderc::Compiler spirvCompiler;
-        shaderc::CompileOptions options;
-        options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
-
-    #ifdef NDEBUG
-        options.SetOptimizationLevel(shaderc_optimization_level_performance);
-    #else
-        options.SetOptimizationLevel(shaderc_optimization_level_zero);
-    #endif
-
-        options.SetSourceLanguage(shaderc_source_language::shaderc_source_language_glsl);
-
-        shaderc::SpvCompilationResult spirvModule = spirvCompiler.CompileGlslToSpv(shaderCode.data(), getShadercShaderKind(stage), "Shader", options);
-        TK_ASSERT(spirvModule.GetCompilationStatus() == shaderc_compilation_status::shaderc_compilation_status_success, std::format("Error compiling shader code from file {}\n\t{}", std::filesystem::absolute(config.path).string(), spirvModule.GetErrorMessage()));
-
-*/

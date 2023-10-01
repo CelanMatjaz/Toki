@@ -79,7 +79,7 @@ namespace Toki {
         pipelineConfig.moduleSpirv[ShaderStage::Fragment] = fragmentModuleSpirv;
         pipelineConfig.inputAttributeDescriptions = mapAttributeDescriptions(config.attributeDescriptions);
         pipelineConfig.inputBindingDescriptions = mapBindingDescriptions(config.bindingDescriptions);
-        pipelineConfig.renderPass = ((VulkanFramebuffer*) config.framebuffer.get())->getRenderPass();
+        pipelineConfig.renderPass = config.renderPass;
         pipelineConfig.properties = config.properties;
 
         pipeline = Pipeline::create(pipelineConfig);
@@ -94,6 +94,7 @@ namespace Toki {
 
         getDescriptorSetBindings(stage, compiler, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         getDescriptorSetBindings(stage, compiler, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        getDescriptorSetBindings(stage, compiler, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT);
         getPushConstants(stage, compiler);
 
         auto stageFlag = mapShaderStage(stage);
@@ -149,6 +150,9 @@ namespace Toki {
                 break;
             case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
                 resourceArray = resources.sampled_images;
+                break;
+            case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
+                resourceArray = resources.subpass_inputs;
                 break;
             default:
                 TK_ASSERT(false, std::format("Decriptor type {} is not supported\n", (int) descriptorType));

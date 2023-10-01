@@ -1,18 +1,13 @@
 #pragma once
 
 #include "renderer/framebuffer.h"
+#include "platform/vulkan/vulkan_render_pass.h"
 #include "platform/vulkan/backend/vulkan_context.h"
 #include "platform/vulkan/backend/vulkan_image.h"
-#include "platform/vulkan/backend/vulkan_render_pass.h"
 #include "vulkan/vulkan.h"
 #include "vector"
 
 namespace Toki {
-
-    struct VulkanFramebufferConfig {
-        std::vector<VkImageView> attachments;
-        uint32_t width = 1280, height = 720;
-    };
 
     class VulkanFramebuffer : public Framebuffer {
     public:
@@ -21,19 +16,18 @@ namespace Toki {
 
         virtual void bind() override;
         virtual void unbind() override;
+        virtual void resize(uint32_t width, uint32_t height, uint32_t layers = 1) override;
+        virtual void nextSubpass() override;
         virtual float readPixel(uint32_t attachmentIndex, uint32_t x, uint32_t y, uint32_t z) override;
         virtual Ref<Texture> getAttachment(uint32_t attachmentIndex) override;
-        virtual Ref<Texture> getDepthAttachment() override;
 
-        Ref<VulkanRenderPass> getRenderPass() { return renderPass; }
+        bool isSwapchainTarget() { return config.target == RenderTarget::Swapchain; }
 
     private:
         void create();
         void destroy();
 
-        Ref<VulkanRenderPass> renderPass;
         std::vector<Ref<VulkanImage>> attachments[VulkanContext::MAX_FRAMES];
-        Ref<VulkanImage> depthAttachment;
         VkFramebuffer framebuffers[VulkanContext::MAX_FRAMES];
     };
 

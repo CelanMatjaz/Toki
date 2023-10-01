@@ -31,7 +31,6 @@ namespace Toki {
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
             context->swapchain->recreate();
-            beginFrame();
             return;
         }
         else TK_ASSERT(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, "Failed to acquire swapchain image");
@@ -44,9 +43,13 @@ namespace Toki {
         commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
         TK_ASSERT_VK_RESULT(vkBeginCommandBuffer(frame->commandBuffer, &commandBufferBeginInfo), "Error starting command buffer recording");
+
+        isFrameStarted = true;
     }
 
     void VulkanRenderer::endFrame() {
+        if (!isFrameStarted) return;
+
         VkDevice device = context->device;
         VulkanContext::FrameData* frame = context->getCurrentFrame();
 
@@ -87,6 +90,12 @@ namespace Toki {
         else TK_ASSERT_VK_RESULT(result, "Failed to present swapchain image");
 
         context->currentFrame = ++context->currentFrame % VulkanContext::MAX_FRAMES;
+
+        isFrameStarted = false;
+    }
+
+    void VulkanRenderer::resizeSwapchain(uint32_t width, uint32_t height, uint32_t layers) {
+        context->swapchain->recreate();
     }
 
     VkCommandBuffer VulkanRenderer::beginSingleUseCommands() {

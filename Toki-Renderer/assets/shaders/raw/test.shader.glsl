@@ -103,5 +103,6 @@ layout(set = 1, binding = 0) uniform sampler2D texSampler[32];
 
 void main() {
     outFragColor = texture(texSampler[textureIndex], vec2(uv.x, -uv.y)) * color;
+    // outFragColor = texture(texSampler[textureIndex], vec2(gl_FragCoord.x / 1280.0, gl_FragCoord.y / 720.0)) * color;
     outInstanceID = instanceID;
 }

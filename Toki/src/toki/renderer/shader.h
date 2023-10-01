@@ -4,7 +4,7 @@
 #include "filesystem"
 #include "utility"
 #include "vector"
-#include "framebuffer.h"
+#include "render_pass.h"
 
 namespace Toki {
 
@@ -52,13 +52,36 @@ namespace Toki {
         None, Front, Back, FrontAndBack
     };
 
+    enum class CompareOp {
+        Never, Less, Equal, LessOrEqual, Greater, NotEqual, GreaterOrEqual, Always
+    };
+
+    enum class StencilOp {
+        Keep, Zero, Replace, IncrementAndClamp, DecrementAndClamp, Invert, IncrementAndWrap, DecrementAndWrap
+    };
+
+    struct StencilOpState {
+        StencilOp failOp = StencilOp::Replace;
+        StencilOp passOp = StencilOp::Replace;
+        StencilOp depthFailOp = StencilOp::Replace;
+        CompareOp compareOp = CompareOp::Always;
+        uint32_t compareMask = 0;
+        uint32_t writeMask = 0;
+        uint32_t reference = 0;
+    };
+
     struct PipelineProperties {
         bool wireframe = false;
         PrimitiveTopology topology = PrimitiveTopology::TriangleList;
         FrontFace frontFace = FrontFace::CounterClockwise;
         CullMode cullMode = CullMode::Back;
+        CompareOp depthCompareOp = CompareOp::LessOrEqual;
         bool enableDepthTest = true;
+        bool enableDepthWrite = true;
         bool enableStencilTest = false;
+        uint32_t subpass = 0;
+        StencilOpState back;
+        StencilOpState front;
     };
 
     struct ShaderConfig {
@@ -66,15 +89,17 @@ namespace Toki {
         std::filesystem::path path;
         std::vector<VertexAttributeDescription> attributeDescriptions;
         std::vector<VertexBindingDescription> bindingDescriptions;
-        Ref<Framebuffer> framebuffer;
+        Ref<RenderPass> renderPass;
         PipelineProperties properties{};
     };
 
     class Shader {
     public:
         static Ref<Shader> create(const ShaderConfig& config);
+
         Shader(const ShaderConfig& config);
         virtual ~Shader() = default;
+
         virtual void bind() = 0;
         virtual void reload() = 0;
 

@@ -2,6 +2,7 @@
 
 #include "renderer/imgui/imgui_layer.h"
 #include "platform/vulkan/vulkan_framebuffer.h"
+#include "platform/vulkan/vulkan_render_pass.h"
 
 namespace Toki {
 
@@ -20,7 +21,8 @@ namespace Toki {
 
     private:
         VkDescriptorPool descriptorPool;
-        Ref<VulkanFramebuffer> framebuffer;
+        Ref<RenderPass> renderPass;
+        Ref<Framebuffer> framebuffer;
     };
 
 }

@@ -25,7 +25,6 @@ namespace Toki {
             isClassRegistered = true;
         }
 
-
         HMENU menu;
         windowStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
         if (windowConfig.resizable) windowStyle |= WS_THICKFRAME;
@@ -106,7 +105,7 @@ namespace Toki {
 
                 switch (wParam) {
                     case SIZE_RESTORED: {
-                        WindowResizeEvent e((int16_t) (lParam >> 16), (int16_t) lParam);
+                        WindowResizeEvent e((int16_t) lParam, (int16_t) (lParam >> 16));
                         ((Engine*) TokiWindowsWindow::engine)->onEvent(e);
                         break;
                     }
@@ -129,7 +128,8 @@ namespace Toki {
                 ((Engine*) TokiWindowsWindow::engine)->onEvent(e);
                 break;
             }
-            case WM_KEYDOWN: {
+            case WM_KEYDOWN:
+            case WM_CHAR: {
                 uint16_t repeatCount = (uint16_t) lParam;
                 if (repeatCount && (lParam >> 30) & 1) {
                     KeyRepeatEvent e(wParam, (lParam >> 16) & 0b1111111, getKeyMods(), repeatCount);

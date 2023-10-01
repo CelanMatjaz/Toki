@@ -101,4 +101,8 @@ namespace Toki {
         vkCmdBindDescriptorSets(VulkanRenderer::commandBuffer(), vulkanShader->getPipelineBindPoint(), vulkanShader->getPipelineLayout(), firstSet, descriptorSets.size() - firstSet, &descriptorSets[firstSet], 0, nullptr);
     }
 
+    void RendererCommand::nextSubpass() {
+        vkCmdNextSubpass(VulkanRenderer::commandBuffer(), VK_SUBPASS_CONTENTS_INLINE);
+    }
+
 }

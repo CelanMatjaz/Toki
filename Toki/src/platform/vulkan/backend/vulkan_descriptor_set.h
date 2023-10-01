@@ -8,7 +8,7 @@
 namespace Toki {
 
     enum class DescriptorSetBindingType {
-        Uniform, CombinedImageSampler
+        Uniform, CombinedImageSampler, SubpassInput
     };
 
     struct DescriptorSetBinding {

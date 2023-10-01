@@ -2,6 +2,7 @@
 #include "engine.h"
 #include "assert.h"
 #include "renderer/renderer.h"
+#include "events/events.h"
 
 #include "platform/windows/windows_window.h"
 
@@ -20,8 +21,8 @@ namespace Toki {
         imguiLayer = ImGuiLayer::create();
         imguiLayer->onAttach();
 
-        isInit = true;
         window->showWindow();
+        isInit = true;
     }
 
     Engine::~Engine() {
@@ -74,6 +75,11 @@ namespace Toki {
 
     void Engine::onEvent(Event& event) {
         if (!isInit) return;
+
+        if (event.getType() == EventType::WindowResize) {
+            WindowResizeEvent* e = (WindowResizeEvent*) &event;
+            Renderer::getRenderer()->resizeSwapchain(e->getWidth(), e->getHeight());
+        }
 
         imguiLayer->onEvent(event);
 

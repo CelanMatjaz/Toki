@@ -30,6 +30,9 @@ namespace Toki {
         static VkPrimitiveTopology mapTopology(PrimitiveTopology topology);
         static VkFrontFace mapFrontFace(FrontFace frontFace);
         static VkCullModeFlags mapCullMode(CullMode cullMode);
+        static VkCompareOp mapCompareOp(CompareOp compareOp);
+        static VkStencilOp mapStencilOpState(StencilOp stencilOp);
+        static VkStencilOpState mapStencilOpState(StencilOpState stencilOpState);
 
     public:
         inline static const std::vector<const char*> validationLayers = {

@@ -18,6 +18,9 @@ namespace Toki {
                 case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
                     setBindings[i] = { DescriptorSetBindingType::CombinedImageSampler, bindings[i].descriptorCount };
                     break;
+                case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
+                    setBindings[i] = { DescriptorSetBindingType::SubpassInput, bindings[i].descriptorCount };
+                    break;
                 default:
                     TK_ASSERT(false, std::format("Descriptor type {} is not supported", (int) bindings[i].descriptorType));
             }

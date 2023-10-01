@@ -17,12 +17,14 @@ namespace Toki {
         virtual void beginFrame() override;
         virtual void endFrame() override;
 
+        virtual void resizeSwapchain(uint32_t width, uint32_t height, uint32_t layers = 1) override;
+
         static VkInstance instance() { return context->instance; }
         static VkDevice device() { return context->device; }
         static VkPhysicalDevice physicalDevice() { return context->physicalDevice; }
         static VkSurfaceKHR surface() { return context->surface; }
         static VulkanContext::QueueFamilyIndexes queueFamilyIndexes() { return context->queueFamilyIndexes; }
-        static auto swapchain() { return context->swapchain; }
+        static Toki::Ref<Toki::VulkanSwapchain> swapchain() { return context->swapchain; }
         static uint32_t currentFrameIndex() { return context->currentFrame; }
         static VkDescriptorPool descriptorPool() { return context->descriptorPool; }
         static VkQueue graphicsQueue() { return context->graphicsQueue; }
@@ -40,6 +42,7 @@ namespace Toki {
 
     private:
         static Ref<VulkanContext> context;
+        bool isFrameStarted = false;
     };
 
 }
