@@ -72,7 +72,6 @@ namespace Toki {
         attachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         attachmentDescription.initialLayout = (attachment.initialLayout == InitialLayout::Undefined ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR); // TODO: create mapping functioon
         attachmentDescription.finalLayout = isSwapchainAttachment ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         return attachmentDescription;
     }
 

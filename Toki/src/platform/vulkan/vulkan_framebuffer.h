@@ -1,7 +1,6 @@
 #pragma once
 
 #include "renderer/framebuffer.h"
-#include "platform/vulkan/backend/vulkan_context.h"
 #include "platform/vulkan/backend/vulkan_image.h"
 #include "platform/vulkan/backend/vulkan_render_pass.h"
 #include "vulkan/vulkan.h"
@@ -21,6 +20,7 @@ namespace Toki {
 
         virtual void bind() override;
         virtual void unbind() override;
+        virtual void resize(uint32_t width, uint32_t height, uint32_t layers = 1) override;
 
         VkRenderPass getRenderPass() { return renderPass->getHandle(); }
 
@@ -29,8 +29,10 @@ namespace Toki {
         void destroy();
 
         Ref<VulkanRenderPass> renderPass;
-        std::vector<Ref<VulkanImage>> attachments[VulkanContext::MAX_FRAMES];
-        VkFramebuffer framebuffers[VulkanContext::MAX_FRAMES];
+        std::vector<Ref<VulkanImage>> attachments[3];
+        VkFramebuffer framebuffers[3];
+
+        bool isSwapchainTarget = false;
     };
 
 }

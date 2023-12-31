@@ -1,6 +1,5 @@
 #pragma once
 
-#include "tkpch.h"
 #include "event.h"
 
 namespace Toki {

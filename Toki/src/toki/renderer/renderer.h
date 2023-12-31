@@ -12,6 +12,8 @@ namespace Toki {
         virtual void beginFrame() = 0;
         virtual void endFrame() = 0;
 
+        virtual void resize(uint32_t width, uint32_t height, uint32_t layers = 1) = 0;
+
         static void initRenderer();
         static void shutdownRenderer();
 

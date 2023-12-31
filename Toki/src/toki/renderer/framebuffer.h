@@ -41,7 +41,7 @@ namespace Toki {
 	};
 
 	struct FramebufferConfig {
-		uint32_t width, height;
+		uint32_t width, height, layers = 1;
 		std::vector<Attachment> colorAttachments;
 		Ref<Attachment> depthAttachment;
 		RenderTarget target = RenderTarget::None;
@@ -57,6 +57,7 @@ namespace Toki {
 
 		virtual void bind() = 0;
 		virtual void unbind() = 0;
+		virtual void resize(uint32_t width, uint32_t height, uint32_t layers = 1) = 0;
 
 		void setClearColor(glm::vec4 color = { 0.1f, 0.1f, 0.1f, 0.1f }) {
 			config.clearColor = color;

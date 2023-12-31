@@ -2,6 +2,7 @@
 #include "engine.h"
 #include "assert.h"
 #include "renderer/renderer.h"
+#include "events/events.h"
 
 namespace Toki {
 
@@ -37,22 +38,22 @@ namespace Toki {
             float deltaTime = std::chrono::duration<float>(now - lastFrameTime).count();
             lastFrameTime = now;
 
+            window->pollEvents();
+
             Renderer::getRenderer()->beginFrame();
 
             for (int32_t i = layers.size() - 1; i >= 0; --i) {
                 layers[i]->onUpdate(deltaTime);
             }
 
-            { // ImGui rendering
-                imguiLayer->startImGuiFrame();
-                for (int layerIndex = layers.size() - 1; layerIndex >= 0; --layerIndex)
-                    layers[layerIndex]->renderImGui();
-                imguiLayer->endImGuiFrame();
-            }
+            // { // ImGui rendering
+            //     imguiLayer->startImGuiFrame();
+            //     for (int layerIndex = layers.size() - 1; layerIndex >= 0; --layerIndex)
+            //         layers[layerIndex]->renderImGui();
+            //     imguiLayer->endImGuiFrame();
+            // }
 
             Renderer::getRenderer()->endFrame();
-
-            window->pollEvents();
         }
     }
 
@@ -65,6 +66,19 @@ namespace Toki {
         TK_ASSERT(layers.size(), "There are no layers on layer stack");
         layers[layers.size() - 1]->onDetach();
         layers.erase(layers.end() - 1);
+    }
+
+    void Engine::onEvent(Event& event) {
+        if (event.getType() == Event::EventType::WindowResized) {
+            WindowResizeEvent* ev = (WindowResizeEvent*) &event;
+            Renderer::getRenderer()->resize(ev->getWidth(), ev->getHeight());
+        }
+
+        imguiLayer->onEvent(event);
+
+        for (int32_t i = layers.size() - 1; i >= 0 && !event.isHandled(); --i) {
+            layers[i]->onEvent(event);
+        }
     }
 
 }

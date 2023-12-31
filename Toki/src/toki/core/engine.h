@@ -31,6 +31,8 @@ namespace Toki {
         void pushLayer(Ref<Layer> layer);
         void popLayer();
 
+        void onEvent(Event& event);
+
         static Ref<Window> getWindow() { return window; }
 
     private:

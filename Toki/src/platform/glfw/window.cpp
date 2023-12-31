@@ -1,6 +1,7 @@
 #include "tkpch.h"
 #include "window.h"
 #include "core/engine.h"
+#include "events/events.h"
 
 namespace Toki {
 
@@ -35,9 +36,19 @@ namespace Toki {
         return window;
     }
 
+    void TokiWindow::resize(uint32_t width, uint32_t height) {
+        // glfwSetWindowSize(window, width, height);
+        // WindowResizeEvent ev(width, height);
+        // engine->onEvent(ev);
+    }
+
     void TokiWindow::windowResizedCallback(GLFWwindow* window, int width, int height) {
         auto win = (TokiWindow*) (glfwGetWindowUserPointer(window));
         win->setWasResized(true);
+        win->width = width;
+        win->height = height;
+        WindowResizeEvent ev(width, height);
+        win->engine->onEvent(ev);
     }
 
     void TokiWindow::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {

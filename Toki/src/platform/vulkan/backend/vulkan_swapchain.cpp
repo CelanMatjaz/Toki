@@ -16,6 +16,9 @@ namespace Toki {
     }
 
     void VulkanSwapchain::recreate(VkPresentModeKHR presentMode) {
+        std::cout << "Createing swapcoijfseo\n";
+        destroy();
+
         VkDevice device = VulkanRenderer::device();
         VkPhysicalDevice physicalDevice = Toki::VulkanRenderer::physicalDevice();
         VkSurfaceKHR surface = Toki::VulkanRenderer::surface();
@@ -33,8 +36,8 @@ namespace Toki {
 
         extent = { windowWidth, windowHeight };
         imageFormat = format.format;
+        colorSpace = format.colorSpace;
 
-        VkPresentModeKHR swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
         VkSurfaceTransformFlagBitsKHR preTransform = VulkanUtils::getPreTransform();
         VkCompositeAlphaFlagBitsKHR compositeAlpha = VulkanUtils::getCompositeAlpha();
         uint32_t imageCount = VulkanUtils::getImageCount(VulkanContext::MAX_FRAMES);
@@ -44,12 +47,12 @@ namespace Toki {
         swapchainCreateInfo.surface = surface;
         swapchainCreateInfo.minImageCount = imageCount;
         swapchainCreateInfo.imageFormat = imageFormat;
-        swapchainCreateInfo.imageColorSpace = format.colorSpace;
+        swapchainCreateInfo.imageColorSpace = colorSpace;
         swapchainCreateInfo.imageExtent = extent;
         swapchainCreateInfo.imageArrayLayers = 1;
         swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         swapchainCreateInfo.compositeAlpha = compositeAlpha;
-        swapchainCreateInfo.presentMode = swapchainPresentMode;
+        swapchainCreateInfo.presentMode = presentMode;
         swapchainCreateInfo.clipped = true;
         swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         swapchainCreateInfo.preTransform = preTransform;
@@ -107,7 +110,8 @@ namespace Toki {
     void VulkanSwapchain::destroy() {
         VkDevice device = Toki::VulkanRenderer::device();
 
-        vkDestroySwapchainKHR(device, swapchain, nullptr);
+        if (swapchain != VK_NULL_HANDLE)
+            vkDestroySwapchainKHR(device, swapchain, nullptr);
 
         depthBuffer.reset();
     }

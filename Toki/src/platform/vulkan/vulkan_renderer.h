@@ -17,6 +17,8 @@ namespace Toki {
         virtual void beginFrame() override;
         virtual void endFrame() override;
 
+        virtual void resize(uint32_t width, uint32_t height, uint32_t layers = 1) override;
+
         static VkInstance instance() { return context->instance; }
         static VkDevice device() { return context->device; }
         static VkPhysicalDevice physicalDevice() { return context->physicalDevice; }

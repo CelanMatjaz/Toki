@@ -1,6 +1,7 @@
 #include "tkpch.h"
 #include "vulkan_imgui_layer.h"
 #include "core/engine.h"
+#include "events/events.h"
 #include "platform/vulkan/vulkan_renderer.h"
 #include "platform/vulkan/backend/vulkan_utils.h"
 #include "backends/imgui_impl_glfw.h"
@@ -11,6 +12,13 @@ namespace Toki {
     void VulkanImGuiLayer::onEvent(Event& e) {
         ImGuiIO& io = ImGui::GetIO();
         if (io.WantCaptureMouse || io.WantCaptureKeyboard) e.setHandled();
+
+        std::cout << "dkwpaojdkawodjawodjaodjawodjv09suf98d\n";
+
+        if (e.getType() == Event::EventType::WindowResized) {
+            WindowResizeEvent* ev = (WindowResizeEvent*) &e;
+            framebuffer->resize(ev->getWidth(), ev->getHeight());
+        }
     }
 
     void VulkanImGuiLayer::onAttach() {

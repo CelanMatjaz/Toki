@@ -25,6 +25,7 @@ namespace Toki {
         virtual void pollEvents() = 0;
         virtual bool shouldClose() = 0;
         virtual void* getHandle() = 0;
+        virtual void resize(uint32_t width, uint32_t height) = 0;
 
         bool wasResized() { return wasResizedFlag; }
         void resetWasResized() { wasResizedFlag = false; }

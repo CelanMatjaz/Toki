@@ -89,7 +89,7 @@ public:
 
         model = Geometry::create();
         model->loadFromObj("assets/models/spongebob_high_poly_tris.obj");
-        model->loadFromObj(modelPath);
+        // model->loadFromObj(modelPath);
 
         camera = Toki::createRef<CameraController>(glm::radians(60.0f), 1280 / 720.f, 0.1f, 1000.0f);
         camera->setPosition({ 0.0f, -2.0f, -10.0f });
@@ -97,7 +97,8 @@ public:
         resetBuffers();
     }
 
-    std::filesystem::path modelPath = "assets/models/sphere.obj";
+    // std::filesystem::path modelPath = "assets/models/sphere.obj";
+    std::filesystem::path modelPath = "assets/models/spongebob_high_poly_tris.obj";
 
     struct Push {
         glm::mat4 mvp;
@@ -198,6 +199,10 @@ public:
             updateInstances();
         }
 
+        if (ImGui::Button("Resize")) {
+            Toki::Engine::getWindow()->resize(800, 600);
+        }
+
         if (accDelta >= 1.0f) {
             fps = frameCount;
             frameCount = 0;
@@ -205,6 +210,18 @@ public:
         }
 
         ImGui::End();
+    }
+
+    void onEvent(Toki::Event& event) override {
+        switch (event.getType()) {
+            case Toki::Event::EventType::WindowResized: {
+                std::cout << "resized\n";
+
+                Toki::WindowResizeEvent* ev = (Toki::WindowResizeEvent*) &event;
+
+                framebuffer->resize(ev->getWidth(), ev->getHeight());
+            }
+        }
     }
 
     InstanceData* instances = nullptr;

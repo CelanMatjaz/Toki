@@ -1,6 +1,7 @@
 #include "tkpch.h"
 #include "vulkan_renderer.h"
 #include "core/assert.h"
+#include "core/engine.h"
 #include "vulkan/vulkan.h"
 
 namespace Toki {
@@ -31,7 +32,6 @@ namespace Toki {
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
             context->swapchain->recreate();
-            beginFrame();
             return;
         }
         else TK_ASSERT(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, "Failed to acquire swapchain image");
@@ -80,13 +80,18 @@ namespace Toki {
 
         VkResult result = vkQueuePresentKHR(context->presentQueue, &presentInfo);
 
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || Engine::getWindow()->wasResized()) {
             context->swapchain->recreate();
+            Engine::getWindow()->resetWasResized();
             return;
         }
         else TK_ASSERT_VK_RESULT(result, "Failed to present swapchain image");
 
         context->currentFrame = ++context->currentFrame % VulkanContext::MAX_FRAMES;
+    }
+
+    void VulkanRenderer::resize(uint32_t width, uint32_t height, uint32_t layers) {
+        context->swapchain->recreate();
     }
 
     VkCommandBuffer VulkanRenderer::beginSingleUseCommands() {

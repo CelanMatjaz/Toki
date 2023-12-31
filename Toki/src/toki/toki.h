@@ -1,5 +1,9 @@
 #include "core/engine.h"
 
+#include "events/event.h"
+#include "events/events.h"
+
+#include "renderer/renderer.h"
 #include "renderer/buffer.h"
 #include "renderer/framebuffer.h"
 #include "renderer/shader.h"

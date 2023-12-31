@@ -4,6 +4,7 @@
 #include "core/core.h"
 #include "vulkan_image.h"
 #include "vector"
+#include "platform/vulkan/vulkan_framebuffer.h"
 
 namespace Toki {
 
@@ -26,6 +27,8 @@ namespace Toki {
         VkSwapchainKHR swapchain = VK_NULL_HANDLE;
         VkExtent2D extent;
         VkFormat imageFormat;
+        VkColorSpaceKHR colorSpace;
+
     };
 
 }
