@@ -61,7 +61,18 @@ target("toki")
     add_files("toki/src/**.cpp")
     set_group("Toki")
     add_headerfiles("toki/src/**.h")
-    add_includedirs("toki/src", "toki/src/toki", "toki/src/platform", VULKAN_INCLUDE, "vendor/glfw/include", "vendor/imgui", "vendor/glm", "vendor/stb", "vendor/spdlog/include")
+    add_includedirs(
+        "toki/src/toki",
+        "toki/src/platform",
+        "toki/src/renderer",
+        "toki/src",
+        VULKAN_INCLUDE,
+        "vendor/glfw/include",
+        "vendor/imgui",
+        "vendor/glm",
+        "vendor/stb",
+        "vendor/spdlog/include"
+    )
     add_deps("glfw", "imgui")
     set_pcxxheader("toki/src/tkpch.h")
     set_pmxxheader("toki/src/itkpch.h")
