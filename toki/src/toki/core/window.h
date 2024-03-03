@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string_view>
 
-#include "core.h"
+#include "toki/core/core.h"
 
 namespace Toki {
 static constexpr uint32_t MIN_WINDOW_WIDTH = 800;
@@ -15,6 +15,7 @@ struct WindowConfig {
     std::string title = "Window";
     bool isResizable : 1 = false;
     bool enableVSync : 1 = false;
+    bool showOnCreate : 1 = false;
 };
 
 struct WindowDimensions {
@@ -23,6 +24,8 @@ struct WindowDimensions {
 
 class Window {
 public:
+    static Ref<Window> create(const WindowConfig& config);
+
     virtual ~Window() = default;
 
     virtual void pollEvents() = 0;
@@ -36,10 +39,13 @@ public:
     virtual void setFloating(bool floating) = 0;
 
     const WindowDimensions& getDimensions();
+    virtual void* getHandle() = 0;
+
+    static void initWindowSystem();
+    static void shutdownWindowSystem();
 
 protected:
     WindowDimensions m_dimensions;
-    Ref<void> m_handle;
 };
 
 }  // namespace Toki

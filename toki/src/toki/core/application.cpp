@@ -2,18 +2,25 @@
 
 #include <print>
 
-#include "platform/glfw_window.h"
+#include "renderer/vulkan_renderer.h"
 
 namespace Toki {
 
 Application::Application(const ApplicationConfig& config) {
     std::println("Initializing app");
 
-    m_mainWindow = createScope<GlfwWindow>(config.windowConfig);
+    Window::initWindowSystem();
+
+    m_mainWindow = Window::create(config.windowConfig);
+    m_renderer = Renderer::create();
+    m_renderer->init();
 }
 
 Application::~Application() {
     std::println("Deinitializing app");
+
+    m_renderer->shutdown();
+    Window::shutdownWindowSystem();
 }
 
 void Application::start() {

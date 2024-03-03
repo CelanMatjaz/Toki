@@ -1,7 +1,12 @@
 #pragma once
 
-#include "GLFW/glfw3.h"
-#include "core/window.h"
+#include "platform.h"
+
+#ifdef TK_WINDOW_SYSTEM_GLFW
+
+#include <GLFW/glfw3.h>
+
+#include "toki/core/window.h"
 
 namespace Toki {
 
@@ -20,6 +25,8 @@ public:
     virtual void setTitle(std::string_view title) override;
     virtual void setFloating(bool floating) override;
 
+    virtual void* getHandle() override;
+
 private:
     static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
     static void windowResizedCallback(GLFWwindow* window, int width, int height);
@@ -29,3 +36,5 @@ private:
 };
 
 }  // namespace Toki
+
+#endif

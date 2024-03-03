@@ -1,15 +1,13 @@
 #include "glfw_window.h"
 
-#include "GLFW/glfw3.h"
+#ifdef TK_WINDOW_SYSTEM_GLFW
 
 namespace Toki {
 
 GlfwWindow::GlfwWindow(const WindowConfig& windowConfig) {
-    glfwInit();
-
     glfwWindowHint(GLFW_RESIZABLE, windowConfig.isResizable ? GLFW_TRUE : GLFW_FALSE);
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_VISIBLE, windowConfig.showOnCreate ? GLFW_TRUE : GLFW_FALSE);
 
     m_windowHandle = glfwCreateWindow(windowConfig.width, windowConfig.height, windowConfig.title.c_str(), nullptr, nullptr);
 
@@ -54,6 +52,10 @@ void GlfwWindow::setFloating(bool floating) {
     glfwSetWindowAttrib(m_windowHandle, GLFW_FLOATING, floating ? GLFW_TRUE : GLFW_FALSE);
 }
 
+void* GlfwWindow::getHandle() {
+    return m_windowHandle;
+}
+
 void GlfwWindow::windowResizedCallback(GLFWwindow* window, int width, int height) {
     auto win = (GlfwWindow*) (glfwGetWindowUserPointer(window));
     win->m_dimensions.width = width;
@@ -63,3 +65,5 @@ void GlfwWindow::windowResizedCallback(GLFWwindow* window, int width, int height
 void GlfwWindow::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {}
 
 }  // namespace Toki
+
+#endif

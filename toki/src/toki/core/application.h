@@ -2,8 +2,9 @@
 
 #include <vector>
 
-#include "core.h"
-#include "window.h"
+#include "toki/core/core.h"
+#include "toki/core/window.h"
+#include "toki/renderer/renderer.h"
 
 namespace Toki {
 
@@ -20,7 +21,8 @@ public:
     void stop();
 
 private:
-    Scope<Window> m_mainWindow;
+    Ref<Window> m_mainWindow;
+    Scope<Renderer> m_renderer;
 };
 
 }  // namespace Toki

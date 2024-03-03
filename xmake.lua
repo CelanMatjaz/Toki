@@ -16,7 +16,7 @@ target("engine")
     set_kind("binary")
     set_group("engine")
     add_files("engine/src/**.cpp")
-    add_includedirs("engine/src", "toki/src/toki", "vendor/glm", "vendor/stb", "vendor/spdlog/include", "vendor/imgui")
+    add_includedirs("engine/src", "toki/src", "vendor/glm", "vendor/stb", "vendor/spdlog/include", "vendor/imgui")
     set_rundir("engine")
     add_deps("toki")
     set_group("Engine")
@@ -62,9 +62,6 @@ target("toki")
     set_group("Toki")
     add_headerfiles("toki/src/**.h")
     add_includedirs(
-        "toki/src/toki",
-        "toki/src/platform",
-        "toki/src/renderer",
         "toki/src",
         VULKAN_INCLUDE,
         "vendor/glfw/include",
@@ -75,7 +72,6 @@ target("toki")
     )
     add_deps("glfw", "imgui")
     set_pcxxheader("toki/src/tkpch.h")
-    set_pmxxheader("toki/src/itkpch.h")
     add_linkdirs(VULKAN_BIN)
     add_links("vulkan-1")
     set_prefixname("")
