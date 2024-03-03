@@ -1,5 +1,6 @@
 #include "application.h"
 
+#include <chrono>
 #include <print>
 
 #include "renderer/vulkan_renderer.h"
@@ -29,8 +30,19 @@ void Application::start() {
     m_mainWindow->show();
     std::println("Starting app");
 
+    static auto lastFrameTime = std::chrono::high_resolution_clock::now();
+    float deltaTime = 0;
+
     while (!m_mainWindow->shouldClose()) {
         m_mainWindow->pollEvents();
+
+        auto frameStartTime = std::chrono::high_resolution_clock::now();
+        deltaTime = std::chrono::duration<float>(frameStartTime - lastFrameTime).count();
+        lastFrameTime = frameStartTime;
+
+        m_renderer->beginFrame();
+
+        m_renderer->endFrame();
     }
 }
 

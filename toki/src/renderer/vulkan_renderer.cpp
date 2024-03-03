@@ -53,6 +53,10 @@ void VulkanRenderer::shutdown() {
     vkDestroyInstance(m_context->instance, m_context->allocationCallbacks);
 }
 
+void VulkanRenderer::beginFrame() {}
+
+void VulkanRenderer::endFrame() {}
+
 void VulkanRenderer::createSwapchain(Ref<Window> window) {
     m_swapchains.emplace_back(VulkanSwapchain::create(m_context, {}, window));
 }
