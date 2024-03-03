@@ -6,37 +6,55 @@
 namespace Toki {
 
 enum class EventType {
-    KeyPress,        // W0: Key code
-    KeyRelease,      // W0: Key code
-    KeyRepeat,       // W0: Key code
-    KeyPressChar,    // W0: Character
-    KeyReleaseChar,  // W0: Character
-    KeyRepeatChar,   // W0: Character
-    // W0: Key code
-    // W1: Mouse X position
-    // W2: Mouse Y position
+    // u16[0]: Key code
+    // u16[1]: Scan code
+    // u16[2]: Mods
+    KeyPress,
+
+    // u16[0]: Key code
+    // u16[1]: Scan code
+    // u16[2]: Mods
+    KeyRelease,
+
+    // u16[0]: Key code
+    // u16[1]: Scan code
+    // u16[2]: Mods
+    KeyRepeat,
+
+    // u16[0]: Key code
+    // u16[1]: Mouse X position
+    // u16[2]: Mouse Y position
     MousePress,
-    // W0: Key code
-    // W1: Mouse X position
-    // W2: Mouse Y position
+
+    // u16[0]: Key code
+    // u16[1]: Mouse X position
+    // u16[2]: Mouse Y position
     MouseRelease,
-    // W0: Key code
-    // W1: Mouse X position
-    // W2: Mouse Y position
+
+    // u16[0]: Key code
+    // u16[1]: Mouse X position
+    // u16[2]: Mouse Y position
     MouseMove,
-    MouseScroll,  // W0: Delta scroll
-    // W0: New width
-    // W1: New height
+
+    // u16[0]: Delta scroll
+    MouseScroll,
+
+    // u16[0]: New width
+    // u16[1]: New height
     WindowResize,
-    // W0: New width
-    // W1: New height
+
+    // u16[0]: New width
+    // u16[1]: New height
     WindowMaximize,
-    // W0: New width = 0
-    // W1: New height = 0
+
+    // u16[0]: New width = 0
+    // u16[1]: New height = 0
     WindowMinimize,
-    // W0: New upper left cornder X position
-    // W1: New upper left cornder Y position
+
+    // u16[0]: New upper left cornder X position
+    // u16[1]: New upper left cornder Y position
     WindowMove,
+
     WindowFocus,
     WindowBlur,
     WindowClose,
@@ -59,13 +77,13 @@ union EventData {
 
 class Event;
 
-using EventFunction = std::function<void(void* sender, void* receiver, Event&)>;
+using EventFunction = std::function<void(void* sender, void* receiver, const Event&)>;
 
 class Event {
 public:
     static void bindEvent(EventType eventType, void* receiver, EventFunction fn);
     static void unbindEvent(EventType eventType, void* receiver);
-    static void dispatchEvent(Event& event, void* sender);
+    static void dispatchEvent(const Event& event, void* sender);
 
     Event() = delete;
     Event(EventType eventType, EventData data = {});

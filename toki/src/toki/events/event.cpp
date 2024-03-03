@@ -41,7 +41,7 @@ void Event::unbindEvent(EventType eventType, void* receiver) {
     TK_ASSERT(false, "No event bound for receiver");
 }
 
-void Event::dispatchEvent(Event& event, void* sender) {
+void Event::dispatchEvent(const Event& event, void* sender) {
     uint32_t type = (uint32_t) event.getType();
 
     TK_ASSERT((bool) handlers[type] && handlers[type]->size() > 0, "No events registered for handler");
