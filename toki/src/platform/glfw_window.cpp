@@ -2,6 +2,8 @@
 
 #ifdef TK_WINDOW_SYSTEM_GLFW
 
+#include "toki/events/event.h"
+
 namespace Toki {
 
 GlfwWindow::GlfwWindow(const WindowConfig& windowConfig) {
@@ -64,9 +66,11 @@ void* GlfwWindow::getHandle() {
 }
 
 void GlfwWindow::windowResizedCallback(GLFWwindow* window, int width, int height) {
-    auto win = (GlfwWindow*) (glfwGetWindowUserPointer(window));
+    Toki::GlfwWindow* win = (GlfwWindow*) (glfwGetWindowUserPointer(window));
     win->m_dimensions.width = width;
     win->m_dimensions.height = height;
+
+    Event::dispatchEvent(Event{ EventType::WindowResize, EventData{ .i32 = { width, height } } }, win);
 }
 
 void GlfwWindow::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {}
