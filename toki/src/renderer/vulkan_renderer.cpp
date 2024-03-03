@@ -26,6 +26,7 @@ VulkanRenderer::VulkanRenderer() : m_context(createRef<VulkanContext>()) {}
 void VulkanRenderer::init() {
     createInstance();
 
+    // Select physical device
     {
         uint32_t physicalDeviceCount = 0;
         vkEnumeratePhysicalDevices(m_context->instance, &physicalDeviceCount, nullptr);
@@ -34,6 +35,7 @@ void VulkanRenderer::init() {
         m_context->physicalDevice = physicalDevices[0];
     }
 
+    // Create device
     {
         WindowConfig windowConfig{};
         windowConfig.showOnCreate = false;
@@ -45,8 +47,14 @@ void VulkanRenderer::init() {
 }
 
 void VulkanRenderer::shutdown() {
+    m_swapchains.clear();
+
     vkDestroyDevice(m_context->device, m_context->allocationCallbacks);
     vkDestroyInstance(m_context->instance, m_context->allocationCallbacks);
+}
+
+void VulkanRenderer::createSwapchain(Ref<Window> window) {
+    m_swapchains.emplace_back(VulkanSwapchain::create(m_context, {}, window));
 }
 
 void VulkanRenderer::createInstance() {

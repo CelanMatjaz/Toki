@@ -7,7 +7,14 @@ namespace Toki {
 GlfwWindow::GlfwWindow(const WindowConfig& windowConfig) {
     glfwWindowHint(GLFW_RESIZABLE, windowConfig.isResizable ? GLFW_TRUE : GLFW_FALSE);
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
     glfwWindowHint(GLFW_VISIBLE, windowConfig.showOnCreate ? GLFW_TRUE : GLFW_FALSE);
+    glfwWindowHint(GLFW_FOCUS_ON_SHOW, windowConfig.focusOnShow ? GLFW_TRUE : GLFW_FALSE);
+    if (windowConfig.showOnCreate) {
+        glfwWindowHint(GLFW_FOCUSED, windowConfig.focusOnCreate ? GLFW_TRUE : GLFW_FALSE);
+        glfwWindowHint(GLFW_FLOATING, windowConfig.floatingOnCreate ? GLFW_TRUE : GLFW_FALSE);
+        glfwWindowHint(GLFW_MAXIMIZED, windowConfig.maximizedOnCreate ? GLFW_TRUE : GLFW_FALSE);
+    }
 
     m_windowHandle = glfwCreateWindow(windowConfig.width, windowConfig.height, windowConfig.title.c_str(), nullptr, nullptr);
 

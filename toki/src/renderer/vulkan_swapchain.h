@@ -12,8 +12,9 @@ namespace Toki {
 
 class VulkanSwapchain {
 public:
+    static Ref<VulkanSwapchain> create(Ref<VulkanContext> context, const SwapchainConfig& swapchainConfig, Ref<Window> window);
+
     VulkanSwapchain() = delete;
-    VulkanSwapchain(Ref<VulkanContext> context, const SwapchainConfig& swapchainConfig, const WindowConfig& windowConfig);
     VulkanSwapchain(Ref<VulkanContext> context, const SwapchainConfig& swapchainConfig, Ref<Window> window);
     ~VulkanSwapchain();
 
@@ -27,10 +28,9 @@ public:
 
 private:
     Ref<VulkanContext> m_context;
+    Ref<Window> m_window;
     VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
     VkSurfaceKHR m_surface = VK_NULL_HANDLE;
-
-    Ref<Window> m_window;
 
     inline static VkSurfaceFormatKHR s_surfaceFormat{};
     VkPresentModeKHR m_presentMode;

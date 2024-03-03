@@ -14,6 +14,8 @@ Application::Application(const ApplicationConfig& config) {
     m_mainWindow = Window::create(config.windowConfig);
     m_renderer = Renderer::create();
     m_renderer->init();
+
+    m_renderer->createSwapchain(m_mainWindow);
 }
 
 Application::~Application() {

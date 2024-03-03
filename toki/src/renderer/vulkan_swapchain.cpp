@@ -15,8 +15,9 @@
 
 namespace Toki {
 
-VulkanSwapchain::VulkanSwapchain(Ref<VulkanContext> context, const SwapchainConfig& swapchainConfig, const WindowConfig& windowConfig)
-    : VulkanSwapchain(context, swapchainConfig, Window::create(windowConfig)) {}
+Ref<VulkanSwapchain> VulkanSwapchain::create(Ref<VulkanContext> context, const SwapchainConfig& swapchainConfig, Ref<Window> window) {
+    return createRef<VulkanSwapchain>(context, swapchainConfig, window);
+}
 
 VulkanSwapchain::VulkanSwapchain(Ref<VulkanContext> context, const SwapchainConfig& swapchainConfig, Ref<Window> window)
     : m_context(context),
@@ -29,7 +30,6 @@ VulkanSwapchain::VulkanSwapchain(Ref<VulkanContext> context, const SwapchainConf
 
 VulkanSwapchain::~VulkanSwapchain() {
     destroy();
-    vkDestroySurfaceKHR(m_context->instance, m_surface, m_context->allocationCallbacks);
 }
 
 void VulkanSwapchain::init() {
@@ -38,6 +38,8 @@ void VulkanSwapchain::init() {
 
 void VulkanSwapchain::destroy(bool destroyHandle) {
     vkDeviceWaitIdle(m_context->device);
+
+    vkDestroySurfaceKHR(m_context->instance, m_surface, m_context->allocationCallbacks);
 }
 
 void VulkanSwapchain::recreate() {

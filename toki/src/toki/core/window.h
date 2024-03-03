@@ -16,6 +16,10 @@ struct WindowConfig {
     bool isResizable : 1 = false;
     bool enableVSync : 1 = false;
     bool showOnCreate : 1 = false;
+    bool focusOnCreate : 1 = false;
+    bool floatingOnCreate : 1 = false;
+    bool maximizedOnCreate : 1 = false;
+    bool focusOnShow : 1 = false;
 };
 
 struct WindowDimensions {

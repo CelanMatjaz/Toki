@@ -11,7 +11,7 @@
 #else
 
 #define TK_ASSERT(valIn, msg)                                                                                   \
-    if (auto val = valIn; val == 0)                                                                             \
+    if (auto val = valIn; val)                                                                                  \
         ;                                                                                                       \
     else {                                                                                                      \
         std::println("Toki assertion ERROR: {} in file {}:{}\n\t{}\n{}", val, __FILE__, __LINE__, #valIn, msg); \
