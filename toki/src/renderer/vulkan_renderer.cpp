@@ -4,8 +4,10 @@
 #include <vector>
 
 #include "platform.h"
+#include "renderer/vulkan_image.h"
 #include "renderer/vulkan_utils.h"
 #include "toki/core/assert.h"
+#include "toki/events/event.h"
 
 #ifdef TK_WINDOW_SYSTEM_GLFW
 #include "GLFW/glfw3.h"
@@ -18,10 +20,12 @@ const std::vector<const char*> validationLayers = {
 };
 const std::vector<const char*> requiredExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME };
 
-bool checkDeviceExtensionSupport(Ref<VulkanContext> context);
+bool checkDeviceExtensionSupport(Ref<VulkanContext> m_context);
 bool checkValidationLayerSupport();
 
-VulkanRenderer::VulkanRenderer() : m_context(createRef<VulkanContext>()) {}
+VulkanRenderer::VulkanRenderer() : m_context(createRef<VulkanContext>()) {
+    Event::bindEvent(EventType::WindowResize, this, [this](void* sender, void* receiver, const Event& event) { m_wasResized = true; });
+}
 
 void VulkanRenderer::init() {
     createInstance();
@@ -44,16 +48,26 @@ void VulkanRenderer::init() {
         createDevice(tempSurface);
         vkDestroySurfaceKHR(m_context->instance, tempSurface, m_context->allocationCallbacks);
     }
+
+    initFrames();
+    initCommandPools();
+
+    VulkanImage::s_context = m_context;
 }
 
 void VulkanRenderer::shutdown() {
     m_swapchains.clear();
 
+    destroyCommandPools();
+    destroyFrames();
+
     vkDestroyDevice(m_context->device, m_context->allocationCallbacks);
     vkDestroyInstance(m_context->instance, m_context->allocationCallbacks);
 }
 
-void VulkanRenderer::beginFrame() {}
+void VulkanRenderer::beginFrame() {
+    FrameData& frame = m_frameData[m_currentFrame];
+}
 
 void VulkanRenderer::endFrame() {}
 
@@ -119,8 +133,8 @@ void VulkanRenderer::createDevice(VkSurfaceKHR surface) {
         exit(1);
     }
 
-    auto isDeviceSuitable = [this, surface](Ref<VulkanContext> context) {
-        VkPhysicalDevice physicalDevice = context->physicalDevice;
+    auto isDeviceSuitable = [this, surface](Ref<VulkanContext> m_context) {
+        VkPhysicalDevice physicalDevice = m_context->physicalDevice;
 
         VkPhysicalDeviceProperties deviceProperties;
         VkPhysicalDeviceFeatures deviceFeatures;
@@ -141,7 +155,7 @@ void VulkanRenderer::createDevice(VkSurfaceKHR surface) {
             vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
         }
 
-        return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && checkDeviceExtensionSupport(context) && formatCount &&
+        return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && checkDeviceExtensionSupport(m_context) && formatCount &&
                presentModeCount;
     };
 
@@ -198,13 +212,94 @@ void VulkanRenderer::createDevice(VkSurfaceKHR surface) {
     vkGetDeviceQueue(m_context->device, m_context->presentFamilyIndex, 0, &m_context->presentQueue);
 }
 
+void VulkanRenderer::initFrames() {
+    VkFenceCreateInfo fenceCreateInfo{};
+    fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+    VkSemaphoreCreateInfo semaphoreCreateInfo{};
+    semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+    VkCommandPoolCreateInfo commandPoolCreateInfo{};
+    commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    commandPoolCreateInfo.queueFamilyIndex = m_context->graphicsFamilyIndex;
+
+    uint32_t commandBufferCount = 1;
+
+    VkCommandBufferAllocateInfo commandBufferALlocateInfo{};
+    commandBufferALlocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    commandBufferALlocateInfo.commandBufferCount = commandBufferCount;
+    commandBufferALlocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+    for (uint32_t i = 0; i < MAX_FRAMES; ++i) {
+        TK_ASSERT_VK_RESULT(
+            vkCreateFence(m_context->device, &fenceCreateInfo, m_context->allocationCallbacks, &m_frameData[i].renderFence),
+            "Could not create render fence"
+        );
+        TK_ASSERT_VK_RESULT(
+            vkCreateSemaphore(m_context->device, &semaphoreCreateInfo, m_context->allocationCallbacks, &m_frameData[i].renderSemaphore),
+            "Could not create render semaphore"
+        );
+        TK_ASSERT_VK_RESULT(
+            vkCreateSemaphore(m_context->device, &semaphoreCreateInfo, m_context->allocationCallbacks, &m_frameData[i].presentSemaphore),
+            "Could not create present semaphore"
+        );
+    }
+}
+
+void VulkanRenderer::initCommandPools() {
+    VkCommandPoolCreateInfo commandPoolCreateInfo{};
+    commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    commandPoolCreateInfo.queueFamilyIndex = m_context->graphicsFamilyIndex;
+
+    m_commandPools.resize(s_renderThreadCount);
+    for (uint32_t frameIndex = 0; frameIndex < MAX_FRAMES; ++frameIndex) {
+        for (uint32_t i = 0; i < s_renderThreadCount; ++i) {
+            TK_ASSERT_VK_RESULT(
+                vkCreateCommandPool(m_context->device, &commandPoolCreateInfo, m_context->allocationCallbacks, &m_commandPools[i][frameIndex]),
+                "Could not create command pool"
+            );
+        }
+    }
+
+    m_extraCommandPools.resize(s_extraCommandPoolCount);
+    for (uint32_t i = 0; i < s_extraCommandPoolCount; ++i) {
+        TK_ASSERT_VK_RESULT(
+            vkCreateCommandPool(m_context->device, &commandPoolCreateInfo, m_context->allocationCallbacks, &m_extraCommandPools[i]),
+            "Could not create frame command pool"
+        );
+    }
+}
+
+void VulkanRenderer::destroyFrames() {
+    for (const auto& frameData : m_frameData) {
+        vkDestroyFence(m_context->device, frameData.renderFence, m_context->allocationCallbacks);
+        vkDestroySemaphore(m_context->device, frameData.presentSemaphore, m_context->allocationCallbacks);
+        vkDestroySemaphore(m_context->device, frameData.renderSemaphore, m_context->allocationCallbacks);
+    }
+}
+
+void VulkanRenderer::destroyCommandPools() {
+    for (auto& commandPools : m_commandPools) {
+        for (auto& pool : commandPools) {
+            vkDestroyCommandPool(m_context->device, pool, m_context->allocationCallbacks);
+        }
+    }
+
+    for (auto& pool : m_extraCommandPools) {
+        vkDestroyCommandPool(m_context->device, pool, m_context->allocationCallbacks);
+    }
+}
+
 #pragma region Utils
 
-bool checkDeviceExtensionSupport(Ref<VulkanContext> context) {
+bool checkDeviceExtensionSupport(Ref<VulkanContext> m_context) {
     uint32_t extensionCount = 0;
-    vkEnumerateDeviceExtensionProperties(context->physicalDevice, nullptr, &extensionCount, nullptr);
+    vkEnumerateDeviceExtensionProperties(m_context->physicalDevice, nullptr, &extensionCount, nullptr);
     std::vector<VkExtensionProperties> deviceExtensions(extensionCount);
-    vkEnumerateDeviceExtensionProperties(context->physicalDevice, nullptr, &extensionCount, deviceExtensions.data());
+    vkEnumerateDeviceExtensionProperties(m_context->physicalDevice, nullptr, &extensionCount, deviceExtensions.data());
 
     uint32_t requiredExtentionCount = requiredExtensions.size();
 
