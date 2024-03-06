@@ -5,6 +5,7 @@
 
 #include "platform.h"
 #include "renderer/vulkan_image.h"
+#include "renderer/vulkan_render_pass.h"
 #include "renderer/vulkan_utils.h"
 #include "toki/core/assert.h"
 #include "toki/events/event.h"
@@ -24,7 +25,7 @@ bool checkDeviceExtensionSupport(Ref<VulkanContext> m_context);
 bool checkValidationLayerSupport();
 
 VulkanRenderer::VulkanRenderer() : m_context(createRef<VulkanContext>()) {
-    Event::bindEvent(EventType::WindowResize, this, [this](void* sender, void* receiver, const Event& event) { m_wasResized = true; });
+    Event::bindEvent(EventType::WindowResize, this, [this](void* sender, void* receiver, const Event& event) { m_wasWindowResized = true; });
 }
 
 void VulkanRenderer::init() {
@@ -49,13 +50,15 @@ void VulkanRenderer::init() {
         vkDestroySurfaceKHR(m_context->instance, tempSurface, m_context->allocationCallbacks);
     }
 
-    initFrames();
     initCommandPools();
+    initFrames();
 
     VulkanImage::s_context = m_context;
 }
 
 void VulkanRenderer::shutdown() {
+    vkDeviceWaitIdle(m_context->device);
+
     m_swapchains.clear();
 
     destroyCommandPools();
@@ -65,11 +68,96 @@ void VulkanRenderer::shutdown() {
     vkDestroyInstance(m_context->instance, m_context->allocationCallbacks);
 }
 
-void VulkanRenderer::beginFrame() {
+bool VulkanRenderer::beginFrame() {
     FrameData& frame = m_frameData[m_currentFrame];
+
+    TK_ASSERT(m_swapchains.size() == 1, "Multiple swapchains are not yet supported");
+
+    auto swapchain = m_swapchains[0];
+
+    std::optional<uint32_t> imageIndex = swapchain->acquireNextImage(frame);
+    if (!imageIndex) {
+        m_currentFrame = MAX_FRAMES;
+        swapchain->recreate();
+        return false;
+    }
+
+    vkResetFences(m_context->device, 1, &frame.renderFence);
+
+    VkCommandBufferBeginInfo commandBufferBeginInfo{};
+    commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    TK_ASSERT_VK_RESULT(vkBeginCommandBuffer(frame.commandBuffer, &commandBufferBeginInfo), "Error starting command buffer recording");
+
+    return true;
 }
 
-void VulkanRenderer::endFrame() {}
+void VulkanRenderer::endFrame() {
+    FrameData& frame = m_frameData[m_currentFrame];
+
+    // TODO: resize on demand
+    static std::vector<VkSwapchainKHR> swapchainHandles(m_swapchains.size());
+    static std::vector<uint32_t> swapchainIndices(m_swapchains.size());
+
+    for (uint32_t i = 0; i < m_swapchains.size(); ++i) {
+        swapchainHandles[i] = m_swapchains[i]->getSwapchainHandle();
+        swapchainIndices[i] = m_swapchains[i]->getCurrentImageIndex();
+        m_swapchains[i]->transitionLayout(frame.commandBuffer);
+    }
+
+    vkEndCommandBuffer(frame.commandBuffer);
+
+    VkSemaphore waitSemaphores[] = { frame.presentSemaphore };
+    VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    VkSemaphore signalSemaphores[] = { frame.presentSemaphore };
+
+    std::vector<VkCommandBuffer> commandBuffers = { frame.commandBuffer };
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = waitSemaphores;
+    submitInfo.pWaitDstStageMask = waitStages;
+    submitInfo.commandBufferCount = commandBuffers.size();
+    submitInfo.pCommandBuffers = commandBuffers.data();
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = signalSemaphores;
+
+    TK_ASSERT_VK_RESULT(vkQueueSubmit(m_context->graphicsQueue, 1, &submitInfo, frame.renderFence), "Could not submit");
+
+    VkPresentInfoKHR presentInfo{};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = signalSemaphores;
+    presentInfo.swapchainCount = swapchainHandles.size();
+    presentInfo.pSwapchains = swapchainHandles.data();
+    presentInfo.pImageIndices = swapchainIndices.data();
+    presentInfo.pResults = nullptr;
+
+    VkResult result = vkQueuePresentKHR(m_context->presentQueue, &presentInfo);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+        m_swapchains[0]->recreate();
+        m_currentFrame = m_swapchains[0]->getCurrentImageIndex();
+        return;
+    } else {
+        TK_ASSERT_VK_RESULT(result, "Failed to present swapchain image");
+    }
+
+    m_currentFrame = (m_swapchains[0]->getCurrentImageIndex() + 1) % MAX_FRAMES;
+}
+
+void VulkanRenderer::submit(Ref<RenderPass> rp, RendererSubmitFn submitFn) {
+    VulkanRenderPass* renderPass = (VulkanRenderPass*) rp.get();
+
+    VulkanRenderingContext internalContext{ m_frameData[m_currentFrame].commandBuffer };
+
+    RenderingContext cxt(&internalContext);
+
+    renderPass->begin(cxt);
+    submitFn(cxt);
+    renderPass->end(cxt);
+}
 
 void VulkanRenderer::createSwapchain(Ref<Window> window) {
     m_swapchains.emplace_back(VulkanSwapchain::create(m_context, {}, window));
@@ -245,6 +333,14 @@ void VulkanRenderer::initFrames() {
             vkCreateSemaphore(m_context->device, &semaphoreCreateInfo, m_context->allocationCallbacks, &m_frameData[i].presentSemaphore),
             "Could not create present semaphore"
         );
+
+        VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
+        commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        commandBufferAllocateInfo.commandPool = m_commandPools[0][i];
+        commandBufferAllocateInfo.commandBufferCount = 1;
+        commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+        TK_ASSERT_VK_RESULT(vkAllocateCommandBuffers(m_context->device, &commandBufferAllocateInfo, &m_frameData[i].commandBuffer), "");
     }
 }
 
@@ -254,6 +350,7 @@ void VulkanRenderer::initCommandPools() {
     commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     commandPoolCreateInfo.queueFamilyIndex = m_context->graphicsFamilyIndex;
 
+    TK_ASSERT(s_renderThreadCount == 1, "More than 1 render thread no supported");  // TODO: remove temp code
     m_commandPools.resize(s_renderThreadCount);
     for (uint32_t frameIndex = 0; frameIndex < MAX_FRAMES; ++frameIndex) {
         for (uint32_t i = 0; i < s_renderThreadCount; ++i) {

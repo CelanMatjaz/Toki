@@ -16,6 +16,8 @@ Application::Application(const ApplicationConfig& config) {
     m_renderer = Renderer::create();
     m_renderer->init();
 
+    Layer::s_renderer = m_renderer;
+
     m_renderer->createSwapchain(m_mainWindow);
 }
 
@@ -33,19 +35,37 @@ void Application::start() {
     static auto lastFrameTime = std::chrono::high_resolution_clock::now();
     float deltaTime = 0;
 
-    while (!m_mainWindow->shouldClose()) {
+    while (m_running) {
         m_mainWindow->pollEvents();
+
+        if (m_mainWindow->shouldClose()) break;
 
         auto frameStartTime = std::chrono::high_resolution_clock::now();
         deltaTime = std::chrono::duration<float>(frameStartTime - lastFrameTime).count();
         lastFrameTime = frameStartTime;
 
-        m_renderer->beginFrame();
+        if (m_renderer->beginFrame()) {
+            for (auto it = m_layerStack.rbegin(); it != m_layerStack.rend(); ++it) {
+                (*it)->onRender();
+            }
 
-        m_renderer->endFrame();
+            m_renderer->endFrame();
+        }
     }
 }
 
-void Application::stop() {}
+void Application::stop() {
+    m_running = true;
+}
+
+void Application::pushLayer(Ref<Layer> layer) {
+    m_layerStack.emplace_back(layer);
+    m_layerStack.back()->onAttach();
+}
+
+void Application::popLayer() {
+    m_layerStack.back()->onDetach();
+    m_layerStack.erase(m_layerStack.end() - 1);
+}
 
 }  // namespace Toki

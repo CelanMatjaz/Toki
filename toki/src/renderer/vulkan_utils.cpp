@@ -1,7 +1,10 @@
 #include "vulkan_utils.h"
 
+#include <utility>
+
 #include "platform.h"
 #include "toki/core/assert.h"
+#include "vulkan/vulkan_core.h"
 
 #ifdef TK_WINDOW_SYSTEM_GLFW
 #include <GLFW/glfw3.h>
@@ -21,9 +24,44 @@ VkSurfaceKHR VulkanUtils::createSurface(Ref<VulkanContext> context, Ref<Window> 
 
     TK_ASSERT(surface != VK_NULL_HANDLE, "Surface should not be VK_NULL_HANDLE");
 
-    std::println("new surface {}", (void*) surface);
-
     return surface;
+}
+
+bool VulkanUtils::checkForMailboxPresentModeSupport(Ref<VulkanContext> context, VkSurfaceKHR surface) {
+    uint32_t presentModeCount = 0;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(context->physicalDevice, surface, &presentModeCount, nullptr);
+    std::vector<VkPresentModeKHR> presentModes(presentModeCount);
+    if (presentModeCount > 0) {
+        vkGetPhysicalDeviceSurfacePresentModesKHR(context->physicalDevice, surface, &presentModeCount, nullptr);
+    }
+
+    for (const auto& presentMode : presentModes) {
+        if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+VkImageAspectFlags VulkanUtils::getImageAspectFlags(VkFormat format) {
+    switch (format) {
+        case VK_FORMAT_R8_SRGB:
+        case VK_FORMAT_R8G8_SRGB:
+        case VK_FORMAT_R8G8B8_SRGB:
+        case VK_FORMAT_R8G8B8A8_SRGB:
+        case VK_FORMAT_B8G8R8A8_SRGB:
+            return VK_IMAGE_ASPECT_COLOR_BIT;
+        case VK_FORMAT_D32_SFLOAT:
+            return VK_IMAGE_ASPECT_DEPTH_BIT;
+        case VK_FORMAT_S8_UINT:
+            return VK_IMAGE_ASPECT_STENCIL_BIT;
+        case VK_FORMAT_D32_SFLOAT_S8_UINT:
+        case VK_FORMAT_D24_UNORM_S8_UINT:
+            return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+        default:
+            std::unreachable();
+    }
 }
 
 }  // namespace Toki

@@ -8,7 +8,9 @@ namespace Toki {
 namespace VulkanUtils {
 
 VkSurfaceKHR createSurface(Ref<VulkanContext> context, Ref<Window> window);
+bool checkForMailboxPresentModeSupport(Ref<VulkanContext> context, VkSurfaceKHR surface);
 
+VkImageAspectFlags getImageAspectFlags(VkFormat format);
 }
 
 }  // namespace Toki

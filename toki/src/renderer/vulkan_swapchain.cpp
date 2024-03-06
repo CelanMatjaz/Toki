@@ -4,6 +4,7 @@
 #include <format>
 
 #include "platform.h"
+#include "renderer/vulkan_image.h"
 #include "renderer/vulkan_utils.h"
 #include "toki/core/assert.h"
 #include "toki/core/core.h"
@@ -22,31 +23,23 @@ Ref<VulkanSwapchain> VulkanSwapchain::create(Ref<VulkanContext> context, const S
 VulkanSwapchain::VulkanSwapchain(Ref<VulkanContext> context, const SwapchainConfig& swapchainConfig, Ref<Window> window)
     : m_context(context),
       m_window(window),
-      m_surface(VulkanUtils::createSurface(context, window)) {
+      m_surface(VulkanUtils::createSurface(context, window)),
+      m_useVSync(swapchainConfig.useVSync) {
     findSurfaceFormat();
     findPresentMode();
     findExtent();
+
+    createSwapchainHandle();
 }
 
 VulkanSwapchain::~VulkanSwapchain() {
-    destroy();
-}
-
-void VulkanSwapchain::init() {
-    createSwapchain();
-}
-
-void VulkanSwapchain::destroy(bool destroyHandle) {
-    vkDeviceWaitIdle(m_context->device);
-
+    vkDestroySwapchainKHR(m_context->device, m_swapchain, m_context->allocationCallbacks);
     vkDestroySurfaceKHR(m_context->instance, m_surface, m_context->allocationCallbacks);
 }
 
-void VulkanSwapchain::recreate() {
-    vkDeviceWaitIdle(m_context->device);
-}
+void VulkanSwapchain::destroy() {}
 
-void VulkanSwapchain::createSwapchain() {
+void VulkanSwapchain::createSwapchainHandle() {
     m_currentImageIndex = 0;
 
     VkSurfaceCapabilitiesKHR surfaceCapabilities;
@@ -91,31 +84,48 @@ void VulkanSwapchain::createSwapchain() {
 
     oldSwapchain = m_swapchain;
 
-    // uint32_t swapchainImageCount = 0;
-    // vkGetSwapchainImagesKHR(m_context->device, m_swapchain, &swapchainImageCount, nullptr);
-    // m_images.resize(swapchainImageCount);
-    // vkGetSwapchainImagesKHR(m_context->device, m_swapchain, &swapchainImageCount, m_images.data());
+    uint32_t swapchainImageCount = 0;
+    vkGetSwapchainImagesKHR(m_context->device, m_swapchain, &swapchainImageCount, nullptr);
+    std::vector<VkImage> images(swapchainImageCount);
+    vkGetSwapchainImagesKHR(m_context->device, m_swapchain, &swapchainImageCount, images.data());
 
-    // wrappedImages.resize(swapchainImageCount);
-    // for (uint32_t i = 0; i < swapchainImageCount; ++i) {
-    //     wrappedImages[i] = createRef<InternalVulkanTexture>(m_images[i], swapchainCreateInfo.imageFormat);
-    // }
+    m_wrappedImages.clear();
+    for (const auto& image : images) {
+        m_wrappedImages.emplace_back(createRef<VulkanImage>(image, swapchainCreateInfo.imageFormat));
+    }
 }
 
-uint32_t VulkanSwapchain::acquireNextImage(FrameData& frameData) {
+void VulkanSwapchain::recreate() {
+    findExtent();
+    createSwapchainHandle();
+}
+
+void VulkanSwapchain::transitionLayout(VkCommandBuffer cmd) {
+    m_wrappedImages[m_currentImageIndex]->transitionLayout(cmd, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+}
+
+std::optional<uint32_t> VulkanSwapchain::acquireNextImage(FrameData& frameData) {
     VkResult result = vkAcquireNextImageKHR(m_context->device, m_swapchain, TIMEOUT, frameData.presentSemaphore, nullptr, &m_currentImageIndex);
 
     VkResult waitFencesResult = vkWaitForFences(m_context->device, 1, &frameData.renderFence, VK_TRUE, TIMEOUT);
     TK_ASSERT(waitFencesResult == VK_SUCCESS || waitFencesResult == VK_TIMEOUT, "Failed waiting for fences");
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        return MAX_FRAMES;
+        return {};
     } else {
         TK_ASSERT(
             result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, std::format("Failed to acquire swapchain image index, result: {}", (uint32_t) result)
         );
     }
 
+    return m_currentImageIndex;
+}
+
+VkSwapchainKHR VulkanSwapchain::getSwapchainHandle() {
+    return m_swapchain;
+}
+
+uint32_t VulkanSwapchain::getCurrentImageIndex() {
     return m_currentImageIndex;
 }
 
@@ -138,16 +148,22 @@ void VulkanSwapchain::findSurfaceFormat() {
 }
 
 void VulkanSwapchain::findPresentMode() {
+    if (m_useVSync) {
+        m_presentMode = VK_PRESENT_MODE_FIFO_KHR;
+        return;
+    }
+
     uint32_t presentModeCount = 0;
     vkGetPhysicalDeviceSurfacePresentModesKHR(m_context->physicalDevice, m_surface, &presentModeCount, nullptr);
     std::vector<VkPresentModeKHR> presentModes(presentModeCount);
-    if (presentModeCount) {
+    if (presentModeCount > 0) {
         vkGetPhysicalDeviceSurfacePresentModesKHR(m_context->physicalDevice, m_surface, &presentModeCount, nullptr);
     }
 
     for (const auto& presentMode : presentModes) {
         if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
             m_presentMode = presentMode;
+            return;
         }
     }
 

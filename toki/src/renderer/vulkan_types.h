@@ -25,14 +25,23 @@ struct VulkanContext {
     VkAllocationCallbacks* allocationCallbacks = nullptr;
 };
 
-struct SwapchainConfig {};
+struct SwapchainConfig {
+    bool useVSync : 1 = false;
+};
 
 struct FrameData {
     VkSemaphore presentSemaphore = VK_NULL_HANDLE;
     VkSemaphore renderSemaphore = VK_NULL_HANDLE;
     VkFence renderFence = VK_NULL_HANDLE;
 
+    VkCommandBuffer commandBuffer = VK_NULL_HANDLE;  // Temp
+
     uint32_t currentImageIndex = 0;
+    bool startedRecording = false;
+};
+
+struct VulkanRenderingContext {
+    VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
 };
 
 }  // namespace Toki

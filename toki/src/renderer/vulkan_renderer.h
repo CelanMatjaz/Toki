@@ -17,8 +17,9 @@ public:
     virtual void init() override;
     virtual void shutdown() override;
 
-    virtual void beginFrame() override;
+    virtual bool beginFrame() override;
     virtual void endFrame() override;
+    virtual void submit(Ref<RenderPass> renderPass, RendererSubmitFn submitFn) override;
 
     virtual void createSwapchain(Ref<Window> window) override;
 
@@ -35,7 +36,7 @@ private:
     Ref<VulkanContext> m_context;
     std::vector<Ref<VulkanSwapchain>> m_swapchains;
 
-    bool m_wasResized : 1 = false;
+    bool m_wasWindowResized : 1 = false;
 
     uint8_t m_currentFrame = 0;
     std::array<FrameData, MAX_FRAMES> m_frameData;

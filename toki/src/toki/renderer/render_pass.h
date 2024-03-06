@@ -22,7 +22,7 @@ public:
     RenderPass& operator=(const RenderPass&& other) = delete;
     virtual ~RenderPass() = default;
 
-private:
+protected:
     RenderPass() = default;
 };
 

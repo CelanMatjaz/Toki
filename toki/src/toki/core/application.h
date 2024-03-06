@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "layer.h"
 #include "toki/core/core.h"
 #include "toki/core/window.h"
 #include "toki/renderer/renderer.h"
@@ -20,9 +21,15 @@ public:
     void start();
     void stop();
 
+    void pushLayer(Ref<Layer> layer);
+    void popLayer();
+
 private:
     Ref<Window> m_mainWindow;
-    Scope<Renderer> m_renderer;
+    Ref<Renderer> m_renderer;
+    std::vector<Ref<Layer>> m_layerStack;
+
+    bool m_running : 1 = true;
 };
 
 }  // namespace Toki

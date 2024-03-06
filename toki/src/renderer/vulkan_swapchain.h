@@ -2,8 +2,10 @@
 
 #include <vulkan/vulkan.h>
 
+#include <optional>
 #include <vector>
 
+#include "renderer/vulkan_image.h"
 #include "renderer/vulkan_types.h"
 #include "toki/core/core.h"
 #include "toki/core/window.h"
@@ -19,10 +21,15 @@ public:
     ~VulkanSwapchain();
 
     void init();
-    void destroy(bool destroyHandle = true);
+    void destroy();
+
     void recreate();
 
-    uint32_t acquireNextImage(FrameData& frameData);
+    void transitionLayout(VkCommandBuffer cmd);
+
+    std::optional<uint32_t> acquireNextImage(FrameData& frameData);
+    VkSwapchainKHR getSwapchainHandle();
+    uint32_t getCurrentImageIndex();
 
     inline static const uint32_t TIMEOUT = UINT32_MAX;
 
@@ -32,13 +39,17 @@ private:
     VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
     VkSurfaceKHR m_surface = VK_NULL_HANDLE;
 
+    bool m_useVSync : 1 = false;
+
     inline static VkSurfaceFormatKHR s_surfaceFormat{};
     VkPresentModeKHR m_presentMode;
     VkExtent2D m_extent;
 
+    std::vector<Ref<VulkanImage>> m_wrappedImages;
+
     uint32_t m_currentImageIndex = 0;
 
-    void createSwapchain();
+    void createSwapchainHandle();
 
     void findSurfaceFormat();
     void findPresentMode();

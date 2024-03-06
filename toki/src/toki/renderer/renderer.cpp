@@ -4,8 +4,8 @@
 
 namespace Toki {
 
-Scope<Renderer> Renderer::create() {
-    return createScope<VulkanRenderer>();
+Ref<Renderer> Renderer::create() {
+    return createRef<VulkanRenderer>();
 }
 
 }  // namespace Toki

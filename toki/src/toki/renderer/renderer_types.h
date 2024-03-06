@@ -42,16 +42,26 @@ enum class AttachmentStoreOp : uint8_t {
 };
 
 struct Attachment {
+    ColorFormat colorFormat;
     AttachmentLoadOp loadOp : 4 = AttachmentLoadOp::ATTACHMENT_LOAD_OP_LOAD;
     AttachmentStoreOp storeOp : 4 = AttachmentStoreOp::ATTACHMENT_STORE_OP_DONT_CARE;
     AttachmentTypeBits typeBits : 4 = AttachmentTypeBits::ATTACHMENT_TYPE_COLOR;
     bool presentable : 4 = false;
-    ColorFormat colorFormat;
 };
 
 enum class IndexSize : uint8_t {
     INDEX_SIZE_16,
     INDEX_SIZE_32,
+};
+
+class RenderingContext {
+public:
+    RenderingContext() = delete;
+    RenderingContext(void* internalContext) : m_internalContext(internalContext) {}
+    const void* getInternalContex() const { return m_internalContext; };
+
+private:
+    void* m_internalContext = nullptr;
 };
 
 }  // namespace Toki
