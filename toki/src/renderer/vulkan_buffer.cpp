@@ -24,8 +24,7 @@ VulkanBuffer::VulkanBuffer(uint32_t size, BufferType bufferType) {
     }
 
     TK_ASSERT_VK_RESULT(
-        vkCreateBuffer(s_context->device, &bufferCreateInfo, s_context->allocationCallbacks, &m_bufferHandle), "Could not create buffer"
-    );
+        vkCreateBuffer(s_context->device, &bufferCreateInfo, s_context->allocationCallbacks, &m_bufferHandle), "Could not create buffer");
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements(s_context->device, m_bufferHandle, &memoryRequirements);
@@ -39,8 +38,8 @@ VulkanBuffer::VulkanBuffer(uint32_t size, BufferType bufferType) {
         VulkanUtils::findMemoryType(s_context->physicalDevice, memoryRequirements.memoryTypeBits, memoryPropertyFlags);
 
     TK_ASSERT_VK_RESULT(
-        vkAllocateMemory(s_context->device, &memoryAllocateInfo, s_context->allocationCallbacks, &m_memoryHandle), "Could not allocate buffer memory"
-    );
+        vkAllocateMemory(s_context->device, &memoryAllocateInfo, s_context->allocationCallbacks, &m_memoryHandle),
+        "Could not allocate buffer memory");
     TK_ASSERT_VK_RESULT(vkBindBufferMemory(s_context->device, m_bufferHandle, m_memoryHandle, 0), "Could not bind buffer memory");
 }
 
@@ -60,17 +59,17 @@ VkBuffer VulkanBuffer::getHandle() const {
     return m_bufferHandle;
 }
 
-VulkanVertexBuffer::VulkanVertexBuffer(const VertexBufferConfig& config)
-    : VertexBuffer(config),
-      VulkanBuffer(config.size, BufferType::BUFFER_TYPE_VERTEX) {}
+VulkanVertexBuffer::VulkanVertexBuffer(const VertexBufferConfig& config) :
+    VertexBuffer(config),
+    VulkanBuffer(config.size, BufferType::BUFFER_TYPE_VERTEX) {}
 
 void VulkanVertexBuffer::setData(uint32_t size, void* data, uint32_t offset) {
     VulkanBuffer::setData(size, data, offset);
 }
 
-VulkanIndexBuffer::VulkanIndexBuffer(const IndexBufferConfig& config)
-    : IndexBuffer(config),
-      VulkanBuffer(config.size, BufferType::BUFFER_TYPE_INDEX) {}
+VulkanIndexBuffer::VulkanIndexBuffer(const IndexBufferConfig& config) :
+    IndexBuffer(config),
+    VulkanBuffer(config.size, BufferType::BUFFER_TYPE_INDEX) {}
 
 void VulkanIndexBuffer::setData(uint32_t size, void* data, uint32_t offset) {
     VulkanBuffer::setData(size, data, offset);

@@ -71,7 +71,7 @@ VulkanRenderPass::VulkanRenderPass(const RenderPassConfig& config) : m_width(con
 
 VulkanRenderPass::~VulkanRenderPass() {}
 
-void VulkanRenderPass::begin(const RenderingContext& ctx, VkImageView presentImageView) {
+void VulkanRenderPass::begin(const RenderingContext& ctx, VkExtent2D extent, VkImageView presentImageView) {
     if (presentImageView != VK_NULL_HANDLE && m_presentableAttachmentIndex >= 0) {
         m_colorAttachmentInfos[m_presentableAttachmentIndex].imageView = presentImageView;
     }
@@ -79,7 +79,7 @@ void VulkanRenderPass::begin(const RenderingContext& ctx, VkImageView presentIma
     VkRenderingInfoKHR renderingInfo{};
     renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
     renderingInfo.renderArea.offset = { 0, 0 };
-    renderingInfo.renderArea.extent = { 800, 600 };
+    renderingInfo.renderArea.extent = extent;
     renderingInfo.layerCount = 1;
     renderingInfo.viewMask = 0;
     renderingInfo.colorAttachmentCount = m_colorAttachmentInfos.size();

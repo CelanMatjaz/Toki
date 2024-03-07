@@ -22,7 +22,8 @@ namespace Toki {
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation",
 };
-const std::vector<const char*> requiredExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME };
+const std::vector<const char*> requiredExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+                                                      /* VK_NV_FILL_RECTANGLE_EXTENSION_NAME */ };
 
 bool checkDeviceExtensionSupport(Ref<VulkanContext> m_context);
 bool checkValidationLayerSupport();
@@ -159,19 +160,25 @@ void VulkanRenderer::submit(Ref<RenderPass> rp, RendererSubmitFn submitFn) {
 
     VulkanRenderingContext ctx{ m_frameData[m_currentFrame].commandBuffer };
 
+    auto [width, height] = m_swapchains[0]->getExtent();
+
     VkViewport viewport{};
-    viewport.width = 800;
-    viewport.height = 600;
+    viewport.width = width;
+    viewport.height = height;
+    viewport.x = 0;
+    viewport.y = 0;
     vkCmdSetViewport(m_frameData[m_currentFrame].commandBuffer, 0, 1, &viewport);
 
     VkRect2D scissor{};
-    scissor.extent.width = 800;
-    scissor.extent.height = 600;
+    scissor.extent.width = width;
+    scissor.extent.height = height;
+    scissor.offset.x = 0;
+    scissor.offset.y = 0;
     vkCmdSetScissor(m_frameData[m_currentFrame].commandBuffer, 0, 1, &scissor);
 
     vkCmdSetLineWidth(m_frameData[m_currentFrame].commandBuffer, 1.0f);
 
-    renderPass->begin(ctx, m_swapchains[0]->getCurrentImageView());
+    renderPass->begin(ctx, m_swapchains[0]->getExtent(), m_swapchains[0]->getCurrentImageView());
     submitFn(ctx);
     renderPass->end(ctx);
 }
@@ -314,8 +321,7 @@ void VulkanRenderer::createDevice(VkSurfaceKHR surface) {
 #endif  // !DIST
 
     TK_ASSERT_VK_RESULT(
-        vkCreateDevice(m_context->physicalDevice, &deviceCreateInfo, m_context->allocationCallbacks, &m_context->device), "Could not create device"
-    );
+        vkCreateDevice(m_context->physicalDevice, &deviceCreateInfo, m_context->allocationCallbacks, &m_context->device), "Could not create device");
 
     vkGetDeviceQueue(m_context->device, m_context->graphicsFamilyIndex, 0, &m_context->graphicsQueue);
     vkGetDeviceQueue(m_context->device, m_context->presentFamilyIndex, 0, &m_context->presentQueue);
@@ -344,16 +350,13 @@ void VulkanRenderer::initFrames() {
     for (uint32_t i = 0; i < MAX_FRAMES; ++i) {
         TK_ASSERT_VK_RESULT(
             vkCreateFence(m_context->device, &fenceCreateInfo, m_context->allocationCallbacks, &m_frameData[i].renderFence),
-            "Could not create render fence"
-        );
+            "Could not create render fence");
         TK_ASSERT_VK_RESULT(
             vkCreateSemaphore(m_context->device, &semaphoreCreateInfo, m_context->allocationCallbacks, &m_frameData[i].renderSemaphore),
-            "Could not create render semaphore"
-        );
+            "Could not create render semaphore");
         TK_ASSERT_VK_RESULT(
             vkCreateSemaphore(m_context->device, &semaphoreCreateInfo, m_context->allocationCallbacks, &m_frameData[i].presentSemaphore),
-            "Could not create present semaphore"
-        );
+            "Could not create present semaphore");
 
         VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
         commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -377,8 +380,7 @@ void VulkanRenderer::initCommandPools() {
         for (uint32_t i = 0; i < s_renderThreadCount; ++i) {
             TK_ASSERT_VK_RESULT(
                 vkCreateCommandPool(m_context->device, &commandPoolCreateInfo, m_context->allocationCallbacks, &m_commandPools[i][frameIndex]),
-                "Could not create command pool"
-            );
+                "Could not create command pool");
         }
     }
 
@@ -386,8 +388,7 @@ void VulkanRenderer::initCommandPools() {
     for (uint32_t i = 0; i < s_extraCommandPoolCount; ++i) {
         TK_ASSERT_VK_RESULT(
             vkCreateCommandPool(m_context->device, &commandPoolCreateInfo, m_context->allocationCallbacks, &m_extraCommandPools[i]),
-            "Could not create frame command pool"
-        );
+            "Could not create frame command pool");
     }
 }
 

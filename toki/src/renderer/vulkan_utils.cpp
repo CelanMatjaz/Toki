@@ -18,8 +18,7 @@ VkSurfaceKHR VulkanUtils::createSurface(Ref<VulkanContext> context, Ref<Window> 
 #ifdef TK_WINDOW_SYSTEM_GLFW
     TK_ASSERT_VK_RESULT(
         glfwCreateWindowSurface(context->instance, (GLFWwindow*) window->getHandle(), context->allocationCallbacks, &surface),
-        "Could not create surface"
-    );
+        "Could not create surface");
 #endif
 
     TK_ASSERT(surface != VK_NULL_HANDLE, "Surface should not be VK_NULL_HANDLE");

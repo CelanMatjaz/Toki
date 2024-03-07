@@ -1,3 +1,4 @@
+#include <glm/glm.hpp>
 #include <print>
 
 #include "toki.h"
@@ -25,10 +26,15 @@ public:
         }
 
         {
-            const float vertices[] = {
-                0.0,  -0.5, 0.0f,  // vertex 1
-                0.5,  0.5,  0.0f,  // vertex 2
-                -0.5, 0.5,  0.0f,  // vertex 3
+            struct Vertex {
+                glm::vec3 position;
+                glm::vec4 color;
+            };
+
+            const Vertex vertices[] = {
+                { { 0.0, -0.5, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },  // vertex 1
+                { { 0.5, 0.5, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },   // vertex 2
+                { { -0.5, 0.5, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } },  // vertex 3
             };
 
             Toki::VertexBufferConfig config{};
@@ -52,8 +58,9 @@ public:
             Toki::ShaderConfig config{};
             config.shaderStagePaths[Toki::ShaderStage::SHADER_STAGE_FRAGMENT] = "assets/shaders/test_shader.frag";
             config.shaderStagePaths[Toki::ShaderStage::SHADER_STAGE_VERTEX] = "assets/shaders/test_shader.vert";
-            config.layoutDescriptions.attributeDescriptions = { { 0, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT3, 0 } };
-            config.layoutDescriptions.bindingDescriptions = { { 0, 3 * sizeof(float), Toki::VertexInputRate::VERTEX_INPUT_RATE_VERTEX } };
+            config.layoutDescriptions.attributeDescriptions = { { 0, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT3, 0 },
+                                                                { 1, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT4, 3 * sizeof(float) } };
+            config.layoutDescriptions.bindingDescriptions = { { 0, 7 * sizeof(float), Toki::VertexInputRate::VERTEX_INPUT_RATE_VERTEX } };
             shader = Toki::Shader::create(config);
         }
     }

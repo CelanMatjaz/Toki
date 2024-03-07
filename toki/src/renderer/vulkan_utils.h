@@ -13,6 +13,6 @@ bool checkForMailboxPresentModeSupport(Ref<VulkanContext> context, VkSurfaceKHR 
 VkImageAspectFlags getImageAspectFlags(VkFormat format);
 
 uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeBits, VkMemoryPropertyFlags properties);
-}
+}  // namespace VulkanUtils
 
 }  // namespace Toki

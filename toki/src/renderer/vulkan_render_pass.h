@@ -15,7 +15,7 @@ public:
     VulkanRenderPass(const RenderPassConfig& config);
     ~VulkanRenderPass();
 
-    void begin(const RenderingContext& ctx, VkImageView presentImageView = VK_NULL_HANDLE);
+    void begin(const RenderingContext& ctx, VkExtent2D extent, VkImageView presentImageView = VK_NULL_HANDLE);
     void end(const RenderingContext& ctx);
 
 private:

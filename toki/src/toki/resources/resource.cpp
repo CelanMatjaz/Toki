@@ -2,10 +2,10 @@
 
 namespace Toki {
 
-Resource::Resource(ResourceType type, std::filesystem::path path)
-    : m_type(type),
-      m_path(path),
-      m_lastWriteTime(std::filesystem::last_write_time(path)) {}
+Resource::Resource(ResourceType type, std::filesystem::path path) :
+    m_type(type),
+    m_path(path),
+    m_lastWriteTime(std::filesystem::last_write_time(path)) {}
 
 bool Resource::checkForNewWrite() {
     return m_lastWriteTime < std::filesystem::last_write_time(m_path);

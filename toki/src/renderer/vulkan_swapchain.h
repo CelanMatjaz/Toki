@@ -28,9 +28,11 @@ public:
     void transitionLayout(VkCommandBuffer cmd, VkImageLayout oldLayout, VkImageLayout newLayout);
 
     std::optional<uint32_t> acquireNextImage(FrameData& frameData);
-    VkSwapchainKHR getSwapchainHandle();
-    uint32_t getCurrentImageIndex();
+    VkSwapchainKHR getSwapchainHandle() const;
+    uint32_t getCurrentImageIndex() const;
     VkImageView getCurrentImageView() const;
+    Ref<Window> getWindow() const;
+    VkExtent2D getExtent() const;
 
     inline static const uint32_t TIMEOUT = UINT32_MAX;
 

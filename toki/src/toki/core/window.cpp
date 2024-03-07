@@ -34,4 +34,4 @@ void Window::shutdownWindowSystem() {
     glfwTerminate();
 #endif
 }
-}
+}  // namespace Toki

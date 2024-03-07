@@ -40,8 +40,7 @@ void VulkanGraphicsPipeline::create() {
 
         TK_ASSERT_VK_RESULT(
             vkCreateShaderModule(s_context->device, &shaderModuleCreateInfo, s_context->allocationCallbacks, &shaderModule),
-            "Could not create shader module"
-        );
+            "Could not create shader module");
 
         shaderModules.emplace_back(shaderModule);
 
@@ -198,8 +197,7 @@ void VulkanGraphicsPipeline::create() {
 
     TK_ASSERT_VK_RESULT(
         vkCreatePipelineLayout(s_context->device, &pipelineLayoutInfo, s_context->allocationCallbacks, &pipelineLayout),
-        "Could not create pipeline layout"
-    );
+        "Could not create pipeline layout");
 
     VkPipelineRenderingCreateInfoKHR renderingCreateInfo{};
     renderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
@@ -262,8 +260,7 @@ void VulkanGraphicsPipeline::create() {
 
     TK_ASSERT_VK_RESULT(
         vkCreateGraphicsPipelines(s_context->device, VK_NULL_HANDLE, 1, &pipelineInfo, s_context->allocationCallbacks, &m_pipeline),
-        "Could not create graphics pipeline"
-    );
+        "Could not create graphics pipeline");
 
     for (auto& shaderModule : shaderModules) {
         vkDestroyShaderModule(s_context->device, shaderModule, s_context->allocationCallbacks);

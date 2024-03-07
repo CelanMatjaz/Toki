@@ -20,11 +20,11 @@ Ref<VulkanSwapchain> VulkanSwapchain::create(Ref<VulkanContext> context, const S
     return createRef<VulkanSwapchain>(context, swapchainConfig, window);
 }
 
-VulkanSwapchain::VulkanSwapchain(Ref<VulkanContext> context, const SwapchainConfig& swapchainConfig, Ref<Window> window)
-    : m_context(context),
-      m_window(window),
-      m_surface(VulkanUtils::createSurface(context, window)),
-      m_useVSync(swapchainConfig.useVSync) {
+VulkanSwapchain::VulkanSwapchain(Ref<VulkanContext> context, const SwapchainConfig& swapchainConfig, Ref<Window> window) :
+    m_context(context),
+    m_window(window),
+    m_surface(VulkanUtils::createSurface(context, window)),
+    m_useVSync(swapchainConfig.useVSync) {
     findSurfaceFormat();
     findPresentMode();
     findExtent();
@@ -75,8 +75,7 @@ void VulkanSwapchain::createSwapchainHandle() {
     }
 
     TK_ASSERT_VK_RESULT(
-        vkCreateSwapchainKHR(m_context->device, &swapchainCreateInfo, m_context->allocationCallbacks, &m_swapchain), "Could not create swapchain"
-    );
+        vkCreateSwapchainKHR(m_context->device, &swapchainCreateInfo, m_context->allocationCallbacks, &m_swapchain), "Could not create swapchain");
 
     if (oldSwapchain != VK_NULL_HANDLE) {
         vkDestroySwapchainKHR(m_context->device, oldSwapchain, m_context->allocationCallbacks);
@@ -97,6 +96,7 @@ void VulkanSwapchain::createSwapchainHandle() {
 
 void VulkanSwapchain::recreate() {
     findExtent();
+
     createSwapchainHandle();
 }
 
@@ -122,16 +122,24 @@ std::optional<uint32_t> VulkanSwapchain::acquireNextImage(FrameData& frameData) 
     return m_currentImageIndex;
 }
 
-VkSwapchainKHR VulkanSwapchain::getSwapchainHandle() {
+VkSwapchainKHR VulkanSwapchain::getSwapchainHandle() const {
     return m_swapchain;
 }
 
-uint32_t VulkanSwapchain::getCurrentImageIndex() {
+uint32_t VulkanSwapchain::getCurrentImageIndex() const {
     return m_currentImageIndex;
 }
 
 VkImageView VulkanSwapchain::getCurrentImageView() const {
     return m_wrappedImages[m_currentImageIndex]->getImageView();
+}
+
+Ref<Window> VulkanSwapchain::getWindow() const {
+    return m_window;
+}
+
+VkExtent2D VulkanSwapchain::getExtent() const {
+    return m_extent;
 }
 
 void VulkanSwapchain::findSurfaceFormat() {
