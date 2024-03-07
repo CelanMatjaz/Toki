@@ -84,7 +84,7 @@ void VulkanGraphicsPipeline::create() {
     }
 
     std::vector<VkVertexInputAttributeDescription> attributeDescriptions(layout.attributeDescriptions.size());
-    for (uint32_t i = 0; i < layout.bindingDescriptions.size(); ++i) {
+    for (uint32_t i = 0; i < layout.attributeDescriptions.size(); ++i) {
         attributeDescriptions[i].binding = layout.attributeDescriptions[i].binding;
         attributeDescriptions[i].offset = layout.attributeDescriptions[i].offset;
         attributeDescriptions[i].location = layout.attributeDescriptions[i].location;
