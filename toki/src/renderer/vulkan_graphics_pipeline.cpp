@@ -83,13 +83,13 @@ void VulkanGraphicsPipeline::create() {
         }
     }
 
-    std::vector<VkVertexInputAttributeDescription> attributeDescriptions(layout.atributeDescriptions.size());
+    std::vector<VkVertexInputAttributeDescription> attributeDescriptions(layout.attributeDescriptions.size());
     for (uint32_t i = 0; i < layout.bindingDescriptions.size(); ++i) {
-        attributeDescriptions[i].binding = layout.atributeDescriptions[i].binding;
-        attributeDescriptions[i].offset = layout.atributeDescriptions[i].offset;
-        attributeDescriptions[i].location = layout.atributeDescriptions[i].location;
+        attributeDescriptions[i].binding = layout.attributeDescriptions[i].binding;
+        attributeDescriptions[i].offset = layout.attributeDescriptions[i].offset;
+        attributeDescriptions[i].location = layout.attributeDescriptions[i].location;
 
-        switch (layout.atributeDescriptions[i].format) {
+        switch (layout.attributeDescriptions[i].format) {
             case VertexFormat::VERTEX_FORMAT_FLOAT1:
                 attributeDescriptions[i].format = VK_FORMAT_R32_SFLOAT;
                 break;

@@ -90,7 +90,7 @@ struct VertexBindingDescription {
 };
 
 struct VertexLayoutDescriptions {
-    std::vector<VertexAttributeDescription> atributeDescriptions;
+    std::vector<VertexAttributeDescription> attributeDescriptions;
     std::vector<VertexBindingDescription> bindingDescriptions;
 };
 

@@ -52,7 +52,7 @@ public:
             Toki::ShaderConfig config{};
             config.shaderStagePaths[Toki::ShaderStage::SHADER_STAGE_FRAGMENT] = "assets/shaders/test_shader.frag";
             config.shaderStagePaths[Toki::ShaderStage::SHADER_STAGE_VERTEX] = "assets/shaders/test_shader.vert";
-            config.layoutDescriptions.atributeDescriptions = { { 0, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT3, 0 } };
+            config.layoutDescriptions.attributeDescriptions = { { 0, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT3, 0 } };
             config.layoutDescriptions.bindingDescriptions = { { 0, 3 * sizeof(float), Toki::VertexInputRate::VERTEX_INPUT_RATE_VERTEX } };
             shader = Toki::Shader::create(config);
         }
