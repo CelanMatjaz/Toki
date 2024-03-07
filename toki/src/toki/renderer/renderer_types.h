@@ -54,14 +54,44 @@ enum class IndexSize : uint8_t {
     INDEX_SIZE_32,
 };
 
-class RenderingContext {
-public:
-    RenderingContext() = delete;
-    RenderingContext(void* internalContext) : m_internalContext(internalContext) {}
-    const void* getInternalContex() const { return m_internalContext; };
+enum class BufferType {
+    BUFFER_TYPE_VERTEX,
+    BUFFER_TYPE_INDEX,
+};
 
-private:
-    void* m_internalContext = nullptr;
+enum class ShaderStage {
+    SHADER_STAGE_VERTEX,
+    SHADER_STAGE_FRAGMENT
+};
+
+enum VertexInputRate {
+    VERTEX_INPUT_RATE_VERTEX,
+    VERTEX_INPUT_RATE_INSTANCE,
+};
+
+enum class VertexFormat {
+    VERTEX_FORMAT_FLOAT1,
+    VERTEX_FORMAT_FLOAT2,
+    VERTEX_FORMAT_FLOAT3,
+    VERTEX_FORMAT_FLOAT4,
+};
+
+struct VertexAttributeDescription {
+    uint32_t location;
+    uint32_t binding;
+    VertexFormat format;
+    uint32_t offset;
+};
+
+struct VertexBindingDescription {
+    uint32_t binding;
+    uint32_t stride;
+    VertexInputRate inputRate;
+};
+
+struct VertexLayoutDescriptions {
+    std::vector<VertexAttributeDescription> atributeDescriptions;
+    std::vector<VertexBindingDescription> bindingDescriptions;
 };
 
 }  // namespace Toki

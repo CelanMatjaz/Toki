@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include "toki/renderer/renderer_types.h"
+
 #if VK_NO_PROTOTYPES
 PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR{ VK_NULL_HANDLE };
 PFN_vkCmdEndRenderingKHR vkCmdEndRenderingKHR{ VK_NULL_HANDLE };
@@ -38,10 +40,6 @@ struct FrameData {
 
     uint32_t currentImageIndex = 0;
     bool startedRecording = false;
-};
-
-struct VulkanRenderingContext {
-    VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
 };
 
 }  // namespace Toki

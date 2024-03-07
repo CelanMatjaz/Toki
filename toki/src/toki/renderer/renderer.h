@@ -8,7 +8,7 @@
 
 namespace Toki {
 
-using RendererSubmitFn = std::function<void(const RenderingContext)>;
+using RendererSubmitFn = std::function<void(const RenderingContext&)>;
 
 class Renderer {
 public:
@@ -17,9 +17,10 @@ public:
     virtual void init() = 0;
     virtual void shutdown() = 0;
 
-    virtual bool beginFrame() = 0;
+    virtual void beginFrame() = 0;
     virtual void endFrame() = 0;
     virtual void submit(Ref<RenderPass> renderPass, RendererSubmitFn submitFn) = 0;
+    virtual void waitForDevice() = 0;
 
     virtual void createSwapchain(Ref<Window> window) = 0;
 };

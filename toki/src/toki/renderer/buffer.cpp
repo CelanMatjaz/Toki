@@ -1,30 +1,35 @@
 #include "buffer.h"
 
+#include "renderer/vulkan_buffer.h"
+#include "toki/core/core.h"
+
 namespace Toki {
 
-Ref<VertexBuffer> Buffer::create(const VertexBufferConfig& config) {
-    return nullptr;
+uint32_t _Buffer::getSize() const {
+    return m_size;
 }
 
-Ref<IndexBuffer> Buffer::create(const IndexBufferConfig& config) {
-    return nullptr;
+Ref<VertexBuffer> VertexBuffer::create(const VertexBufferConfig& config) {
+    return createRef<VulkanVertexBuffer>(config);
 }
 
-Buffer::Buffer(uint32_t size) : m_size(size) {}
+VertexBuffer::VertexBuffer(const VertexBufferConfig& config) : m_binding(config.binding) {}
 
-VertexBuffer::VertexBuffer(const VertexBufferConfig& config) : Buffer(config.size), m_binding(config.binding) {}
-
-uint32_t VertexBuffer::getBinding() {
+uint32_t VertexBuffer::getBinding() const {
     return m_binding;
 }
 
-IndexBuffer::IndexBuffer(const IndexBufferConfig& config) : Buffer(config.size), m_indexCount(config.indexCount) {}
+Ref<IndexBuffer> IndexBuffer::create(const IndexBufferConfig& config) {
+    return createRef<VulkanIndexBuffer>(config);
+}
 
-uint32_t IndexBuffer::getIndexCount() {
+IndexBuffer::IndexBuffer(const IndexBufferConfig& config) : m_indexCount(config.indexCount) {}
+
+uint32_t IndexBuffer::getIndexCount() const {
     return m_indexCount;
 }
 
-IndexSize IndexBuffer::getIndexSize() {
+IndexSize IndexBuffer::getIndexSize() const {
     return m_indexSize;
 }
 

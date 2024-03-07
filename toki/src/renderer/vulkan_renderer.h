@@ -17,9 +17,10 @@ public:
     virtual void init() override;
     virtual void shutdown() override;
 
-    virtual bool beginFrame() override;
+    virtual void beginFrame() override;
     virtual void endFrame() override;
     virtual void submit(Ref<RenderPass> renderPass, RendererSubmitFn submitFn) override;
+    virtual void waitForDevice() override;
 
     virtual void createSwapchain(Ref<Window> window) override;
 

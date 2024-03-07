@@ -4,6 +4,7 @@
 
 #include "toki/core/core.h"
 #include "toki/renderer/renderer_types.h"
+#include "toki/renderer/rendering_context.h"
 
 namespace Toki {
 

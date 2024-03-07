@@ -100,8 +100,8 @@ void VulkanSwapchain::recreate() {
     createSwapchainHandle();
 }
 
-void VulkanSwapchain::transitionLayout(VkCommandBuffer cmd) {
-    m_wrappedImages[m_currentImageIndex]->transitionLayout(cmd, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+void VulkanSwapchain::transitionLayout(VkCommandBuffer cmd, VkImageLayout oldLayout, VkImageLayout newLayout) {
+    m_wrappedImages[m_currentImageIndex]->transitionLayout(cmd, oldLayout, newLayout);
 }
 
 std::optional<uint32_t> VulkanSwapchain::acquireNextImage(FrameData& frameData) {
@@ -110,12 +110,13 @@ std::optional<uint32_t> VulkanSwapchain::acquireNextImage(FrameData& frameData) 
     VkResult waitFencesResult = vkWaitForFences(m_context->device, 1, &frameData.renderFence, VK_TRUE, TIMEOUT);
     TK_ASSERT(waitFencesResult == VK_SUCCESS || waitFencesResult == VK_TIMEOUT, "Failed waiting for fences");
 
-    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+            recreate();
+        }
         return {};
     } else {
-        TK_ASSERT(
-            result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, std::format("Failed to acquire swapchain image index, result: {}", (uint32_t) result)
-        );
+        TK_ASSERT(result == VK_SUCCESS, std::format("Failed to acquire swapchain image index, result: {}", (uint32_t) result));
     }
 
     return m_currentImageIndex;
@@ -127,6 +128,10 @@ VkSwapchainKHR VulkanSwapchain::getSwapchainHandle() {
 
 uint32_t VulkanSwapchain::getCurrentImageIndex() {
     return m_currentImageIndex;
+}
+
+VkImageView VulkanSwapchain::getCurrentImageView() const {
+    return m_wrappedImages[m_currentImageIndex]->getImageView();
 }
 
 void VulkanSwapchain::findSurfaceFormat() {

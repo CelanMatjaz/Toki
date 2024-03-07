@@ -20,51 +20,42 @@ struct IndexBufferConfig : BufferConfig {
     IndexSize indexSize;
 };
 
-class VertexBuffer;
-class IndexBuffer;
-
-class Buffer {
+class _Buffer {
 public:
-    static Ref<VertexBuffer> create(const VertexBufferConfig& config);
-    static Ref<IndexBuffer> create(const IndexBufferConfig& config);
+    uint32_t getSize() const;
 
-    Buffer() = delete;
-    Buffer(const Buffer& other) = delete;
-    Buffer(Buffer&& other) = delete;
-    Buffer& operator=(const Buffer& other) = delete;
-    Buffer& operator=(const Buffer&& other) = delete;
-    virtual ~Buffer() = default;
-
-    virtual void setData(uint32_t size, void* data) = 0;
-
-    uint32_t getSize() const { return m_size; }
-
-protected:
-    Buffer(uint32_t size);
-
+private:
     uint32_t m_size = 0;
 };
 
-class VertexBuffer : public Buffer {
+class VertexBuffer : public _Buffer {
 public:
+    static Ref<VertexBuffer> create(const VertexBufferConfig& config);
+
     VertexBuffer() = delete;
     VertexBuffer(const VertexBufferConfig& config);
     virtual ~VertexBuffer() = default;
 
-    uint32_t getBinding();
+    virtual void setData(uint32_t size, void* data, uint32_t offset = 0) = 0;
+
+    uint32_t getBinding() const;
 
 private:
     uint32_t m_binding = 0;
 };
 
-class IndexBuffer : public Buffer {
+class IndexBuffer : public _Buffer {
 public:
+    static Ref<IndexBuffer> create(const IndexBufferConfig& config);
+
     IndexBuffer() = delete;
     IndexBuffer(const IndexBufferConfig& config);
     virtual ~IndexBuffer() = default;
 
-    uint32_t getIndexCount();
-    IndexSize getIndexSize();
+    virtual void setData(uint32_t size, void* data, uint32_t offset = 0) = 0;
+
+    uint32_t getIndexCount() const;
+    IndexSize getIndexSize() const;
 
 private:
     uint32_t m_indexCount = 0;

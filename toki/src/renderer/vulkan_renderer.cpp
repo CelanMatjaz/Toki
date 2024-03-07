@@ -4,6 +4,8 @@
 #include <vector>
 
 #include "platform.h"
+#include "renderer/vulkan_buffer.h"
+#include "renderer/vulkan_graphics_pipeline.h"
 #include "renderer/vulkan_image.h"
 #include "renderer/vulkan_render_pass.h"
 #include "renderer/vulkan_utils.h"
@@ -13,6 +15,7 @@
 #ifdef TK_WINDOW_SYSTEM_GLFW
 #include "GLFW/glfw3.h"
 #endif
+#include "vulkan_rendering_context.h"
 
 namespace Toki {
 
@@ -53,7 +56,9 @@ void VulkanRenderer::init() {
     initCommandPools();
     initFrames();
 
+    VulkanBuffer::s_context = m_context;
     VulkanImage::s_context = m_context;
+    VulkanGraphicsPipeline::s_context = m_context;
 }
 
 void VulkanRenderer::shutdown() {
@@ -68,7 +73,7 @@ void VulkanRenderer::shutdown() {
     vkDestroyInstance(m_context->instance, m_context->allocationCallbacks);
 }
 
-bool VulkanRenderer::beginFrame() {
+void VulkanRenderer::beginFrame() {
     FrameData& frame = m_frameData[m_currentFrame];
 
     TK_ASSERT(m_swapchains.size() == 1, "Multiple swapchains are not yet supported");
@@ -76,10 +81,8 @@ bool VulkanRenderer::beginFrame() {
     auto swapchain = m_swapchains[0];
 
     std::optional<uint32_t> imageIndex = swapchain->acquireNextImage(frame);
-    if (!imageIndex) {
-        m_currentFrame = MAX_FRAMES;
-        swapchain->recreate();
-        return false;
+    if (!imageIndex.has_value()) {
+        return;
     }
 
     vkResetFences(m_context->device, 1, &frame.renderFence);
@@ -89,7 +92,9 @@ bool VulkanRenderer::beginFrame() {
     commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     TK_ASSERT_VK_RESULT(vkBeginCommandBuffer(frame.commandBuffer, &commandBufferBeginInfo), "Error starting command buffer recording");
 
-    return true;
+    for (uint32_t i = 0; i < m_swapchains.size(); ++i) {
+        m_swapchains[i]->transitionLayout(frame.commandBuffer, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    }
 }
 
 void VulkanRenderer::endFrame() {
@@ -102,7 +107,7 @@ void VulkanRenderer::endFrame() {
     for (uint32_t i = 0; i < m_swapchains.size(); ++i) {
         swapchainHandles[i] = m_swapchains[i]->getSwapchainHandle();
         swapchainIndices[i] = m_swapchains[i]->getCurrentImageIndex();
-        m_swapchains[i]->transitionLayout(frame.commandBuffer);
+        m_swapchains[i]->transitionLayout(frame.commandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     }
 
     vkEndCommandBuffer(frame.commandBuffer);
@@ -144,19 +149,35 @@ void VulkanRenderer::endFrame() {
         TK_ASSERT_VK_RESULT(result, "Failed to present swapchain image");
     }
 
+    vkQueueWaitIdle(m_context->presentQueue);
+
     m_currentFrame = (m_swapchains[0]->getCurrentImageIndex() + 1) % MAX_FRAMES;
 }
 
 void VulkanRenderer::submit(Ref<RenderPass> rp, RendererSubmitFn submitFn) {
     VulkanRenderPass* renderPass = (VulkanRenderPass*) rp.get();
 
-    VulkanRenderingContext internalContext{ m_frameData[m_currentFrame].commandBuffer };
+    VulkanRenderingContext ctx{ m_frameData[m_currentFrame].commandBuffer };
 
-    RenderingContext cxt(&internalContext);
+    VkViewport viewport{};
+    viewport.width = 800;
+    viewport.height = 600;
+    vkCmdSetViewport(m_frameData[m_currentFrame].commandBuffer, 0, 1, &viewport);
 
-    renderPass->begin(cxt);
-    submitFn(cxt);
-    renderPass->end(cxt);
+    VkRect2D scissor{};
+    scissor.extent.width = 800;
+    scissor.extent.height = 600;
+    vkCmdSetScissor(m_frameData[m_currentFrame].commandBuffer, 0, 1, &scissor);
+
+    vkCmdSetLineWidth(m_frameData[m_currentFrame].commandBuffer, 1.0f);
+
+    renderPass->begin(ctx, m_swapchains[0]->getCurrentImageView());
+    submitFn(ctx);
+    renderPass->end(ctx);
+}
+
+void VulkanRenderer::waitForDevice() {
+    vkDeviceWaitIdle(m_context->device);
 }
 
 void VulkanRenderer::createSwapchain(Ref<Window> window) {

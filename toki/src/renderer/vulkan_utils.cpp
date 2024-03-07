@@ -64,4 +64,19 @@ VkImageAspectFlags VulkanUtils::getImageAspectFlags(VkFormat format) {
     }
 }
 
+uint32_t VulkanUtils::findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeBits, VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memoryProperties;
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
+
+    for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
+        if ((typeBits & (1 << i)) && (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    TK_ASSERT(false, "Failed to find suitable memory type");
+
+    return -1;
+}
+
 }  // namespace Toki

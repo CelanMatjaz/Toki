@@ -1,6 +1,6 @@
 #include "vulkan_render_pass.h"
 
-#include "renderer/vulkan_types.h"
+#include "renderer/vulkan_rendering_context.h"
 #include "toki/core/assert.h"
 
 namespace Toki {
@@ -48,6 +48,7 @@ VulkanRenderPass::VulkanRenderPass(const RenderPassConfig& config) : m_width(con
             case ColorFormat::COLOR_FORMAT_RG:
             case ColorFormat::COLOR_FORMAT_RGB:
             case ColorFormat::COLOR_FORMAT_RGBA:
+                attachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
                 m_colorAttachmentInfos.emplace_back(attachmentInfo);
                 break;
             case ColorFormat::COLOR_FORMAT_DEPTH:
@@ -70,7 +71,11 @@ VulkanRenderPass::VulkanRenderPass(const RenderPassConfig& config) : m_width(con
 
 VulkanRenderPass::~VulkanRenderPass() {}
 
-void VulkanRenderPass::begin(const RenderingContext& ctx) {
+void VulkanRenderPass::begin(const RenderingContext& ctx, VkImageView presentImageView) {
+    if (presentImageView != VK_NULL_HANDLE && m_presentableAttachmentIndex >= 0) {
+        m_colorAttachmentInfos[m_presentableAttachmentIndex].imageView = presentImageView;
+    }
+
     VkRenderingInfoKHR renderingInfo{};
     renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
     renderingInfo.renderArea.offset = { 0, 0 };
@@ -82,11 +87,11 @@ void VulkanRenderPass::begin(const RenderingContext& ctx) {
     renderingInfo.pDepthAttachment = m_depthAttachmentInfo.get();
     renderingInfo.pStencilAttachment = m_stencilAttachmentInfo.get();
 
-    vkCmdBeginRendering(((VulkanRenderingContext*) ctx.getInternalContex())->commandBuffer, &renderingInfo);
+    vkCmdBeginRendering(((VulkanRenderingContext&) ctx).getCommandBuffer(), &renderingInfo);
 }
 
 void VulkanRenderPass::end(const RenderingContext& ctx) {
-    vkCmdEndRendering(((VulkanRenderingContext*) ctx.getInternalContex())->commandBuffer);
+    vkCmdEndRendering(((VulkanRenderingContext&) ctx).getCommandBuffer());
 }
 
 }  // namespace Toki

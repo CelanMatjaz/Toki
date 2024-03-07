@@ -25,11 +25,12 @@ public:
 
     void recreate();
 
-    void transitionLayout(VkCommandBuffer cmd);
+    void transitionLayout(VkCommandBuffer cmd, VkImageLayout oldLayout, VkImageLayout newLayout);
 
     std::optional<uint32_t> acquireNextImage(FrameData& frameData);
     VkSwapchainKHR getSwapchainHandle();
     uint32_t getCurrentImageIndex();
+    VkImageView getCurrentImageView() const;
 
     inline static const uint32_t TIMEOUT = UINT32_MAX;
 

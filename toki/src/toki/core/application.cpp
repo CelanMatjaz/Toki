@@ -3,6 +3,7 @@
 #include <chrono>
 #include <print>
 
+#include "assert.h"
 #include "renderer/vulkan_renderer.h"
 
 namespace Toki {
@@ -24,6 +25,11 @@ Application::Application(const ApplicationConfig& config) {
 Application::~Application() {
     std::println("Deinitializing app");
 
+    uint32_t layerCount = m_layerStack.size();
+    for (uint32_t i = 0; i < layerCount; ++i) {
+        popLayer();
+    }
+
     m_renderer->shutdown();
     Window::shutdownWindowSystem();
 }
@@ -44,14 +50,14 @@ void Application::start() {
         deltaTime = std::chrono::duration<float>(frameStartTime - lastFrameTime).count();
         lastFrameTime = frameStartTime;
 
-        if (m_renderer->beginFrame()) {
-            for (auto it = m_layerStack.rbegin(); it != m_layerStack.rend(); ++it) {
-                (*it)->onRender();
-            }
-
-            m_renderer->endFrame();
+        m_renderer->beginFrame();
+        for (auto it = m_layerStack.rbegin(); it != m_layerStack.rend(); ++it) {
+            (*it)->onRender();
         }
+        m_renderer->endFrame();
     }
+
+    m_renderer->waitForDevice();
 }
 
 void Application::stop() {
@@ -64,6 +70,7 @@ void Application::pushLayer(Ref<Layer> layer) {
 }
 
 void Application::popLayer() {
+    TK_ASSERT(m_layerStack.size() > 0, "Cannot pop stack with 0 layers");
     m_layerStack.back()->onDetach();
     m_layerStack.erase(m_layerStack.end() - 1);
 }
