@@ -33,9 +33,9 @@ public:
             };
 
             const Vertex vertices[] = {
-                { { 0.0, -0.5, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },  // vertex 1
-                { { 0.5, 0.5, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },   // vertex 2
-                { { -0.5, 0.5, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } },  // vertex 3
+                { { 0.0 * 800, -0.5 * 600, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },  // vertex 1
+                { { 0.5 * 800, 0.5 * 600, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },   // vertex 2
+                { { -0.5 * 800, 0.5 * 600, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } },  // vertex 3
             };
 
             Toki::VertexBufferConfig config{};
@@ -64,11 +64,15 @@ public:
             config.layoutDescriptions.bindingDescriptions = { { 0, 7 * sizeof(float), Toki::VertexInputRate::VERTEX_INPUT_RATE_VERTEX } };
             shader = Toki::Shader::create(config);
         }
+
+        p[1, 1] *= -1;
     }
 
+    inline static glm::mat4 p = glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, 0.1f, 1000.0f);
+
     void onRender() override {
-        static glm::mat4 mvp = glm::ortho(0.0f, 8.0f, 6.0f, 0.0f, 0.0f, 1000.0f) *
-                               glm::lookAt(glm::vec3{ 0.0f, 0.0f, -1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }) * glm::mat4{ 1.0f };
+        static glm::mat4 mvp = p * glm::lookAt(glm::vec3{ 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }) *
+                               glm::translate(glm::mat4{ 1.0f }, glm::vec3{ 400.0f, -300.0f, 0.0f });
 
         submit(renderPass, [this](const Toki::RenderingContext& ctx) {
             ctx.bindVertexBuffers({ vertexBuffer });

@@ -18,6 +18,7 @@ public:
 
     VkPipeline getPipeline() const;
     VkPipelineLayout getPipelineLayout() const;
+    uint32_t getPushConstantStageFlags() const;
 
 private:
     inline static Ref<VulkanContext> s_context;
@@ -27,6 +28,7 @@ private:
 
     VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
     VkPipeline m_pipeline = VK_NULL_HANDLE;
+    uint32_t m_pushConstantStageFlags = 0;
 };
 
 }  // namespace Toki

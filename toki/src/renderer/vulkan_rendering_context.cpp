@@ -14,7 +14,11 @@ void VulkanRenderingContext::bindVertexBuffers(std::vector<Ref<VertexBuffer>> ve
 }
 
 void VulkanRenderingContext::bindIndexBuffer(Ref<IndexBuffer> indexBuffer) const {
-    vkCmdBindIndexBuffer(m_commandBuffer, ((VulkanIndexBuffer*) indexBuffer.get())->getHandle(), 0, VK_INDEX_TYPE_UINT32);
+    vkCmdBindIndexBuffer(
+        m_commandBuffer,
+        ((VulkanIndexBuffer*) indexBuffer.get())->getHandle(),
+        0,
+        indexBuffer->getIndexSize() == IndexSize::INDEX_SIZE_32 ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16);
 }
 
 void VulkanRenderingContext::bindShader(Ref<Shader> shader) const {
@@ -22,7 +26,8 @@ void VulkanRenderingContext::bindShader(Ref<Shader> shader) const {
 }
 
 void VulkanRenderingContext::pushConstants(Ref<Shader> shader, uint32_t size, void* data) const {
-    vkCmdPushConstants(m_commandBuffer, ((VulkanGraphicsPipeline*) shader.get())->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, size, data);
+    auto s = ((VulkanGraphicsPipeline*) shader.get());
+    vkCmdPushConstants(m_commandBuffer, s->getPipelineLayout(), s->getPushConstantStageFlags(), 0, size, data);
 }
 
 void VulkanRenderingContext::draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) const {

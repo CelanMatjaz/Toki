@@ -29,6 +29,10 @@ VkPipelineLayout VulkanGraphicsPipeline::getPipelineLayout() const {
     return m_pipelineLayout;
 }
 
+uint32_t VulkanGraphicsPipeline::getPushConstantStageFlags() const {
+    return m_pushConstantStageFlags;
+}
+
 void VulkanGraphicsPipeline::create() {
     std::vector<VkPipelineShaderStageCreateInfo> shaderStageCreateInfos;
     std::vector<VkShaderModule> shaderModules;
@@ -74,6 +78,10 @@ void VulkanGraphicsPipeline::create() {
         shaderStageCreateInfos.emplace_back(shaderStageCreateInfo);
 
         ++i;
+    }
+
+    for (const auto& c : constants) {
+        m_pushConstantStageFlags |= c.stageFlags;
     }
 
     VertexLayoutDescriptions layout = m_config.layoutDescriptions;
