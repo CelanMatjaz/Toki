@@ -26,12 +26,12 @@ target("engine")
         add_defines("DEBUG")
         set_symbols("debug")
         set_optimize("none")
-        set_runtimes("MTd")
+        set_runtimes("MDd")
     elseif is_mode("release") then
         add_defines("RELEASE")
         set_optimize("fastest")
         set_symbols("hidden")
-        set_runtimes("MT")
+        set_runtimes("MD")
     end 
 
 target("glfw")
@@ -75,19 +75,19 @@ target("toki")
     add_linkdirs(VULKAN_BIN)
     add_links("vulkan-1")
     set_prefixname("")
-    set_extension(".lib")
+    -- set_extension(".lib")
     add_defines("GLM_FORCE_RADIANS", "GLM_FORCE_DEPTH_ZERO_TO_ONE")
 
     if is_mode("debug") then
         add_defines("DEBUG")
         set_symbols("debug")
         set_optimize("none")
-        set_runtimes("MTd")
+        set_runtimes("MDd")
         add_links("spirv-cross-cored", "shaderc_sharedd", "spirv-cross-glsld")
     elseif is_mode("release") then
         add_defines("DEBUG")
         set_optimize("fastest")
         set_symbols("hidden")
-        set_runtimes("MT")
+        set_runtimes("MD")
         add_links("spirv-cross-core", "shaderc_shared", "spirv-cross-glsl")
     end

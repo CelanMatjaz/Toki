@@ -14,4 +14,10 @@
 #include <utility>
 #include <vector>
 
-#include "vulkan/vulkan.h"
+// Vendor
+#include <vulkan/vulkan.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/transform.hpp>

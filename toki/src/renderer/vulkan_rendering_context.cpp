@@ -21,6 +21,10 @@ void VulkanRenderingContext::bindShader(Ref<Shader> shader) const {
     vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, ((VulkanGraphicsPipeline*) shader.get())->getPipeline());
 }
 
+void VulkanRenderingContext::pushConstants(Ref<Shader> shader, uint32_t size, void* data) const {
+    vkCmdPushConstants(m_commandBuffer, ((VulkanGraphicsPipeline*) shader.get())->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, size, data);
+}
+
 void VulkanRenderingContext::draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) const {
     vkCmdDraw(m_commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
 }

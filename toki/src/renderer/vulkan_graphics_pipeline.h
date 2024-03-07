@@ -17,6 +17,7 @@ public:
     ~VulkanGraphicsPipeline();
 
     VkPipeline getPipeline() const;
+    VkPipelineLayout getPipelineLayout() const;
 
 private:
     inline static Ref<VulkanContext> s_context;

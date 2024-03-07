@@ -1,4 +1,5 @@
 #include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
 #include <print>
 
 #include "toki.h"
@@ -66,10 +67,14 @@ public:
     }
 
     void onRender() override {
+        static glm::mat4 mvp = glm::ortho(0.0f, 8.0f, 6.0f, 0.0f, 0.0f, 1000.0f) *
+                               glm::lookAt(glm::vec3{ 0.0f, 0.0f, -1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }) * glm::mat4{ 1.0f };
+
         submit(renderPass, [this](const Toki::RenderingContext& ctx) {
             ctx.bindVertexBuffers({ vertexBuffer });
             ctx.bindIndexBuffer(indexBuffer);
             ctx.bindShader(shader);
+            ctx.pushConstants(shader, sizeof(mvp), &mvp);
             ctx.draw(3, 1, 0, 0);
         });
     }

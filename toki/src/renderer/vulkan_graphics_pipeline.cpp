@@ -1,7 +1,9 @@
 #include "vulkan_graphics_pipeline.h"
 
 #include <shaderc/shaderc.hpp>
+#include <spirv_cross/spirv_reflect.hpp>
 
+#include "renderer/vulkan_utils.h"
 #include "toki/core/assert.h"
 #include "toki/resources/loaders/text_loader.h"
 #include "toki/resources/resource_utils.h"
@@ -9,25 +11,34 @@
 namespace Toki {
 
 static std::vector<uint32_t> getCompiledBinary(const std::pair<ShaderStage, std::filesystem::path>& stage);
+static std::vector<VkPushConstantRange> reflectConstants(ShaderStage, const std::vector<uint32_t>& spirv);
 
 VulkanGraphicsPipeline::VulkanGraphicsPipeline(const ShaderConfig& config) : Shader(config) {
     create();
 }
 
 VulkanGraphicsPipeline::~VulkanGraphicsPipeline() {
-    vkDestroyPipeline(s_context->device, m_pipeline, s_context->allocationCallbacks);
+    destroy();
 }
 
 VkPipeline VulkanGraphicsPipeline::getPipeline() const {
     return m_pipeline;
 }
 
+VkPipelineLayout VulkanGraphicsPipeline::getPipelineLayout() const {
+    return m_pipelineLayout;
+}
+
 void VulkanGraphicsPipeline::create() {
     std::vector<VkPipelineShaderStageCreateInfo> shaderStageCreateInfos;
     std::vector<VkShaderModule> shaderModules;
 
+    std::vector<VkPushConstantRange> constants;
+
     for (const auto& pair : m_config.shaderStagePaths) {
         auto code = getCompiledBinary(pair);
+
+        constants.append_range(reflectConstants(pair.first, code));
 
         VkShaderModuleCreateInfo shaderModuleCreateInfo{};
         shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -190,13 +201,17 @@ void VulkanGraphicsPipeline::create() {
     dynamicState.pDynamicStates = states.data();
     dynamicState.dynamicStateCount = states.size();
 
-    VkPipelineLayout pipelineLayout;
+    if (m_pipelineLayout != VK_NULL_HANDLE) {
+        vkDestroyPipelineLayout(s_context->device, m_pipelineLayout, s_context->allocationCallbacks);
+    }
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.pushConstantRangeCount = constants.size();
+    pipelineLayoutInfo.pPushConstantRanges = constants.data();
 
     TK_ASSERT_VK_RESULT(
-        vkCreatePipelineLayout(s_context->device, &pipelineLayoutInfo, s_context->allocationCallbacks, &pipelineLayout),
+        vkCreatePipelineLayout(s_context->device, &pipelineLayoutInfo, s_context->allocationCallbacks, &m_pipelineLayout),
         "Could not create pipeline layout");
 
     VkPipelineRenderingCreateInfoKHR renderingCreateInfo{};
@@ -253,7 +268,7 @@ void VulkanGraphicsPipeline::create() {
     pipelineInfo.pMultisampleState = &multisampleStateCreateInfo;
     pipelineInfo.pColorBlendState = &colorBlendStateCreateInfo;
     pipelineInfo.pDynamicState = &dynamicState;
-    pipelineInfo.layout = pipelineLayout;
+    pipelineInfo.layout = m_pipelineLayout;
     pipelineInfo.renderPass = VK_NULL_HANDLE;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.pDepthStencilState = &depthStencilStateCreateInfo;
@@ -265,8 +280,6 @@ void VulkanGraphicsPipeline::create() {
     for (auto& shaderModule : shaderModules) {
         vkDestroyShaderModule(s_context->device, shaderModule, s_context->allocationCallbacks);
     }
-
-    vkDestroyPipelineLayout(s_context->device, pipelineLayout, s_context->allocationCallbacks);
 }
 
 void VulkanGraphicsPipeline::destroy() {
@@ -314,6 +327,27 @@ static std::vector<uint32_t> getCompiledBinary(const std::pair<ShaderStage, std:
 
     TK_ASSERT(spirvModule.end() - spirvModule.begin() > 0, "");
     return { spirvModule.begin(), spirvModule.end() };
+}
+
+static std::vector<VkPushConstantRange> reflectConstants(ShaderStage stage, const std::vector<uint32_t>& spirv) {
+    spirv_cross::Compiler compiler(spirv);
+    spirv_cross::ShaderResources resources = compiler.get_shader_resources();
+
+    std::vector<VkPushConstantRange> constants;
+    VkShaderStageFlagBits stageFlag = VulkanUtils::mapShaderStage(stage);
+
+    for (const auto& constant : resources.push_constant_buffers) {
+        const auto& elementType = compiler.get_type(constant.base_type_id);
+
+        VkPushConstantRange range{};
+        range.offset = compiler.get_decoration(constant.id, spv::DecorationOffset);
+        range.size = compiler.get_declared_struct_size(elementType);
+        range.stageFlags = stageFlag;
+
+        constants.emplace_back(range);
+    }
+
+    return constants;
 }
 
 }  // namespace Toki

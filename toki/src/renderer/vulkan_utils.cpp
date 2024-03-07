@@ -78,4 +78,15 @@ uint32_t VulkanUtils::findMemoryType(VkPhysicalDevice physicalDevice, uint32_t t
     return -1;
 }
 
+VkShaderStageFlagBits VulkanUtils::mapShaderStage(ShaderStage shaderStage) {
+    switch (shaderStage) {
+        case ShaderStage::SHADER_STAGE_VERTEX:
+            return VK_SHADER_STAGE_VERTEX_BIT;
+        case ShaderStage::SHADER_STAGE_FRAGMENT:
+            return VK_SHADER_STAGE_FRAGMENT_BIT;
+        default:
+            std::unreachable();
+    }
+}
+
 }  // namespace Toki
