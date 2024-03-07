@@ -20,6 +20,8 @@ GlfwWindow::GlfwWindow(const WindowConfig& windowConfig) {
 
     m_windowHandle = glfwCreateWindow(windowConfig.width, windowConfig.height, windowConfig.title.c_str(), nullptr, nullptr);
 
+    glfwSetWindowSizeLimits(m_windowHandle, MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT, GLFW_DONT_CARE, GLFW_DONT_CARE);
+
     glfwMakeContextCurrent(m_windowHandle);
     glfwSetWindowUserPointer(m_windowHandle, this);
 

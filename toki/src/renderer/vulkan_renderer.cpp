@@ -80,6 +80,8 @@ void VulkanRenderer::beginFrame() {
 
     auto swapchain = m_swapchains[0];
 
+    vkQueueWaitIdle(m_context->presentQueue);
+
     std::optional<uint32_t> imageIndex = swapchain->acquireNextImage(frame);
     if (!imageIndex.has_value()) {
         return;
@@ -148,8 +150,6 @@ void VulkanRenderer::endFrame() {
     } else {
         TK_ASSERT_VK_RESULT(result, "Failed to present swapchain image");
     }
-
-    vkQueueWaitIdle(m_context->presentQueue);
 
     m_currentFrame = (m_swapchains[0]->getCurrentImageIndex() + 1) % MAX_FRAMES;
 }

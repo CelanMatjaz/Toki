@@ -76,7 +76,7 @@ private:
 
 int main() {
     Toki::ApplicationConfig applicationConfig{};
-    // applicationConfig.windowConfig.isResizable = true;
+    applicationConfig.windowConfig.isResizable = true;
 
     Toki::Application app{ applicationConfig };
 
