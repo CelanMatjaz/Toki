@@ -95,8 +95,8 @@ void VulkanSwapchain::createSwapchainHandle() {
 }
 
 void VulkanSwapchain::recreate() {
+    vkDeviceWaitIdle(m_context->device);
     findExtent();
-
     createSwapchainHandle();
 }
 
