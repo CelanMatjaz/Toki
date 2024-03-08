@@ -81,8 +81,6 @@ void VulkanRenderer::beginFrame() {
 
     auto swapchain = m_swapchains[0];
 
-    vkQueueWaitIdle(m_context->presentQueue);
-
     std::optional<uint32_t> imageIndex = swapchain->acquireNextImage(frame);
     if (!imageIndex.has_value()) {
         return;
@@ -153,6 +151,9 @@ void VulkanRenderer::endFrame() {
     }
 
     m_currentFrame = (m_swapchains[0]->getCurrentImageIndex() + 1) % MAX_FRAMES;
+
+    VkResult waitFencesResult = vkWaitForFences(m_context->device, 1, &frame.renderFence, VK_TRUE, UINT64_MAX);
+    TK_ASSERT(waitFencesResult == VK_SUCCESS || waitFencesResult == VK_TIMEOUT, "Failed waiting for fences");
 }
 
 void VulkanRenderer::submit(Ref<RenderPass> rp, RendererSubmitFn submitFn) {
@@ -211,7 +212,7 @@ void VulkanRenderer::createInstance() {
     instanceCreateInfo.enabledExtensionCount = extensionCount;
     instanceCreateInfo.ppEnabledExtensionNames = extensions;
 
-#ifndef DIST
+#ifndef TK_DIST
     if (checkValidationLayerSupport()) {
         instanceCreateInfo.enabledLayerCount = validationLayers.size();
         instanceCreateInfo.ppEnabledLayerNames = validationLayers.data();
@@ -311,7 +312,7 @@ void VulkanRenderer::createDevice(VkSurfaceKHR surface) {
     deviceCreateInfo.enabledExtensionCount = requiredExtensions.size();
     deviceCreateInfo.ppEnabledExtensionNames = requiredExtensions.data();
 
-#ifndef DIST
+#ifndef TK_DIST
     if (checkValidationLayerSupport()) {
         deviceCreateInfo.enabledLayerCount = validationLayers.size();
         deviceCreateInfo.ppEnabledLayerNames = validationLayers.data();

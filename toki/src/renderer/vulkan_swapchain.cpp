@@ -107,9 +107,6 @@ void VulkanSwapchain::transitionLayout(VkCommandBuffer cmd, VkImageLayout oldLay
 std::optional<uint32_t> VulkanSwapchain::acquireNextImage(FrameData& frameData) {
     VkResult result = vkAcquireNextImageKHR(m_context->device, m_swapchain, TIMEOUT, frameData.presentSemaphore, nullptr, &m_currentImageIndex);
 
-    VkResult waitFencesResult = vkWaitForFences(m_context->device, 1, &frameData.renderFence, VK_TRUE, TIMEOUT);
-    TK_ASSERT(waitFencesResult == VK_SUCCESS || waitFencesResult == VK_TIMEOUT, "Failed waiting for fences");
-
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
             recreate();
