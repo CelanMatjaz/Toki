@@ -89,4 +89,25 @@ VkShaderStageFlagBits VulkanUtils::mapShaderStage(ShaderStage shaderStage) {
     }
 }
 
+VkFormat VulkanUtils::mapFormat(ColorFormat colorFormat) {
+    switch (colorFormat) {
+        case ColorFormat::COLOR_FORMAT_R:
+            return VK_FORMAT_R8_SRGB;
+        case ColorFormat::COLOR_FORMAT_RG:
+            return VK_FORMAT_R8G8_SRGB;
+        case ColorFormat::COLOR_FORMAT_RGB:
+            return VK_FORMAT_R8G8B8_SRGB;
+        case ColorFormat::COLOR_FORMAT_RGBA:
+            return VK_FORMAT_R8G8B8A8_SRGB;
+        case ColorFormat::COLOR_FORMAT_DEPTH:
+            return VK_FORMAT_D32_SFLOAT;
+        case ColorFormat::COLOR_FORMAT_STENCIL:
+            return VK_FORMAT_S8_UINT;
+        case ColorFormat::COLOR_FORMAT_DEPTH_STENCIL:
+            return VK_FORMAT_D24_UNORM_S8_UINT;
+        default:
+            std::unreachable();
+    }
+}
+
 }  // namespace Toki

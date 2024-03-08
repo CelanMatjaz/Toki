@@ -237,27 +237,18 @@ void VulkanGraphicsPipeline::create() {
         }
 
         switch (attachment.colorFormat) {
-            case ColorFormat::COLOR_FORMAT_R:
-                colorFormats.emplace_back(VK_FORMAT_R8_SRGB);
-                break;
-            case ColorFormat::COLOR_FORMAT_RG:
-                colorFormats.emplace_back(VK_FORMAT_R8G8_SRGB);
-                break;
-            case ColorFormat::COLOR_FORMAT_RGB:
-                colorFormats.emplace_back(VK_FORMAT_R8G8B8_SRGB);
-                break;
-            case ColorFormat::COLOR_FORMAT_RGBA:
-                colorFormats.emplace_back(VK_FORMAT_R8G8B8A8_SRGB);
-                break;
-            case ColorFormat::COLOR_FORMAT_DEPTH_STENCIL:
-                renderingCreateInfo.depthAttachmentFormat = renderingCreateInfo.stencilAttachmentFormat = VK_FORMAT_D24_UNORM_S8_UINT;
-                break;
             case ColorFormat::COLOR_FORMAT_DEPTH:
-                renderingCreateInfo.depthAttachmentFormat = VK_FORMAT_D32_SFLOAT;
+                renderingCreateInfo.depthAttachmentFormat = VulkanUtils::mapFormat(attachment.colorFormat);
                 break;
             case ColorFormat::COLOR_FORMAT_STENCIL:
-                renderingCreateInfo.stencilAttachmentFormat = VK_FORMAT_S8_UINT;
+                renderingCreateInfo.stencilAttachmentFormat = VulkanUtils::mapFormat(attachment.colorFormat);
                 break;
+            case ColorFormat::COLOR_FORMAT_DEPTH_STENCIL:
+                renderingCreateInfo.depthAttachmentFormat = VulkanUtils::mapFormat(attachment.colorFormat);
+                renderingCreateInfo.stencilAttachmentFormat = VulkanUtils::mapFormat(attachment.colorFormat);
+                break;
+            default:
+                colorFormats.emplace_back(VulkanUtils::mapFormat(attachment.colorFormat));
         }
     }
 

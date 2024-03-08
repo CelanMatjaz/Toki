@@ -15,6 +15,7 @@ class VulkanBuffer {
 public:
     VulkanBuffer() = delete;
 
+    VulkanBuffer(uint32_t size, VkMemoryPropertyFlags usage, VkMemoryPropertyFlags memoryPropertyFlags);
     VulkanBuffer(uint32_t size, BufferType bufferType);
     virtual ~VulkanBuffer();
 

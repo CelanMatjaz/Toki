@@ -16,6 +16,7 @@ VkImageAspectFlags getImageAspectFlags(VkFormat format);
 uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeBits, VkMemoryPropertyFlags properties);
 
 VkShaderStageFlagBits mapShaderStage(ShaderStage shaderStage);
+VkFormat mapFormat(ColorFormat colorFormat);
 
 }  // namespace VulkanUtils
 

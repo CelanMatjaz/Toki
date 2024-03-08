@@ -11,12 +11,18 @@ public:
 
     void onAttach() override {
         std::vector<Toki::Attachment> attachments;
-        attachments.resize(1);
-        Toki::Attachment& attachment = attachments[0];
-        attachment.colorFormat = Toki::ColorFormat::COLOR_FORMAT_RGBA;
-        attachment.loadOp = Toki::AttachmentLoadOp::ATTACHMENT_LOAD_OP_CLEAR;
-        attachment.storeOp = Toki::AttachmentStoreOp::ATTACHMENT_STORE_OP_STORE;
-        attachment.presentable = true;
+        attachments.resize(2);
+
+        Toki::Attachment& presentAttachment = attachments[0];
+        presentAttachment.colorFormat = Toki::ColorFormat::COLOR_FORMAT_RGBA;
+        presentAttachment.loadOp = Toki::AttachmentLoadOp::ATTACHMENT_LOAD_OP_CLEAR;
+        presentAttachment.storeOp = Toki::AttachmentStoreOp::ATTACHMENT_STORE_OP_STORE;
+        presentAttachment.presentable = true;
+
+        Toki::Attachment& depthAttachment = attachments[1];
+        depthAttachment.colorFormat = Toki::ColorFormat::COLOR_FORMAT_DEPTH_STENCIL;
+        depthAttachment.loadOp = Toki::AttachmentLoadOp::ATTACHMENT_LOAD_OP_CLEAR;
+        depthAttachment.storeOp = Toki::AttachmentStoreOp::ATTACHMENT_STORE_OP_DONT_CARE;
 
         {
             Toki::RenderPassConfig config{};
@@ -33,9 +39,9 @@ public:
             };
 
             const Vertex vertices[] = {
-                { { 0.0 * 800 + 400, -0.5 * 600 - 300, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },   // vertex 1
-                { { 0.5 * 800 + 400, 0.5 * 600 - 300, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },    // vertex 2
-                { { -0.5 * 800 + 400, 0.5 * 600 - 300, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } },   // vertex 3
+                { { 0.0 * 800 + 400, -0.5 * 600 - 300, 5.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },   // vertex 1
+                { { 0.5 * 800 + 400, 0.5 * 600 - 300, -1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },   // vertex 2
+                { { -0.5 * 800 + 400, 0.5 * 600 - 300, -1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } },  // vertex 3
                 { { -0.5 * 800 + 400, -0.5 * 600 - 300, 0.0f }, { 0.5f, 1.0f, 1.0f, 1.0f } },  // vertex 6
                 { { 0.5 * 800 + 400, -0.5 * 600 - 300, 0.0f }, { 1.0f, 0.5f, 1.0f, 1.0f } },   // vertex 5
                 { { 0.0 * 800 + 400, 0.5 * 600 - 300, 0.0f }, { 1.0f, 1.0f, 0.5f, 1.0f } },    // vertex 4
@@ -65,6 +71,7 @@ public:
             config.layoutDescriptions.attributeDescriptions = { { 0, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT3, 0 },
                                                                 { 1, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT4, 3 * sizeof(float) } };
             config.layoutDescriptions.bindingDescriptions = { { 0, 7 * sizeof(float), Toki::VertexInputRate::VERTEX_INPUT_RATE_VERTEX } };
+            config.attachments = attachments;
             shader = Toki::Shader::create(config);
         }
 

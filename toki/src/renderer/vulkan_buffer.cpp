@@ -6,30 +6,18 @@
 
 namespace Toki {
 
-VulkanBuffer::VulkanBuffer(uint32_t size, BufferType bufferType) {
+VulkanBuffer::VulkanBuffer(uint32_t size, VkMemoryPropertyFlags usage, VkMemoryPropertyFlags memoryPropertyFlags) {
     VkBufferCreateInfo bufferCreateInfo{};
     bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferCreateInfo.size = size;
     bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    switch (bufferType) {
-        case BufferType::BUFFER_TYPE_VERTEX:
-            bufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-            break;
-        case BufferType::BUFFER_TYPE_INDEX:
-            bufferCreateInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-            break;
-        default:
-            std::unreachable();
-    }
+    bufferCreateInfo.usage = usage;
 
     TK_ASSERT_VK_RESULT(
         vkCreateBuffer(s_context->device, &bufferCreateInfo, s_context->allocationCallbacks, &m_bufferHandle), "Could not create buffer");
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements(s_context->device, m_bufferHandle, &memoryRequirements);
-
-    VkMemoryPropertyFlags memoryPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
     VkMemoryAllocateInfo memoryAllocateInfo{};
     memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -42,6 +30,20 @@ VulkanBuffer::VulkanBuffer(uint32_t size, BufferType bufferType) {
         "Could not allocate buffer memory");
     TK_ASSERT_VK_RESULT(vkBindBufferMemory(s_context->device, m_bufferHandle, m_memoryHandle, 0), "Could not bind buffer memory");
 }
+
+static VkBufferUsageFlags mapUsage(BufferType bufferType) {
+    switch (bufferType) {
+        case BufferType::BUFFER_TYPE_VERTEX:
+            return VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        case BufferType::BUFFER_TYPE_INDEX:
+            return VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+        default:
+            std::unreachable();
+    }
+}
+
+VulkanBuffer::VulkanBuffer(uint32_t size, BufferType bufferType) :
+    VulkanBuffer(size, mapUsage(bufferType), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {}
 
 VulkanBuffer::~VulkanBuffer() {
     vkDestroyBuffer(s_context->device, m_bufferHandle, s_context->allocationCallbacks);

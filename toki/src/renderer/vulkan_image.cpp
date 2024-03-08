@@ -11,6 +11,35 @@ VulkanImage::VulkanImage(VkImage image, VkFormat format) : m_imageHandle(image),
     createImageView();
 }
 
+VulkanImage::VulkanImage(const VulkanImageConfig& config) : m_isWrapped(false), m_format(config.format) {
+    VkImageCreateInfo imageCreateInfo{};
+    imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageCreateInfo.format = config.format;
+    imageCreateInfo.extent = config.extent;
+    imageCreateInfo.mipLevels = config.mips;
+    imageCreateInfo.arrayLayers = 1;
+    imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageCreateInfo.tiling = config.tiling;
+    imageCreateInfo.usage = config.usage | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+    vkCreateImage(s_context->device, &imageCreateInfo, nullptr, &m_imageHandle);
+
+    VkMemoryRequirements memoryRequirements;
+    vkGetImageMemoryRequirements(s_context->device, m_imageHandle, &memoryRequirements);
+
+    VkMemoryAllocateInfo memoryAllocateInfo{};
+    memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    memoryAllocateInfo.allocationSize = memoryRequirements.size;
+    memoryAllocateInfo.memoryTypeIndex =
+        VulkanUtils::findMemoryType(s_context->physicalDevice, memoryRequirements.memoryTypeBits, config.memoryProperties);
+
+    TK_ASSERT_VK_RESULT(vkAllocateMemory(s_context->device, &memoryAllocateInfo, nullptr, &m_memoryHandle), "Could not allocate Vulkan image memory");
+    TK_ASSERT_VK_RESULT(vkBindImageMemory(s_context->device, m_imageHandle, m_memoryHandle, 0), "Could not bind Vulkan image memory");
+
+    createImageView();
+};
+
 VulkanImage::~VulkanImage() {
     vkDestroyImageView(s_context->device, m_imageViewHandle, s_context->allocationCallbacks);
 
@@ -24,6 +53,17 @@ VulkanImage::~VulkanImage() {
 
 VkImageView VulkanImage::getImageView() {
     return m_imageViewHandle;
+}
+
+void VulkanImage::setData(uint32_t size, void* data) {
+    // BufferConfig bufferConfig{};
+    // bufferConfig.size = size;
+    // VulkanBuffer stagingBuffer(bufferConfig, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+    // VK_MEMORY_PROPERTY_HOST_COHERENT_BIT); stagingBuffer.setData(size, data);
+
+    // this->transitionLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    // copyBufferToTexture(&stagingBuffer, this);
+    // this->transitionLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void VulkanImage::transitionLayout(VkCommandBuffer cmd, VkImageLayout oldLayout, VkImageLayout newLayout) {

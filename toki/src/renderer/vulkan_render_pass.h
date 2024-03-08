@@ -5,6 +5,7 @@
 #include <optional>
 #include <vector>
 
+#include "renderer/vulkan_image.h"
 #include "toki/renderer/render_pass.h"
 
 namespace Toki {
@@ -20,8 +21,11 @@ public:
 
 private:
     std::vector<VkRenderingAttachmentInfo> m_colorAttachmentInfos;
-    Scope<VkRenderingAttachmentInfo> m_depthAttachmentInfo;
-    Scope<VkRenderingAttachmentInfo> m_stencilAttachmentInfo;
+    std::vector<Ref<VulkanImage>> m_colorAttachments;
+    Ref<VkRenderingAttachmentInfo> m_depthAttachmentInfo;
+    Ref<VulkanImage> m_depthAttachment;
+    Ref<VkRenderingAttachmentInfo> m_stencilAttachmentInfo;
+    Ref<VulkanImage> m_stencilAttachment;
     int32_t m_presentableAttachmentIndex = -1;
     uint16_t m_width, m_height;
 };

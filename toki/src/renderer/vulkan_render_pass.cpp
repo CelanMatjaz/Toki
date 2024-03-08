@@ -1,6 +1,7 @@
 #include "vulkan_render_pass.h"
 
 #include "renderer/vulkan_rendering_context.h"
+#include "renderer/vulkan_utils.h"
 #include "toki/core/assert.h"
 
 namespace Toki {
@@ -11,11 +12,13 @@ VulkanRenderPass::VulkanRenderPass(const RenderPassConfig& config) : m_width(con
 
         VkRenderingAttachmentInfo attachmentInfo{};
         attachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
-        attachmentInfo.clearValue = {};
+        attachmentInfo.clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
+        attachmentInfo.clearValue.depthStencil = { 1.0f, 0 };
 
         if (attachment.presentable) {
             TK_ASSERT(m_presentableAttachmentIndex == -1, "Only 1 presentable attachment can be provided");
             m_presentableAttachmentIndex = i;
+            attachmentInfo.clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
         }
 
         switch (attachment.loadOp) {
@@ -49,20 +52,41 @@ VulkanRenderPass::VulkanRenderPass(const RenderPassConfig& config) : m_width(con
             case ColorFormat::COLOR_FORMAT_RGB:
             case ColorFormat::COLOR_FORMAT_RGBA:
                 attachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                m_colorAttachments.emplace_back(createRef<VulkanImage>(VulkanImageConfig{ .format = VulkanUtils::mapFormat(attachment.colorFormat),
+                                                                                          .extent = { config.width, config.height, 1 },
+                                                                                          .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT }));
+                attachmentInfo.imageView = m_colorAttachments.back()->getImageView();
                 m_colorAttachmentInfos.emplace_back(attachmentInfo);
                 break;
             case ColorFormat::COLOR_FORMAT_DEPTH:
+                attachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
                 TK_ASSERT(!m_depthAttachmentInfo, "Depth attachment already provided");
-                m_depthAttachmentInfo = createScope<VkRenderingAttachmentInfo>(attachmentInfo);
+                m_depthAttachment = createRef<VulkanImage>(VulkanImageConfig{ .format = VulkanUtils::mapFormat(attachment.colorFormat),
+                                                                              .extent = { config.width, config.height, 1 },
+                                                                              .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT });
+                attachmentInfo.imageView = m_depthAttachment->getImageView();
+                m_depthAttachmentInfo = createRef<VkRenderingAttachmentInfo>(attachmentInfo);
                 break;
             case ColorFormat::COLOR_FORMAT_STENCIL:
                 TK_ASSERT(!m_stencilAttachmentInfo, "Stencil attachment already provided");
-                m_stencilAttachmentInfo = createScope<VkRenderingAttachmentInfo>(attachmentInfo);
+                attachmentInfo.imageLayout = VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL;
+                m_stencilAttachment = createRef<VulkanImage>(VulkanImageConfig{ .format = VulkanUtils::mapFormat(attachment.colorFormat),
+                                                                                .extent = { config.width, config.height, 1 },
+                                                                                .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT });
+                attachmentInfo.imageView = m_stencilAttachment->getImageView();
+                m_stencilAttachmentInfo = createRef<VkRenderingAttachmentInfo>(attachmentInfo);
                 break;
             case ColorFormat::COLOR_FORMAT_DEPTH_STENCIL:
                 TK_ASSERT(!m_depthAttachmentInfo && !m_stencilAttachmentInfo, "Depth/stencil attachment already provided");
-                m_depthAttachmentInfo = createScope<VkRenderingAttachmentInfo>(attachmentInfo);
-                m_stencilAttachmentInfo = createScope<VkRenderingAttachmentInfo>(attachmentInfo);
+                attachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+                m_depthAttachment = m_stencilAttachment =
+                    createRef<VulkanImage>(VulkanImageConfig{ .format = VulkanUtils::mapFormat(attachment.colorFormat),
+                                                              .extent = { config.width, config.height, 1 },
+                                                              .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT });
+                attachmentInfo.imageView = m_depthAttachment->getImageView();
+                m_depthAttachmentInfo = m_stencilAttachmentInfo = createRef<VkRenderingAttachmentInfo>(attachmentInfo);
+
+                break;
             default:
                 std::unreachable();
         }
