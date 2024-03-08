@@ -23,12 +23,12 @@ target("engine")
     add_defines("GLM_FORCE_RADIANS", "GLM_FORCE_DEPTH_ZERO_TO_ONE")
 
     if is_mode("debug") then
-        add_defines("DEBUG")
+        add_defines("TK_DEBUG")
         set_symbols("debug")
         set_optimize("none")
         set_runtimes("MDd")
     elseif is_mode("release") then
-        add_defines("RELEASE")
+        add_defines("TK_RELEASE")
         set_optimize("fastest")
         set_symbols("hidden")
         set_runtimes("MD")
@@ -79,13 +79,13 @@ target("toki")
     add_defines("GLM_FORCE_RADIANS", "GLM_FORCE_DEPTH_ZERO_TO_ONE")
 
     if is_mode("debug") then
-        add_defines("DEBUG")
+        add_defines("TK_DEBUG")
         set_symbols("debug")
         set_optimize("none")
         set_runtimes("MDd")
         add_links("spirv-cross-cored", "shaderc_sharedd", "spirv-cross-glsld")
     elseif is_mode("release") then
-        add_defines("DEBUG")
+        add_defines("TK_RELEASE")
         set_optimize("fastest")
         set_symbols("hidden")
         set_runtimes("MD")

@@ -301,7 +301,7 @@ static std::vector<uint32_t> getCompiledBinary(const std::pair<ShaderStage, std:
     options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
     options.SetSourceLanguage(shaderc_source_language::shaderc_source_language_glsl);
 
-#ifdef NDEBUG
+#ifdef TK_NDEBUG
     options.SetOptimizationLevel(shaderc_optimization_level_performance);
 #else
     options.SetOptimizationLevel(shaderc_optimization_level_zero);

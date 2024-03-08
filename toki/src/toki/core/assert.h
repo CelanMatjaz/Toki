@@ -3,7 +3,7 @@
 #include <print>
 #include <stacktrace>
 
-#ifdef DIST
+#ifdef TK_DIST
 
 #define TK_ASSERT(val, msg) val
 #define TK_ASSERT_VK_RESULT(val, msg) val
