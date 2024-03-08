@@ -33,9 +33,12 @@ public:
             };
 
             const Vertex vertices[] = {
-                { { 0.0 * 800, -0.5 * 600, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },  // vertex 1
-                { { 0.5 * 800, 0.5 * 600, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },   // vertex 2
-                { { -0.5 * 800, 0.5 * 600, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } },  // vertex 3
+                { { 0.0 * 800 + 400, -0.5 * 600 - 300, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },   // vertex 1
+                { { 0.5 * 800 + 400, 0.5 * 600 - 300, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },    // vertex 2
+                { { -0.5 * 800 + 400, 0.5 * 600 - 300, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } },   // vertex 3
+                { { -0.5 * 800 + 400, -0.5 * 600 - 300, 0.0f }, { 0.5f, 1.0f, 1.0f, 1.0f } },  // vertex 6
+                { { 0.5 * 800 + 400, -0.5 * 600 - 300, 0.0f }, { 1.0f, 0.5f, 1.0f, 1.0f } },   // vertex 5
+                { { 0.0 * 800 + 400, 0.5 * 600 - 300, 0.0f }, { 1.0f, 1.0f, 0.5f, 1.0f } },    // vertex 4
             };
 
             Toki::VertexBufferConfig config{};
@@ -65,21 +68,22 @@ public:
             shader = Toki::Shader::create(config);
         }
 
-        p[1, 1] *= -1;
+        camera.setProjection(glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, 0.1f, 1000.0f));
+        camera.setView(glm::lookAt(glm::vec3{ 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }));
     }
 
-    inline static glm::mat4 p = glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, 0.1f, 1000.0f);
+    Toki::OrthographicCamera camera;
 
     void onRender() override {
-        static glm::mat4 mvp = p * glm::lookAt(glm::vec3{ 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }) *
-                               glm::translate(glm::mat4{ 1.0f }, glm::vec3{ 400.0f, -300.0f, 0.0f });
-
         submit(renderPass, [this](const Toki::RenderingContext& ctx) {
+            glm::mat4 mvp = camera.getProjection() * camera.getView() * glm::translate(glm::mat4{ 1.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f });
+
             ctx.bindVertexBuffers({ vertexBuffer });
             ctx.bindIndexBuffer(indexBuffer);
             ctx.bindShader(shader);
             ctx.pushConstants(shader, sizeof(mvp), &mvp);
             ctx.draw(3, 1, 0, 0);
+            ctx.draw(3, 1, 3, 0);
         });
     }
 
