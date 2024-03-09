@@ -19,7 +19,7 @@ public:
     void begin(const RenderingContext& ctx, VkExtent2D extent, VkImageView presentImageView = VK_NULL_HANDLE);
     void end(const RenderingContext& ctx);
 
-private:
+protected:
     std::vector<VkRenderingAttachmentInfo> m_colorAttachmentInfos;
     std::vector<Ref<VulkanImage>> m_colorAttachments;
     Ref<VkRenderingAttachmentInfo> m_depthAttachmentInfo;

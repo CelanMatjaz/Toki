@@ -88,9 +88,9 @@ void VulkanSwapchain::createSwapchainHandle() {
     std::vector<VkImage> images(swapchainImageCount);
     vkGetSwapchainImagesKHR(m_context->device, m_swapchain, &swapchainImageCount, images.data());
 
-    m_wrappedImages.clear();
-    for (const auto& image : images) {
-        m_wrappedImages.emplace_back(createRef<VulkanImage>(image, swapchainCreateInfo.imageFormat));
+    m_wrappedImages.resize(images.size());
+    for (uint32_t i = 0; i < m_wrappedImages.size(); ++i) {
+        m_wrappedImages[i] = createRef<VulkanImage>(images[i], swapchainCreateInfo.imageFormat);
     }
 }
 

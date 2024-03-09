@@ -3,6 +3,7 @@
 #include "renderer/vulkan_rendering_context.h"
 #include "renderer/vulkan_utils.h"
 #include "toki/core/assert.h"
+#include "toki/events/event.h"
 
 namespace Toki {
 
@@ -95,6 +96,29 @@ VulkanRenderPass::VulkanRenderPass(const RenderPassConfig& config) : m_width(con
                 std::unreachable();
         }
     }
+
+    Event::bindEvent(EventType::WindowResize, this, [](void* sender, void* receiver, const Event& event) {
+        EventData eventData = event.getData();
+
+        VulkanRenderPass* rp = (VulkanRenderPass*) receiver;
+        rp->m_width = eventData.i32[0];
+        rp->m_height = eventData.i32[1];
+
+        for (uint32_t i = 0; i < rp->m_colorAttachments.size(); ++i) {
+            if (i == rp->m_presentableAttachmentIndex) continue;
+            rp->m_colorAttachments[i]->resize(rp->m_width, rp->m_height);
+        }
+
+        if (rp->m_depthAttachment) {
+            rp->m_depthAttachment->resize(rp->m_width, rp->m_height);
+            rp->m_depthAttachmentInfo->imageView = rp->m_depthAttachment->getImageView();
+        }
+
+        if (rp->m_stencilAttachment) {
+            rp->m_stencilAttachment->resize(rp->m_width, rp->m_height);
+            rp->m_stencilAttachmentInfo->imageView = rp->m_stencilAttachment->getImageView();
+        }
+    });
 }
 
 VulkanRenderPass::~VulkanRenderPass() {}

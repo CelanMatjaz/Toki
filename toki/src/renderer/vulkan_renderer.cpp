@@ -81,6 +81,11 @@ void VulkanRenderer::beginFrame() {
 
     auto swapchain = m_swapchains[0];
 
+    if (m_wasWindowResized) {
+        m_swapchains[0]->recreate();
+        m_wasWindowResized = false;
+    }
+
     std::optional<uint32_t> imageIndex = swapchain->acquireNextImage(frame);
     if (!imageIndex.has_value()) {
         return;
@@ -131,6 +136,8 @@ void VulkanRenderer::endFrame() {
 
     TK_ASSERT_VK_RESULT(vkQueueSubmit(m_context->graphicsQueue, 1, &submitInfo, frame.renderFence), "Could not submit");
 
+    std::vector<VkResult> results(m_swapchains.size());
+
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.waitSemaphoreCount = 1;
@@ -138,16 +145,21 @@ void VulkanRenderer::endFrame() {
     presentInfo.swapchainCount = swapchainHandles.size();
     presentInfo.pSwapchains = swapchainHandles.data();
     presentInfo.pImageIndices = swapchainIndices.data();
-    presentInfo.pResults = nullptr;
+    presentInfo.pResults = results.data();
 
     VkResult result = vkQueuePresentKHR(m_context->presentQueue, &presentInfo);
 
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-        m_swapchains[0]->recreate();
-        m_currentFrame = m_swapchains[0]->getCurrentImageIndex();
-        return;
-    } else {
-        TK_ASSERT_VK_RESULT(result, "Failed to present swapchain image");
+    uint32_t i = 0;
+    for (auto& result : results) {
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_wasWindowResized) {
+            m_swapchains[i]->recreate();
+            m_currentFrame = m_swapchains[i]->getCurrentImageIndex();
+            m_wasWindowResized = false;
+            return;
+        } else {
+            TK_ASSERT_VK_RESULT(result, "Failed to present swapchain image");
+        }
+        ++i;
     }
 
     m_currentFrame = (m_swapchains[0]->getCurrentImageIndex() + 1) % MAX_FRAMES;

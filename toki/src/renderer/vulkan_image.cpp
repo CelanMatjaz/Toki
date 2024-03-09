@@ -11,48 +11,24 @@ VulkanImage::VulkanImage(VkImage image, VkFormat format) : m_imageHandle(image),
     createImageView();
 }
 
-VulkanImage::VulkanImage(const VulkanImageConfig& config) : m_isWrapped(false), m_format(config.format) {
-    VkImageCreateInfo imageCreateInfo{};
-    imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageCreateInfo.format = config.format;
-    imageCreateInfo.extent = config.extent;
-    imageCreateInfo.mipLevels = config.mips;
-    imageCreateInfo.arrayLayers = 1;
-    imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageCreateInfo.tiling = config.tiling;
-    imageCreateInfo.usage = config.usage;
-
-    vkCreateImage(s_context->device, &imageCreateInfo, nullptr, &m_imageHandle);
-
-    VkMemoryRequirements memoryRequirements;
-    vkGetImageMemoryRequirements(s_context->device, m_imageHandle, &memoryRequirements);
-
-    VkMemoryAllocateInfo memoryAllocateInfo{};
-    memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    memoryAllocateInfo.allocationSize = memoryRequirements.size;
-    memoryAllocateInfo.memoryTypeIndex =
-        VulkanUtils::findMemoryType(s_context->physicalDevice, memoryRequirements.memoryTypeBits, config.memoryProperties);
-
-    TK_ASSERT_VK_RESULT(vkAllocateMemory(s_context->device, &memoryAllocateInfo, nullptr, &m_memoryHandle), "Could not allocate Vulkan image memory");
-    TK_ASSERT_VK_RESULT(vkBindImageMemory(s_context->device, m_imageHandle, m_memoryHandle, 0), "Could not bind Vulkan image memory");
-
+VulkanImage::VulkanImage(const VulkanImageConfig& config) : m_isWrapped(false), m_format(config.format), m_config{ config } {
+    createImage();
     createImageView();
 };
 
 VulkanImage::~VulkanImage() {
-    vkDestroyImageView(s_context->device, m_imageViewHandle, s_context->allocationCallbacks);
-
-    if (m_isWrapped) {
-        return;
-    }
-
-    vkFreeMemory(s_context->device, m_memoryHandle, s_context->allocationCallbacks);
-    vkDestroyImage(s_context->device, m_imageHandle, s_context->allocationCallbacks);
+    destroy();
 }
 
 VkImageView VulkanImage::getImageView() {
     return m_imageViewHandle;
+}
+
+void VulkanImage::resize(uint32_t width, uint32_t height, uint32_t layers) {
+    m_config.extent = { width, height, layers };
+    destroy();
+    createImage();
+    createImageView();
 }
 
 void VulkanImage::setData(uint32_t size, void* data) {
@@ -124,6 +100,33 @@ void VulkanImage::transitionLayout(VkCommandBuffer cmd, VkImageLayout oldLayout,
     vkCmdPipelineBarrier(cmd, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
 
+void VulkanImage::createImage() {
+    VkImageCreateInfo imageCreateInfo{};
+    imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageCreateInfo.format = m_config.format;
+    imageCreateInfo.extent = m_config.extent;
+    imageCreateInfo.mipLevels = m_config.mips;
+    imageCreateInfo.arrayLayers = 1;
+    imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageCreateInfo.tiling = m_config.tiling;
+    imageCreateInfo.usage = m_config.usage;
+
+    vkCreateImage(s_context->device, &imageCreateInfo, nullptr, &m_imageHandle);
+
+    VkMemoryRequirements memoryRequirements;
+    vkGetImageMemoryRequirements(s_context->device, m_imageHandle, &memoryRequirements);
+
+    VkMemoryAllocateInfo memoryAllocateInfo{};
+    memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    memoryAllocateInfo.allocationSize = memoryRequirements.size;
+    memoryAllocateInfo.memoryTypeIndex =
+        VulkanUtils::findMemoryType(s_context->physicalDevice, memoryRequirements.memoryTypeBits, m_config.memoryProperties);
+
+    TK_ASSERT_VK_RESULT(vkAllocateMemory(s_context->device, &memoryAllocateInfo, nullptr, &m_memoryHandle), "Could not allocate Vulkan image memory");
+    TK_ASSERT_VK_RESULT(vkBindImageMemory(s_context->device, m_imageHandle, m_memoryHandle, 0), "Could not bind Vulkan image memory");
+}
+
 void VulkanImage::createImageView() {
     VkImageAspectFlags aspectMask;
     VkImageLayout imageLayout;
@@ -148,6 +151,17 @@ void VulkanImage::createImageView() {
     imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 
     vkCreateImageView(s_context->device, &imageViewCreateInfo, s_context->allocationCallbacks, &m_imageViewHandle);
+}
+
+void VulkanImage::destroy() {
+    vkDestroyImageView(s_context->device, m_imageViewHandle, s_context->allocationCallbacks);
+
+    if (m_isWrapped) {
+        return;
+    }
+
+    vkFreeMemory(s_context->device, m_memoryHandle, s_context->allocationCallbacks);
+    vkDestroyImage(s_context->device, m_imageHandle, s_context->allocationCallbacks);
 }
 
 }  // namespace Toki

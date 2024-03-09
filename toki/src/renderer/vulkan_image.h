@@ -31,11 +31,15 @@ public:
 
     VkImageView getImageView();
 
+    void resize(uint32_t width, uint32_t height, uint32_t layers = 1);
     void setData(uint32_t size, void* data);
     void transitionLayout(VkCommandBuffer cmd, VkImageLayout oldLayout, VkImageLayout newLayout);
 
 private:
+    void createImage();
     void createImageView();
+
+    void destroy();
 
     inline static Ref<VulkanContext> s_context;
 
@@ -44,6 +48,8 @@ private:
     VkDeviceMemory m_memoryHandle = VK_NULL_HANDLE;
     VkFormat m_format;
     bool m_isWrapped : 1 = false;
+
+    VulkanImageConfig m_config;
 };
 
 }  // namespace Toki
