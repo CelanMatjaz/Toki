@@ -5,9 +5,9 @@
 namespace Toki {
 
 enum class ColorFormat : uint8_t {
-    COLOR_FORMAT_R,     // Maps to VK_FORMAT_R8_SRGB
-    COLOR_FORMAT_RG,    // Maps to VK_FORMAT_R8G8_SRGB
-    COLOR_FORMAT_RGB,   // Maps to VK_FORMAT_R8G8B8_SRGB
+    // COLOR_FORMAT_R,     // Maps to VK_FORMAT_R8_SRGB
+    // COLOR_FORMAT_RG,    // Maps to VK_FORMAT_R8G8_SRGB
+    // COLOR_FORMAT_RGB,   // Maps to VK_FORMAT_R8G8B8_SRGB
     COLOR_FORMAT_RGBA,  // Maps to VK_FORMAT_R8G8B8A8_SRGB
     COLOR_FORMAT_DEPTH,
     COLOR_FORMAT_STENCIL,

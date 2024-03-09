@@ -47,15 +47,19 @@ VulkanRenderPass::VulkanRenderPass(const RenderPassConfig& config) : m_width(con
         }
 
         switch (attachment.colorFormat) {
-            case ColorFormat::COLOR_FORMAT_R:
-            case ColorFormat::COLOR_FORMAT_RG:
-            case ColorFormat::COLOR_FORMAT_RGB:
             case ColorFormat::COLOR_FORMAT_RGBA:
                 attachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                m_colorAttachments.emplace_back(createRef<VulkanImage>(VulkanImageConfig{ .format = VulkanUtils::mapFormat(attachment.colorFormat),
-                                                                                          .extent = { config.width, config.height, 1 },
-                                                                                          .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT }));
-                attachmentInfo.imageView = m_colorAttachments.back()->getImageView();
+
+                if (attachment.presentable) {
+                    m_colorAttachments.emplace_back(nullptr);
+                } else {
+                    m_colorAttachments.emplace_back(
+                        createRef<VulkanImage>(VulkanImageConfig{ .format = VulkanUtils::mapFormat(attachment.colorFormat),
+                                                                  .extent = { config.width, config.height, 1 },
+                                                                  .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                                                                  .tiling = VK_IMAGE_TILING_OPTIMAL }));
+                    attachmentInfo.imageView = m_colorAttachments.back()->getImageView();
+                }
                 m_colorAttachmentInfos.emplace_back(attachmentInfo);
                 break;
             case ColorFormat::COLOR_FORMAT_DEPTH:

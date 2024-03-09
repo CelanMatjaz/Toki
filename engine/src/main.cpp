@@ -11,18 +11,19 @@ public:
 
     void onAttach() override {
         std::vector<Toki::Attachment> attachments;
-        attachments.resize(2);
 
-        Toki::Attachment& presentAttachment = attachments[0];
+        Toki::Attachment presentAttachment{};
         presentAttachment.colorFormat = Toki::ColorFormat::COLOR_FORMAT_RGBA;
         presentAttachment.loadOp = Toki::AttachmentLoadOp::ATTACHMENT_LOAD_OP_CLEAR;
         presentAttachment.storeOp = Toki::AttachmentStoreOp::ATTACHMENT_STORE_OP_STORE;
         presentAttachment.presentable = true;
+        attachments.emplace_back(presentAttachment);
 
-        Toki::Attachment& depthAttachment = attachments[1];
+        Toki::Attachment depthAttachment{};
         depthAttachment.colorFormat = Toki::ColorFormat::COLOR_FORMAT_DEPTH_STENCIL;
         depthAttachment.loadOp = Toki::AttachmentLoadOp::ATTACHMENT_LOAD_OP_CLEAR;
         depthAttachment.storeOp = Toki::AttachmentStoreOp::ATTACHMENT_STORE_OP_DONT_CARE;
+        attachments.emplace_back(depthAttachment);
 
         {
             Toki::RenderPassConfig config{};
@@ -39,7 +40,7 @@ public:
             };
 
             const Vertex vertices[] = {
-                { { 0.0 * 800 + 400, -0.5 * 600 - 300, 5.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },   // vertex 1
+                { { 0.0 * 800 + 400, -0.5 * 600 - 300, 2.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },   // vertex 1
                 { { 0.5 * 800 + 400, 0.5 * 600 - 300, -1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },   // vertex 2
                 { { -0.5 * 800 + 400, 0.5 * 600 - 300, -1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } },  // vertex 3
                 { { -0.5 * 800 + 400, -0.5 * 600 - 300, 0.0f }, { 0.5f, 1.0f, 1.0f, 1.0f } },  // vertex 6

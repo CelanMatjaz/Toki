@@ -45,10 +45,6 @@ bool VulkanUtils::checkForMailboxPresentModeSupport(Ref<VulkanContext> context, 
 
 VkImageAspectFlags VulkanUtils::getImageAspectFlags(VkFormat format) {
     switch (format) {
-        case VK_FORMAT_R8_SRGB:
-        case VK_FORMAT_R8G8_SRGB:
-        case VK_FORMAT_R8G8B8_SRGB:
-        case VK_FORMAT_R8G8B8A8_SRGB:
         case VK_FORMAT_B8G8R8A8_SRGB:
             return VK_IMAGE_ASPECT_COLOR_BIT;
         case VK_FORMAT_D32_SFLOAT:
@@ -91,12 +87,6 @@ VkShaderStageFlagBits VulkanUtils::mapShaderStage(ShaderStage shaderStage) {
 
 VkFormat VulkanUtils::mapFormat(ColorFormat colorFormat) {
     switch (colorFormat) {
-        case ColorFormat::COLOR_FORMAT_R:
-            return VK_FORMAT_R8_SRGB;
-        case ColorFormat::COLOR_FORMAT_RG:
-            return VK_FORMAT_R8G8_SRGB;
-        case ColorFormat::COLOR_FORMAT_RGB:
-            return VK_FORMAT_R8G8B8_SRGB;
         case ColorFormat::COLOR_FORMAT_RGBA:
             return VK_FORMAT_R8G8B8A8_SRGB;
         case ColorFormat::COLOR_FORMAT_DEPTH:

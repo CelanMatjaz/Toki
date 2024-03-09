@@ -191,12 +191,21 @@ void VulkanGraphicsPipeline::create() {
     colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
     colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
+    uint32_t colorAttachmentCount = 0;
+    for (const auto& attachment : m_config.attachments) {
+        if (attachment.colorFormat == ColorFormat::COLOR_FORMAT_RGBA) {
+            ++colorAttachmentCount;
+        }
+    }
+
+    std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachmentStates(colorAttachmentCount, colorBlendAttachment);
+
     VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo{};
     colorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     colorBlendStateCreateInfo.logicOpEnable = VK_FALSE;
     colorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_COPY;
-    colorBlendStateCreateInfo.attachmentCount = 1;
-    colorBlendStateCreateInfo.pAttachments = &colorBlendAttachment;
+    colorBlendStateCreateInfo.attachmentCount = colorBlendAttachmentStates.size();
+    colorBlendStateCreateInfo.pAttachments = colorBlendAttachmentStates.data();
     colorBlendStateCreateInfo.blendConstants[0] = 0.0f;
     colorBlendStateCreateInfo.blendConstants[1] = 0.0f;
     colorBlendStateCreateInfo.blendConstants[2] = 0.0f;
