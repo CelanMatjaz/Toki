@@ -41,26 +41,31 @@ const std::vector<VkDescriptorSet>& VulkanGraphicsPipeline::getDestriptorSets() 
     return m_descriptorSets;
 }
 
-void VulkanGraphicsPipeline::setUniforms(std::vector<Ref<UniformBuffer>> uniforms) {
+void VulkanGraphicsPipeline::setUniforms(std::vector<UniformType> uniforms) {
     std::vector<VkWriteDescriptorSet> writes;
     std::vector<VkDescriptorBufferInfo> descriptorBufferInfos;
+    std::vector<VkDescriptorImageInfo> descriptorImageInfos;
 
-    for (const auto& uniform : uniforms) {
-        VkDescriptorBufferInfo descriptorBufferInfo{};
-        descriptorBufferInfo.buffer = (VkBuffer) ((VulkanUniformBuffer*) uniform.get())->getHandle();
-        descriptorBufferInfo.offset = 0;
-        descriptorBufferInfo.range = uniform->getSize();
-        descriptorBufferInfos.emplace_back(descriptorBufferInfo);
+    for (const auto& u : uniforms) {
+        if (std::holds_alternative<Ref<UniformBuffer>>(u)) {
+            auto uniform = std::get<Ref<UniformBuffer>>(u);
 
-        VkWriteDescriptorSet writeDescriptorSet{};
-        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        writeDescriptorSet.dstSet = m_descriptorSets[uniform->getSetIndex()];
-        writeDescriptorSet.descriptorCount = 1;
-        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        writeDescriptorSet.pBufferInfo = &descriptorBufferInfos.back();
-        writeDescriptorSet.dstArrayElement = uniform->getArrayElementIndex();
-        writeDescriptorSet.dstBinding = uniform->getBinding();
-        writes.emplace_back(writeDescriptorSet);
+            VkDescriptorBufferInfo descriptorBufferInfo{};
+            descriptorBufferInfo.buffer = (VkBuffer) ((VulkanUniformBuffer*) uniform.get())->getHandle();
+            descriptorBufferInfo.offset = 0;
+            descriptorBufferInfo.range = uniform->getSize();
+            descriptorBufferInfos.emplace_back(descriptorBufferInfo);
+
+            VkWriteDescriptorSet writeDescriptorSet{};
+            writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writeDescriptorSet.dstSet = m_descriptorSets[uniform->getSetIndex()];
+            writeDescriptorSet.descriptorCount = 1;
+            writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            writeDescriptorSet.pBufferInfo = &descriptorBufferInfos.back();
+            writeDescriptorSet.dstArrayElement = uniform->getArrayElementIndex();
+            writeDescriptorSet.dstBinding = uniform->getBinding();
+            writes.emplace_back(writeDescriptorSet);
+        }
     }
 
     vkUpdateDescriptorSets(s_context->device, writes.size(), writes.data(), 0, nullptr);

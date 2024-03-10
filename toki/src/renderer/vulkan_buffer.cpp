@@ -70,6 +70,7 @@ void* VulkanBuffer::mapMemory(uint32_t size, uint32_t offset) {
     m_isMemoryMapped = true;
     return deviceData;
 }
+
 void VulkanBuffer::unmapMemory() {
     vkUnmapMemory(s_context->device, m_memoryHandle);
     m_isMemoryMapped = false;

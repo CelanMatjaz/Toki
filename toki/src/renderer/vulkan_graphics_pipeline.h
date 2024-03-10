@@ -21,7 +21,7 @@ public:
     uint32_t getPushConstantStageFlags() const;
     const std::vector<VkDescriptorSet>& getDestriptorSets() const;
 
-    virtual void setUniforms(std::vector<Ref<UniformBuffer>> uniforms) override;
+    virtual void setUniforms(std::vector<UniformType> uniforms) override;
 
 private:
     inline static Ref<VulkanContext> s_context;

@@ -11,3 +11,6 @@
 // Camera
 #include "toki/renderer/camera/camera.h"
 #include "toki/renderer/camera/orthographic_camera.h"
+
+// Event
+#include "toki/events/event.h"

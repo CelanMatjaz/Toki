@@ -89,7 +89,7 @@ public:
             config.arrayElement = 0;
             uniformBuffer = Toki::UniformBuffer::create(config);
             // uniformBuffer->setData(config.size, (void*) &mvp);
-            mappedMemory = uniformBuffer->mapMemory(config.size, 0);
+            mappedMemory = (glm::mat4*) uniformBuffer->mapMemory(config.size, 0);
             memcpy(mappedMemory, &mvp, sizeof(mvp));
         }
 
@@ -97,15 +97,20 @@ public:
 
         // camera.setProjection(glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, 0.1f, 1000.0f));
         // camera.setView(glm::lookAt(glm::vec3{ 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }));
+
+        Toki::Event::bindEvent(Toki::EventType::WindowResize, this, [this](void* sender, void* receiver, const Toki::Event& event) {
+            glm::mat4& mvp = *this->mappedMemory;
+            mvp = camera.getProjection() * camera.getView() * glm::translate(glm::mat4{ 1.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f });
+        });
     }
 
     Toki::OrthographicCamera camera;
     glm::mat4 mvp;
-    void* mappedMemory;
+    glm::mat4* mappedMemory;
 
     void onRender() override {
         submit(renderPass, [this](const Toki::RenderingContext& ctx) {
-            mvp = camera.getProjection() * camera.getView() * glm::translate(glm::mat4{ 1.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f });
+            // mvp = camera.getProjection() * camera.getView() * glm::translate(glm::mat4{ 1.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f });
 
             ctx.bindVertexBuffers({ vertexBuffer });
             ctx.bindIndexBuffer(indexBuffer);

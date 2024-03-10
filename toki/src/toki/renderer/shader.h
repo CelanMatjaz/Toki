@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 #include "toki/core/core.h"
@@ -16,6 +17,8 @@ struct ShaderConfig {
     std::vector<Attachment> attachments;
 };
 
+using UniformType = std::variant<Ref<UniformBuffer>>;
+
 class Shader {
 public:
     static Ref<Shader> create(const ShaderConfig& config);
@@ -27,7 +30,7 @@ public:
     Shader& operator=(const Shader&& other) = delete;
     virtual ~Shader() = default;
 
-    virtual void setUniforms(std::vector<Ref<UniformBuffer>> uniforms) = 0;
+    virtual void setUniforms(std::vector<UniformType> uniforms) = 0;
 
 protected:
     ShaderConfig m_config;
