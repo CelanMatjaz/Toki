@@ -30,9 +30,11 @@ private:
 
     void initFrames();
     void initCommandPools();
+    void initDescriptorPools();
 
     void destroyFrames();
     void destroyCommandPools();
+    void destroyDescriptorPools();
 
     Ref<VulkanContext> m_context;
     std::vector<Ref<VulkanSwapchain>> m_swapchains;

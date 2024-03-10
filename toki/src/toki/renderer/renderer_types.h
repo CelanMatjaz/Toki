@@ -57,6 +57,7 @@ enum class IndexSize : uint8_t {
 enum class BufferType {
     BUFFER_TYPE_VERTEX,
     BUFFER_TYPE_INDEX,
+    BUFFER_TYPE_UNIFORM
 };
 
 enum class ShaderStage {

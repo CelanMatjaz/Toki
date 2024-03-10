@@ -24,6 +24,8 @@ struct VulkanContext {
     VkQueue graphicsQueue;
     VkQueue presentQueue;
 
+    VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
+
     VkAllocationCallbacks* allocationCallbacks = nullptr;
 };
 

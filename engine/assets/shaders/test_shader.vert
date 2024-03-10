@@ -9,7 +9,11 @@ layout(push_constant) uniform constants {
 	mat4 mvp;
 } PushConstants;
 
+layout(set = 0, binding = 0) uniform UniformBuffer {
+    mat4 mvp;
+} uniformBuffer;
+
 void main() {
-    gl_Position = PushConstants.mvp * vec4(inPosition, 1.0);
+    gl_Position = uniformBuffer.mvp * vec4(inPosition, 1.0);
     outColor = inColor;
 }

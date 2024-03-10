@@ -30,6 +30,12 @@ void VulkanRenderingContext::pushConstants(Ref<Shader> shader, uint32_t size, vo
     vkCmdPushConstants(m_commandBuffer, s->getPipelineLayout(), s->getPushConstantStageFlags(), 0, size, data);
 }
 
+void VulkanRenderingContext::bindUniforms(Ref<Shader> shader, uint32_t firstSet, uint32_t setCount) const {
+    auto s = ((VulkanGraphicsPipeline*) shader.get());
+    const std::vector<VkDescriptorSet>& sets = s->getDestriptorSets();
+    vkCmdBindDescriptorSets(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, s->getPipelineLayout(), firstSet, setCount, sets.data(), 0, nullptr);
+}
+
 void VulkanRenderingContext::draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) const {
     vkCmdDraw(m_commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
 }

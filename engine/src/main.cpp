@@ -77,19 +77,41 @@ public:
         }
 
         camera.setProjection(glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, 0.1f, 1000.0f));
-        camera.setView(glm::lookAt(glm::vec3{ 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }));
+        camera.setView(glm::lookAt(glm::vec3{ 0.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }));
+
+        {
+            mvp = camera.getProjection() * camera.getView() * glm::translate(glm::mat4{ 1.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f });
+
+            Toki::UniformBufferConfig config{};
+            config.size = sizeof(mvp);
+            config.setIndex = 0;
+            config.binding = 0;
+            config.arrayElement = 0;
+            uniformBuffer = Toki::UniformBuffer::create(config);
+            // uniformBuffer->setData(config.size, (void*) &mvp);
+            mappedMemory = uniformBuffer->mapMemory(config.size, 0);
+            memcpy(mappedMemory, &mvp, sizeof(mvp));
+        }
+
+        shader->setUniforms({ uniformBuffer });
+
+        // camera.setProjection(glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, 0.1f, 1000.0f));
+        // camera.setView(glm::lookAt(glm::vec3{ 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }));
     }
 
     Toki::OrthographicCamera camera;
+    glm::mat4 mvp;
+    void* mappedMemory;
 
     void onRender() override {
         submit(renderPass, [this](const Toki::RenderingContext& ctx) {
-            glm::mat4 mvp = camera.getProjection() * camera.getView() * glm::translate(glm::mat4{ 1.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f });
+            mvp = camera.getProjection() * camera.getView() * glm::translate(glm::mat4{ 1.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f });
 
             ctx.bindVertexBuffers({ vertexBuffer });
             ctx.bindIndexBuffer(indexBuffer);
             ctx.bindShader(shader);
             ctx.pushConstants(shader, sizeof(mvp), &mvp);
+            ctx.bindUniforms(shader, 0, 1);
             ctx.draw(3, 1, 0, 0);
             ctx.draw(3, 1, 3, 0);
         });
@@ -99,6 +121,7 @@ private:
     Toki::Ref<Toki::RenderPass> renderPass;
     Toki::Ref<Toki::VertexBuffer> vertexBuffer;
     Toki::Ref<Toki::IndexBuffer> indexBuffer;
+    Toki::Ref<Toki::UniformBuffer> uniformBuffer;
     Toki::Ref<Toki::Shader> shader;
 };
 

@@ -56,6 +56,7 @@ void VulkanRenderer::init() {
 
     initCommandPools();
     initFrames();
+    initDescriptorPools();
 
     VulkanBuffer::s_context = m_context;
     VulkanImage::s_context = m_context;
@@ -67,6 +68,7 @@ void VulkanRenderer::shutdown() {
 
     m_swapchains.clear();
 
+    destroyDescriptorPools();
     destroyCommandPools();
     destroyFrames();
 
@@ -405,6 +407,20 @@ void VulkanRenderer::initCommandPools() {
     }
 }
 
+void VulkanRenderer::initDescriptorPools() {
+    std::vector<VkDescriptorPoolSize> poolSizes = { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 100 } };
+
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
+    descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    descriptorPoolCreateInfo.maxSets = 1;
+    descriptorPoolCreateInfo.poolSizeCount = poolSizes.size();
+    descriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
+
+    TK_ASSERT_VK_RESULT(
+        vkCreateDescriptorPool(m_context->device, &descriptorPoolCreateInfo, m_context->allocationCallbacks, &m_context->descriptorPool),
+        "Could not create ddescriptor pool");
+}
+
 void VulkanRenderer::destroyFrames() {
     for (const auto& frameData : m_frameData) {
         vkDestroyFence(m_context->device, frameData.renderFence, m_context->allocationCallbacks);
@@ -423,6 +439,10 @@ void VulkanRenderer::destroyCommandPools() {
     for (auto& pool : m_extraCommandPools) {
         vkDestroyCommandPool(m_context->device, pool, m_context->allocationCallbacks);
     }
+}
+
+void VulkanRenderer::destroyDescriptorPools() {
+    vkDestroyDescriptorPool(m_context->device, m_context->descriptorPool, m_context->allocationCallbacks);
 }
 
 #pragma region Utils

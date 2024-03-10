@@ -11,21 +11,17 @@ struct BufferConfig {
     uint32_t size = 0;
 };
 
-struct VertexBufferConfig : BufferConfig {
-    uint32_t binding = 0;
-};
-
-struct IndexBufferConfig : BufferConfig {
-    uint32_t indexCount = 0;
-    IndexSize indexSize;
-};
-
 class _Buffer {
 public:
+    _Buffer(uint32_t size) : m_size(size) {}
     uint32_t getSize() const;
 
-private:
+protected:
     uint32_t m_size = 0;
+};
+
+struct VertexBufferConfig : public BufferConfig {
+    uint32_t binding = 0;
 };
 
 class VertexBuffer : public _Buffer {
@@ -44,6 +40,11 @@ private:
     uint32_t m_binding = 0;
 };
 
+struct IndexBufferConfig : public BufferConfig {
+    uint32_t indexCount = 0;
+    IndexSize indexSize;
+};
+
 class IndexBuffer : public _Buffer {
 public:
     static Ref<IndexBuffer> create(const IndexBufferConfig& config);
@@ -60,6 +61,32 @@ public:
 private:
     uint32_t m_indexCount = 0;
     IndexSize m_indexSize;
+};
+
+struct UniformBufferConfig : public BufferConfig {
+    uint32_t setIndex = 0;
+    uint32_t binding = 0;
+    uint32_t arrayElement = 0;
+};
+
+class UniformBuffer : public _Buffer {
+public:
+    static Ref<UniformBuffer> create(const UniformBufferConfig& config);
+
+    UniformBuffer() = delete;
+    UniformBuffer(const UniformBufferConfig& config);
+    virtual ~UniformBuffer() = default;
+
+    virtual void setData(uint32_t size, void* data, uint32_t offset = 0) = 0;
+    virtual void* mapMemory(uint32_t size, uint32_t offset) = 0;
+    virtual void unmapMemory() = 0;
+
+    uint32_t getSetIndex() const;
+    uint32_t getBinding() const;
+    uint32_t getArrayElementIndex() const;
+
+private:
+    UniformBufferConfig m_config;
 };
 
 }  // namespace Toki

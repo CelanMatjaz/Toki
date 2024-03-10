@@ -20,6 +20,8 @@ public:
     virtual ~VulkanBuffer();
 
     void setData(uint32_t size, void* data, uint32_t offset = 0);
+    void* mapMemory(uint32_t size, uint32_t offset);
+    void unmapMemory();
 
     VkBuffer getHandle() const;
 
@@ -29,6 +31,7 @@ private:
     VkBuffer m_bufferHandle = VK_NULL_HANDLE;
     VkDeviceMemory m_memoryHandle = VK_NULL_HANDLE;
     uint32_t m_size = 0;
+    bool m_isMemoryMapped : 1 = false;
 };
 
 class VulkanVertexBuffer : public VertexBuffer, public VulkanBuffer {
@@ -47,6 +50,17 @@ public:
     virtual ~VulkanIndexBuffer() = default;
 
     virtual void setData(uint32_t size, void* data, uint32_t offset = 0) override;
+};
+
+class VulkanUniformBuffer : public UniformBuffer, public VulkanBuffer {
+public:
+    VulkanUniformBuffer() = delete;
+    VulkanUniformBuffer(const UniformBufferConfig& config);
+    virtual ~VulkanUniformBuffer() = default;
+
+    virtual void setData(uint32_t size, void* data, uint32_t offset = 0) override;
+    virtual void* mapMemory(uint32_t size, uint32_t offset) override;
+    virtual void unmapMemory() override;
 };
 
 }  // namespace Toki

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "toki/core/core.h"
+#include "toki/renderer/buffer.h"
 #include "toki/renderer/renderer_types.h"
 
 namespace Toki {
@@ -25,6 +26,8 @@ public:
     Shader& operator=(const Shader& other) = delete;
     Shader& operator=(const Shader&& other) = delete;
     virtual ~Shader() = default;
+
+    virtual void setUniforms(std::vector<Ref<UniformBuffer>> uniforms) = 0;
 
 protected:
     ShaderConfig m_config;

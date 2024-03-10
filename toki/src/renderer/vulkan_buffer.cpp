@@ -6,7 +6,7 @@
 
 namespace Toki {
 
-VulkanBuffer::VulkanBuffer(uint32_t size, VkMemoryPropertyFlags usage, VkMemoryPropertyFlags memoryPropertyFlags) {
+VulkanBuffer::VulkanBuffer(uint32_t size, VkMemoryPropertyFlags usage, VkMemoryPropertyFlags memoryPropertyFlags) : m_size(size) {
     VkBufferCreateInfo bufferCreateInfo{};
     bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferCreateInfo.size = size;
@@ -37,6 +37,8 @@ static VkBufferUsageFlags mapUsage(BufferType bufferType) {
             return VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
         case BufferType::BUFFER_TYPE_INDEX:
             return VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+        case BufferType::BUFFER_TYPE_UNIFORM:
+            return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
         default:
             std::unreachable();
     }
@@ -46,6 +48,10 @@ VulkanBuffer::VulkanBuffer(uint32_t size, BufferType bufferType) :
     VulkanBuffer(size, mapUsage(bufferType), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {}
 
 VulkanBuffer::~VulkanBuffer() {
+    if (m_isMemoryMapped) {
+        unmapMemory();
+    }
+
     vkDestroyBuffer(s_context->device, m_bufferHandle, s_context->allocationCallbacks);
     vkFreeMemory(s_context->device, m_memoryHandle, s_context->allocationCallbacks);
 }
@@ -55,6 +61,18 @@ void VulkanBuffer::setData(uint32_t size, void* data, uint32_t offset) {
     vkMapMemory(s_context->device, m_memoryHandle, offset, size, 0, &deviceData);
     memcpy(deviceData, data, size);
     vkUnmapMemory(s_context->device, m_memoryHandle);
+}
+
+void* VulkanBuffer::mapMemory(uint32_t size, uint32_t offset) {
+    TK_ASSERT(offset + size <= m_size, "Trying to map over buffer size");
+    void* deviceData = nullptr;
+    TK_ASSERT_VK_RESULT(vkMapMemory(s_context->device, m_memoryHandle, offset, size, 0, &deviceData), "Could not map memory");
+    m_isMemoryMapped = true;
+    return deviceData;
+}
+void VulkanBuffer::unmapMemory() {
+    vkUnmapMemory(s_context->device, m_memoryHandle);
+    m_isMemoryMapped = false;
 }
 
 VkBuffer VulkanBuffer::getHandle() const {
@@ -75,6 +93,22 @@ VulkanIndexBuffer::VulkanIndexBuffer(const IndexBufferConfig& config) :
 
 void VulkanIndexBuffer::setData(uint32_t size, void* data, uint32_t offset) {
     VulkanBuffer::setData(size, data, offset);
+}
+
+VulkanUniformBuffer::VulkanUniformBuffer(const UniformBufferConfig& config) :
+    UniformBuffer(config),
+    VulkanBuffer(config.size, BufferType::BUFFER_TYPE_UNIFORM) {}
+
+void VulkanUniformBuffer::setData(uint32_t size, void* data, uint32_t offset) {
+    VulkanBuffer::setData(size, data, offset);
+}
+
+void* VulkanUniformBuffer::mapMemory(uint32_t size, uint32_t offset) {
+    return VulkanBuffer::mapMemory(size, offset);
+}
+
+void VulkanUniformBuffer::unmapMemory() {
+    VulkanBuffer::unmapMemory();
 }
 
 }  // namespace Toki
