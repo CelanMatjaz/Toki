@@ -88,15 +88,22 @@ public:
             config.binding = 0;
             config.arrayElement = 0;
             uniformBuffer = Toki::UniformBuffer::create(config);
-            // uniformBuffer->setData(config.size, (void*) &mvp);
             mappedMemory = (glm::mat4*) uniformBuffer->mapMemory(config.size, 0);
             memcpy(mappedMemory, &mvp, sizeof(mvp));
         }
 
-        shader->setUniforms({ uniformBuffer });
+        {
+            Toki::UniformBufferConfig config{};
+            config.size = sizeof(glm::vec3);
+            config.setIndex = 0;
+            config.binding = 1;
+            config.arrayElement = 0;
+            offsetUniform = Toki::UniformBuffer::create(config);
+            offset = (glm::vec3*) offsetUniform->mapMemory(config.size, 0);
+            memset(offset, 0, sizeof(glm::vec3));
+        }
 
-        // camera.setProjection(glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, 0.1f, 1000.0f));
-        // camera.setView(glm::lookAt(glm::vec3{ 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }));
+        shader->setUniforms({ uniformBuffer, offsetUniform });
 
         Toki::Event::bindEvent(Toki::EventType::WindowResize, this, [this](void* sender, void* receiver, const Toki::Event& event) {
             glm::mat4& mvp = *this->mappedMemory;
@@ -107,10 +114,12 @@ public:
     Toki::OrthographicCamera camera;
     glm::mat4 mvp;
     glm::mat4* mappedMemory;
+    glm::vec3* offset;
 
     void onRender() override {
         submit(renderPass, [this](const Toki::RenderingContext& ctx) {
             // mvp = camera.getProjection() * camera.getView() * glm::translate(glm::mat4{ 1.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f });
+            offset->r += 0.1;
 
             ctx.bindVertexBuffers({ vertexBuffer });
             ctx.bindIndexBuffer(indexBuffer);
@@ -127,6 +136,7 @@ private:
     Toki::Ref<Toki::VertexBuffer> vertexBuffer;
     Toki::Ref<Toki::IndexBuffer> indexBuffer;
     Toki::Ref<Toki::UniformBuffer> uniformBuffer;
+    Toki::Ref<Toki::UniformBuffer> offsetUniform;
     Toki::Ref<Toki::Shader> shader;
 };
 

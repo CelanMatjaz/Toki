@@ -2,6 +2,7 @@
 
 #include "renderer/vulkan_buffer.h"
 #include "renderer/vulkan_graphics_pipeline.h"
+#include "toki/core/assert.h"
 
 namespace Toki {
 
@@ -33,6 +34,7 @@ void VulkanRenderingContext::pushConstants(Ref<Shader> shader, uint32_t size, vo
 void VulkanRenderingContext::bindUniforms(Ref<Shader> shader, uint32_t firstSet, uint32_t setCount) const {
     auto s = ((VulkanGraphicsPipeline*) shader.get());
     const std::vector<VkDescriptorSet>& sets = s->getDestriptorSets();
+    TK_ASSERT(sets.size() >= setCount + firstSet, std::format("Not enough sets bound {} >= {} + {}", sets.size(), setCount, firstSet));
     vkCmdBindDescriptorSets(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, s->getPipelineLayout(), firstSet, setCount, sets.data(), 0, nullptr);
 }
 
