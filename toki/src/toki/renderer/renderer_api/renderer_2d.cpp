@@ -152,10 +152,10 @@ void Renderer2D::flush() {
 
 void Renderer2D::drawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color) {
     uint32_t currentQuadIndex = data.indexCount / 1.5f;
-    data.quadVertexPtr[currentQuadIndex + 0].position = -glm::vec3(position, -1.0f);
-    data.quadVertexPtr[currentQuadIndex + 1].position = -glm::vec3(position.x + size.x, position.y, -1.0f);
-    data.quadVertexPtr[currentQuadIndex + 2].position = -glm::vec3(position.x, position.y + size.y, -1.0f);
-    data.quadVertexPtr[currentQuadIndex + 3].position = -glm::vec3(position + size, -1.0f);
+    data.quadVertexPtr[currentQuadIndex + 0].position = -glm::vec3(position, 0.0f);
+    data.quadVertexPtr[currentQuadIndex + 1].position = -glm::vec3(position.x + size.x, position.y, 0.0f);
+    data.quadVertexPtr[currentQuadIndex + 2].position = -glm::vec3(position.x, position.y + size.y, 0.0f);
+    data.quadVertexPtr[currentQuadIndex + 3].position = -glm::vec3(position + size, 0.0f);
 
     uint32_t currentIndexIndex = data.indexCount;
     data.quadIndexPtr[currentIndexIndex + 0] = currentIndexIndex + 0;

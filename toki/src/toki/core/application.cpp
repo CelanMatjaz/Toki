@@ -5,7 +5,7 @@
 
 #include "assert.h"
 #include "renderer/vulkan_renderer.h"
-#include "toki/renderer/renderer_2d/renderer_2d.h"
+#include "toki/renderer/renderer_api/renderer_2d.h"
 
 namespace Toki {
 

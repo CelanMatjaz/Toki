@@ -10,8 +10,8 @@
 #include "toki/renderer/shader.h"
 #include "toki/renderer/texture.h"
 
-// Renderer2D
-#include "toki/renderer/renderer_2d/renderer_2d.h"
+// Renderer APIs
+#include "toki/renderer/renderer_api/renderer_2d.h"
 
 // Camera
 #include "toki/renderer/camera/camera.h"
