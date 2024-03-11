@@ -103,8 +103,8 @@ public:
 
         {
             Toki::ShaderConfig config{};
-            config.shaderStagePaths[Toki::ShaderStage::SHADER_STAGE_FRAGMENT] = "assets/shaders/test_shader.frag.glsl";
-            config.shaderStagePaths[Toki::ShaderStage::SHADER_STAGE_VERTEX] = "assets/shaders/test_shader.vert.glsl";
+            config.shaderStages[Toki::ShaderStage::SHADER_STAGE_FRAGMENT] = (std::filesystem::path) "assets/shaders/test_shader.frag.glsl";
+            config.shaderStages[Toki::ShaderStage::SHADER_STAGE_VERTEX] = (std::filesystem::path) "assets/shaders/test_shader.vert.glsl";
             config.layoutDescriptions.attributeDescriptions = {
                 { 0, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT3, 0 },
                 { 1, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT4, 4 * sizeof(float) },
@@ -115,8 +115,8 @@ public:
             config.attachments[0].presentable = false;
             shader = Toki::Shader::create(config);
 
-            config.shaderStagePaths[Toki::ShaderStage::SHADER_STAGE_FRAGMENT] = "assets/shaders/test_shader_post.frag.glsl";
-            config.shaderStagePaths[Toki::ShaderStage::SHADER_STAGE_VERTEX] = "assets/shaders/test_shader_post.vert.glsl";
+            config.shaderStages[Toki::ShaderStage::SHADER_STAGE_FRAGMENT] = (std::filesystem::path) "assets/shaders/test_shader_post.frag.glsl";
+            config.shaderStages[Toki::ShaderStage::SHADER_STAGE_VERTEX] = (std::filesystem::path) "assets/shaders/test_shader_post.vert.glsl";
             config.layoutDescriptions.attributeDescriptions = {
                 { 0, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT3, 0 },
                 { 1, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT2, 3 * sizeof(float) },
