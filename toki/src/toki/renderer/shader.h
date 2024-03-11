@@ -8,6 +8,7 @@
 #include "toki/core/core.h"
 #include "toki/renderer/buffer.h"
 #include "toki/renderer/renderer_types.h"
+#include "toki/renderer/sampler.h"
 #include "toki/renderer/texture.h"
 
 namespace Toki {
@@ -18,7 +19,7 @@ struct ShaderConfig {
     std::vector<Attachment> attachments;
 };
 
-using UniformType = std::variant<Ref<UniformBuffer>, Ref<Texture>>;
+using UniformType = std::variant<Ref<UniformBuffer>, Ref<Texture>, Ref<Sampler>>;
 
 class Shader {
 public:

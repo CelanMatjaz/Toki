@@ -17,6 +17,7 @@
 #include "GLFW/glfw3.h"
 #endif
 #include "vulkan_rendering_context.h"
+#include "vulkan_sampler.h"
 
 namespace Toki {
 
@@ -62,6 +63,7 @@ void VulkanRenderer::init() {
     VulkanBuffer::s_context = m_context;
     VulkanImage::s_context = m_context;
     VulkanGraphicsPipeline::s_context = m_context;
+    VulkanSampler::s_context = m_context;
 
     m_context->submitSingleUseCommands = [this](std::function<void(VkCommandBuffer)> fn) {
         VkCommandBufferAllocateInfo commandBufferAllocateInfo{};

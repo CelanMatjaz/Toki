@@ -11,6 +11,7 @@
 #include "toki/resources/loaders/text_loader.h"
 #include "toki/resources/resource_utils.h"
 #include "vulkan/vulkan_core.h"
+#include "vulkan_sampler.h"
 
 namespace Toki {
 
@@ -44,17 +45,19 @@ const std::vector<VkDescriptorSet>& VulkanGraphicsPipeline::getDestriptorSets() 
 }
 
 void VulkanGraphicsPipeline::setUniforms(std::vector<UniformType> uniforms) {
-    std::vector<VkWriteDescriptorSet> writes;
 
     uint32_t bufferInfoSize = 0, imageInfoSize = 0;
 
     for (const auto& u : uniforms) {
         if (std::holds_alternative<Ref<UniformBuffer>>(u)) ++bufferInfoSize;
-        if (std::holds_alternative<Ref<Texture>>(u)) ++imageInfoSize;
+        if (std::holds_alternative<Ref<Texture>>(u) || std::holds_alternative<Ref<Sampler>>(u)) ++imageInfoSize;
     }
     
     std::vector<VkDescriptorBufferInfo> descriptorBufferInfos(bufferInfoSize);
     std::vector<VkDescriptorImageInfo> descriptorImageInfos(imageInfoSize);
+
+    std::vector<VkWriteDescriptorSet> writes;
+    writes.reserve(imageInfoSize + bufferInfoSize);
 
     uint32_t bufferInfoIndex = 0, imageInfoIndex = 0;
 
@@ -62,7 +65,7 @@ void VulkanGraphicsPipeline::setUniforms(std::vector<UniformType> uniforms) {
         if (std::holds_alternative<Ref<UniformBuffer>>(u)) {
             auto uniform = std::get<Ref<UniformBuffer>>(u);
 
-            VkDescriptorBufferInfo& descriptorBufferInfo = descriptorBufferInfos[bufferInfoIndex++];
+            VkDescriptorBufferInfo& descriptorBufferInfo = descriptorBufferInfos[bufferInfoIndex];
             descriptorBufferInfo = {};
             descriptorBufferInfo.buffer = (VkBuffer) ((VulkanUniformBuffer*) uniform.get())->getHandle();
             descriptorBufferInfo.offset = 0;
@@ -73,7 +76,7 @@ void VulkanGraphicsPipeline::setUniforms(std::vector<UniformType> uniforms) {
             writeDescriptorSet.dstSet = m_descriptorSets[uniform->getSetIndex()];
             writeDescriptorSet.descriptorCount = 1;
             writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            writeDescriptorSet.pBufferInfo = &descriptorBufferInfos[descriptorBufferInfos.size()-1];
+            writeDescriptorSet.pBufferInfo = &descriptorBufferInfos[bufferInfoIndex++];
             writeDescriptorSet.dstArrayElement = uniform->getArrayElementIndex();
             writeDescriptorSet.dstBinding = uniform->getBinding();
             writes.emplace_back(writeDescriptorSet);
@@ -82,21 +85,38 @@ void VulkanGraphicsPipeline::setUniforms(std::vector<UniformType> uniforms) {
         if (std::holds_alternative<Ref<Texture>>(u)) {
             auto texture = std::get<Ref<Texture>>(u);
 
-            VkDescriptorImageInfo& descriptorImageInfo = descriptorImageInfos[imageInfoIndex++];
+            VkDescriptorImageInfo& descriptorImageInfo = descriptorImageInfos[imageInfoIndex];
             descriptorImageInfo = {};
             descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             descriptorImageInfo.imageView = (VkImageView) ((VulkanImage*) texture.get())->getImageView();
             descriptorImageInfo.sampler = VK_NULL_HANDLE;
-            descriptorImageInfos.emplace_back(descriptorImageInfo);
 
             VkWriteDescriptorSet writeDescriptorSet{};
             writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             writeDescriptorSet.dstSet = m_descriptorSets[texture->getSetIndex()];
             writeDescriptorSet.descriptorCount = 1;
             writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-            writeDescriptorSet.pImageInfo = &descriptorImageInfos.back();
+            writeDescriptorSet.pImageInfo = &descriptorImageInfos[imageInfoIndex++];
             writeDescriptorSet.dstArrayElement = texture->getArrayElementIndex();
             writeDescriptorSet.dstBinding = texture->getBinding();
+            writes.emplace_back(writeDescriptorSet);
+        }
+
+        if (std::holds_alternative<Ref<Sampler>>(u)) {
+            auto sampler = std::get<Ref<Sampler>>(u);
+
+            VkDescriptorImageInfo& descriptorImageInfo = descriptorImageInfos[imageInfoIndex];
+            descriptorImageInfo = {};
+            descriptorImageInfo.sampler = ((VulkanSampler*) sampler.get())->getSampler();
+
+            VkWriteDescriptorSet writeDescriptorSet{};
+            writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writeDescriptorSet.dstSet = m_descriptorSets[sampler->getSetIndex()];
+            writeDescriptorSet.descriptorCount = 1;
+            writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+            writeDescriptorSet.pImageInfo = &descriptorImageInfos[imageInfoIndex++];
+            writeDescriptorSet.dstArrayElement = sampler->getArrayElementIndex();
+            writeDescriptorSet.dstBinding = sampler->getBinding();
             writes.emplace_back(writeDescriptorSet);
         }
     }

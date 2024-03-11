@@ -37,15 +37,16 @@ public:
             struct Vertex {
                 glm::vec3 position;
                 glm::vec4 color;
+                glm::vec2 uv;
             };
 
             const Vertex vertices[] = {
-                { { 0.0 * 800 + 400, -0.5 * 600 - 300, 2.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },   // vertex 1
-                { { 0.5 * 800 + 400, 0.5 * 600 - 300, -1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },   // vertex 2
-                { { -0.5 * 800 + 400, 0.5 * 600 - 300, -1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } },  // vertex 3
-                { { -0.5 * 800 + 400, -0.5 * 600 - 300, 0.0f }, { 0.5f, 1.0f, 1.0f, 1.0f } },  // vertex 6
-                { { 0.5 * 800 + 400, -0.5 * 600 - 300, 0.0f }, { 1.0f, 0.5f, 1.0f, 1.0f } },   // vertex 5
-                { { 0.0 * 800 + 400, 0.5 * 600 - 300, 0.0f }, { 1.0f, 1.0f, 0.5f, 1.0f } },    // vertex 4
+                { { 400, -600, 2.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.5f, 1.0f } },                           // vertex 1
+                { { 800, 0, -1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f } },                             // vertex 2
+                { { 0, 0, -1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 0.0f, 0.0f } },                               // vertex 3
+                { { -0.5 * 800 + 400, -0.5 * 600 - 300, 0.0f }, { 0.5f, 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f } },  // vertex 6
+                { { 0.5 * 800 + 400, -0.5 * 600 - 300, 0.0f }, { 1.0f, 0.5f, 1.0f, 1.0f }, { 0.0f, 0.0f } },   // vertex 5
+                { { 0.0 * 800 + 400, 0.5 * 600 - 300, 0.0f }, { 1.0f, 1.0f, 0.5f, 1.0f }, { 0.0f, 0.0f } },    // vertex 4
             };
 
             Toki::VertexBufferConfig config{};
@@ -69,9 +70,12 @@ public:
             Toki::ShaderConfig config{};
             config.shaderStagePaths[Toki::ShaderStage::SHADER_STAGE_FRAGMENT] = "assets/shaders/test_shader.frag.glsl";
             config.shaderStagePaths[Toki::ShaderStage::SHADER_STAGE_VERTEX] = "assets/shaders/test_shader.vert.glsl";
-            config.layoutDescriptions.attributeDescriptions = { { 0, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT3, 0 },
-                                                                { 1, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT4, 3 * sizeof(float) } };
-            config.layoutDescriptions.bindingDescriptions = { { 0, 7 * sizeof(float), Toki::VertexInputRate::VERTEX_INPUT_RATE_VERTEX } };
+            config.layoutDescriptions.attributeDescriptions = {
+                { 0, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT3, 0 },
+                { 1, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT4, 4 * sizeof(float) },
+                { 2, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT2, 7 * sizeof(float) },
+            };
+            config.layoutDescriptions.bindingDescriptions = { { 0, 9 * sizeof(float), Toki::VertexInputRate::VERTEX_INPUT_RATE_VERTEX } };
             config.attachments = attachments;
             shader = Toki::Shader::create(config);
         }
@@ -111,7 +115,15 @@ public:
             testTexture = Toki::Texture::create("assets/textures/chad.jpg", config);
         }
 
-        shader->setUniforms({ uniformBuffer, offsetUniform, testTexture });
+        {
+            Toki::SamplerConfig config{};
+            config.setIndex = 1;
+            config.binding = 1;
+            config.arrayElement = 0;
+            testSampler = Toki::Sampler::create(config);
+        }
+
+        shader->setUniforms({ uniformBuffer, offsetUniform, testTexture, testSampler });
 
         Toki::Event::bindEvent(Toki::EventType::WindowResize, this, [this](void* sender, void* receiver, const Toki::Event& event) {
             glm::mat4& mvp = *this->mappedMemory;
@@ -127,7 +139,7 @@ public:
     void onRender() override {
         submit(renderPass, [this](const Toki::RenderingContext& ctx) {
             // mvp = camera.getProjection() * camera.getView() * glm::translate(glm::mat4{ 1.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f });
-            offset->r += 0.001;
+            offset->r += 0.1;
 
             ctx.bindVertexBuffers({ vertexBuffer });
             ctx.bindIndexBuffer(indexBuffer);
@@ -135,7 +147,7 @@ public:
             ctx.pushConstants(shader, sizeof(mvp), &mvp);
             ctx.bindUniforms(shader, 0, 2);
             ctx.draw(3, 1, 0, 0);
-            ctx.draw(3, 1, 3, 0);
+            // ctx.draw(3, 1, 3, 0);
         });
     }
 
@@ -147,6 +159,7 @@ private:
     Toki::Ref<Toki::UniformBuffer> offsetUniform;
     Toki::Ref<Toki::Shader> shader;
     Toki::Ref<Toki::Texture> testTexture;
+    Toki::Ref<Toki::Sampler> testSampler;
 };
 
 int main() {

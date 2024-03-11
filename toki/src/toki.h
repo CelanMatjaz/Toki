@@ -6,6 +6,7 @@
 // Renderer
 #include "toki/renderer/buffer.h"
 #include "toki/renderer/render_pass.h"
+#include "toki/renderer/sampler.h"
 #include "toki/renderer/shader.h"
 #include "toki/renderer/texture.h"
 
