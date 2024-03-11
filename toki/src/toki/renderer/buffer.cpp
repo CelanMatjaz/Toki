@@ -23,14 +23,14 @@ Ref<IndexBuffer> IndexBuffer::create(const IndexBufferConfig& config) {
     return createRef<VulkanIndexBuffer>(config);
 }
 
-IndexBuffer::IndexBuffer(const IndexBufferConfig& config) : _Buffer(config.size), m_indexCount(config.indexCount) {}
+IndexBuffer::IndexBuffer(const IndexBufferConfig& config) : _Buffer(config.size), m_config(config) {}
 
 uint32_t IndexBuffer::getIndexCount() const {
-    return m_indexCount;
+    return m_config.indexCount;
 }
 
 IndexSize IndexBuffer::getIndexSize() const {
-    return m_indexSize;
+    return m_config.indexSize;
 }
 
 Ref<UniformBuffer> UniformBuffer::create(const UniformBufferConfig& config) {
@@ -38,15 +38,5 @@ Ref<UniformBuffer> UniformBuffer::create(const UniformBufferConfig& config) {
 }
 
 UniformBuffer::UniformBuffer(const UniformBufferConfig& config) : m_config(config), _Buffer(config.size) {}
-
-uint32_t UniformBuffer::getSetIndex() const {
-    return m_config.setIndex;
-};
-uint32_t UniformBuffer::getBinding() const {
-    return m_config.binding;
-};
-uint32_t UniformBuffer::getArrayElementIndex() const {
-    return m_config.arrayElement;
-};
 
 }  // namespace Toki

@@ -123,6 +123,24 @@ VulkanRenderPass::VulkanRenderPass(const RenderPassConfig& config) : m_width(con
 
 VulkanRenderPass::~VulkanRenderPass() {}
 
+Ref<Texture> VulkanRenderPass::getColorAttachment(uint32_t textureIndex) {
+    TK_ASSERT(textureIndex < m_colorAttachments.size(), std::format("Attachment index {} does not exist", textureIndex));
+
+    s_context->submitSingleUseCommands([this, textureIndex](VkCommandBuffer cmd) {
+        this->m_colorAttachments[textureIndex]->transitionLayout(cmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    });
+
+    return m_colorAttachments[textureIndex];
+}
+
+Ref<Texture> VulkanRenderPass::getDepthAttachment() {
+    return m_depthAttachment;
+}
+
+Ref<Texture> VulkanRenderPass::getStencilAttachment() {
+    return m_stencilAttachment;
+}
+
 void VulkanRenderPass::begin(const RenderingContext& ctx, VkExtent2D extent, VkImageView presentImageView) {
     if (presentImageView != VK_NULL_HANDLE && m_presentableAttachmentIndex >= 0) {
         m_colorAttachmentInfos[m_presentableAttachmentIndex].imageView = presentImageView;

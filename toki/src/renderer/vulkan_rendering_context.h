@@ -18,6 +18,8 @@ public:
     virtual void bindUniforms(Ref<Shader> shader, uint32_t firstSet, uint32_t setCount) const override;
 
     virtual void draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) const override;
+    virtual void drawIndexed(
+        uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance) const override;
 
     VkCommandBuffer getCommandBuffer() const;
 

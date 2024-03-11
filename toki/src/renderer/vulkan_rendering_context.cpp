@@ -42,6 +42,11 @@ void VulkanRenderingContext::draw(uint32_t vertexCount, uint32_t instanceCount, 
     vkCmdDraw(m_commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
 }
 
+void VulkanRenderingContext::drawIndexed(
+    uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance) const {
+    vkCmdDrawIndexed(m_commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+}
+
 VkCommandBuffer VulkanRenderingContext::getCommandBuffer() const {
     return m_commandBuffer;
 }

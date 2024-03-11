@@ -60,6 +60,7 @@ void VulkanRenderer::init() {
     initFrames();
     initDescriptorPools();
 
+    VulkanRenderPass::s_context = m_context;
     VulkanBuffer::s_context = m_context;
     VulkanImage::s_context = m_context;
     VulkanGraphicsPipeline::s_context = m_context;

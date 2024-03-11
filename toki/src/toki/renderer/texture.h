@@ -8,9 +8,6 @@
 namespace Toki {
 
 struct TextureConfig {
-    uint32_t setIndex = 0;
-    uint32_t binding = 0;
-    uint32_t arrayElement = 0;
     Ref<Sampler> optionalSampler = nullptr;
 };
 
@@ -25,9 +22,7 @@ public:
 
     virtual void setData(uint32_t size, void* data) = 0;
 
-    uint32_t getSetIndex() const;
-    uint32_t getBinding() const;
-    uint32_t getArrayElementIndex() const;
+    void setOptionalSampler(Ref<Sampler> sampler);
     Ref<Sampler> getOptionalSampler() const;
 
 protected:

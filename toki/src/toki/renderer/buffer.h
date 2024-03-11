@@ -59,14 +59,11 @@ public:
     IndexSize getIndexSize() const;
 
 private:
-    uint32_t m_indexCount = 0;
-    IndexSize m_indexSize;
+IndexBufferConfig m_config;
 };
 
 struct UniformBufferConfig : public BufferConfig {
-    uint32_t setIndex = 0;
-    uint32_t binding = 0;
-    uint32_t arrayElement = 0;
+
 };
 
 class UniformBuffer : public _Buffer {
@@ -80,10 +77,6 @@ public:
     virtual void setData(uint32_t size, void* data, uint32_t offset = 0) = 0;
     virtual void* mapMemory(uint32_t size, uint32_t offset) = 0;
     virtual void unmapMemory() = 0;
-
-    uint32_t getSetIndex() const;
-    uint32_t getBinding() const;
-    uint32_t getArrayElementIndex() const;
 
 private:
     UniformBufferConfig m_config;

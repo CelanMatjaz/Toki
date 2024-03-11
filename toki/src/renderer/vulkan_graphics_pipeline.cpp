@@ -44,13 +44,12 @@ const std::vector<VkDescriptorSet>& VulkanGraphicsPipeline::getDestriptorSets() 
     return m_descriptorSets;
 }
 
-void VulkanGraphicsPipeline::setUniforms(std::vector<UniformType> uniforms) {
-
+void VulkanGraphicsPipeline::setUniforms(std::vector<Uniform> uniforms) {
     uint32_t bufferInfoSize = 0, imageInfoSize = 0;
 
     for (const auto& u : uniforms) {
-        if (std::holds_alternative<Ref<UniformBuffer>>(u)) ++bufferInfoSize;
-        if (std::holds_alternative<Ref<Texture>>(u) || std::holds_alternative<Ref<Sampler>>(u)) ++imageInfoSize;
+        if (std::holds_alternative<Ref<UniformBuffer>>(u.uniform)) ++bufferInfoSize;
+        if (std::holds_alternative<Ref<Texture>>(u.uniform) || std::holds_alternative<Ref<Sampler>>(u.uniform)) ++imageInfoSize;
     }
     
     std::vector<VkDescriptorBufferInfo> descriptorBufferInfos(bufferInfoSize);
@@ -62,8 +61,8 @@ void VulkanGraphicsPipeline::setUniforms(std::vector<UniformType> uniforms) {
     uint32_t bufferInfoIndex = 0, imageInfoIndex = 0;
 
     for (const auto& u : uniforms) {
-        if (std::holds_alternative<Ref<UniformBuffer>>(u)) {
-            auto uniform = std::get<Ref<UniformBuffer>>(u);
+        if (std::holds_alternative<Ref<UniformBuffer>>(u.uniform)) {
+            auto uniform = std::get<Ref<UniformBuffer>>(u.uniform);
 
             VkDescriptorBufferInfo& descriptorBufferInfo = descriptorBufferInfos[bufferInfoIndex];
             descriptorBufferInfo = {};
@@ -73,17 +72,17 @@ void VulkanGraphicsPipeline::setUniforms(std::vector<UniformType> uniforms) {
 
             VkWriteDescriptorSet writeDescriptorSet{};
             writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writeDescriptorSet.dstSet = m_descriptorSets[uniform->getSetIndex()];
+            writeDescriptorSet.dstSet = m_descriptorSets[u.setIndex];
             writeDescriptorSet.descriptorCount = 1;
             writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             writeDescriptorSet.pBufferInfo = &descriptorBufferInfos[bufferInfoIndex++];
-            writeDescriptorSet.dstArrayElement = uniform->getArrayElementIndex();
-            writeDescriptorSet.dstBinding = uniform->getBinding();
+            writeDescriptorSet.dstArrayElement = u.arrayElementIndex;
+            writeDescriptorSet.dstBinding = u.binding;
             writes.emplace_back(writeDescriptorSet);
         }
 
-        if (std::holds_alternative<Ref<Texture>>(u)) {
-            auto texture = std::get<Ref<Texture>>(u);
+        if (std::holds_alternative<Ref<Texture>>(u.uniform)) {
+            auto texture = std::get<Ref<Texture>>(u.uniform);
             auto optionalSampler = texture->getOptionalSampler();
 
             VkDescriptorImageInfo& descriptorImageInfo = descriptorImageInfos[imageInfoIndex];
@@ -94,12 +93,12 @@ void VulkanGraphicsPipeline::setUniforms(std::vector<UniformType> uniforms) {
 
             VkWriteDescriptorSet writeDescriptorSet{};
             writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writeDescriptorSet.dstSet = m_descriptorSets[texture->getSetIndex()];
+            writeDescriptorSet.dstSet = m_descriptorSets[u.setIndex];
             writeDescriptorSet.descriptorCount = 1;
             writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
             writeDescriptorSet.pImageInfo = &descriptorImageInfos[imageInfoIndex++];
-            writeDescriptorSet.dstArrayElement = texture->getArrayElementIndex();
-            writeDescriptorSet.dstBinding = texture->getBinding();
+            writeDescriptorSet.dstArrayElement = u.arrayElementIndex;
+            writeDescriptorSet.dstBinding = u.binding;
 
             if (optionalSampler) {
                 descriptorImageInfo.sampler = ((VulkanSampler*) optionalSampler.get())->getSampler();
@@ -109,8 +108,8 @@ void VulkanGraphicsPipeline::setUniforms(std::vector<UniformType> uniforms) {
             writes.emplace_back(writeDescriptorSet);
         }
 
-        if (std::holds_alternative<Ref<Sampler>>(u)) {
-            auto sampler = std::get<Ref<Sampler>>(u);
+        if (std::holds_alternative<Ref<Sampler>>(u.uniform)) {
+            auto sampler = std::get<Ref<Sampler>>(u.uniform);
 
             VkDescriptorImageInfo& descriptorImageInfo = descriptorImageInfos[imageInfoIndex];
             descriptorImageInfo = {};
@@ -118,12 +117,12 @@ void VulkanGraphicsPipeline::setUniforms(std::vector<UniformType> uniforms) {
 
             VkWriteDescriptorSet writeDescriptorSet{};
             writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writeDescriptorSet.dstSet = m_descriptorSets[sampler->getSetIndex()];
+            writeDescriptorSet.dstSet = m_descriptorSets[u.setIndex];
             writeDescriptorSet.descriptorCount = 1;
             writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
             writeDescriptorSet.pImageInfo = &descriptorImageInfos[imageInfoIndex++];
-            writeDescriptorSet.dstArrayElement = sampler->getArrayElementIndex();
-            writeDescriptorSet.dstBinding = sampler->getBinding();
+            writeDescriptorSet.dstArrayElement = u.arrayElementIndex;
+            writeDescriptorSet.dstBinding = u.binding;
             writes.emplace_back(writeDescriptorSet);
         }
     }
@@ -134,6 +133,7 @@ void VulkanGraphicsPipeline::setUniforms(std::vector<UniformType> uniforms) {
 void VulkanGraphicsPipeline::create() {
     std::vector<VkPipelineShaderStageCreateInfo> shaderStageCreateInfos;
     std::vector<VkShaderModule> shaderModules;
+    shaderModules.reserve(m_config.shaderStagePaths.size());
 
     std::vector<VkPushConstantRange> constants;
 
@@ -151,7 +151,7 @@ void VulkanGraphicsPipeline::create() {
 
         static uint32_t i = 0;
 
-        VkShaderModule shaderModule;
+        VkShaderModule shaderModule = VK_NULL_HANDLE;
 
         TK_ASSERT_VK_RESULT(
             vkCreateShaderModule(s_context->device, &shaderModuleCreateInfo, s_context->allocationCallbacks, &shaderModule),
@@ -161,7 +161,7 @@ void VulkanGraphicsPipeline::create() {
 
         VkPipelineShaderStageCreateInfo shaderStageCreateInfo{};
         shaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        shaderStageCreateInfo.module = shaderModules[i];
+        shaderStageCreateInfo.module = shaderModules.back();
         shaderStageCreateInfo.pName = "main";
 
         switch (pair.first) {

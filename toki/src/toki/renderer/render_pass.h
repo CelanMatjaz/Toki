@@ -23,6 +23,10 @@ public:
     RenderPass& operator=(const RenderPass&& other) = delete;
     virtual ~RenderPass() = default;
 
+    virtual Ref<Texture> getColorAttachment(uint32_t textureIndex) = 0;
+    virtual Ref<Texture> getDepthAttachment() = 0;
+    virtual Ref<Texture> getStencilAttachment() = 0;
+
 protected:
     RenderPass() = default;
 };

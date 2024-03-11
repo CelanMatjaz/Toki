@@ -21,6 +21,17 @@ struct ShaderConfig {
 
 using UniformType = std::variant<Ref<UniformBuffer>, Ref<Texture>, Ref<Sampler>>;
 
+struct Uniform {
+    Uniform(UniformType u, uint8_t setIndex = 0, uint8_t binding = 0, uint8_t arrayElementIndex = 0) :
+        uniform(u),
+        setIndex(setIndex),
+        binding(binding),
+        arrayElementIndex(arrayElementIndex){};
+
+    UniformType uniform;
+    uint8_t setIndex = 0, binding = 0, arrayElementIndex = 0;
+};
+
 class Shader {
 public:
     static Ref<Shader> create(const ShaderConfig& config);
@@ -32,7 +43,7 @@ public:
     Shader& operator=(const Shader&& other) = delete;
     virtual ~Shader() = default;
 
-    virtual void setUniforms(std::vector<UniformType> uniforms) = 0;
+    virtual void setUniforms(std::vector<Uniform> uniforms) = 0;
 
 protected:
     ShaderConfig m_config;

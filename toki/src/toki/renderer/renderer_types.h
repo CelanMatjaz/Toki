@@ -50,8 +50,8 @@ struct Attachment {
 };
 
 enum class IndexSize : uint8_t {
-    INDEX_SIZE_16,
     INDEX_SIZE_32,
+    INDEX_SIZE_16,
 };
 
 enum class BufferType {

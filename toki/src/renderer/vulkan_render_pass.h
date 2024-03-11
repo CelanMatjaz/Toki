@@ -9,17 +9,26 @@
 #include "toki/renderer/render_pass.h"
 
 namespace Toki {
+class VulkanRenderer;
 
 class VulkanRenderPass : public RenderPass {
+    friend VulkanRenderer;
+
 public:
     VulkanRenderPass() = delete;
     VulkanRenderPass(const RenderPassConfig& config);
     ~VulkanRenderPass();
 
+    virtual Ref<Texture> getColorAttachment(uint32_t textureIndex) override;
+    virtual Ref<Texture> getDepthAttachment() override;
+    virtual Ref<Texture> getStencilAttachment() override;
+
     void begin(const RenderingContext& ctx, VkExtent2D extent, VkImageView presentImageView = VK_NULL_HANDLE);
     void end(const RenderingContext& ctx);
 
 protected:
+    inline static Ref<VulkanContext> s_context;
+
     std::vector<VkRenderingAttachmentInfo> m_colorAttachmentInfos;
     std::vector<Ref<VulkanImage>> m_colorAttachments;
     Ref<VkRenderingAttachmentInfo> m_depthAttachmentInfo;
