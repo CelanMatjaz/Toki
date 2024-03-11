@@ -26,4 +26,8 @@ uint32_t Texture::getArrayElementIndex() const {
     return m_config.arrayElement;
 };
 
+Ref<Sampler> Texture::getOptionalSampler() const {
+    return m_config.optionalSampler;
+}
+
 }  // namespace Toki

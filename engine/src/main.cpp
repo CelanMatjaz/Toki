@@ -108,14 +108,6 @@ public:
         }
 
         {
-            Toki::TextureConfig config{};
-            config.setIndex = 1;
-            config.binding = 0;
-            config.arrayElement = 0;
-            testTexture = Toki::Texture::create("assets/textures/chad.jpg", config);
-        }
-
-        {
             Toki::SamplerConfig config{};
             config.setIndex = 1;
             config.binding = 1;
@@ -123,7 +115,16 @@ public:
             testSampler = Toki::Sampler::create(config);
         }
 
-        shader->setUniforms({ uniformBuffer, offsetUniform, testTexture, testSampler });
+        {
+            Toki::TextureConfig config{};
+            config.setIndex = 1;
+            config.binding = 0;
+            config.arrayElement = 0;
+            config.optionalSampler = testSampler;
+            testTexture = Toki::Texture::create("assets/textures/chad.jpg", config);
+        }
+
+        shader->setUniforms({ uniformBuffer, offsetUniform, testTexture });
 
         Toki::Event::bindEvent(Toki::EventType::WindowResize, this, [this](void* sender, void* receiver, const Toki::Event& event) {
             glm::mat4& mvp = *this->mappedMemory;

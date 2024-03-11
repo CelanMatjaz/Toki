@@ -84,6 +84,7 @@ void VulkanGraphicsPipeline::setUniforms(std::vector<UniformType> uniforms) {
 
         if (std::holds_alternative<Ref<Texture>>(u)) {
             auto texture = std::get<Ref<Texture>>(u);
+            auto optionalSampler = texture->getOptionalSampler();
 
             VkDescriptorImageInfo& descriptorImageInfo = descriptorImageInfos[imageInfoIndex];
             descriptorImageInfo = {};
@@ -99,6 +100,12 @@ void VulkanGraphicsPipeline::setUniforms(std::vector<UniformType> uniforms) {
             writeDescriptorSet.pImageInfo = &descriptorImageInfos[imageInfoIndex++];
             writeDescriptorSet.dstArrayElement = texture->getArrayElementIndex();
             writeDescriptorSet.dstBinding = texture->getBinding();
+
+            if (optionalSampler) {
+                descriptorImageInfo.sampler = ((VulkanSampler*) optionalSampler.get())->getSampler();
+                writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            }
+
             writes.emplace_back(writeDescriptorSet);
         }
 

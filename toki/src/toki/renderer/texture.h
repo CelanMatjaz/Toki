@@ -3,6 +3,7 @@
 #include <filesystem>
 
 #include "toki/core/core.h"
+#include "toki/renderer/sampler.h"
 
 namespace Toki {
 
@@ -10,6 +11,7 @@ struct TextureConfig {
     uint32_t setIndex = 0;
     uint32_t binding = 0;
     uint32_t arrayElement = 0;
+    Ref<Sampler> optionalSampler = nullptr;
 };
 
 class Texture {
@@ -26,9 +28,11 @@ public:
     uint32_t getSetIndex() const;
     uint32_t getBinding() const;
     uint32_t getArrayElementIndex() const;
-protected:
+    Ref<Sampler> getOptionalSampler() const;
 
+protected:
     Texture() = default;
+
 private:
     TextureConfig m_config;
 };
