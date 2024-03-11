@@ -107,6 +107,7 @@ VulkanRenderPass::VulkanRenderPass(const RenderPassConfig& config) : m_width(con
         for (uint32_t i = 0; i < rp->m_colorAttachments.size(); ++i) {
             if (i == rp->m_presentableAttachmentIndex) continue;
             rp->m_colorAttachments[i]->resize(rp->m_width, rp->m_height);
+            rp->m_colorAttachmentInfos[i].imageView = rp->m_colorAttachments[i]->getImageView();
         }
 
         if (rp->m_depthAttachment) {
