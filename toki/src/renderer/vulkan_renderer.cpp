@@ -11,6 +11,7 @@
 #include "renderer/vulkan_utils.h"
 #include "toki/core/assert.h"
 #include "toki/events/event.h"
+#include "vulkan/vulkan_core.h"
 
 #ifdef TK_WINDOW_SYSTEM_GLFW
 #include "GLFW/glfw3.h"
@@ -61,6 +62,36 @@ void VulkanRenderer::init() {
     VulkanBuffer::s_context = m_context;
     VulkanImage::s_context = m_context;
     VulkanGraphicsPipeline::s_context = m_context;
+
+    m_context->submitSingleUseCommands = [this](std::function<void(VkCommandBuffer)> fn) {
+        VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
+        commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        commandBufferAllocateInfo.commandPool = m_extraCommandPools[0];
+        commandBufferAllocateInfo.commandBufferCount = 1;
+        commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+        VkCommandBuffer commandBuffer;
+        TK_ASSERT_VK_RESULT(
+            vkAllocateCommandBuffers(m_context->device, &commandBufferAllocateInfo, &commandBuffer), "Could not allocate single use command buffer");
+
+        VkCommandBufferBeginInfo commandBufferBeginInfo{};
+        commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        TK_ASSERT_VK_RESULT(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo), "Could not begin recording single use command buffer");
+
+        fn(commandBuffer);
+
+        TK_ASSERT_VK_RESULT(vkEndCommandBuffer(commandBuffer), "Could not end recording single use commdn buffer");
+
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffer;
+
+        TK_ASSERT_VK_RESULT(vkQueueSubmit(m_context->graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE), "");
+        TK_ASSERT_VK_RESULT(vkQueueWaitIdle(m_context->graphicsQueue), "");
+        vkFreeCommandBuffers(m_context->device, m_extraCommandPools[0], 1, &commandBuffer);
+    };
 }
 
 void VulkanRenderer::shutdown() {
@@ -408,11 +439,16 @@ void VulkanRenderer::initCommandPools() {
 }
 
 void VulkanRenderer::initDescriptorPools() {
-    std::vector<VkDescriptorPoolSize> poolSizes = { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 100 } };
+    static constexpr uint32_t MAX_SETS = 100;
+
+    std::vector<VkDescriptorPoolSize> poolSizes = { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 100 },
+                                                    { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 100 },
+                                                    { VK_DESCRIPTOR_TYPE_SAMPLER, 100 },
+                                                    { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 100 } };
 
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
     descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    descriptorPoolCreateInfo.maxSets = 1;
+    descriptorPoolCreateInfo.maxSets = MAX_SETS;
     descriptorPoolCreateInfo.poolSizeCount = poolSizes.size();
     descriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
 

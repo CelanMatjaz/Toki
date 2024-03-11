@@ -1,8 +1,13 @@
 #include "vulkan_image.h"
 
+#include <stb_image.h>
 #include <toki/core/assert.h>
 
+#include <filesystem>
+
+#include "renderer/vulkan_buffer.h"
 #include "renderer/vulkan_utils.h"
+#include "toki/resources/resource_utils.h"
 #include "vulkan/vulkan_core.h"
 
 namespace Toki {
@@ -15,6 +20,42 @@ VulkanImage::VulkanImage(const VulkanImageConfig& config) : m_isWrapped(false), 
     createImage();
     createImageView();
 };
+
+VulkanImage::VulkanImage(std::filesystem::path path, const TextureConfig& config) : Texture(path, config), m_isWrapped(false) {
+    TK_ASSERT(ResourceUtils::fileExists(path), "File does not exist");
+
+    int width, height, channels;
+    int forcedChannels;
+
+    // TODO: use dynamic channel count
+    uint32_t* pixels = (uint32_t*) stbi_load(std::filesystem::absolute(path).string().c_str(), &width, &height, &channels, STBI_rgb_alpha);
+    VkDeviceSize imageSize = width * height * 4;
+
+    TK_ASSERT(pixels != nullptr, "Error loading image");
+    TK_ASSERT(imageSize > 0, "Image size is 0");
+
+    m_config = {};
+    m_config.extent = { (uint32_t) width, (uint32_t) height, 1 };
+    m_config.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    m_config.mips = 1;
+    m_config.tiling = VK_IMAGE_TILING_OPTIMAL;
+    m_config.memoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+    switch (channels) {
+        case 3:
+        case 4:
+            m_format = VK_FORMAT_R8G8B8A8_SRGB;
+            m_config.format = VK_FORMAT_R8G8B8A8_SRGB;
+            break;
+    }
+
+    createImage();
+    createImageView();
+
+    setData(imageSize, pixels);
+
+    stbi_image_free(pixels);
+}
 
 VulkanImage::~VulkanImage() {
     destroy();
@@ -32,14 +73,27 @@ void VulkanImage::resize(uint32_t width, uint32_t height, uint32_t layers) {
 }
 
 void VulkanImage::setData(uint32_t size, void* data) {
-    // BufferConfig bufferConfig{};
-    // bufferConfig.size = size;
-    // VulkanBuffer stagingBuffer(bufferConfig, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-    // VK_MEMORY_PROPERTY_HOST_COHERENT_BIT); stagingBuffer.setData(size, data);
+    VulkanBuffer stagingBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    stagingBuffer.setData(size, data);
 
-    // this->transitionLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    // copyBufferToTexture(&stagingBuffer, this);
-    // this->transitionLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    s_context->submitSingleUseCommands([this, buffer = stagingBuffer.getHandle()](VkCommandBuffer cmd) {
+        this->transitionLayout(cmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+        VkBufferImageCopy region{};
+        region.bufferOffset = 0;
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+        region.imageOffset = { 0, 0, 0 };
+        region.imageExtent = this->m_config.extent;
+
+        vkCmdCopyBufferToImage(cmd, buffer, this->m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+        this->transitionLayout(cmd, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    });
 }
 
 void VulkanImage::transitionLayout(VkCommandBuffer cmd, VkImageLayout oldLayout, VkImageLayout newLayout) {
@@ -110,7 +164,7 @@ void VulkanImage::createImage() {
     imageCreateInfo.arrayLayers = 1;
     imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageCreateInfo.tiling = m_config.tiling;
-    imageCreateInfo.usage = m_config.usage;
+    imageCreateInfo.usage = m_config.usage | VK_IMAGE_USAGE_SAMPLED_BIT;
 
     vkCreateImage(s_context->device, &imageCreateInfo, nullptr, &m_imageHandle);
 

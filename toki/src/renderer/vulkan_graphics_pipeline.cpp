@@ -5,10 +5,12 @@
 #include <spirv_cross/spirv_reflect.hpp>
 
 #include "renderer/vulkan_buffer.h"
+#include "renderer/vulkan_image.h"
 #include "renderer/vulkan_utils.h"
 #include "toki/core/assert.h"
 #include "toki/resources/loaders/text_loader.h"
 #include "toki/resources/resource_utils.h"
+#include "vulkan/vulkan_core.h"
 
 namespace Toki {
 
@@ -43,27 +45,58 @@ const std::vector<VkDescriptorSet>& VulkanGraphicsPipeline::getDestriptorSets() 
 
 void VulkanGraphicsPipeline::setUniforms(std::vector<UniformType> uniforms) {
     std::vector<VkWriteDescriptorSet> writes;
-    std::vector<VkDescriptorBufferInfo> descriptorBufferInfos;
-    std::vector<VkDescriptorImageInfo> descriptorImageInfos;
+
+    uint32_t bufferInfoSize = 0, imageInfoSize = 0;
+
+    for (const auto& u : uniforms) {
+        if (std::holds_alternative<Ref<UniformBuffer>>(u)) ++bufferInfoSize;
+        if (std::holds_alternative<Ref<Texture>>(u)) ++imageInfoSize;
+    }
+    
+    std::vector<VkDescriptorBufferInfo> descriptorBufferInfos(bufferInfoSize);
+    std::vector<VkDescriptorImageInfo> descriptorImageInfos(imageInfoSize);
+
+    uint32_t bufferInfoIndex = 0, imageInfoIndex = 0;
 
     for (const auto& u : uniforms) {
         if (std::holds_alternative<Ref<UniformBuffer>>(u)) {
             auto uniform = std::get<Ref<UniformBuffer>>(u);
 
-            VkDescriptorBufferInfo descriptorBufferInfo{};
+            VkDescriptorBufferInfo& descriptorBufferInfo = descriptorBufferInfos[bufferInfoIndex++];
+            descriptorBufferInfo = {};
             descriptorBufferInfo.buffer = (VkBuffer) ((VulkanUniformBuffer*) uniform.get())->getHandle();
             descriptorBufferInfo.offset = 0;
             descriptorBufferInfo.range = uniform->getSize();
-            descriptorBufferInfos.emplace_back(descriptorBufferInfo);
 
             VkWriteDescriptorSet writeDescriptorSet{};
             writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             writeDescriptorSet.dstSet = m_descriptorSets[uniform->getSetIndex()];
             writeDescriptorSet.descriptorCount = 1;
             writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            writeDescriptorSet.pBufferInfo = &descriptorBufferInfos.back();
+            writeDescriptorSet.pBufferInfo = &descriptorBufferInfos[descriptorBufferInfos.size()-1];
             writeDescriptorSet.dstArrayElement = uniform->getArrayElementIndex();
             writeDescriptorSet.dstBinding = uniform->getBinding();
+            writes.emplace_back(writeDescriptorSet);
+        }
+
+        if (std::holds_alternative<Ref<Texture>>(u)) {
+            auto texture = std::get<Ref<Texture>>(u);
+
+            VkDescriptorImageInfo& descriptorImageInfo = descriptorImageInfos[imageInfoIndex++];
+            descriptorImageInfo = {};
+            descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            descriptorImageInfo.imageView = (VkImageView) ((VulkanImage*) texture.get())->getImageView();
+            descriptorImageInfo.sampler = VK_NULL_HANDLE;
+            descriptorImageInfos.emplace_back(descriptorImageInfo);
+
+            VkWriteDescriptorSet writeDescriptorSet{};
+            writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writeDescriptorSet.dstSet = m_descriptorSets[texture->getSetIndex()];
+            writeDescriptorSet.descriptorCount = 1;
+            writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+            writeDescriptorSet.pImageInfo = &descriptorImageInfos.back();
+            writeDescriptorSet.dstArrayElement = texture->getArrayElementIndex();
+            writeDescriptorSet.dstBinding = texture->getBinding();
             writes.emplace_back(writeDescriptorSet);
         }
     }
@@ -266,7 +299,7 @@ void VulkanGraphicsPipeline::create() {
 
     m_descriptorSetLayouts.resize(sets.size());
 
-    for (const auto& [set, bindings] : reflectDescriptors(spirv)) {
+    for (const auto& [set, bindings] : sets) {
         VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
         descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         descriptorSetLayoutCreateInfo.bindingCount = bindings.size();
@@ -284,7 +317,8 @@ void VulkanGraphicsPipeline::create() {
     descriptorSetAllocateInfo.pSetLayouts = m_descriptorSetLayouts.data();
 
     m_descriptorSets.resize(m_descriptorSetLayouts.size());
-    vkAllocateDescriptorSets(s_context->device, &descriptorSetAllocateInfo, m_descriptorSets.data());
+    TK_ASSERT_VK_RESULT(
+        vkAllocateDescriptorSets(s_context->device, &descriptorSetAllocateInfo, m_descriptorSets.data()), "Could not allocate descriptor sets");
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -440,7 +474,12 @@ static std::unordered_map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> r
     for (const auto& [stage, spirv] : p) {
         spirv_cross::Compiler compiler(spirv);
         spirv_cross::ShaderResources resources = compiler.get_shader_resources();
-        std::vector<ResourceDectriptorType> resourcesArrays = { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, resources.uniform_buffers } };
+        std::vector<ResourceDectriptorType> resourcesArrays = {
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, resources.uniform_buffers },
+            { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, resources.separate_images },
+            { VK_DESCRIPTOR_TYPE_SAMPLER, resources.separate_samplers },
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, resources.sampled_images },
+        };
 
         spirv_cross::SmallVector<spirv_cross::Resource> resourceArray;
 

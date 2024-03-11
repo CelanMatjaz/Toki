@@ -67,8 +67,8 @@ public:
 
         {
             Toki::ShaderConfig config{};
-            config.shaderStagePaths[Toki::ShaderStage::SHADER_STAGE_FRAGMENT] = "assets/shaders/test_shader.frag";
-            config.shaderStagePaths[Toki::ShaderStage::SHADER_STAGE_VERTEX] = "assets/shaders/test_shader.vert";
+            config.shaderStagePaths[Toki::ShaderStage::SHADER_STAGE_FRAGMENT] = "assets/shaders/test_shader.frag.glsl";
+            config.shaderStagePaths[Toki::ShaderStage::SHADER_STAGE_VERTEX] = "assets/shaders/test_shader.vert.glsl";
             config.layoutDescriptions.attributeDescriptions = { { 0, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT3, 0 },
                                                                 { 1, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT4, 3 * sizeof(float) } };
             config.layoutDescriptions.bindingDescriptions = { { 0, 7 * sizeof(float), Toki::VertexInputRate::VERTEX_INPUT_RATE_VERTEX } };
@@ -103,7 +103,15 @@ public:
             memset(offset, 0, sizeof(glm::vec3));
         }
 
-        shader->setUniforms({ uniformBuffer, offsetUniform });
+        {
+            Toki::TextureConfig config{};
+            config.setIndex = 1;
+            config.binding = 0;
+            config.arrayElement = 0;
+            testTexture = Toki::Texture::create("assets/textures/chad.jpg", config);
+        }
+
+        shader->setUniforms({ uniformBuffer, offsetUniform, testTexture });
 
         Toki::Event::bindEvent(Toki::EventType::WindowResize, this, [this](void* sender, void* receiver, const Toki::Event& event) {
             glm::mat4& mvp = *this->mappedMemory;
@@ -119,13 +127,13 @@ public:
     void onRender() override {
         submit(renderPass, [this](const Toki::RenderingContext& ctx) {
             // mvp = camera.getProjection() * camera.getView() * glm::translate(glm::mat4{ 1.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f });
-            offset->r += 0.1;
+            offset->r += 0.001;
 
             ctx.bindVertexBuffers({ vertexBuffer });
             ctx.bindIndexBuffer(indexBuffer);
             ctx.bindShader(shader);
             ctx.pushConstants(shader, sizeof(mvp), &mvp);
-            ctx.bindUniforms(shader, 0, 1);
+            ctx.bindUniforms(shader, 0, 2);
             ctx.draw(3, 1, 0, 0);
             ctx.draw(3, 1, 3, 0);
         });
@@ -138,6 +146,7 @@ private:
     Toki::Ref<Toki::UniformBuffer> uniformBuffer;
     Toki::Ref<Toki::UniformBuffer> offsetUniform;
     Toki::Ref<Toki::Shader> shader;
+    Toki::Ref<Toki::Texture> testTexture;
 };
 
 int main() {

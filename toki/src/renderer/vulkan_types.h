@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include <functional>
+
 #include "toki/renderer/renderer_types.h"
 
 #if VK_NO_PROTOTYPES
@@ -27,6 +29,8 @@ struct VulkanContext {
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
 
     VkAllocationCallbacks* allocationCallbacks = nullptr;
+
+    std::function<void(std::function<void(VkCommandBuffer)>)> submitSingleUseCommands = {};
 };
 
 struct SwapchainConfig {

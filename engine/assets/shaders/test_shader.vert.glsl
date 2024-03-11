@@ -18,6 +18,6 @@ layout(set = 0, binding = 1) uniform Offset {
 } offset;
 
 void main() {
-    gl_Position = uniformBuffer.mvp * vec4(inPosition + offset.offset, 1.0);
+    gl_Position = PushConstants.mvp * vec4(inPosition + offset.offset, 1.0);
     outColor = inColor;
 }

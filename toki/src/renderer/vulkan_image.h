@@ -4,6 +4,7 @@
 
 #include "renderer/vulkan_types.h"
 #include "toki/core/core.h"
+#include "toki/renderer/texture.h"
 
 namespace Toki {
 
@@ -18,7 +19,7 @@ struct VulkanImageConfig {
     uint32_t mips = 1;
 };
 
-class VulkanImage {
+class VulkanImage : public Texture {
     friend VulkanRenderer;
 
 public:
@@ -26,6 +27,7 @@ public:
     // Wrap swapchain image
     VulkanImage(VkImage image, VkFormat format);
     VulkanImage(const VulkanImageConfig& config);
+    VulkanImage(std::filesystem::path path, const TextureConfig& config);
 
     ~VulkanImage();
 

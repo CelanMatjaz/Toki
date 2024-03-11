@@ -76,7 +76,7 @@ target("toki")
     add_links("vulkan-1")
     set_prefixname("")
     -- set_extension(".lib")
-    add_defines("GLM_FORCE_RADIANS", "GLM_FORCE_DEPTH_ZERO_TO_ONE")
+    add_defines("GLM_FORCE_RADIANS", "GLM_FORCE_DEPTH_ZERO_TO_ONE", "STB_IMAGE_STATIC", "STB_IMAGE_IMPLEMENTATION")
 
     if is_mode("debug") then
         add_defines("TK_DEBUG")
