@@ -15,7 +15,7 @@
 
 namespace Toki {
 
-static std::vector<uint32_t> getCompiledBinary(const std::pair<ShaderStage, std::filesystem::path>& stage);
+static std::vector<uint32_t> getCompiledBinary(const std::pair<ShaderStage, std::variant<std::string, std::filesystem::path>>& stage);
 static std::vector<VkPushConstantRange> reflectConstants(ShaderStage, const std::vector<uint32_t>& spirv);
 static std::unordered_map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> reflectDescriptors(
     const std::unordered_map<ShaderStage, std::vector<uint32_t>>& p);
@@ -133,13 +133,13 @@ void VulkanGraphicsPipeline::setUniforms(std::vector<Uniform> uniforms) {
 void VulkanGraphicsPipeline::create() {
     std::vector<VkPipelineShaderStageCreateInfo> shaderStageCreateInfos;
     std::vector<VkShaderModule> shaderModules;
-    shaderModules.reserve(m_config.shaderStagePaths.size());
+    shaderModules.reserve(m_config.shaderStages.size());
 
     std::vector<VkPushConstantRange> constants;
 
     std::unordered_map<ShaderStage, std::vector<uint32_t>> spirv;
 
-    for (const auto& pair : m_config.shaderStagePaths) {
+    for (auto& pair : m_config.shaderStages) {
         auto& code = spirv[pair.first] = getCompiledBinary(pair);
 
         constants.append_range(reflectConstants(pair.first, code));
@@ -426,7 +426,7 @@ void VulkanGraphicsPipeline::destroy() {
     }
 }
 
-static std::vector<uint32_t> getCompiledBinary(const std::pair<ShaderStage, std::filesystem::path>& stage) {
+static std::vector<uint32_t> getCompiledBinary(const std::pair<ShaderStage, std::variant<std::string, std::filesystem::path>>& stage) {
     shaderc::Compiler spirvCompiler;
     shaderc::CompileOptions options;
     options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
@@ -451,14 +451,19 @@ static std::vector<uint32_t> getCompiledBinary(const std::pair<ShaderStage, std:
             std::unreachable();
     }
 
-    auto fileSource = TextLoader::readTextFile(stage.second);
+    std::expected<std::string, Toki::Error> fileSource;
 
-    if (!fileSource.has_value()) {
-        std::unreachable();
+    if (std::holds_alternative<std::filesystem::path>(stage.second)) {
+        fileSource = TextLoader::readTextFile(std::get<std::filesystem::path>(stage.second));
+
+        if (!fileSource.has_value()) {
+            std::unreachable();
+        }
+    } else {
+        fileSource = std::get<std::string>(stage.second);
     }
 
-    shaderc::SpvCompilationResult spirvModule =
-        spirvCompiler.CompileGlslToSpv(fileSource.value().c_str(), shaderKind, std::filesystem::absolute(stage.second).string().c_str(), options);
+    shaderc::SpvCompilationResult spirvModule = spirvCompiler.CompileGlslToSpv(fileSource.value().c_str(), shaderKind, "", options);
     if (spirvModule.GetCompilationStatus() != shaderc_compilation_status::shaderc_compilation_status_success) {
         std::println("ERROR MESSAGE:\n{}\n\nCOMPILATION STATUS: {}\n", spirvModule.GetErrorMessage(), (int) spirvModule.GetCompilationStatus());
     }

@@ -14,7 +14,7 @@
 namespace Toki {
 
 struct ShaderConfig {
-    std::unordered_map<ShaderStage, std::filesystem::path> shaderStagePaths;
+    std::unordered_map<ShaderStage, std::variant<std::string, std::filesystem::path>> shaderStages;
     VertexLayoutDescriptions layoutDescriptions;
     std::vector<Attachment> attachments;
 };
