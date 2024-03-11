@@ -5,6 +5,7 @@
 
 #include "assert.h"
 #include "renderer/vulkan_renderer.h"
+#include "toki/renderer/renderer_2d/renderer_2d.h"
 
 namespace Toki {
 
@@ -18,6 +19,9 @@ Application::Application(const ApplicationConfig& config) {
     m_renderer->init();
 
     Layer::s_renderer = m_renderer;
+    Renderer2D::s_renderer = m_renderer;
+
+    Renderer2D::init();
 
     m_renderer->createSwapchain(m_mainWindow);
 }
@@ -29,6 +33,8 @@ Application::~Application() {
     for (uint32_t i = 0; i < layerCount; ++i) {
         popLayer();
     }
+
+    Renderer2D::shutdown();
 
     m_renderer->shutdown();
     Window::shutdownWindowSystem();

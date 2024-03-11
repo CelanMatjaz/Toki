@@ -88,12 +88,28 @@ void VulkanVertexBuffer::setData(uint32_t size, void* data, uint32_t offset) {
     VulkanBuffer::setData(size, data, offset);
 }
 
+void* VulkanVertexBuffer::mapMemory(uint32_t size, uint32_t offset) {
+    return VulkanBuffer::mapMemory(size, offset);
+}
+
+void VulkanVertexBuffer::unmapMemory() {
+    VulkanBuffer::unmapMemory();
+}
+
 VulkanIndexBuffer::VulkanIndexBuffer(const IndexBufferConfig& config) :
     IndexBuffer(config),
     VulkanBuffer(config.size, BufferType::BUFFER_TYPE_INDEX) {}
 
 void VulkanIndexBuffer::setData(uint32_t size, void* data, uint32_t offset) {
     VulkanBuffer::setData(size, data, offset);
+}
+
+void* VulkanIndexBuffer::mapMemory(uint32_t size, uint32_t offset) {
+    return VulkanBuffer::mapMemory(size, offset);
+}
+
+void VulkanIndexBuffer::unmapMemory() {
+    VulkanBuffer::unmapMemory();
 }
 
 VulkanUniformBuffer::VulkanUniformBuffer(const UniformBufferConfig& config) :

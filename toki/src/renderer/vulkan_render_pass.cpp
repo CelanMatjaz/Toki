@@ -19,7 +19,10 @@ VulkanRenderPass::VulkanRenderPass(const RenderPassConfig& config) : m_width(con
         if (attachment.presentable) {
             TK_ASSERT(m_presentableAttachmentIndex == -1, "Only 1 presentable attachment can be provided");
             m_presentableAttachmentIndex = i;
-            attachmentInfo.clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
+        }
+
+        if (attachment.loadOp == AttachmentLoadOp::ATTACHMENT_LOAD_OP_LOAD) {
+            attachmentInfo.clearValue.color.float32[3] = 0.0f;
         }
 
         switch (attachment.loadOp) {

@@ -344,8 +344,10 @@ void VulkanGraphicsPipeline::create() {
     descriptorSetAllocateInfo.pSetLayouts = m_descriptorSetLayouts.data();
 
     m_descriptorSets.resize(m_descriptorSetLayouts.size());
-    TK_ASSERT_VK_RESULT(
-        vkAllocateDescriptorSets(s_context->device, &descriptorSetAllocateInfo, m_descriptorSets.data()), "Could not allocate descriptor sets");
+    if (m_descriptorSets.size() > 0) {
+        TK_ASSERT_VK_RESULT(
+            vkAllocateDescriptorSets(s_context->device, &descriptorSetAllocateInfo, m_descriptorSets.data()), "Could not allocate descriptor sets");
+    }
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;

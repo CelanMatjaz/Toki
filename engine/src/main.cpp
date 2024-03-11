@@ -207,6 +207,13 @@ public:
             ctx.bindUniforms(shader2, 0, 2);
             ctx.drawIndexed(6, 1, 0, 0, 0);
         });
+
+        static float test = 0.0;
+        test += 0.01;
+
+        Toki::Renderer2D::begin();
+        Toki::Renderer2D::drawQuad(glm::vec2{ test * 4, test * test }, glm::vec2{ 300.0f, 300.0f }, glm::vec4{ 1.0f });
+        Toki::Renderer2D::end();
     }
 
 private:

@@ -41,6 +41,8 @@ public:
     virtual ~VulkanVertexBuffer() = default;
 
     virtual void setData(uint32_t size, void* data, uint32_t offset = 0) override;
+    virtual void* mapMemory(uint32_t size, uint32_t offset) override;
+    virtual void unmapMemory() override;
 };
 
 class VulkanIndexBuffer : public IndexBuffer, public VulkanBuffer {
@@ -50,6 +52,8 @@ public:
     virtual ~VulkanIndexBuffer() = default;
 
     virtual void setData(uint32_t size, void* data, uint32_t offset = 0) override;
+    virtual void* mapMemory(uint32_t size, uint32_t offset) override;
+    virtual void unmapMemory() override;
 };
 
 class VulkanUniformBuffer : public UniformBuffer, public VulkanBuffer {

@@ -33,6 +33,8 @@ public:
     virtual ~VertexBuffer() = default;
 
     virtual void setData(uint32_t size, void* data, uint32_t offset = 0) = 0;
+    virtual void* mapMemory(uint32_t size, uint32_t offset) = 0;
+    virtual void unmapMemory() = 0;
 
     uint32_t getBinding() const;
 
@@ -54,6 +56,8 @@ public:
     virtual ~IndexBuffer() = default;
 
     virtual void setData(uint32_t size, void* data, uint32_t offset = 0) = 0;
+    virtual void* mapMemory(uint32_t size, uint32_t offset) = 0;
+    virtual void unmapMemory() = 0;
 
     uint32_t getIndexCount() const;
     IndexSize getIndexSize() const;
