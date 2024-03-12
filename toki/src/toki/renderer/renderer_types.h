@@ -95,4 +95,62 @@ struct VertexLayoutDescriptions {
     std::vector<VertexBindingDescription> bindingDescriptions;
 };
 
+enum class PrimitiveTopology : uint8_t {
+    PointList,
+    LineList,
+    LineStrip,
+    TriangleList,
+    TriangleStrip,
+    TriangleFan,
+    LineListWithAdjacency,
+    LineStripWithAdjacency,
+    TriangleListWithAdjacency,
+    TriangleStripWithAdjacency,
+    PatchList,
+    NotSpecified
+};
+
+enum class PolygonMode : uint8_t {
+    Fill,
+    Line,
+    Point,
+    NotSpecified
+};
+
+enum class CullMode : uint8_t {
+    None,
+    Front,
+    Back,
+    FrontAndBack,
+    NotSpecified
+};
+
+enum class FrontFace : uint8_t {
+    CounterClockwise,
+    Clockwise,
+    NotSpecified
+};
+
+enum class CompareOp : uint8_t {
+    Never,
+    Less,
+    Equal,
+    LessOrEqual,
+    Greater,
+    NotEqual,
+    GreaterOrEqual,
+    Always,
+    NotSpecified
+};
+
+struct DepthTest {
+    bool enable : 1 = false;
+    bool write : 1 = false;
+    CompareOp compareOp : 4;
+};
+
+struct StencilTest {
+    bool enable : 1 = false;
+};
+
 }  // namespace Toki
