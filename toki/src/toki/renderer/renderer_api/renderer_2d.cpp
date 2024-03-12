@@ -17,8 +17,11 @@ static constexpr const char* QUAD_SHADER_VERT_SOURCE = R"(#version 460
 
 static constexpr const char* QUAD_SHADER_FRAG_SOURCE = R"(#version 460
     layout(location = 0) out vec4 outColor;
+    layout(set = 0, binding = 0) uniform QuadData {
+        vec4 color;
+    } quadData;
     void main() {
-        outColor = vec4(1.0, 1.0, 1.0, 1.0);
+        outColor = quadData.color;
     })";
 
 struct RendererData {
@@ -125,6 +128,15 @@ void Renderer2D::initObjects() {
         data.quadIndexPtr = (uint32_t*) data.quadIndexBuffer->mapMemory(config.size, 0);
     }
 
+    {
+        UniformBufferConfig config{};
+        config.size = sizeof(glm::vec4);
+        data.colorUniformBuffer = UniformBuffer::create(config);
+        glm::vec4 defaultColor = glm::vec4{ 1.0f, 0.0f, 1.0f, 1.0f };
+        data.colorUniformBuffer->setData(sizeof(glm::vec4), &defaultColor);
+        data.quadShader->setUniforms({ { data.colorUniformBuffer } });
+    }
+
     data.camera.setProjection(glm::ortho(0.0f, (float) width, 0.0f, (float) height, -10.0f, 10.0f));
     data.camera.setView(glm::lookAt(glm::vec3{ 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }));
     data.mvp = data.camera.getProjection() * data.camera.getView();
@@ -141,6 +153,7 @@ void Renderer2D::flush() {
         submit(data.renderPass, [](const Toki::RenderingContext& ctx) {
             ctx.bindShader(data.quadShader);
             ctx.pushConstants(data.quadShader, sizeof(data.mvp), &data.mvp);
+            ctx.bindUniforms(data.quadShader, 0, 1);
             ctx.bindVertexBuffers({ data.quadVertexBuffer });
             ctx.bindIndexBuffer(data.quadIndexBuffer);
             ctx.drawIndexed(data.indexCount, 1, 0, 0, 0);
