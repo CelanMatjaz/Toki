@@ -248,7 +248,7 @@ void VulkanGraphicsPipeline::create() {
         case PrimitiveTopology::LineStrip:
             inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
             break;
-        case PrimitiveTopology::TrianbleList:
+        case PrimitiveTopology::TriangleList:
             inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
             break;
         case PrimitiveTopology::TriangleStrip:

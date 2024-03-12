@@ -99,7 +99,7 @@ enum class PrimitiveTopology : uint8_t {
     PointList,
     LineList,
     LineStrip,
-    TrianbleList,
+    TriangleList,
     TriangleStrip,
     TriangleFan,
     LineListWithAdjacency,
