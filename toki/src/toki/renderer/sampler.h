@@ -4,8 +4,7 @@
 
 namespace Toki {
 
-struct SamplerConfig {
-};
+struct SamplerConfig {};
 
 class Sampler {
 public:
