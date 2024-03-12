@@ -63,12 +63,10 @@ public:
     IndexSize getIndexSize() const;
 
 private:
-IndexBufferConfig m_config;
+    IndexBufferConfig m_config;
 };
 
-struct UniformBufferConfig : public BufferConfig {
-
-};
+struct UniformBufferConfig : public BufferConfig {};
 
 class UniformBuffer : public _Buffer {
 public:

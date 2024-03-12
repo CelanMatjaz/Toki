@@ -51,7 +51,7 @@ void VulkanGraphicsPipeline::setUniforms(std::vector<Uniform> uniforms) {
         if (std::holds_alternative<Ref<UniformBuffer>>(u.uniform)) ++bufferInfoSize;
         if (std::holds_alternative<Ref<Texture>>(u.uniform) || std::holds_alternative<Ref<Sampler>>(u.uniform)) ++imageInfoSize;
     }
-    
+
     std::vector<VkDescriptorBufferInfo> descriptorBufferInfos(bufferInfoSize);
     std::vector<VkDescriptorImageInfo> descriptorImageInfos(imageInfoSize);
 
@@ -198,6 +198,8 @@ void VulkanGraphicsPipeline::create() {
             case VertexInputRate::VERTEX_INPUT_RATE_INSTANCE:
                 bindingDescriptions[i].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
                 break;
+            default:
+                std::unreachable();
         }
     }
 
@@ -220,6 +222,8 @@ void VulkanGraphicsPipeline::create() {
             case VertexFormat::VERTEX_FORMAT_FLOAT4:
                 attributeDescriptions[i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
                 break;
+            default:
+                std::unreachable();
         }
     }
 
@@ -232,8 +236,45 @@ void VulkanGraphicsPipeline::create() {
 
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo{};
     inputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     inputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
+
+    switch (m_config.options.primitiveTopology) {
+        case PrimitiveTopology::PointList:
+            inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+            break;
+        case PrimitiveTopology::LineList:
+            inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+            break;
+        case PrimitiveTopology::LineStrip:
+            inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+            break;
+        case PrimitiveTopology::TrianbleList:
+            inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+            break;
+        case PrimitiveTopology::TriangleStrip:
+            inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+            break;
+        case PrimitiveTopology::TriangleFan:
+            inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
+            break;
+        case PrimitiveTopology::LineListWithAdjacency:
+            inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY;
+            break;
+        case PrimitiveTopology::LineStripWithAdjacency:
+            inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY;
+            break;
+        case PrimitiveTopology::TriangleListWithAdjacency:
+            inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY;
+            break;
+        case PrimitiveTopology::TriangleStripWithAdjacency:
+            inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY;
+            break;
+        case PrimitiveTopology::PatchList:
+            inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+            break;
+        default:
+            std::unreachable();
+    }
 
     VkViewport viewport{};
     viewport.maxDepth = 1.0f;
@@ -251,14 +292,54 @@ void VulkanGraphicsPipeline::create() {
     rasterizerCreateInto.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizerCreateInto.depthClampEnable = VK_FALSE;
     rasterizerCreateInto.rasterizerDiscardEnable = VK_FALSE;
-    rasterizerCreateInto.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizerCreateInto.lineWidth = 1.0f;
-    rasterizerCreateInto.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizerCreateInto.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterizerCreateInto.depthBiasEnable = VK_FALSE;
     rasterizerCreateInto.depthBiasConstantFactor = 0.0f;
     rasterizerCreateInto.depthBiasClamp = 0.0f;
     rasterizerCreateInto.depthBiasSlopeFactor = 0.0f;
+
+    switch (m_config.options.polygonMode) {
+        case PolygonMode::Fill:
+            rasterizerCreateInto.polygonMode = VK_POLYGON_MODE_FILL;
+            break;
+        case PolygonMode::Line:
+            rasterizerCreateInto.polygonMode = VK_POLYGON_MODE_LINE;
+            break;
+        case PolygonMode::Point:
+            rasterizerCreateInto.polygonMode = VK_POLYGON_MODE_POINT;
+            break;
+        default:
+            std::unreachable();
+    }
+
+    switch (m_config.options.cullMode) {
+        case CullMode::None:
+            rasterizerCreateInto.cullMode = VK_CULL_MODE_NONE;
+            break;
+        case CullMode::Front:
+            rasterizerCreateInto.cullMode = VK_CULL_MODE_FRONT_BIT;
+            break;
+        case CullMode::Back:
+            rasterizerCreateInto.cullMode = VK_CULL_MODE_BACK_BIT;
+            break;
+        case CullMode::FrontAndBack:
+            rasterizerCreateInto.cullMode = VK_CULL_MODE_FRONT_AND_BACK;
+            break;
+        default:
+            std::unreachable();
+    }
+
+    switch (m_config.options.frontFace) {
+        case FrontFace::CounterClockwise:
+            rasterizerCreateInto.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+            break;
+        case FrontFace::Clockwise:
+            rasterizerCreateInto.frontFace = VK_FRONT_FACE_CLOCKWISE;
+            break;
+        default:
+            std::unreachable();
+    }
 
     VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo{};
     multisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -271,9 +352,9 @@ void VulkanGraphicsPipeline::create() {
 
     VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo{};
     depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
-    depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
-    depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+    depthStencilStateCreateInfo.depthTestEnable = m_config.options.depthTest.enable ? VK_TRUE : VK_FALSE;
+    depthStencilStateCreateInfo.depthWriteEnable = m_config.options.depthTest.write ? VK_TRUE : VK_FALSE;
+    depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;  // TODO: add a switch statement for this (m_config.options.depthTest.compareOp)
     depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
     depthStencilStateCreateInfo.minDepthBounds = 0.0f;
     depthStencilStateCreateInfo.maxDepthBounds = 1.0f;

@@ -104,7 +104,17 @@ public:
         }
 
         {
+            Toki::ShaderOptions options{};
+            options.primitiveTopology = Toki::PrimitiveTopology::TrianbleList;
+            options.polygonMode = Toki::PolygonMode::Fill;
+            options.cullMode = Toki::CullMode::Back;
+            options.frontFace = Toki::FrontFace::Clockwise;
+            options.depthTest.enable = true;
+            options.depthTest.write = true;
+            options.depthTest.compareOp = Toki::CompareOp::Less;
+
             Toki::ShaderConfig config{};
+            config.options = options;
             config.shaderStages[Toki::ShaderStage::SHADER_STAGE_FRAGMENT] = (std::filesystem::path) "assets/shaders/test_shader.frag.glsl";
             config.shaderStages[Toki::ShaderStage::SHADER_STAGE_VERTEX] = (std::filesystem::path) "assets/shaders/test_shader.vert.glsl";
             config.layoutDescriptions.attributeDescriptions = {
@@ -190,7 +200,7 @@ public:
     void onRender() override {
         submit(renderPass, [this](const Toki::RenderingContext& ctx) {
             offset->r += 0.1;
-            
+
             ctx.bindVertexBuffers({ vertexBuffer });
             ctx.bindIndexBuffer(indexBuffer);
             ctx.bindShader(shader);
