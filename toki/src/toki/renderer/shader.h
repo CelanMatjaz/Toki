@@ -13,10 +13,20 @@
 
 namespace Toki {
 
+struct ShaderOptions {
+    PrimitiveTopology primitiveTopology : 4 = PrimitiveTopology::NotSpecified;
+    PolygonMode polygonMode : 2 = PolygonMode::NotSpecified;
+    CullMode cullMode : 2 = CullMode::NotSpecified;
+    FrontFace frontFace : 2 = FrontFace::NotSpecified;
+    DepthTest depthTest;
+    StencilTest stencilTest;
+};
+
 struct ShaderConfig {
     std::unordered_map<ShaderStage, std::variant<std::string, std::filesystem::path>> shaderStages;
     VertexLayoutDescriptions layoutDescriptions;
     std::vector<Attachment> attachments;
+    ShaderOptions options{};
 };
 
 using UniformType = std::variant<Ref<UniformBuffer>, Ref<Texture>, Ref<Sampler>>;
