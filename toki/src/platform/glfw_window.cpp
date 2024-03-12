@@ -20,8 +20,6 @@ GlfwWindow::GlfwWindow(const WindowConfig& windowConfig) {
 
     m_windowHandle = glfwCreateWindow(windowConfig.width, windowConfig.height, windowConfig.title.c_str(), nullptr, nullptr);
 
-    m_dimensions = { windowConfig.width, windowConfig.height };
-
     glfwSetWindowSizeLimits(m_windowHandle, MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT, GLFW_DONT_CARE, GLFW_DONT_CARE);
 
     glfwMakeContextCurrent(m_windowHandle);
@@ -29,6 +27,8 @@ GlfwWindow::GlfwWindow(const WindowConfig& windowConfig) {
 
     glfwSetFramebufferSizeCallback(m_windowHandle, windowResizedCallback);
     glfwSetKeyCallback(m_windowHandle, keyCallback);
+
+    glfwGetFramebufferSize(m_windowHandle, &m_dimensions.width, &m_dimensions.height);
 }
 
 GlfwWindow::~GlfwWindow() {}

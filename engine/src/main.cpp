@@ -10,6 +10,8 @@ public:
     ~TestLayer() = default;
 
     void onAttach() override {
+        auto [width, height] = m_window->getDimensions();
+
         std::vector<Toki::Attachment> attachments;
 
         Toki::Attachment presentAttachment{};
@@ -27,8 +29,8 @@ public:
 
         {
             Toki::RenderPassConfig config{};
-            config.width = 800;
-            config.height = 600;
+            config.width = width;
+            config.height = height;
             config.attachments = attachments;
             renderPass2 = Toki::RenderPass::create(config);
 
@@ -126,7 +128,7 @@ public:
             shader2 = Toki::Shader::create(config);
         }
 
-        camera.setProjection(glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, 0.1f, 1000.0f));
+        camera.setProjection(glm::ortho(0.0f, (float) width, 0.0f, (float) height, 0.1f, 1000.0f));
         camera.setView(glm::lookAt(glm::vec3{ 0.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }));
 
         {
@@ -236,6 +238,7 @@ private:
 int main() {
     Toki::ApplicationConfig applicationConfig{};
     applicationConfig.windowConfig.isResizable = true;
+    applicationConfig.windowConfig.showOnCreate = true;
 
     Toki::Application app{ applicationConfig };
 

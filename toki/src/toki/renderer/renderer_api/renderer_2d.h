@@ -14,7 +14,7 @@ class Renderer2D {
     friend Application;
 
 public:
-    static void init();
+    static void init(Ref<Window> window);
     static void shutdown();
 
     static void begin();
@@ -29,7 +29,7 @@ private:
 
     static void submit(Ref<RenderPass> renderPass, RendererSubmitFn submitFn);
 
-    static void initObjects();
+    static void initObjects(Ref<Window> window);
 };
 
 }  // namespace Toki

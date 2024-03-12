@@ -21,7 +21,7 @@ Application::Application(const ApplicationConfig& config) {
     Layer::s_renderer = m_renderer;
     Renderer2D::s_renderer = m_renderer;
 
-    Renderer2D::init();
+    Renderer2D::init(m_mainWindow);
 
     m_renderer->createSwapchain(m_mainWindow);
 }
@@ -71,6 +71,7 @@ void Application::stop() {
 }
 
 void Application::pushLayer(Ref<Layer> layer) {
+    layer->m_window = m_mainWindow;
     m_layerStack.emplace_back(layer);
     m_layerStack.back()->onAttach();
 }

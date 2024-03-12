@@ -23,6 +23,7 @@ public:
 
 protected:
     void submit(Ref<RenderPass> renderPass, RendererSubmitFn submitFn);
+    Ref<Window> m_window;
 
 private:
     inline static Ref<Renderer> s_renderer;

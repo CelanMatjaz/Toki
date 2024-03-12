@@ -52,9 +52,9 @@ struct RendererData {
 
 static RendererData data;
 
-void Renderer2D::init() {
+void Renderer2D::init(Ref<Window> window) {
     TK_ASSERT(!data.initialized, "Renderer2D already initialized");
-    initObjects();
+    initObjects(window);
     data.initialized = true;
 }
 
@@ -75,8 +75,8 @@ void Renderer2D::submit(Ref<RenderPass> renderpass, RendererSubmitFn submitFn) {
     s_renderer->submit(renderpass, submitFn);
 }
 
-void Renderer2D::initObjects() {
-    const auto [width, height] = WindowDimensions{ 800, 600 };
+void Renderer2D::initObjects(Ref<Window> window) {
+    const auto [width, height] = window->getDimensions();
 
     std::vector<Attachment> attachments(2);
 

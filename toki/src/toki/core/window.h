@@ -23,7 +23,7 @@ struct WindowConfig {
 };
 
 struct WindowDimensions {
-    uint16_t width, height;
+    int width, height;
 };
 
 class Window {
