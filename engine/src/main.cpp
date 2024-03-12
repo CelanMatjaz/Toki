@@ -105,7 +105,7 @@ public:
 
         {
             Toki::ShaderOptions options{};
-            options.primitiveTopology = Toki::PrimitiveTopology::TrianbleList;
+            options.primitiveTopology = Toki::PrimitiveTopology::TriangleList;
             options.polygonMode = Toki::PolygonMode::Fill;
             options.cullMode = Toki::CullMode::Back;
             options.frontFace = Toki::FrontFace::Clockwise;

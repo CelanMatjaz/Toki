@@ -100,7 +100,17 @@ void Renderer2D::initObjects(Ref<Window> window) {
     }
 
     {
+        Toki::ShaderOptions options{};
+        options.primitiveTopology = Toki::PrimitiveTopology::TriangleList;
+        options.polygonMode = Toki::PolygonMode::Fill;
+        options.cullMode = Toki::CullMode::Back;
+        options.frontFace = Toki::FrontFace::Clockwise;
+        options.depthTest.enable = true;
+        options.depthTest.write = true;
+        options.depthTest.compareOp = Toki::CompareOp::Less;
+
         ShaderConfig config{};
+        config.options = options;
         config.attachments = attachments;
         config.shaderStages[ShaderStage::SHADER_STAGE_VERTEX] = (std::string) QUAD_SHADER_VERT_SOURCE;
         config.shaderStages[ShaderStage::SHADER_STAGE_FRAGMENT] = (std::string) QUAD_SHADER_FRAG_SOURCE;
