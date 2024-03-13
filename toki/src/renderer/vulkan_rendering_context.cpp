@@ -9,9 +9,15 @@ namespace Toki {
 VulkanRenderingContext::VulkanRenderingContext(VkCommandBuffer commandBuffer) : m_commandBuffer(commandBuffer) {}
 
 void VulkanRenderingContext::bindVertexBuffers(std::vector<Ref<VertexBuffer>> vertexBuffers) const {
-    std::vector<VkBuffer> buffers = { ((VulkanVertexBuffer*) vertexBuffers[0].get())->getHandle() };
-    VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(m_commandBuffer, 0, 1, buffers.data(), offsets);
+    std::vector<VkBuffer> buffers(vertexBuffers.size());
+    std::vector<VkDeviceSize> offsets(vertexBuffers.size());
+
+    for (uint32_t i = 0; i < vertexBuffers.size(); ++i) {
+        buffers[i] = ((VulkanVertexBuffer*) vertexBuffers[i].get())->getHandle();
+        offsets[i] = 0;
+    }
+
+    vkCmdBindVertexBuffers(m_commandBuffer, 0, buffers.size(), buffers.data(), offsets.data());
 }
 
 void VulkanRenderingContext::bindIndexBuffer(Ref<IndexBuffer> indexBuffer) const {

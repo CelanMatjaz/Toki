@@ -7,21 +7,32 @@
 namespace Toki {
 
 static constexpr const char* QUAD_SHADER_VERT_SOURCE = R"(#version 460
-    layout(location = 0) in vec3 inPosition;
-    layout(push_constant) uniform PushConstant {
+    layout (location = 0) out vec4 outColor;
+    
+    layout (location = 0) in vec3 inPosition;
+    layout (location = 1) in vec2 inPositionInstance;
+    layout (location = 2) in vec2 inSizeInstance;
+    layout (location = 3) in vec4 inColor;
+
+    layout (push_constant) uniform PushConstant {
         mat4 mvp;
-    } pushConstant;    
+    } pushConstant;
+
     void main() {
-        gl_Position = pushConstant.mvp * vec4(inPosition, 1.0);
+        gl_Position = pushConstant.mvp * vec4(inPosition.x * inSizeInstance.x + inPositionInstance.x, inPosition.y * inSizeInstance.y + inPositionInstance.y, inPosition.z, 1.0);
+        outColor = inColor;
     })";
 
 static constexpr const char* QUAD_SHADER_FRAG_SOURCE = R"(#version 460
-    layout(location = 0) out vec4 outColor;
-    layout(set = 0, binding = 0) uniform QuadData {
+    layout (location = 0) out vec4 outColor;
+
+    layout (location = 0) in vec4 inColor;
+
+    layout (set = 0, binding = 0) uniform QuadData {
         vec4 color;
     } quadData;
     void main() {
-        outColor = quadData.color;
+        outColor = inColor;
     })";
 
 struct RendererData {
@@ -29,9 +40,13 @@ struct RendererData {
         glm::vec3 position;
     };
 
+    struct QuadInstance {
+        glm::vec2 position;
+        glm::vec2 size;
+        glm::vec4 color;
+    };
+
     inline static constexpr uint32_t MAX_QUADS = 1000;
-    inline static constexpr uint32_t VERTICES_PER_QUAD_VERTEX_BUFFER = 4 * MAX_QUADS;
-    inline static constexpr uint32_t INDICES_PER_QUAD_INDEX_BUFFER = 6 * MAX_QUADS;
 
     bool initialized = false;
 
@@ -42,10 +57,10 @@ struct RendererData {
 
     Ref<Shader> quadShader;
     Ref<VertexBuffer> quadVertexBuffer;
+    Ref<VertexBuffer> quadInstanceVertexBuffer;
     Ref<IndexBuffer> quadIndexBuffer;
-    QuadVertex* quadVertexPtr = nullptr;
-    uint32_t* quadIndexPtr = nullptr;
-    uint32_t indexCount = 0;
+    QuadInstance* quadInstancePtr = nullptr;
+    uint32_t instanceCount = 0;
 
     Ref<UniformBuffer> colorUniformBuffer;
 };
@@ -116,26 +131,49 @@ void Renderer2D::initObjects(Ref<Window> window) {
         config.shaderStages[ShaderStage::SHADER_STAGE_FRAGMENT] = (std::string) QUAD_SHADER_FRAG_SOURCE;
         config.layoutDescriptions.attributeDescriptions = {
             { 0, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT3, offsetof(RendererData::QuadVertex, position) },
+            { 1, 1, Toki::VertexFormat::VERTEX_FORMAT_FLOAT2, offsetof(RendererData::QuadInstance, position) },
+            { 2, 1, Toki::VertexFormat::VERTEX_FORMAT_FLOAT2, offsetof(RendererData::QuadInstance, size) },
+            { 3, 1, Toki::VertexFormat::VERTEX_FORMAT_FLOAT4, offsetof(RendererData::QuadInstance, color) },
         };
-        config.layoutDescriptions.bindingDescriptions = { { 0, sizeof(RendererData::QuadVertex), Toki::VertexInputRate::VERTEX_INPUT_RATE_VERTEX } };
+        config.layoutDescriptions.bindingDescriptions = {
+            { 0, sizeof(RendererData::QuadVertex), Toki::VertexInputRate::VERTEX_INPUT_RATE_VERTEX },
+            { 1, sizeof(RendererData::QuadInstance), Toki::VertexInputRate::VERTEX_INPUT_RATE_INSTANCE }
+        };
         data.quadShader = Shader::create(config);
     }
 
     {
-        VertexBufferConfig config{};
-        config.binding = 0;
-        config.size = RendererData::VERTICES_PER_QUAD_VERTEX_BUFFER * sizeof(RendererData::QuadVertex);
-        data.quadVertexBuffer = VertexBuffer::create(config);
-        data.quadVertexPtr = (RendererData::QuadVertex*) data.quadVertexBuffer->mapMemory(config.size, 0);
+        uint16_t indices[] = { 0, 1, 2, 2, 1, 3 };
+
+        IndexBufferConfig config{};
+        config.size = sizeof(indices);
+        config.indexCount = 6;
+        config.indexSize = Toki::IndexSize::INDEX_SIZE_16;
+        data.quadIndexBuffer = IndexBuffer::create(config);
+        data.quadIndexBuffer->setData(sizeof(indices), indices);
     }
 
     {
-        IndexBufferConfig config{};
-        config.size = RendererData::INDICES_PER_QUAD_INDEX_BUFFER;
-        config.indexCount = RendererData::INDICES_PER_QUAD_INDEX_BUFFER * sizeof(uint32_t);
-        config.indexSize = Toki::IndexSize::INDEX_SIZE_32;
-        data.quadIndexBuffer = IndexBuffer::create(config);
-        data.quadIndexPtr = (uint32_t*) data.quadIndexBuffer->mapMemory(config.size, 0);
+        RendererData::QuadVertex vertices[] = {
+            glm::vec3{ 0.0f, 0.0f, 0.0f },
+            glm::vec3{ 1.0f, 0.0f, 0.0f },
+            glm::vec3{ 0.0f, 1.0f, 0.0f },
+            glm::vec3{ 1.0f, 1.0f, 0.0f },
+        };
+
+        VertexBufferConfig config{};
+        config.binding = 0;
+        config.size = sizeof(vertices);
+        data.quadVertexBuffer = VertexBuffer::create(config);
+        data.quadVertexBuffer->setData(sizeof(vertices), vertices);
+    }
+
+    {
+        VertexBufferConfig config{};
+        config.binding = 1;
+        config.size = RendererData::MAX_QUADS * sizeof(RendererData::QuadInstance);
+        data.quadInstanceVertexBuffer = VertexBuffer::create(config);
+        data.quadInstancePtr = (RendererData::QuadInstance*) data.quadInstanceVertexBuffer->mapMemory(config.size, 0);
     }
 
     {
@@ -159,36 +197,29 @@ void Renderer2D::initObjects(Ref<Window> window) {
 }
 
 void Renderer2D::flush() {
-    if (data.indexCount) {
+    if (data.instanceCount > 0) {
         submit(data.renderPass, [](const Toki::RenderingContext& ctx) {
             ctx.bindShader(data.quadShader);
             ctx.pushConstants(data.quadShader, sizeof(data.mvp), &data.mvp);
             ctx.bindUniforms(data.quadShader, 0, 1);
-            ctx.bindVertexBuffers({ data.quadVertexBuffer });
+            ctx.bindVertexBuffers({ data.quadVertexBuffer, data.quadInstanceVertexBuffer });
             ctx.bindIndexBuffer(data.quadIndexBuffer);
-            ctx.drawIndexed(data.indexCount, 1, 0, 0, 0);
+            ctx.drawIndexed(6, data.instanceCount, 0, 0, 0);
         });
 
-        data.indexCount = 0;
+        data.instanceCount = 0;
     }
 }
 
 void Renderer2D::drawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color) {
-    uint32_t currentQuadIndex = data.indexCount / 1.5f;
-    data.quadVertexPtr[currentQuadIndex + 0].position = -glm::vec3(position, 0.0f);
-    data.quadVertexPtr[currentQuadIndex + 1].position = -glm::vec3(position.x + size.x, position.y, 0.0f);
-    data.quadVertexPtr[currentQuadIndex + 2].position = -glm::vec3(position.x, position.y + size.y, 0.0f);
-    data.quadVertexPtr[currentQuadIndex + 3].position = -glm::vec3(position + size, 0.0f);
+    uint32_t currentInstanceIndex = data.instanceCount;
+    RendererData::QuadInstance& currentInstance = data.quadInstancePtr[currentInstanceIndex];
 
-    uint32_t currentIndexIndex = data.indexCount;
-    data.quadIndexPtr[currentIndexIndex + 0] = currentIndexIndex + 0;
-    data.quadIndexPtr[currentIndexIndex + 1] = currentIndexIndex + 1;
-    data.quadIndexPtr[currentIndexIndex + 2] = currentIndexIndex + 2;
-    data.quadIndexPtr[currentIndexIndex + 3] = currentIndexIndex + 2;
-    data.quadIndexPtr[currentIndexIndex + 4] = currentIndexIndex + 1;
-    data.quadIndexPtr[currentIndexIndex + 5] = currentIndexIndex + 3;
+    currentInstance.position = -position;
+    currentInstance.size = -size;
+    currentInstance.color = color;
 
-    data.indexCount += 6;
+    ++data.instanceCount;
 }
 
 }  // namespace Toki
