@@ -14,6 +14,9 @@ VulkanRenderPass::VulkanRenderPass(const RenderPassConfig& config) : m_width(con
         VkRenderingAttachmentInfo attachmentInfo{};
         attachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
         attachmentInfo.clearValue.depthStencil.depth = 1.0f;
+        attachmentInfo.clearValue.color.float32[0] = 0.1;
+        attachmentInfo.clearValue.color.float32[1] = 0.1;
+        attachmentInfo.clearValue.color.float32[2] = 0.1;
 
         if (attachment.presentable) {
             TK_ASSERT(m_presentableAttachmentIndex == -1, "Only 1 presentable attachment can be provided");

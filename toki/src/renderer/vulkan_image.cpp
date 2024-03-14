@@ -12,14 +12,25 @@
 
 namespace Toki {
 
-VulkanImage::VulkanImage(VkImage image, VkFormat format) : m_imageHandle(image), m_format(format), m_isWrapped(true) {
+VulkanImage::VulkanImage(VkImage image, VkFormat format) : m_imageHandle(image), m_config({ .format = format }), m_isWrapped(true) {
     createImageView();
 }
 
-VulkanImage::VulkanImage(const VulkanImageConfig& config) : m_isWrapped(false), m_format(config.format), m_config{ config } {
+VulkanImage::VulkanImage(const VulkanImageConfig& config) : m_isWrapped(false), m_config(config) {
     createImage();
     createImageView();
 };
+
+VulkanImage::VulkanImage(const TextureConfig& config) :
+    Texture(config),
+    m_isWrapped(false),
+    m_config({ .format = VK_FORMAT_R8G8B8A8_SRGB,
+               .extent = { config.width, config.height, 1 },
+               .usage = (VK_IMAGE_USAGE_TRANSFER_DST_BIT),
+               .tiling = VK_IMAGE_TILING_OPTIMAL }) {
+    createImage();
+    createImageView();
+}
 
 VulkanImage::VulkanImage(std::filesystem::path path, const TextureConfig& config) : Texture(path, config), m_isWrapped(false) {
     TK_ASSERT(ResourceUtils::fileExists(path), "File does not exist");
@@ -44,7 +55,6 @@ VulkanImage::VulkanImage(std::filesystem::path path, const TextureConfig& config
     switch (channels) {
         case 3:
         case 4:
-            m_format = VK_FORMAT_R8G8B8A8_SRGB;
             m_config.format = VK_FORMAT_R8G8B8A8_SRGB;
             break;
     }
@@ -184,12 +194,12 @@ void VulkanImage::createImageView() {
     if (m_isWrapped) {
         aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     } else {
-        aspectMask = VulkanUtils::getImageAspectFlags(m_format);
+        aspectMask = VulkanUtils::getImageAspectFlags(m_config.format);
     }
 
     VkImageViewCreateInfo imageViewCreateInfo{};
     imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    imageViewCreateInfo.format = m_format;
+    imageViewCreateInfo.format = m_config.format;
     imageViewCreateInfo.subresourceRange = {};
     imageViewCreateInfo.subresourceRange.aspectMask = aspectMask;
     imageViewCreateInfo.subresourceRange.baseMipLevel = 0;

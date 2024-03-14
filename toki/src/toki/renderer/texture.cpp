@@ -9,7 +9,7 @@ Ref<Texture> Texture::create(std::filesystem::path path, const TextureConfig& co
 }
 
 Ref<Texture> Texture::create(const TextureConfig& config) {
-    return nullptr;
+    return createRef<VulkanImage>(config);
 }
 
 Texture::Texture(std::filesystem::path path, const TextureConfig& config) : m_config(config) {}

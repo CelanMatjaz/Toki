@@ -6,6 +6,7 @@
 #include "assert.h"
 #include "renderer/vulkan_renderer.h"
 #include "toki/renderer/renderer_api/renderer_2d.h"
+#include "toki/systems/font_system.h"
 #include "toki/systems/ui_system.h"
 
 namespace Toki {
@@ -26,6 +27,7 @@ Application::Application(const ApplicationConfig& config) {
 
     m_renderer->createSwapchain(m_mainWindow);
 
+    FontSystem::init(this);
     UISystem::init(this);
 }
 
@@ -33,6 +35,7 @@ Application::~Application() {
     std::println("Deinitializing app");
 
     UISystem::shutdown();
+    FontSystem::shutdown();
 
     uint32_t layerCount = m_layerStack.size();
     for (uint32_t i = 0; i < layerCount; ++i) {

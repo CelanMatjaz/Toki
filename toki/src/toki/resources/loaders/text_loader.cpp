@@ -11,17 +11,17 @@ std::expected<std::string, Error> TextLoader::readTextFile(std::filesystem::path
         return std::unexpected<Error>{ Error::FileNotFoundError };
     }
 
-    std::ifstream shaderFile(filePath, std::ios::ate);
+    std::ifstream textFile(filePath, std::ios::ate);
 
-    if (!shaderFile.is_open() || !shaderFile.good()) {
+    if (!textFile.is_open() || !textFile.good()) {
         return std::unexpected<Error>{ Error::FileReadError };
     }
 
-    uint32_t fileSize = shaderFile.tellg();
-    shaderFile.seekg(0);
+    uint32_t fileSize = textFile.tellg();
+    textFile.seekg(0);
 
     std::string buf(fileSize, 0);
-    shaderFile.read(buf.data(), fileSize);
+    textFile.read(buf.data(), fileSize);
 
     return buf;
 }

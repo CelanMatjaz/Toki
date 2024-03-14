@@ -236,7 +236,7 @@ void VulkanGraphicsPipeline::create() {
 
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo{};
     inputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
+    inputAssemblyStateCreateInfo.primitiveRestartEnable = m_config.options.prititiveRestart ? VK_TRUE : VK_FALSE;
 
     switch (m_config.options.primitiveTopology) {
         case PrimitiveTopology::PointList:

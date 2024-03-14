@@ -5,19 +5,20 @@
 namespace Toki {
 
 enum class ResourceType {
-    File
+    Font
 };
 
 class Resource {
 public:
+    Resource() = default;
     Resource(ResourceType type, std::filesystem::path path);
     ~Resource() = default;
 
-    bool checkForNewWrite();
+    bool checkForNewWrite() const;
 
-    ResourceType getType();
-    std::filesystem::path getPath();
-    std::filesystem::file_time_type getLastWriteTime();
+    ResourceType getType() const;
+    std::filesystem::path getPath() const;
+    std::filesystem::file_time_type getLastWriteTime() const;
 
 private:
     ResourceType m_type;

@@ -4,7 +4,25 @@
 
 namespace Toki {
 
-struct SamplerConfig {};
+enum class TextureRepeat {
+    Repeat,
+    Mirrored,
+    ClampEdge,
+    ClampBorder
+};
+
+enum class TextureFilter {
+    Nearest,
+    Linear
+};
+
+struct SamplerConfig {
+    TextureRepeat repeatU : 2 = TextureRepeat::Repeat;
+    TextureRepeat repeatV : 2 = TextureRepeat::Repeat;
+    TextureRepeat repeatW : 2 = TextureRepeat::Repeat;
+    TextureFilter magFilter : 2 = TextureFilter::Nearest;
+    TextureFilter minFilter : 2 = TextureFilter::Nearest;
+};
 
 class Sampler {
 public:

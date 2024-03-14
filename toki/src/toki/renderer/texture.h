@@ -8,6 +8,7 @@
 namespace Toki {
 
 struct TextureConfig {
+    uint32_t width = 0, height = 0;
     Ref<Sampler> optionalSampler = nullptr;
 };
 

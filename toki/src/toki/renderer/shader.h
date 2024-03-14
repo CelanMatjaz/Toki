@@ -20,6 +20,7 @@ struct ShaderOptions {
     FrontFace frontFace : 2 = FrontFace::NotSpecified;
     DepthTest depthTest;
     StencilTest stencilTest;
+    bool prititiveRestart = false;
 };
 
 struct ShaderConfig {

@@ -28,6 +28,7 @@ public:
     VulkanImage(VkImage image, VkFormat format);
     VulkanImage(const VulkanImageConfig& config);
     VulkanImage(std::filesystem::path path, const TextureConfig& config);
+    VulkanImage(const TextureConfig& config);
 
     ~VulkanImage();
 
@@ -48,7 +49,6 @@ private:
     VkImage m_imageHandle = VK_NULL_HANDLE;
     VkImageView m_imageViewHandle = VK_NULL_HANDLE;
     VkDeviceMemory m_memoryHandle = VK_NULL_HANDLE;
-    VkFormat m_format;
     bool m_isWrapped : 1 = false;
 
     VulkanImageConfig m_config;

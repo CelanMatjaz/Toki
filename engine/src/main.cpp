@@ -9,8 +9,16 @@ public:
     TestLayer() : Toki::Layer(){};
     ~TestLayer() = default;
 
+    Toki::Ref<Toki::Font> font;
+    Toki::Ref<Toki::Sampler> fontSampler;
+
     void onAttach() override {
         auto [width, height] = m_window->getDimensions();
+
+        font = Toki::FontSystem::loadBitmapFont("test", { Toki::ResourceType::Font, "assets/fonts/calibril.ttf" });
+
+        Toki::SamplerConfig fontSamplerConfig{};
+        fontSampler = Toki::Sampler::create(fontSamplerConfig);
 
         std::vector<Toki::Attachment> attachments;
 
@@ -177,14 +185,17 @@ public:
             testSampler = Toki::Sampler::create(config);
         }
 
-        {
-            Toki::TextureConfig config{};
-            config.optionalSampler = testSampler;
-            testTexture = Toki::Texture::create("assets/textures/chad.jpg", config);
-        }
-
-        shader->setUniforms({ { uniformBuffer, 0, 0 }, { offsetUniform, 0, 1 }, { testTexture, 1, 0 } });
-        shader2->setUniforms({ { postProcessing, 0, 0 }, { testSampler, 1, 1 } });
+        shader->setUniforms({
+            { uniformBuffer, 0, 0 },
+            { offsetUniform, 0, 1 },
+            { testTexture, 1, 0 },
+            { testSampler, 1, 1 },
+        });
+        shader2->setUniforms({
+            { postProcessing, 0, 0 },
+            { testTexture, 1, 0 },
+            { testSampler, 1, 1 },
+        });
 
         Toki::Event::bindEvent(Toki::EventType::WindowResize, this, [this](void* sender, void* receiver, const Toki::Event& event) {
             glm::mat4& mvp = *this->mappedMemory;
