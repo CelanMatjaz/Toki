@@ -19,7 +19,10 @@ private:
     glm::vec2 m_position = glm::vec2{ 0.0f, 0.0f };
     glm::vec2 m_size = glm::vec2{ 100.0f, 100.0f };
     glm::vec4 m_color = glm::vec4{ 1.0f, 0.0f, 1.0f, 1.0f };
-    float change = 0.0f;
+    float m_change = 0.0f;
+
+    bool m_resizing : 1 = false;
+    bool m_moving : 1 = false;
 };
 
 }  // namespace Toki

@@ -14,26 +14,34 @@ bool UIWindow::onEvent(Event& e) {
     EventData eventData = e.getData();
     EventType eventType = e.getType();
 
-    static bool isHolding = false;
     static glm::vec2 lastClickPos{};
 
     switch (eventType) {
         case EventType::MousePress:
             lastClickPos = { eventData.i16[0], eventData.i16[1] };
-            if (rectHasPoint(m_position, m_size, lastClickPos)) {
-                isHolding = true;
-                change = 0.2f;
+            if (rectHasPoint(m_position + m_size - 10.0f, glm::vec2{ 10.0f }, lastClickPos)) {
+                m_resizing = true;
+                e.setHandled();
+                return true;
+            } else if (rectHasPoint(m_position, m_size, lastClickPos)) {
+                m_moving = true;
+                m_change = 0.2f;
                 e.setHandled();
                 return true;
             }
             break;
         case EventType::MouseRelease:
             lastClickPos = { -1.0f, -1.0f };
-            isHolding = false;
-            change = 0.0f;
+            m_moving = false;
+            m_resizing = false;
+            m_change = 0.0f;
             break;
         case EventType::MouseMove: {
-            if (isHolding) {
+            if (m_resizing) {
+                glm::vec2 offset = glm::vec2{ eventData.i32[0], eventData.i32[1] };
+                m_size += offset;
+                e.setHandled();
+            } else if (m_moving) {
                 glm::vec2 offset = glm::vec2{ eventData.i32[0], eventData.i32[1] };
                 m_position += offset;
                 e.setHandled();
@@ -46,8 +54,9 @@ bool UIWindow::onEvent(Event& e) {
 
 void UIWindow::draw() {
     auto c = m_color;
-    c.g += change;
+    c.g += m_change;
     Renderer2D::drawQuad(m_position, m_size, c);
+    Renderer2D::drawQuad(m_position + m_size - 10.0f, glm::vec2{ 10.0f }, glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f });
 }
 
 }  // namespace Toki
