@@ -21,19 +21,20 @@ enum class EventType {
     // u16[2]: Mods
     KeyRepeat,
 
-    // u16[0]: Key code
-    // u16[1]: Mouse X position
-    // u16[2]: Mouse Y position
+    // u16[0]: Mouse X position
+    // u16[1]: Mouse Y position
+    // u16[2]: Key code
+    // u16[3]: Mods
     MousePress,
 
-    // u16[0]: Key code
-    // u16[1]: Mouse X position
-    // u16[2]: Mouse Y position
+    // u16[0]: Mouse X position
+    // u16[1]: Mouse Y position
+    // u16[2]: Key code
+    // u16[3]: Mods
     MouseRelease,
 
-    // u16[0]: Key code
-    // u16[1]: Mouse X position
-    // u16[2]: Mouse Y position
+    // i32[0]: Mouse X offset
+    // i32[1]: Mouse Y offset
     MouseMove,
 
     // u16[0]: Delta scroll

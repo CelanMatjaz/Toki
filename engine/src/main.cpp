@@ -190,12 +190,18 @@ public:
             glm::mat4& mvp = *this->mappedMemory;
             mvp = camera.getProjection() * camera.getView() * glm::translate(glm::mat4{ 1.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f });
         });
+
+        uiContainer.addWindow("window1", { glm::vec2{ 100.0f, 100.0f }, glm::vec2{ 100.0f, 100.f }, glm::vec4{ 0.3f, 0.2f, 0.6f, 1.0f } });
+        uiContainer.addWindow("window2", { glm::vec2{ 200.0f, 200.0f }, glm::vec2{ 100.0f, 100.f }, glm::vec4{ 0.6f, 0.3f, 0.2f, 1.0f } });
+        uiContainer.addWindow("window3", { glm::vec2{ 300.0f, 300.0f }, glm::vec2{ 100.0f, 100.f }, glm::vec4{ 0.2f, 0.6f, 0.3f, 1.0f } });
     }
 
     Toki::OrthographicCamera camera;
     glm::mat4 mvp;
     glm::mat4* mappedMemory;
     glm::vec3* offset;
+
+    Toki::UIContainer uiContainer;
 
     void onRender() override {
         submit(renderPass, [this](const Toki::RenderingContext& ctx) {
@@ -224,9 +230,16 @@ public:
         test += 0.01;
 
         Toki::Renderer2D::begin();
-        Toki::Renderer2D::drawQuad(glm::vec2{ test * 4, test * test }, glm::vec2{ 300.0f, 300.0f }, glm::vec4{ 1.0f, 0.0f, 1.0f, 1.0f });
+        Toki::Renderer2D::drawQuad(glm::vec2{ test * test, test * test }, glm::vec2{ 30.0f, 30.0f }, glm::vec4{ 1.0f, 0.0f, 1.0f, 1.0f });
+
+        // Toki::Renderer2D::setColor(glm::vec4{ 0.0f, 0.4f, 0.7f, 1.0f });
+        // Toki::Renderer2D::drawQuad(glm::vec2{ test, test * test }, glm::vec2{ 100.0f, 100.0f });
+
+        uiContainer.draw();
         Toki::Renderer2D::end();
     }
+
+    void onEvent(Toki::Event& event) override { uiContainer.onEvent(event); }
 
 private:
     Toki::Ref<Toki::RenderPass> renderPass;

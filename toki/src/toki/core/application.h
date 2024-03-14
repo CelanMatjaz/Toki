@@ -24,6 +24,8 @@ public:
     void pushLayer(Ref<Layer> layer);
     void popLayer();
 
+    void handleEvent(Event& e);
+
 private:
     Ref<Window> m_mainWindow;
     Ref<Renderer> m_renderer;

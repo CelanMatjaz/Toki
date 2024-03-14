@@ -26,7 +26,11 @@ struct WindowDimensions {
     int width, height;
 };
 
+class Application;
+
 class Window {
+    friend Application;
+
 public:
     static Ref<Window> create(const WindowConfig& config);
 
@@ -45,10 +49,12 @@ public:
     const WindowDimensions& getDimensions();
     virtual void* getHandle() = 0;
 
-    static void initWindowSystem();
+    static void initWindowSystem(Application* application);
     static void shutdownWindowSystem();
 
 protected:
+    inline static Application* s_application = nullptr;
+
     WindowDimensions m_dimensions;
 };
 

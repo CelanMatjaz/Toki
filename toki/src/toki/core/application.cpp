@@ -13,7 +13,7 @@ namespace Toki {
 Application::Application(const ApplicationConfig& config) {
     std::println("Initializing app");
 
-    Window::initWindowSystem();
+    Window::initWindowSystem(this);
 
     m_mainWindow = Window::create(config.windowConfig);
     m_renderer = Renderer::create();
@@ -85,6 +85,13 @@ void Application::popLayer() {
     TK_ASSERT(m_layerStack.size() > 0, "Cannot pop stack with 0 layers");
     m_layerStack.back()->onDetach();
     m_layerStack.erase(m_layerStack.end() - 1);
+}
+
+void Application::handleEvent(Event& e) {
+    for (auto it = m_layerStack.rbegin(); it != m_layerStack.rend(); ++it) {
+        (*it)->onEvent(e);
+        if (e.isHandled()) break;
+    }
 }
 
 }  // namespace Toki

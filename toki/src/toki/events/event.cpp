@@ -44,7 +44,9 @@ void Event::unbindEvent(EventType eventType, void* receiver) {
 void Event::dispatchEvent(const Event& event, void* sender) {
     uint32_t type = (uint32_t) event.getType();
 
-    TK_ASSERT((bool) handlers[type] && handlers[type]->size() > 0, "No events registered for handler");
+    // TK_ASSERT((bool) handlers[type] && handlers[type]->size() > 0, "No events registered for handler");
+
+    if (!handlers[type]) return;
 
     for (uint32_t i = 0; i < handlers[type]->size(); ++i) {
         auto& handler = handlers[type]->operator[](i);

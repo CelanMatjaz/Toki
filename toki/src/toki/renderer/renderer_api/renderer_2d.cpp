@@ -122,7 +122,7 @@ void Renderer2D::initObjects(Ref<Window> window) {
         options.frontFace = Toki::FrontFace::Clockwise;
         options.depthTest.enable = true;
         options.depthTest.write = true;
-        options.depthTest.compareOp = Toki::CompareOp::Less;
+        options.depthTest.compareOp = Toki::CompareOp::GreaterOrEqual;
 
         ShaderConfig config{};
         config.options = options;
@@ -220,6 +220,23 @@ void Renderer2D::drawQuad(const glm::vec2& position, const glm::vec2& size, cons
     currentInstance.color = color;
 
     ++data.instanceCount;
+}
+
+void Renderer2D::drawQuad(const Quad& quad) {
+    uint32_t currentInstanceIndex = data.instanceCount;
+    RendererData::QuadInstance& currentInstance = data.quadInstancePtr[currentInstanceIndex];
+
+    currentInstance.position = -quad.position;
+    currentInstance.size = -quad.size;
+    currentInstance.color = quad.color;
+
+    ++data.instanceCount;
+}
+
+void Renderer2D::drawQuads(std::vector<Quad> quads) {
+    for (const auto& quad : quads) {
+        drawQuad(quad);
+    }
 }
 
 }  // namespace Toki

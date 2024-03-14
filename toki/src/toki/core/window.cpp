@@ -23,10 +23,12 @@ const WindowDimensions& Window::getDimensions() {
     return m_dimensions;
 }
 
-void Window::initWindowSystem() {
+void Window::initWindowSystem(Application* application) {
 #ifdef TK_WINDOW_SYSTEM_GLFW
     glfwInit();
 #endif
+
+    s_application = application;
 }
 
 void Window::shutdownWindowSystem() {

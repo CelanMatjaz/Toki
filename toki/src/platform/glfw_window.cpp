@@ -2,6 +2,7 @@
 
 #ifdef TK_WINDOW_SYSTEM_GLFW
 
+#include "toki/core/application.h"
 #include "toki/events/event.h"
 
 namespace Toki {
@@ -27,6 +28,8 @@ GlfwWindow::GlfwWindow(const WindowConfig& windowConfig) {
 
     glfwSetFramebufferSizeCallback(m_windowHandle, windowResizedCallback);
     glfwSetKeyCallback(m_windowHandle, keyCallback);
+    glfwSetCursorPosCallback(m_windowHandle, cursorPosCallback);
+    glfwSetMouseButtonCallback(m_windowHandle, mouseButtonCallback);
 
     glfwGetFramebufferSize(m_windowHandle, &m_dimensions.width, &m_dimensions.height);
 }
@@ -69,15 +72,52 @@ void* GlfwWindow::getHandle() {
     return m_windowHandle;
 }
 
+#define DISPATCH_EVENT(e, ptr)     \
+    s_application->handleEvent(e); \
+    if (!e.isHandled()) Event::dispatchEvent(e, ptr);
+
 void GlfwWindow::windowResizedCallback(GLFWwindow* window, int width, int height) {
     Toki::GlfwWindow* win = (GlfwWindow*) (glfwGetWindowUserPointer(window));
     win->m_dimensions.width = width;
     win->m_dimensions.height = height;
 
-    Event::dispatchEvent(Event{ EventType::WindowResize, EventData{ .i32 = { width, height } } }, win);
+    Event e = { EventType::WindowResize, EventData{ .i32 = { width, height } } };
+    DISPATCH_EVENT(e, win);
 }
 
 void GlfwWindow::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {}
+
+void GlfwWindow::cursorPosCallback(GLFWwindow* window, double xPos, double yPos) {
+    Toki::GlfwWindow* win = (GlfwWindow*) (glfwGetWindowUserPointer(window));
+
+    static double prevX = 0, prevY = 0;
+
+    Event e = { EventType::MouseMove, EventData{ .i32 = { (int32_t) (xPos - prevX), (int32_t) (yPos - prevY) } } };
+    DISPATCH_EVENT(e, win);
+
+    prevX = xPos;
+    prevY = yPos;
+}
+
+void GlfwWindow::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+    Toki::GlfwWindow* win = (GlfwWindow*) (glfwGetWindowUserPointer(window));
+
+    double xPos, yPos;
+    glfwGetCursorPos(window, &xPos, &yPos);
+
+    switch (action) {
+        case GLFW_PRESS: {
+            Event e = { EventType::MousePress, EventData{ .i16 = { (int16_t) xPos, (int16_t) yPos, (int16_t) button, (int16_t) mods } } };
+            DISPATCH_EVENT(e, win);
+            break;
+        }
+        case GLFW_RELEASE: {
+            Event e = { EventType::MouseRelease, EventData{ .i16 = { (int16_t) xPos, (int16_t) yPos, (int16_t) button, (int16_t) mods } } };
+            DISPATCH_EVENT(e, win);
+            break;
+        }
+    }
+}
 
 }  // namespace Toki
 

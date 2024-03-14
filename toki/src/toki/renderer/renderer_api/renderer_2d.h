@@ -13,6 +13,12 @@ class Application;
 class Renderer2D {
     friend Application;
 
+    struct Quad {
+        const glm::vec2& position;
+        const glm::vec2& size;
+        const glm::vec4& color;
+    };
+
 public:
     static void init(Ref<Window> window);
     static void shutdown();
@@ -23,6 +29,8 @@ public:
     static void flush();
 
     static void drawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color);
+    static void drawQuad(const Quad& quad);
+    static void drawQuads(std::vector<Quad> quads);
 
 private:
     inline static Ref<Renderer> s_renderer;

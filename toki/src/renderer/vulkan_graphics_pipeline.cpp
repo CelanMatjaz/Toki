@@ -354,7 +354,8 @@ void VulkanGraphicsPipeline::create() {
     depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     depthStencilStateCreateInfo.depthTestEnable = m_config.options.depthTest.enable ? VK_TRUE : VK_FALSE;
     depthStencilStateCreateInfo.depthWriteEnable = m_config.options.depthTest.write ? VK_TRUE : VK_FALSE;
-    depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;  // TODO: add a switch statement for this (m_config.options.depthTest.compareOp)
+    depthStencilStateCreateInfo.depthCompareOp =
+        VK_COMPARE_OP_LESS_OR_EQUAL;  // TODO: add a switch statement for this (m_config.options.depthTest.compareOp)
     depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
     depthStencilStateCreateInfo.minDepthBounds = 0.0f;
     depthStencilStateCreateInfo.maxDepthBounds = 1.0f;
