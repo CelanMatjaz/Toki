@@ -43,7 +43,6 @@ private:
 };
 
 struct IndexBufferConfig : public BufferConfig {
-    uint32_t indexCount = 0;
     IndexSize indexSize;
 };
 
@@ -59,7 +58,6 @@ public:
     virtual void* mapMemory(uint32_t size, uint32_t offset) = 0;
     virtual void unmapMemory() = 0;
 
-    uint32_t getIndexCount() const;
     IndexSize getIndexSize() const;
 
 private:

@@ -6,9 +6,9 @@
 namespace Toki {
 
 struct FontKerning {
-    uint32_t codepoint0;
     uint32_t codepoint1;
-    uint16_t amount;
+    uint32_t codepoint2;
+    uint16_t advance;
 };
 
 struct GlyphData {
@@ -20,18 +20,19 @@ struct GlyphData {
 };
 
 struct FontData {
-    uint32_t size;
-    uint32_t lineHeight;
+    uint16_t size;
+    uint16_t lineHeight;
+    uint16_t atlasWidth, atlasHeight;
     Ref<Texture> atlas;
     std::vector<GlyphData> glyphs;
     std::vector<FontKerning> kernings;
 };
 
 struct Font {
-    const char* name;
+    std::string name;
     Resource resource;
     std::vector<uint8_t> binaryData;
-    std::vector<Ref<FontData>> fontVersions;
+    std::unordered_map<uint16_t, Ref<FontData>> fontVersions;
 };
 
 class Application;
@@ -40,7 +41,9 @@ class FontSystem {
     friend Application;
 
 public:
-    static Ref<Font> loadBitmapFont(std::string name, const Resource& resource);
+    static void loadFont(std::string name, const Resource& resource);
+    static void unloadFont(std::string name);
+    static Ref<FontData> getFont(std::string name, uint16_t size);
 
 private:
     inline static Application* s_application = nullptr;

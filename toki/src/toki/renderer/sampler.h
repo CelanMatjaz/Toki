@@ -4,14 +4,14 @@
 
 namespace Toki {
 
-enum class TextureRepeat {
+enum class TextureRepeat : uint8_t {
     Repeat,
     Mirrored,
     ClampEdge,
     ClampBorder
 };
 
-enum class TextureFilter {
+enum class TextureFilter : uint8_t {
     Nearest,
     Linear
 };

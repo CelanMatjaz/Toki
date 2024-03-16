@@ -9,6 +9,9 @@
 #include "toki/renderer/texture.h"
 #include "toki/resources/loaders/binary_loader.h"
 
+#define DEFAULT_FONT_ATLAS_WIDTH 1024
+#define DEFAULT_FONT_ATLAS_HEIGHT 1024
+
 namespace Toki {
 
 struct FontSystemState {
@@ -40,72 +43,80 @@ void FontSystem::shutdown() {
     delete state;
 }
 
-Ref<Font> FontSystem::loadBitmapFont(std::string name, const Resource& resource) {
-    if (state->fonts.contains(name)) {
-        return state->fonts[name];
+void FontSystem::loadFont(std::string name, const Resource& resource) {
+    if (!state->fonts.contains(name)) {
+        state->fonts[name] = createRef<Font>();
+
+        auto fontBinary = BinaryLoader::readBinaryFile(resource.getPath());
+        if (!fontBinary.has_value()) {
+            return;
+        }
+
+        state->fonts[name]->name = name;
+        state->fonts[name]->binaryData = fontBinary.value();
+        state->fonts[name]->resource = resource;
+    }
+}
+
+void FontSystem::unloadFont(std::string name) {
+    state->fonts.erase(name);
+}
+
+Ref<FontData> FontSystem::getFont(std::string name, uint16_t size) {
+    TK_ASSERT(state->fonts.contains(name), std::format("Font \"{}\" not loaded", name));
+
+    if (state->fonts[name]->fontVersions.contains(size)) {
+        return state->fonts[name]->fontVersions[size];
     }
 
-    // TK_ASSERT(!state->fonts.contains(name), std::format("Font with name \"{}\" already exists", name));
+    Ref<FontData> fontVersion = createRef<FontData>();
 
-    auto fontBinary = BinaryLoader::readBinaryFile(resource.getPath());
-    Ref<Font> font = createRef<Font>();
-    font->binaryData = fontBinary.value();
-
-    auto f = createRef<FontData>();
-
-    uint32_t index = stbtt_GetFontOffsetForIndex(fontBinary.value().data(), 0);
+    uint32_t index = stbtt_GetFontOffsetForIndex(state->fonts[name]->binaryData.data(), 0);
     stbtt_fontinfo fontInfo{};
-    int res = stbtt_InitFont(&fontInfo, fontBinary.value().data(), index);
+    int res = stbtt_InitFont(&fontInfo, state->fonts[name]->binaryData.data(), index);
 
-    TK_ASSERT(res != 0, "");
+    uint16_t atlasWidth = DEFAULT_FONT_ATLAS_WIDTH;
+    uint16_t atlasHeight = DEFAULT_FONT_ATLAS_HEIGHT;
+
+    fontVersion->atlasWidth = atlasWidth;
+    fontVersion->atlasHeight = atlasHeight;
 
     TextureConfig atlasConfig{};
-    atlasConfig.width = atlasConfig.height = 1024;
+    atlasConfig.width = atlasWidth;
+    atlasConfig.height = atlasHeight;
     Ref<Texture> atlas = Texture::create(atlasConfig);
 
-    std::vector<int> codePoints(96);
+    std::vector<int32_t> codePoints(96);
     codePoints[0] = -1;
     for (uint32_t i = 0; i < 95; ++i) {
         codePoints[i + 1] = i + 32;
     }
 
-    uint32_t fontsize = 20;
-
-    int a, b, c, d;
-    stbtt_GetFontBoundingBox(&fontInfo, &a, &b, &c, &d);
-    std::println("{} {} {} {}", a, b, c, d);
-
-    int scale = stbtt_ScaleForPixelHeight(&fontInfo, fontsize);
-    std::println("scale {}", scale);
+    float scale = stbtt_ScaleForPixelHeight(&fontInfo, size);
 
     int ascent, descent, line_gap;
     stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &line_gap);
+    fontVersion->lineHeight = (ascent - descent + line_gap) * scale;
 
-    std::println("123 {} {} {}", ascent, descent, line_gap);
-
-    f->lineHeight = (ascent - descent + line_gap) * scale;
-
-    std::vector<uint8_t> pixels(1024 * 1024);
+    std::vector<uint8_t> pixels(atlasWidth * atlasHeight);
     stbtt_pack_context context;
-    res = stbtt_PackBegin(&context, pixels.data(), 1024, 1024, 0, 1, 0);
-    std::println("stbtt_PackBegin {}", res);
+    TK_ASSERT(stbtt_PackBegin(&context, pixels.data(), atlasWidth, atlasHeight, 0, 1, 0), "");
 
-    stbtt_packedchar* charData = new stbtt_packedchar[codePoints.size()];
+    std::vector<stbtt_packedchar> charData(codePoints.size());
 
     stbtt_pack_range range;
     range.first_unicode_codepoint_in_range = 0;
-    range.font_size = fontsize;
+    range.font_size = size;
     range.num_chars = codePoints.size();
-    range.chardata_for_range = charData;
+    range.chardata_for_range = charData.data();
     range.array_of_unicode_codepoints = codePoints.data();
 
-    res = stbtt_PackFontRanges(&context, fontBinary.value().data(), 0, &range, 1);
-    std::println("stbtt_PackFontRanges {}", res);
+    TK_ASSERT(stbtt_PackFontRanges(&context, state->fonts[name]->binaryData.data(), 0, &range, 1), "");
 
     stbtt_PackEnd(&context);
 
-    std::vector<uint8_t> rgbaPixels(1024 * 1024 * 4);
-    for (uint32_t j = 0; j < 1024 * 1024; ++j) {
+    std::vector<uint8_t> rgbaPixels(atlasWidth * atlasHeight * 4);
+    for (uint32_t j = 0; j < atlasWidth * atlasHeight; ++j) {
         rgbaPixels[(j * 4) + 0] = pixels[j];
         rgbaPixels[(j * 4) + 1] = pixels[j];
         rgbaPixels[(j * 4) + 2] = pixels[j];
@@ -114,8 +125,19 @@ Ref<Font> FontSystem::loadBitmapFont(std::string name, const Resource& resource)
 
     atlas->setData(rgbaPixels.size(), rgbaPixels.data());
 
-    std::vector<GlyphData> glyphData(codePoints.size());
+    uint32_t kerningCount = stbtt_GetKerningTableLength(&fontInfo);
+    std::vector<FontKerning> kernings(kerningCount);
+    std::vector<stbtt_kerningentry> table(kerningCount);
 
+    stbtt_GetKerningTable(&fontInfo, table.data(), table.size());
+
+    for (uint32_t i = 0; i < table.size(); ++i) {
+        kernings[i].codepoint1 = table[i].glyph1;
+        kernings[i].codepoint2 = table[i].glyph2;
+        kernings[i].advance = table[i].advance;
+    }
+
+    std::vector<GlyphData> glyphData(codePoints.size());
     for (uint32_t i = 0; i < codePoints.size(); ++i) {
         stbtt_packedchar* pc = &charData[i];
         glyphData[i].codepoint = codePoints[i];
@@ -128,34 +150,12 @@ Ref<Font> FontSystem::loadBitmapFont(std::string name, const Resource& resource)
         glyphData[i].xAdvance = pc->xadvance;
     }
 
-    std::println("count: {}", glyphData.size());
+    fontVersion->atlas = atlas;
+    fontVersion->glyphs = std::move(glyphData);
+    fontVersion->kernings = std::move(kernings);
+    state->fonts[name]->fontVersions.emplace(size, fontVersion);
 
-    uint32_t kerningCount = stbtt_GetKerningTableLength(&fontInfo);
-    std::vector<FontKerning> kernings(kerningCount);
-    std::vector<stbtt_kerningentry> table(kerningCount);
-
-    stbtt_GetKerningTable(&fontInfo, table.data(), table.size());
-
-    for (uint32_t i = 0; i < table.size(); ++i) {
-        kernings[i].codepoint0 = table[i].glyph1;
-        kernings[i].codepoint1 = table[i].glyph2;
-        kernings[i].amount = table[i].advance;
-    }
-
-    std::println("kernings: {}", kernings.size());
-
-    delete[] charData;
-
-    f->glyphs = glyphData;
-
-    f->atlas = atlas;
-    font->fontVersions.emplace_back(f);
-
-    state->fonts.emplace(name, font);
-
-    return font;
-
-    // std::vector<font_glyph> glyphs(codePoints.size());
+    return state->fonts[name]->fontVersions[size];
 }
 
 }  // namespace Toki

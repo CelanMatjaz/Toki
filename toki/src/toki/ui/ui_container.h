@@ -8,12 +8,6 @@
 #include "toki/ui/ui_window.h"
 
 namespace Toki {
-
-enum class ComponentType : uint32_t {
-    None,
-    Window
-};
-
 class UIContainer {
 public:
     UIWindow& addWindow(const char* name, const UIWindow& newComponent);

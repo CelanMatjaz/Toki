@@ -354,8 +354,6 @@ void VulkanGraphicsPipeline::create() {
     depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     depthStencilStateCreateInfo.depthTestEnable = m_config.options.depthTest.enable ? VK_TRUE : VK_FALSE;
     depthStencilStateCreateInfo.depthWriteEnable = m_config.options.depthTest.write ? VK_TRUE : VK_FALSE;
-    depthStencilStateCreateInfo.depthCompareOp =
-        VK_COMPARE_OP_LESS_OR_EQUAL;  // TODO: add a switch statement for this (m_config.options.depthTest.compareOp)
     depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
     depthStencilStateCreateInfo.minDepthBounds = 0.0f;
     depthStencilStateCreateInfo.maxDepthBounds = 1.0f;
@@ -363,14 +361,44 @@ void VulkanGraphicsPipeline::create() {
     depthStencilStateCreateInfo.front = {};
     depthStencilStateCreateInfo.back = {};
 
+    switch (m_config.options.depthTest.compareOp) {
+        case CompareOp::Always:
+            depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_ALWAYS;
+            break;
+        case CompareOp::Equal:
+            depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_EQUAL;
+            break;
+        case CompareOp::Greater:
+            depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_GREATER;
+            break;
+        case CompareOp::GreaterOrEqual:
+            depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
+            break;
+        case CompareOp::Less:
+            depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+            break;
+        case CompareOp::LessOrEqual:
+            depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+            break;
+        case CompareOp::Never:
+            depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_NEVER;
+            break;
+        case CompareOp::NotEqual:
+            depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_NOT_EQUAL;
+            break;
+        case CompareOp::NotSpecified:
+        default:
+            std::unreachable();
+    }
+
     VkPipelineColorBlendAttachmentState colorBlendAttachment{};
     colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    colorBlendAttachment.blendEnable = VK_FALSE;
-    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    colorBlendAttachment.blendEnable = VK_TRUE;
+    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-    colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
     uint32_t colorAttachmentCount = 0;
@@ -388,10 +416,10 @@ void VulkanGraphicsPipeline::create() {
     colorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_COPY;
     colorBlendStateCreateInfo.attachmentCount = colorBlendAttachmentStates.size();
     colorBlendStateCreateInfo.pAttachments = colorBlendAttachmentStates.data();
-    colorBlendStateCreateInfo.blendConstants[0] = 0.0f;
-    colorBlendStateCreateInfo.blendConstants[1] = 0.0f;
-    colorBlendStateCreateInfo.blendConstants[2] = 0.0f;
-    colorBlendStateCreateInfo.blendConstants[3] = 0.0f;
+    colorBlendStateCreateInfo.blendConstants[0] = 1.0f;
+    colorBlendStateCreateInfo.blendConstants[1] = 1.0f;
+    colorBlendStateCreateInfo.blendConstants[2] = 1.0f;
+    colorBlendStateCreateInfo.blendConstants[3] = 1.0f;
 
     std::vector<VkDynamicState> states = { VK_DYNAMIC_STATE_LINE_WIDTH, VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 

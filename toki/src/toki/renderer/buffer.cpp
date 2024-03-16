@@ -25,10 +25,6 @@ Ref<IndexBuffer> IndexBuffer::create(const IndexBufferConfig& config) {
 
 IndexBuffer::IndexBuffer(const IndexBufferConfig& config) : _Buffer(config.size), m_config(config) {}
 
-uint32_t IndexBuffer::getIndexCount() const {
-    return m_config.indexCount;
-}
-
 IndexSize IndexBuffer::getIndexSize() const {
     return m_config.indexSize;
 }

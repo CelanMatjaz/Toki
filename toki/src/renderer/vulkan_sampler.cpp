@@ -53,7 +53,6 @@ VulkanSampler::VulkanSampler(const SamplerConfig& config) : Sampler(config) {
     samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
 
     TK_ASSERT_VK_RESULT(vkCreateSampler(s_context->device, &samplerInfo, s_context->allocationCallbacks, &m_sampler), "Could not create sampler");
-    int a = 0;
 }
 
 VulkanSampler::~VulkanSampler() {

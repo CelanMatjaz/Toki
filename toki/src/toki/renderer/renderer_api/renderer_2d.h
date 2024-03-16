@@ -15,9 +15,9 @@ class Renderer2D {
     friend Application;
 
     struct Quad {
-        const glm::vec2& position;
-        const glm::vec2& size;
-        const glm::vec4& color;
+        glm::vec2 position;
+        glm::vec2 size;
+        glm::vec4 color;
     };
 
 public:
@@ -32,8 +32,9 @@ public:
     static void drawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color);
     static void drawQuad(const Quad& quad);
     static void drawQuads(std::vector<Quad> quads);
+    static void drawQuadB(const Quad& quad);
 
-    static void drawFont(const glm::vec2& position,Ref<FontData> font, std::string text);
+    static void drawText(const glm::vec2& position, Ref<FontData> font, std::string text);
 
 private:
     inline static Ref<Renderer> s_renderer;

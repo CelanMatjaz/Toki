@@ -15,7 +15,8 @@ public:
     void onAttach() override {
         auto [width, height] = m_window->getDimensions();
 
-        font = Toki::FontSystem::loadBitmapFont("test", { Toki::ResourceType::Font, "assets/fonts/calibril.ttf" });
+        // Toki::FontSystem::loadFont("test", { Toki::ResourceType::Font, "assets/fonts/Roboto-Bold.ttf" });
+        Toki::FontSystem::loadFont("test", { Toki::ResourceType::Font, "assets/fonts/calibril.ttf" });
 
         Toki::SamplerConfig fontSamplerConfig{};
         fontSampler = Toki::Sampler::create(fontSamplerConfig);
@@ -94,7 +95,6 @@ public:
 
             Toki::IndexBufferConfig config{};
             config.size = sizeof(indices);
-            config.indexCount = sizeof(indices) / sizeof(uint32_t);
             config.indexSize = Toki::IndexSize::INDEX_SIZE_32;
             indexBuffer = Toki::IndexBuffer::create(config);
             indexBuffer->setData(config.size, (void*) indices);
@@ -105,7 +105,6 @@ public:
 
             Toki::IndexBufferConfig config{};
             config.size = sizeof(indices);
-            config.indexCount = sizeof(indices) / sizeof(uint32_t);
             config.indexSize = Toki::IndexSize::INDEX_SIZE_32;
             indexBuffer2 = Toki::IndexBuffer::create(config);
             indexBuffer2->setData(config.size, (void*) indices);
