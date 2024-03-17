@@ -11,8 +11,8 @@ public:
     Camera(glm::mat4 projection, glm::mat4 view);
     ~Camera() = default;
 
-    [[NODISCARD]] const glm::mat4& getView() const;
-    [[NODISCARD]] const glm::mat4& getProjection() const;
+    [[nodiscard]] const glm::mat4& getView() const;
+    [[nodiscard]] const glm::mat4& getProjection() const;
 
     void setProjection(const glm::mat4& newProjection);
     void setView(const glm::mat4& newView);

@@ -96,7 +96,6 @@ public:
             };
             config.layoutDescriptions.bindingDescriptions = { { 0, 9 * sizeof(float), Toki::VertexInputRate::VERTEX_INPUT_RATE_VERTEX } };
             config.attachments = attachments;
-            config.attachments[0].presentable = false;
             shader = Toki::Shader::create(config);
         }
 

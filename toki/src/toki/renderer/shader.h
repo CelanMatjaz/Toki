@@ -15,12 +15,12 @@ namespace Toki {
 
 struct ShaderOptions {
     PrimitiveTopology primitiveTopology : 4 = PrimitiveTopology::NotSpecified;
+    CullMode cullMode : 4 = CullMode::NotSpecified;
     PolygonMode polygonMode : 2 = PolygonMode::NotSpecified;
-    CullMode cullMode : 2 = CullMode::NotSpecified;
     FrontFace frontFace : 2 = FrontFace::NotSpecified;
+    bool prititiveRestart : 1 = false;
     DepthTest depthTest;
     StencilTest stencilTest;
-    bool prititiveRestart = false;
 };
 
 struct ShaderConfig {

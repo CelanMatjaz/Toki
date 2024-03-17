@@ -496,7 +496,7 @@ void VulkanGraphicsPipeline::create() {
                 renderingCreateInfo.stencilAttachmentFormat = VulkanUtils::mapFormat(attachment.colorFormat);
                 break;
             default:
-                colorFormats.emplace_back(VulkanUtils::mapFormat(attachment.colorFormat));
+                std::unreachable();
         }
     }
 

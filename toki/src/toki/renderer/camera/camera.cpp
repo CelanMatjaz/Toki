@@ -16,7 +16,7 @@ const glm::mat4& Camera::getProjection() const {
 
 void Camera::setProjection(const glm::mat4& newProjection) {
     m_projectionMatrix = newProjection;
-    m_projectionMatrix[1, 1] *= -1;
+    m_projectionMatrix[1][1] *= -1;
 }
 
 void Camera::setView(const glm::mat4& newView) {

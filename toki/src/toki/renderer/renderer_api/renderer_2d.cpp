@@ -255,7 +255,7 @@ void Renderer2D::drawText(const glm::vec2& position, Ref<FontData> font, std::st
 
         uint32_t currentQuadIndex = data.batchQuadCount;
 
-        glm::vec2 del = glm::vec2{ 128.0f, 1024.0f };
+        glm::vec2 del = glm::vec2{ 1024.0f, 1024.0f };
 
         data.batchQuads[currentQuadIndex + 0] =
             RendererData::QuadBVertex{ { offset.x, offset.y + g.yOffset, 0.0f }, glm::vec2{ g.x, g.y } / del, glm::vec4{ 0.0f } };
