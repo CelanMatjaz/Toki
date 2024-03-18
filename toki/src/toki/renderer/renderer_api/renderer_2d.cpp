@@ -118,7 +118,7 @@ void Renderer2D::initObjects(Ref<Window> window) {
     }
 
     {
-        Toki::ShaderOptions options{};
+        Toki::GraphicsShaderOptions options{};
         options.primitiveTopology = Toki::PrimitiveTopology::TriangleList;
         options.polygonMode = Toki::PolygonMode::Fill;
         options.cullMode = Toki::CullMode::Back;
@@ -126,20 +126,21 @@ void Renderer2D::initObjects(Ref<Window> window) {
         options.depthTest.enable = false;
         options.depthTest.write = true;
         options.depthTest.compareOp = Toki::CompareOp::LessOrEqual;
-
-        ShaderConfig config{};
-        config.options = options;
-        config.attachments = attachments;
-        config.shaderStages[ShaderStage::SHADER_STAGE_VERTEX] = (std::string) QUAD_SHADER_VERT_SOURCE;
-        config.shaderStages[ShaderStage::SHADER_STAGE_FRAGMENT] = (std::string) QUAD_SHADER_FRAG_SOURCE;
-        config.layoutDescriptions.attributeDescriptions = {
+        options.attachments = attachments;
+        options.layoutDescriptions.attributeDescriptions = {
             { 0, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT3, offsetof(RendererData::QuadBVertex, position) },
             { 1, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT2, offsetof(RendererData::QuadBVertex, uv) },
             { 2, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT4, offsetof(RendererData::QuadBVertex, color) },
         };
-        config.layoutDescriptions.bindingDescriptions = {
+        options.layoutDescriptions.bindingDescriptions = {
             { 0, sizeof(RendererData::QuadBVertex), Toki::VertexInputRate::VERTEX_INPUT_RATE_VERTEX },
         };
+
+        ShaderConfig config{};
+        config.options = options;
+        config.shaderStages[ShaderStage::SHADER_STAGE_VERTEX] = (std::string) QUAD_SHADER_VERT_SOURCE;
+        config.shaderStages[ShaderStage::SHADER_STAGE_FRAGMENT] = (std::string) QUAD_SHADER_FRAG_SOURCE;
+
         data.batchShader = Shader::create(config);
     }
 

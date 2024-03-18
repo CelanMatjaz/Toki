@@ -76,7 +76,7 @@ public:
         }
 
         {
-            Toki::ShaderOptions options{};
+            Toki::GraphicsShaderOptions options{};
             options.primitiveTopology = Toki::PrimitiveTopology::TriangleList;
             options.polygonMode = Toki::PolygonMode::Fill;
             options.cullMode = Toki::CullMode::Back;
@@ -84,18 +84,18 @@ public:
             options.depthTest.enable = true;
             options.depthTest.write = true;
             options.depthTest.compareOp = Toki::CompareOp::Less;
+            options.layoutDescriptions.attributeDescriptions = {
+                { 0, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT3, 0 },
+                { 1, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT4, 4 * sizeof(float) },
+                { 2, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT2, 7 * sizeof(float) },
+            };
+            options.layoutDescriptions.bindingDescriptions = { { 0, 9 * sizeof(float), Toki::VertexInputRate::VERTEX_INPUT_RATE_VERTEX } };
+            options.attachments = attachments;
 
             Toki::ShaderConfig config{};
             config.options = options;
             config.shaderStages[Toki::ShaderStage::SHADER_STAGE_FRAGMENT] = (std::filesystem::path) "assets/shaders/test_shader.frag.glsl";
             config.shaderStages[Toki::ShaderStage::SHADER_STAGE_VERTEX] = (std::filesystem::path) "assets/shaders/test_shader.vert.glsl";
-            config.layoutDescriptions.attributeDescriptions = {
-                { 0, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT3, 0 },
-                { 1, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT4, 4 * sizeof(float) },
-                { 2, 0, Toki::VertexFormat::VERTEX_FORMAT_FLOAT2, 7 * sizeof(float) },
-            };
-            config.layoutDescriptions.bindingDescriptions = { { 0, 9 * sizeof(float), Toki::VertexInputRate::VERTEX_INPUT_RATE_VERTEX } };
-            config.attachments = attachments;
             shader = Toki::Shader::create(config);
         }
 

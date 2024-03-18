@@ -1,31 +1,33 @@
 #include "vulkan_renderer.h"
 
+#include <vulkan/vulkan.h>
+
 #include <print>
 #include <vector>
 
 #include "platform.h"
+#include "renderer/pipeline/vulkan_pipeline.h"
 #include "renderer/vulkan_buffer.h"
-#include "renderer/vulkan_graphics_pipeline.h"
 #include "renderer/vulkan_image.h"
 #include "renderer/vulkan_render_pass.h"
+#include "renderer/vulkan_rendering_context.h"
+#include "renderer/vulkan_sampler.h"
+#include "renderer/vulkan_shader.h"
 #include "renderer/vulkan_utils.h"
 #include "toki/core/assert.h"
 #include "toki/events/event.h"
-#include "vulkan/vulkan_core.h"
 
 #ifdef TK_WINDOW_SYSTEM_GLFW
 #include "GLFW/glfw3.h"
 #endif
-#include "vulkan_rendering_context.h"
-#include "vulkan_sampler.h"
 
 namespace Toki {
 
-const std::vector<const char*> validationLayers = {
+static const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation",
 };
-const std::vector<const char*> requiredExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
-                                                      /* VK_NV_FILL_RECTANGLE_EXTENSION_NAME */ };
+static const std::vector<const char*> requiredExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+                                                             /* VK_NV_FILL_RECTANGLE_EXTENSION_NAME */ };
 
 bool checkDeviceExtensionSupport(Ref<VulkanContext> m_context);
 bool checkValidationLayerSupport();
@@ -61,9 +63,10 @@ void VulkanRenderer::init() {
     initDescriptorPools();
 
     VulkanRenderPass::s_context = m_context;
+    VulkanPipeline::s_context = m_context;
+    VulkanShader::s_context = m_context;
     VulkanBuffer::s_context = m_context;
     VulkanImage::s_context = m_context;
-    VulkanGraphicsPipeline::s_context = m_context;
     VulkanSampler::s_context = m_context;
 
     m_context->submitSingleUseCommands = [this](std::function<void(VkCommandBuffer)> fn) {
