@@ -4,6 +4,7 @@
 #include <execution>
 #include <spirv_cross/spirv_reflect.hpp>
 
+#include "renderer/pipeline/compute_pipeline.h"
 #include "renderer/pipeline/graphics_pipeline.h"
 #include "renderer/pipeline/shader_compiler.h"
 #include "renderer/vulkan_utils.h"
@@ -13,6 +14,10 @@ namespace Toki {
 
 Ref<VulkanPipeline> VulkanPipeline::create(const ShaderBinaries& binaries, const GraphicsShaderOptions& options) {
     return createRef<GraphicsPipeline>(binaries, options);
+}
+
+Ref<VulkanPipeline> VulkanPipeline::create(const ShaderBinaries& binaries, const ComputeShaderOptions& options) {
+    return createRef<ComputePipeline>(binaries, options);
 }
 
 VulkanPipeline::~VulkanPipeline() {

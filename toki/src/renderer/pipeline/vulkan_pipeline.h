@@ -32,6 +32,7 @@ class VulkanPipeline {
 
 public:
     static Ref<VulkanPipeline> create(const ShaderBinaries& sources, const GraphicsShaderOptions& options);
+    static Ref<VulkanPipeline> create(const ShaderBinaries& sources, const ComputeShaderOptions& options);
 
     VulkanPipeline() = default;
     virtual ~VulkanPipeline();

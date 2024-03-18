@@ -1,5 +1,7 @@
 #include "vulkan_shader.h"
 
+#include <vulkan/vulkan.h>
+
 #include <ranges>
 #include <shaderc/shaderc.hpp>
 #include <spirv_cross/spirv_reflect.hpp>
@@ -8,9 +10,9 @@
 #include "renderer/pipeline/vulkan_pipeline.h"
 #include "renderer/vulkan_buffer.h"
 #include "renderer/vulkan_image.h"
+#include "renderer/vulkan_sampler.h"
+#include "toki/core/assert.h"
 #include "toki/resources/loaders/text_loader.h"
-#include "vulkan/vulkan_core.h"
-#include "vulkan_sampler.h"
 
 namespace Toki {
 
@@ -31,7 +33,18 @@ VulkanShader::VulkanShader(const ShaderConfig& config) : Shader(config) {
     }
 
     if (std::holds_alternative<GraphicsShaderOptions>(config.options)) {
+        TK_ASSERT(
+            config.shaderStages.contains(ShaderStage::SHADER_STAGE_VERTEX) && config.shaderStages.contains(ShaderStage::SHADER_STAGE_FRAGMENT),
+            "Vertex AND fragment shader stages are not provided for graphics pipeline creation");
         m_pipeline = VulkanPipeline::create(binaries, std::get<GraphicsShaderOptions>(config.options));
+        return;
+    }
+
+    else if (std::holds_alternative<ComputeShaderOptions>(config.options)) {
+        TK_ASSERT(
+            config.shaderStages.contains(ShaderStage::SHADER_STAGE_VERTEX) && config.shaderStages.contains(ShaderStage::SHADER_STAGE_FRAGMENT),
+            "Compute shader stage is not provided for compute pipeline creation");
+        m_pipeline = VulkanPipeline::create(binaries, std::get<ComputeShaderOptions>(config.options));
         return;
     }
 

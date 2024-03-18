@@ -25,7 +25,9 @@ struct GraphicsShaderOptions {
     std::vector<Attachment> attachments;
 };
 
-using ShaderOptions = std::variant<GraphicsShaderOptions>;
+struct ComputeShaderOptions {};
+
+using ShaderOptions = std::variant<GraphicsShaderOptions, ComputeShaderOptions>;
 using ShaderStages = std::unordered_map<ShaderStage, std::variant<std::string, std::filesystem::path>>;
 
 struct ShaderConfig {
