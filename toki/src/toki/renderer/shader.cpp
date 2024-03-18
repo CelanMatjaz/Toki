@@ -1,11 +1,11 @@
 #include "shader.h"
 
-#include "renderer/vulkan_graphics_pipeline.h"
+#include "renderer/vulkan_shader.h"
 
 namespace Toki {
 
 Ref<Shader> Shader::create(const ShaderConfig& config) {
-    return createRef<VulkanGraphicsPipeline>(config);
+    return createRef<VulkanShader>(config);
 }
 
 Shader::Shader(const ShaderConfig& config) : m_config(config) {}

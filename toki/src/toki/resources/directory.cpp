@@ -7,7 +7,7 @@ std::filesystem::path Directory::workingDirectory() {
 }
 
 std::filesystem::path Directory::cacheDirectory() {
-    return workingDirectory() / "cache";
+    return workingDirectory() / ".cache";
 }
 
 std::filesystem::path Directory::assetsDirectory() {

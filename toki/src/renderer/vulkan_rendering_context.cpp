@@ -1,7 +1,7 @@
 #include "vulkan_rendering_context.h"
 
 #include "renderer/vulkan_buffer.h"
-#include "renderer/vulkan_graphics_pipeline.h"
+#include "renderer/vulkan_shader.h"
 #include "toki/core/assert.h"
 
 namespace Toki {
@@ -29,16 +29,17 @@ void VulkanRenderingContext::bindIndexBuffer(Ref<IndexBuffer> indexBuffer) const
 }
 
 void VulkanRenderingContext::bindShader(Ref<Shader> shader) const {
-    vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, ((VulkanGraphicsPipeline*) shader.get())->getPipeline());
+    auto s = ((VulkanShader*) shader.get());
+    vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, s->getPipeline());
 }
 
-void VulkanRenderingContext::pushConstants(Ref<Shader> shader, uint32_t size, void* data) const {
-    auto s = ((VulkanGraphicsPipeline*) shader.get());
-    vkCmdPushConstants(m_commandBuffer, s->getPipelineLayout(), s->getPushConstantStageFlags(), 0, size, data);
+void VulkanRenderingContext::pushConstants(Ref<Shader> shader, uint32_t size, void* data, uint32_t offset) const {
+    auto s = ((VulkanShader*) shader.get());
+    vkCmdPushConstants(m_commandBuffer, s->getPipelineLayout(), s->getPushConstantStageFlags(), offset, size, data);
 }
 
 void VulkanRenderingContext::bindUniforms(Ref<Shader> shader, uint32_t firstSet, uint32_t setCount) const {
-    auto s = ((VulkanGraphicsPipeline*) shader.get());
+    auto s = ((VulkanShader*) shader.get());
     const std::vector<VkDescriptorSet>& sets = s->getDestriptorSets();
     TK_ASSERT(sets.size() >= setCount + firstSet, std::format("Not enough sets bound {} >= {} + {}", sets.size(), setCount, firstSet));
     vkCmdBindDescriptorSets(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, s->getPipelineLayout(), firstSet, setCount, sets.data(), 0, nullptr);

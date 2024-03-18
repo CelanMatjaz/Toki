@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include "renderer/pipeline/vulkan_pipeline.h"
 #include "renderer/vulkan_types.h"
 #include "toki/renderer/shader.h"
 
@@ -9,12 +10,12 @@ namespace Toki {
 
 class VulkanRenderer;
 
-class VulkanGraphicsPipeline : public Shader {
+class VulkanShader : public Shader {
     friend VulkanRenderer;
 
 public:
-    VulkanGraphicsPipeline(const ShaderConfig& config);
-    ~VulkanGraphicsPipeline();
+    VulkanShader(const ShaderConfig& config);
+    ~VulkanShader();
 
     VkPipeline getPipeline() const;
     VkPipelineLayout getPipelineLayout() const;
@@ -29,11 +30,7 @@ private:
     void create();
     void destroy();
 
-    VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
-    VkPipeline m_pipeline = VK_NULL_HANDLE;
-    uint32_t m_pushConstantStageFlags = 0;
-    std::vector<VkDescriptorSet> m_descriptorSets;
-    std::vector<VkDescriptorSetLayout> m_descriptorSetLayouts;
+    Ref<VulkanPipeline> m_pipeline;
 };
 
 }  // namespace Toki
