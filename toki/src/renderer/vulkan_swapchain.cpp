@@ -113,7 +113,7 @@ std::optional<uint32_t> VulkanSwapchain::acquireNextImage(FrameData& frameData) 
         }
         return {};
     } else {
-        TK_ASSERT(result == VK_SUCCESS, std::format("Failed to acquire swapchain image index, result: {}", (uint32_t) result));
+        TK_ASSERT(result == VK_SUCCESS, "Failed to acquire swapchain image index, result: {}", (uint32_t) result);
     }
 
     return m_currentImageIndex;

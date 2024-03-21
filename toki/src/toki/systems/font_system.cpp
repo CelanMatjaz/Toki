@@ -63,7 +63,7 @@ void FontSystem::unloadFont(std::string name) {
 }
 
 Ref<FontData> FontSystem::getFont(std::string name, uint16_t size) {
-    TK_ASSERT(state->fonts.contains(name), std::format("Font \"{}\" not loaded", name));
+    TK_ASSERT(state->fonts.contains(name), "Font \"{}\" not loaded", name);
 
     if (state->fonts[name]->fontVersions.contains(size)) {
         return state->fonts[name]->fontVersions[size];

@@ -133,7 +133,7 @@ VulkanRenderPass::VulkanRenderPass(const RenderPassConfig& config) : m_width(con
 VulkanRenderPass::~VulkanRenderPass() {}
 
 Ref<Texture> VulkanRenderPass::getColorAttachment(uint32_t textureIndex) {
-    TK_ASSERT(textureIndex < m_colorAttachments.size(), std::format("Attachment index {} does not exist", textureIndex));
+    TK_ASSERT(textureIndex < m_colorAttachments.size(), "Attachment index {} does not exist", textureIndex);
 
     s_context->submitSingleUseCommands([this, textureIndex](VkCommandBuffer cmd) {
         this->m_colorAttachments[textureIndex]->transitionLayout(cmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
