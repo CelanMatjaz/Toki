@@ -16,6 +16,6 @@ public:
 private:
     bool m_currentBuffer = 0;
     StackAllocator m_buffers[2];
-}
+};
 
 }  // namespace Toki
