@@ -14,9 +14,10 @@ VulkanRenderPass::VulkanRenderPass(const RenderPassConfig& config) : m_width(con
         VkRenderingAttachmentInfo attachmentInfo{};
         attachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
         attachmentInfo.clearValue.depthStencil.depth = 1.0f;
-        attachmentInfo.clearValue.color.float32[0] = 0.1;
-        attachmentInfo.clearValue.color.float32[1] = 0.1;
-        attachmentInfo.clearValue.color.float32[2] = 0.1;
+        attachmentInfo.clearValue.color.uint32[0] = 0;
+        attachmentInfo.clearValue.color.uint32[1] = 0;
+        attachmentInfo.clearValue.color.uint32[2] = 0;
+        attachmentInfo.clearValue.color.uint32[3] = 0;
 
         if (attachment.presentable) {
             TK_ASSERT(m_presentableAttachmentIndex == -1, "Only 1 presentable attachment can be provided");
@@ -24,7 +25,7 @@ VulkanRenderPass::VulkanRenderPass(const RenderPassConfig& config) : m_width(con
         }
 
         if (attachment.loadOp == AttachmentLoadOp::ATTACHMENT_LOAD_OP_LOAD) {
-            attachmentInfo.clearValue.color.float32[3] = 0.0f;
+            attachmentInfo.clearValue.color.uint32[3] = 0.0f;
         }
 
         switch (attachment.loadOp) {
@@ -100,9 +101,6 @@ VulkanRenderPass::VulkanRenderPass(const RenderPassConfig& config) : m_width(con
             default:
                 std::unreachable();
         }
-
-        // Magic fix for red channel clear being set to 1.0f when setting stencil clear to 1.0f
-        m_colorAttachmentInfos.back().clearValue.color.float32[0] = 0;
     }
 
     Event::bindEvent(EventType::WindowResize, this, [](void* sender, void* receiver, const Event& event) {
