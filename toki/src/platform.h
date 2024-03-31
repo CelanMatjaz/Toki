@@ -4,4 +4,5 @@
 
 #if defined(WIN32) || defined(_WIN32)
 #define TK_PLATFORM_WINDOWS
+#include <Windows.h>
 #endif
