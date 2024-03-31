@@ -35,7 +35,7 @@ void* StackAllocator::allocAligned(uint32_t size, uint32_t alignment) {
     uintptr_t misalignment = ((uint64_t) raw & mask);
     ptrdiff_t adjustment = alignment - misalignment;
 
-    return (void*) raw + adjustment;
+    return (void*) (raw + adjustment);
 }
 
 uint32_t StackAllocator::getPointer() const {

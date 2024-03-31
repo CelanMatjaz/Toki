@@ -12,10 +12,6 @@ namespace Toki {
 void* allocateBlock(uint64_t allocationSize) {
 #ifdef TK_PLATFORM_WINDOWS
     void* memoryBlock = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, allocationSize);
-
-    auto code = GetExceptionCode();
-    TK_ASSERT(code != STATUS_NO_MEMORY, "Lack of available memory or heap corruption");
-
     return memoryBlock;
 #endif
 }
