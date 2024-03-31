@@ -3,8 +3,9 @@
 #include <chrono>
 #include <print>
 
-#include "assert.h"
 #include "renderer/vulkan_renderer.h"
+#include "toki/core/assert.h"
+#include "toki/core/logging.h"
 #include "toki/renderer/renderer_api/renderer_2d.h"
 #include "toki/systems/font_system.h"
 #include "toki/systems/job_system.h"
@@ -14,6 +15,12 @@ namespace Toki {
 
 Application::Application(const ApplicationConfig& config) {
     std::println("Initializing app");
+
+    LOG_INFO("STARTING");
+    LOG_WARN("STARTING");
+    LOG_ERROR("STARTING");
+    LOG_FATAL("STARTING");
+    LOG_DEBUG("STARTING");
 
     Window::initWindowSystem(this);
 
@@ -68,9 +75,11 @@ void Application::start() {
         lastFrameTime = frameStartTime;
 
         m_renderer->beginFrame();
+
         for (auto it = m_layerStack.rbegin(); it != m_layerStack.rend(); ++it) {
             (*it)->onRender();
         }
+
         m_renderer->endFrame();
 
         JobSystem::updateQueues();
@@ -96,6 +105,8 @@ void Application::popLayer() {
 }
 
 void Application::handleEvent(Event& e) {
+    if (e.isHandled()) return;
+
     for (auto it = m_layerStack.rbegin(); it != m_layerStack.rend(); ++it) {
         (*it)->onEvent(e);
         if (e.isHandled()) break;
