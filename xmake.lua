@@ -1,7 +1,7 @@
 VULKAN_SDK = os.getenv("VULKAN_SDK")
 
-VULKAN_INCLUDE = path.join(VULKAN_SDK, "Include")
-VULKAN_BIN = path.join(VULKAN_SDK, "Lib")
+VULKAN_INCLUDE = path.join(VULKAN_SDK, "include")
+VULKAN_BIN = path.join(VULKAN_SDK, "lib")
 
 set_project("Toki")
 
@@ -40,11 +40,17 @@ target("glfw")
     set_group("Dependencies")
     add_includedirs("vendor/glfw/src")
     add_files("vendor/glfw/src/*.c")
-    add_defines("_GLFW_WIN32", "_GLFW_VULKAN_STATIC")
-    add_links("gdi32", "user32", "shell32")
+
+    add_defines("_GLFW_VULKAN_STATIC")
     set_prefixname("")
     set_extension(".lib")
     set_group("dependencies")
+    set_warnings("none")
+
+    if is_plat("windows") then
+        add_defines("_GLFW_WIN32")
+        add_links("gdi32", "user32", "shell32")
+    end
 
 target("imgui")
     set_kind("static")
@@ -56,6 +62,7 @@ target("imgui")
     set_prefixname("")
     set_extension(".lib")
     set_group("dependencies")
+    set_warnings("none")
     
 target("toki")
     set_kind("static")
@@ -76,6 +83,7 @@ target("toki")
     add_linkdirs(VULKAN_BIN)
     add_links("vulkan-1")
     set_prefixname("")
+    set_warnings("everything")
     -- set_extension(".lib")
     add_defines("GLM_FORCE_RADIANS", "GLM_FORCE_DEPTH_ZERO_TO_ONE", "STB_IMAGE_STATIC", "STB_IMAGE_IMPLEMENTATION", "STB_TRUETYPE_IMPLEMENTATION")
 
