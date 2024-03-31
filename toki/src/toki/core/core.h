@@ -32,6 +32,8 @@ public:
         m_ref = other.m_ref;
         return *this;
     }
+
+    const T* operator->() const { return m_ref; }
     const T* get() const { return m_ref; }
 
 private:
