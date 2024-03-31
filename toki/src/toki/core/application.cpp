@@ -9,6 +9,7 @@
 #include "toki/renderer/renderer_api/renderer_2d.h"
 #include "toki/systems/font_system.h"
 #include "toki/systems/job_system.h"
+#include "toki/systems/resource_system.h"
 #include "toki/systems/ui_system.h"
 
 namespace Toki {
@@ -35,6 +36,17 @@ Application::Application(const ApplicationConfig& config) {
 
     m_renderer->createSwapchain(m_mainWindow);
 
+    {
+        ResourceSystemConfig config{};
+        config.resourceDirectory = std::filesystem::current_path();
+        std::println("{}", config.resourceDirectory.string());
+        ResourceSystem::initialize(config);
+
+        for (const auto& asd : ResourceSystem::getResourcesAtPath("/assets/shaders")) {
+            std::println("{}", asd->getPath().string());
+        }
+    }
+
     JobSystem::init(this);
     FontSystem::init(this);
     UISystem::init(this);
@@ -46,6 +58,7 @@ Application::~Application() {
     UISystem::shutdown();
     FontSystem::shutdown();
     JobSystem::shutdown();
+    ResourceSystem::shutdown();
 
     uint32_t layerCount = m_layerStack.size();
     for (uint32_t i = 0; i < layerCount; ++i) {

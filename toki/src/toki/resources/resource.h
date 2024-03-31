@@ -5,7 +5,8 @@
 namespace Toki {
 
 enum class ResourceType {
-    Font
+    Unknown,
+    Font,
 };
 
 class Resource {
@@ -15,6 +16,7 @@ public:
     ~Resource() = default;
 
     bool checkForNewWrite() const;
+    void update();
 
     ResourceType getType() const;
     std::filesystem::path getPath() const;
@@ -24,6 +26,7 @@ private:
     ResourceType m_type;
     std::filesystem::path m_path;
     std::filesystem::file_time_type m_lastWriteTime;
+    uint64_t m_size;
 };
 
 }  // namespace Toki
