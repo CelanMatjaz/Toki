@@ -1,6 +1,8 @@
 # Toki
 
-Work in progress C++ rendering engine writen with the Vulkan rendering API.
+Work in progress rendering engine writen with C++ and the Vulkan rendering API.
+
+![Example](/assets/pic1.png)
 
 ## System dependencies
 
