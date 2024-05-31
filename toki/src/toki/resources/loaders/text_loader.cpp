@@ -8,13 +8,13 @@ namespace Toki {
 
 std::expected<std::string, Error> TextLoader::readTextFile(std::filesystem::path filePath) {
     if (!ResourceUtils::fileExists(filePath)) {
-        return std::unexpected<Error>{ Error::FileNotFoundError };
+        return std::unexpected(Error::FileNotFoundError);
     }
 
     std::ifstream textFile(filePath, std::ios::ate);
 
     if (!textFile.is_open() || !textFile.good()) {
-        return std::unexpected<Error>{ Error::FileReadError };
+        return std::unexpected(Error::FileReadError);
     }
 
     uint32_t fileSize = textFile.tellg();

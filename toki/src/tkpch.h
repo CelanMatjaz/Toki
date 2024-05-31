@@ -20,6 +20,10 @@
 #include <variant>
 #include <vector>
 
+#ifndef TK_NDEBUG
+#include <stacktrace>
+#endif
+
 // Vendor
 #include <vulkan/vulkan.h>
 

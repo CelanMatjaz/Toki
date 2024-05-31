@@ -5,75 +5,39 @@
 
 #include "renderer/vulkan_renderer.h"
 #include "toki/core/assert.h"
+#include "toki/core/core.h"
+#include "toki/core/frame_data.h"
 #include "toki/core/logging.h"
-#include "toki/renderer/renderer_api/renderer_2d.h"
-#include "toki/systems/font_system.h"
-#include "toki/systems/job_system.h"
-#include "toki/systems/resource_system.h"
-#include "toki/systems/ui_system.h"
 
 namespace Toki {
 
 Application::Application(const ApplicationConfig& config) {
-    std::println("Initializing app");
-
-    LOG_INFO("STARTING");
-    LOG_WARN("STARTING");
-    LOG_ERROR("STARTING");
-    LOG_FATAL("STARTING");
-    LOG_DEBUG("STARTING");
+    LOG_INFO("Initializing app");
 
     Window::initWindowSystem(this);
 
     m_mainWindow = Window::create(config.windowConfig);
-    m_renderer = Renderer::create();
-    m_renderer->init();
-
-    Layer::s_renderer = m_renderer;
-    Renderer2D::s_renderer = m_renderer;
-
-    Renderer2D::init(m_mainWindow);
-
-    m_renderer->createSwapchain(m_mainWindow);
-
-    {
-        ResourceSystemConfig config{};
-        config.resourceDirectory = std::filesystem::current_path();
-        std::println("{}", config.resourceDirectory.string());
-        ResourceSystem::initialize(config);
-
-        for (const auto& asd : ResourceSystem::getResourcesAtPath("/assets/shaders")) {
-            std::println("{}", asd->getPath().string());
-        }
-    }
-
-    JobSystem::init(this);
-    FontSystem::init(this);
-    UISystem::init(this);
+    s_renderer = createRef<VulkanRenderer>();
+    s_renderer->init();
+    s_renderer->bindWindow(m_mainWindow);
 }
 
 Application::~Application() {
-    std::println("Deinitializing app");
-
-    UISystem::shutdown();
-    FontSystem::shutdown();
-    JobSystem::shutdown();
-    ResourceSystem::shutdown();
+    LOG_INFO("Deinitializing app");
 
     uint32_t layerCount = m_layerStack.size();
     for (uint32_t i = 0; i < layerCount; ++i) {
         popLayer();
     }
 
-    Renderer2D::shutdown();
-
-    m_renderer->shutdown();
+    s_renderer->shutdown();
     Window::shutdownWindowSystem();
 }
 
 void Application::start() {
     m_mainWindow->show();
-    std::println("Starting app");
+
+    LOG_INFO("Starting app");
 
     static auto lastFrameTime = std::chrono::high_resolution_clock::now();
     float deltaTime = 0;
@@ -87,18 +51,23 @@ void Application::start() {
         deltaTime = std::chrono::duration<float>(frameStartTime - lastFrameTime).count();
         lastFrameTime = frameStartTime;
 
-        m_renderer->beginFrame();
+        static FrameData frameData{};
+        frameData.deltaTime = deltaTime;
+        frameData.totalTime += deltaTime;
+        frameData.frameNumber++;
+
+        s_renderer->beginFrame(frameData);
 
         for (auto it = m_layerStack.rbegin(); it != m_layerStack.rend(); ++it) {
             (*it)->onRender();
         }
 
-        m_renderer->endFrame();
+        s_renderer->endFrame(frameData);
 
-        JobSystem::updateQueues();
+        s_renderer->present(frameData);
+
+        // return;
     }
-
-    m_renderer->waitForDevice();
 }
 
 void Application::stop() {
@@ -106,7 +75,6 @@ void Application::stop() {
 }
 
 void Application::pushLayer(Ref<Layer> layer) {
-    layer->m_window = m_mainWindow;
     m_layerStack.emplace_back(layer);
     m_layerStack.back()->onAttach();
 }
@@ -124,6 +92,10 @@ void Application::handleEvent(Event& e) {
         (*it)->onEvent(e);
         if (e.isHandled()) break;
     }
+}
+
+Renderer& Application::getRenderer() {
+    return *s_renderer;
 }
 
 }  // namespace Toki

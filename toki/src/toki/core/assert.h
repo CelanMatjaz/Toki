@@ -9,12 +9,22 @@
 
 #else
 
+#include <source_location>
+
+#define LOG_SOURCE_LOCATION                                                                                                \
+    {                                                                                                                      \
+        auto location = std::source_location::current();                                                                   \
+        std::println("{}:{}:{} '{}'", location.file_name(), location.line(), location.column(), location.function_name()); \
+    }
+
 #define TK_ASSERT(valIn, msg, ...)                                                                                                             \
-    if (auto val = valIn; val)                                                                                                                 \
+    if (bool val = valIn; val)                                                                                                                 \
         ;                                                                                                                                      \
     else {                                                                                                                                     \
         std::println(                                                                                                                          \
             "Toki assertion ERROR: {} in file {}:{}\n\t{}\n{}", val, __FILE__, __LINE__, #valIn, std::format(msg __VA_OPT__(, ) __VA_ARGS__)); \
+        LOG_SOURCE_LOCATION;                                                                                                                   \
+        __builtin_trap();                                                                                                                      \
     }
 
 #define TK_ASSERT_VK_RESULT(valIn, msg, ...)                               \
@@ -28,6 +38,8 @@
             __LINE__,                                                      \
             #valIn,                                                        \
             std::format(msg __VA_OPT__(, ) __VA_ARGS__));                  \
+        LOG_SOURCE_LOCATION;                                               \
+        __builtin_trap();                                                  \
     }
 
 #endif

@@ -11,6 +11,7 @@ namespace Toki {
 
 struct ApplicationConfig {
     WindowConfig windowConfig;
+    std::filesystem::path rootDir = std::filesystem::current_path();
 };
 
 class Application {
@@ -26,12 +27,16 @@ public:
 
     void handleEvent(Event& e);
 
+    static Renderer& getRenderer();
+
 private:
     Ref<Window> m_mainWindow;
-    Ref<Renderer> m_renderer;
     std::vector<Ref<Layer>> m_layerStack;
 
     bool m_running : 1 = true;
+
+private:
+    inline static Ref<Renderer> s_renderer;
 };
 
 }  // namespace Toki

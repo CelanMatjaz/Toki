@@ -8,13 +8,13 @@ namespace Toki {
 
 std::expected<std::vector<uint8_t>, Error> BinaryLoader::readBinaryFile(std::filesystem::path filePath) {
     if (!ResourceUtils::fileExists(filePath)) {
-        return std::unexpected<Error>{ Error::FileNotFoundError };
+        return std::unexpected(Error::FileNotFoundError);
     }
 
     std::ifstream binaryFile(filePath, std::ios::ate | std::ios::binary);
 
     if (!binaryFile.is_open() || !binaryFile.good()) {
-        return std::unexpected<Error>{ Error::FileReadError };
+        return std::unexpected(Error::FileReadError);
     }
 
     uint32_t fileSize = binaryFile.tellg();

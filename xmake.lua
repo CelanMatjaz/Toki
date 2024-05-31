@@ -9,7 +9,7 @@ add_rules("mode.debug", "mode.release")
 set_arch(os.arch())
 set_languages("cxx23")
 set_exceptions("cxx")
-set_toolchains("msvc", {vs = "2022"})
+-- set_toolchains("msvc", {vs = "2022"})
 set_toolchains("clang")
 
 target("engine")

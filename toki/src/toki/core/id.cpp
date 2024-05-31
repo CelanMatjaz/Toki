@@ -1,6 +1,5 @@
 #include "id.h"
 
-#include <cstring>
 #include <ctime>
 
 namespace Toki {
@@ -11,14 +10,20 @@ Id Id::createId() {
 
 static uint32_t id = 0;
 
-Id::Id() : m_values{ id++, (uint32_t) time(0) } {}
+Id::Id() : m_values{ .u32{ ~(id++), (uint32_t) time(0) } } {}
+
+Id::Id(uint64_t n) : m_values{ n } {}
 
 Id::Id(const Id& other) {
-    memcpy(m_values, other.m_values, sizeof(m_values));
+    m_values.u64 = other.m_values.u64;
 }
 
 Id::Id(Id&& other) {
-    memcpy(m_values, other.m_values, sizeof(m_values));
+    m_values.u64 = other.m_values.u64;
+}
+
+uint64_t Id::getId() const {
+    return m_values.u64;
 }
 
 Id& Id::operator=(const Id& other) {
@@ -26,7 +31,7 @@ Id& Id::operator=(const Id& other) {
         return *this;
     }
 
-    memcpy(m_values, other.m_values, sizeof(m_values));
+    m_values.u64 = other.m_values.u64;
     return *this;
 }
 
@@ -35,16 +40,29 @@ Id& Id::operator=(const Id&& other) {
         return *this;
     }
 
-    memcpy(m_values, other.m_values, sizeof(m_values));
+    m_values.u64 = other.m_values.u64;
+    return *this;
+}
+
+Id& Id::operator=(const uint64_t&& n) {
+    m_values.u64 = n;
     return *this;
 }
 
 bool Id::operator==(const Id& other) const {
-    return m_values[0] == other.m_values[0] && m_values[1] == other.m_values[1];
+    return m_values.u64 == other.m_values.u64;
 }
 
-size_t Id::operator()(const Id& p) const {
-    return (size_t) (m_values[0] << sizeof(m_values[0]) | m_values[1]);
+bool Id::operator<(const Id& other) const {
+    return m_values.u64 < other.m_values.u64;
+}
+
+uint64_t Id::operator()(const Id& p) const {
+    return p.m_values.u64;
+}
+
+Id::operator bool() const {
+    return m_values.u64 != 0;
 }
 
 }  // namespace Toki

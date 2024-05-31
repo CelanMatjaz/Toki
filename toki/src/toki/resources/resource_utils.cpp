@@ -3,7 +3,11 @@
 namespace Toki {
 
 bool ResourceUtils::pathExists(std::filesystem::path path) {
-    return std::filesystem::exists(path);
+    if (path.is_absolute()) {
+        return std::filesystem::exists(path);
+    } else {
+        return std::filesystem::exists(std::filesystem::current_path() / path);
+    }
 }
 
 bool ResourceUtils::directoryExists(std::filesystem::path path) {
