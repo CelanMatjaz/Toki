@@ -65,8 +65,6 @@ void Application::start() {
         s_renderer->endFrame(frameData);
 
         s_renderer->present(frameData);
-
-        // return;
     }
 }
 

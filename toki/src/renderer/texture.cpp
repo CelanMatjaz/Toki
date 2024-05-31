@@ -24,11 +24,11 @@ Texture::Texture(ColorFormat format, std::filesystem::path path) :
             break;
 
         case ColorFormat::RG8:
-            forcedChannels = STBI_grey_alpha;
+            forcedChannels = STBI_rgb;
             break;
 
         case ColorFormat::RGBA8:
-            forcedChannels = STBI_grey_alpha;
+            forcedChannels = STBI_rgb_alpha;
             break;
 
         case ColorFormat::Depth:
@@ -43,6 +43,10 @@ Texture::Texture(ColorFormat format, std::filesystem::path path) :
 
     uint32_t* pixels = (uint32_t*) stbi_load(std::filesystem::absolute(path).string().c_str(), &width, &height, &channels, forcedChannels);
     uint64_t imageSize = width * height * 4;
+
+    m_extent.width = width;
+    m_extent.height = height;
+    m_extent.depth = 1;
 
     TK_ASSERT(pixels != nullptr, "Error loading image");
     TK_ASSERT(imageSize > 0, "Image size is 0");
@@ -83,8 +87,9 @@ void Texture::setData(uint32_t size, void* data) {
 }
 
 void Texture::setData(uint32_t size, const Region3D& region, void* data) {
-    Buffer stagingBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    stagingBuffer.setData(size, 0, data);
+    auto stagingBuffer =
+        createRef<Buffer>(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    stagingBuffer->setData(size, 0, data);
 
     CommandPool::submitSingleUseCommands(context.physicalDeviceData.transferQueue, [this, b = stagingBuffer, r = region](VkCommandBuffer cmd) {
         this->transitionLayout(cmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -100,7 +105,7 @@ void Texture::setData(uint32_t size, const Region3D& region, void* data) {
         region.imageOffset = { static_cast<int32_t>(r.position.x), static_cast<int32_t>(r.position.y), static_cast<int32_t>(r.position.z) };
         region.imageExtent = { static_cast<uint32_t>(r.extent.x), static_cast<uint32_t>(r.extent.y), static_cast<uint32_t>(r.extent.z) };
 
-        vkCmdCopyBufferToImage(cmd, b.m_buffer, this->m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+        vkCmdCopyBufferToImage(cmd, b->m_buffer, this->m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
         this->transitionLayout(cmd, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     });
@@ -120,7 +125,7 @@ void Texture::createImage() {
     imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
     imageCreateInfo.format = m_format;
     imageCreateInfo.extent = m_extent;
-    imageCreateInfo.mipLevels = 0;
+    imageCreateInfo.mipLevels = 1;
     imageCreateInfo.arrayLayers = 1;
     imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
@@ -234,10 +239,12 @@ void Texture::transitionLayout(VkCommandBuffer cmd, VkImageLayout oldLayout, VkI
         TK_ASSERT(false, "Old and new layout combination is not supported");
     }
 
+    m_layout = newLayout;
+
     vkCmdPipelineBarrier(cmd, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
 
-WrappedImage ::WrappedImage(VkImage image, VkFormat format) {
+WrappedImage::WrappedImage(VkImage image, VkFormat format) {
     VkImageAspectFlags aspectMask = getImageAspectFlags(format);
 
     VkImageViewCreateInfo imageViewCreateInfo{};

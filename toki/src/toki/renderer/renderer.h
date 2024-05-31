@@ -45,9 +45,6 @@ public:
     virtual void destroyShader(Handle handle) = 0;
     virtual void bindShader(Handle handle) = 0;
 
-    virtual Handle createSampler(const SamplerConfig& config) = 0;
-    virtual void destroySampler(Handle handle) = 0;
-
     virtual Handle createBuffer(const BufferConfig& config) = 0;
     virtual Handle createBuffer(BufferType bufferType, uint32_t size) = 0;
     virtual void destroyBuffer(Handle handle) = 0;
@@ -61,15 +58,20 @@ public:
     // TODO: add set data for textures
     virtual void destroyTexture(Handle handle) = 0;
 
+    virtual Handle createSampler() = 0;
+    virtual void destroySampler(Handle handle) = 0;
+
     virtual void uploadGeometry(Ref<Geometry> geometry) = 0;
 
     virtual void setColorClear(const Color& color) = 0;
     virtual void setDepthClear(float clear) = 0;
     virtual void setStencilClear(uint32_t clear) = 0;
 
-    virtual void bindTexture(Handle handle) = 0;  // TODO: add parameters
-    virtual void bindSampler(Handle handle) = 0;  // TODO: add parameters
-    virtual void bindUniform(Handle handle) = 0;  // TODO: add parameters
+    virtual void setTexture(Handle handle, uint32_t setIndex, uint32_t binding, uint32_t arrayIndex = 0) = 0;
+    virtual void setSampler(Handle handle, uint32_t setIndex, uint32_t binding, uint32_t arrayIndex = 0) = 0;
+    virtual void setTextureWithSampler(Handle textureHandle, Handle samplerHandle, uint32_t setIndex, uint32_t binding, uint32_t arrayIndex = 0) = 0;
+    virtual void setUniformBuffer(Handle handle, uint32_t setIndex, uint32_t binding, uint32_t arrayIndex = 0) = 0;
+    virtual void bindUniforms(uint32_t firstSet, uint32_t setCount) = 0;
 
     virtual void draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) = 0;
     virtual void drawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, uint32_t vertexOffset, uint32_t firstInstance) = 0;

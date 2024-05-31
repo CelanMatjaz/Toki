@@ -51,9 +51,8 @@ static void reflectDescriptors(ShaderStage stage, spirv_cross::Compiler& compile
         { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, resources.storage_buffers }, { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, resources.storage_images },
     };
 
-    for (const auto& [descriptorType, resources] : resourceArrays) {
-        for (const auto& resource : resources) {
-            // const auto& type = compiler.get_type(resource.base_type_id);
+    for (const auto& [descriptorType, r] : resourceArrays) {
+        for (const auto& resource : r) {
             const auto& typeArray = compiler.get_type(resource.type_id);
 
             uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
@@ -129,11 +128,9 @@ void Pipeline::createPipelineLayout(const ShaderPipelineBinaries& binaries) {
 
     for (const auto& [shaderStage, spirv] : binaries) {
         spirv_cross::Compiler compiler(spirv);
-        spirv_cross::ShaderResources resources = compiler.get_shader_resources();
 
         reflectConstants(shaderStage, compiler, pushConstantRanges);
         reflectDescriptors(shaderStage, compiler, setBindings);
-
         // TODO: check max push constant size for physical device
     }
 
@@ -356,15 +353,7 @@ void Pipeline::destroy() {
 
     vkDestroyPipeline(context.device, m_pipeline, context.allocationCallbacks);
 
-    for (auto& [_, childPipeline] : m_childPipelines) {
-        childPipeline.destroy();
-    }
-
-    m_childPipelines.clear();
-
-    if (!m_hasParent) {
-        vkDestroyPipelineLayout(context.device, m_pipelineLayout, context.allocationCallbacks);
-    }
+    vkDestroyPipelineLayout(context.device, m_pipelineLayout, context.allocationCallbacks);
 }
 
 static std::vector<VkVertexInputBindingDescription> createBindingDescriptions(std::vector<Binding>& bindings) {

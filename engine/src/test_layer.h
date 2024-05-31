@@ -17,4 +17,8 @@ private:
     Handle m_indexBuffer;
     Handle m_framebuffer;
     Handle m_shader;
+    Handle m_shader2;
+
+    Handle m_testTexture;
+    Handle m_testSampler;
 };

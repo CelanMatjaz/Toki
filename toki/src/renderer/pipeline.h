@@ -29,15 +29,11 @@ struct Pipeline {
 
     ShaderConfig m_config;
 
-private:
-    void allocateDescriptorSets(std::vector<VkDescriptorSetLayout>& layouts);
-
     std::vector<VkDescriptorSetLayout> m_descriptorSetLayouts;
     std::vector<VkDescriptorSet> m_descriptorSets;
 
-    bool m_hasParent = false;
-
-    std::unordered_map<Handle, Pipeline, Handle> m_childPipelines;
+private:
+    void allocateDescriptorSets(std::vector<VkDescriptorSetLayout>& layouts);
 };
 
 }  // namespace Toki

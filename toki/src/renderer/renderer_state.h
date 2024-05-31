@@ -7,6 +7,7 @@
 #include "renderer/framebuffer.h"
 #include "renderer/pipeline.h"
 #include "renderer/render_pass.h"
+#include "renderer/sampler.h"
 #include "renderer/swapchain.h"
 #include "renderer/texture.h"
 #include "renderer/vulkan_types.h"
@@ -39,6 +40,10 @@ inline std::unordered_map<Handle, Ref<Buffer>, Handle> s_bufferMap;
 inline std::unordered_map<Handle, Ref<Texture>, Handle> s_textureMap;
 inline std::unordered_map<Handle, Ref<Framebuffer>, Handle> s_framebufferMap;
 inline std::unordered_map<Handle, Ref<Pipeline>, Handle> s_pipelineMap;
+inline std::unordered_map<Handle, Ref<Sampler>, Handle> s_samplerMap;
+
+inline Ref<Pipeline> s_currentlyBoundPipeline;
+inline Ref<Framebuffer> s_currentlyBoundFramebuffer;
 
 #pragma endregion ObjectHandles
 
@@ -63,8 +68,6 @@ struct VulkanClearValues {
     float depthClear = 0.0f;
     uint32_t stencilClear = 0;
 } inline s_globalClearValues;
-
-inline std::optional<Handle> s_currentBoundFramebuffer;
 
 #pragma endregion RenderingState
 

@@ -5,7 +5,7 @@ attachments_config_path=assets/configs/simple.attachments.acfg
 
 # Data
 name=simple_shader
-stage=fragment,assets/shaders/test_shader.frag.glsl,.cache/shaders/test_shader.frag.shdr
+stage=fragment,assets/shaders/test_shader2.frag.glsl,.cache/shaders/test_shader2.frag.shdr
 stage=vertex,assets/shaders/test_shader.vert.glsl,.cache/shaders/test_shader.vert.shdr
 depth_test_enable=true
 depth_test_write=true

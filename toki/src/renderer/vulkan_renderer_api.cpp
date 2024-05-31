@@ -69,9 +69,10 @@ void VulkanRenderer::destroyFramebuffer(Handle handle) {
 
 void VulkanRenderer::bindFramebuffer(Handle handle) {
     TK_ASSERT(s_framebufferMap.contains(handle), "Invalid framebuffer handle provided: Framebuffer does not exist");
-    TK_ASSERT(!s_currentBoundFramebuffer.has_value(), "Cannot bind a framebuffer while one is already bound");
+    TK_ASSERT(s_currentlyBoundFramebuffer.get() == nullptr, "Cannot bind a framebuffer while one is already bound");
 
     const Ref<Framebuffer> framebuffer = s_framebufferMap[handle];
+    s_currentlyBoundFramebuffer = framebuffer;
 
     std::vector<VkClearValue> clearValues(framebuffer->m_attachments.size());
 
@@ -113,14 +114,12 @@ void VulkanRenderer::bindFramebuffer(Handle handle) {
 
 void VulkanRenderer::unbindFramebuffer() {
     vkCmdEndRenderPass(getCommandBuffer());
-    s_currentBoundFramebuffer.reset();
+    s_currentlyBoundFramebuffer.reset();
 }
 
 Handle VulkanRenderer::createShader(const ShaderConfig& config) {
     Handle handle;
-
     s_pipelineMap.emplace(handle, createRef<Pipeline>(config));
-
     return handle;
 }
 
@@ -136,15 +135,10 @@ void VulkanRenderer::destroyShader(Handle handle) {
 
 void VulkanRenderer::bindShader(Handle handle) {
     TK_ASSERT(s_pipelineMap.contains(handle), "Invalid shader handle provided: Shader does not exist");
-    vkCmdBindPipeline(getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, *s_pipelineMap[handle]);
+    auto pipeline = s_pipelineMap[handle];
+    s_currentlyBoundPipeline = pipeline;
+    vkCmdBindPipeline(getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline);
 }
-
-Handle VulkanRenderer::createSampler(const SamplerConfig& config) {
-    Handle handle;
-    return handle;
-}
-
-void VulkanRenderer::destroySampler(Handle handle) {}
 
 Handle VulkanRenderer::createBuffer(const BufferConfig& config) {
     return createBuffer(config.type, config.size);
@@ -231,6 +225,17 @@ void VulkanRenderer::destroyTexture(Handle handle) {
     s_textureMap.erase(handle);
 }
 
+Handle VulkanRenderer::createSampler() {
+    Handle handle;
+    s_samplerMap.emplace(handle, createRef<Sampler>());
+    return handle;
+}
+
+void VulkanRenderer::destroySampler(Handle handle) {
+    TK_ASSERT(s_samplerMap.contains(handle), "Sampler with provided handle does not exist");
+    s_samplerMap.erase(handle);
+}
+
 void VulkanRenderer::uploadGeometry(Ref<Geometry> geometry) {}
 
 void VulkanRenderer::setColorClear(const Color& c) {
@@ -245,11 +250,105 @@ void VulkanRenderer::setStencilClear(uint32_t clear) {
     s_globalClearValues.stencilClear = clear;
 }
 
-void VulkanRenderer::bindTexture(Handle handle) {}
+void VulkanRenderer::setTexture(Handle handle, uint32_t setIndex, uint32_t binding, uint32_t arrayIndex) {
+    TK_ASSERT(s_textureMap.contains(handle), "Texture with provided handle does not exist");
 
-void VulkanRenderer::bindSampler(Handle handle) {}
+    auto texture = s_textureMap[handle];
 
-void VulkanRenderer::bindUniform(Handle handle) {}
+    VkDescriptorImageInfo descriptorImageInfo{};
+    descriptorImageInfo.imageView = texture->m_imageView;
+    descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    descriptorImageInfo.sampler = VK_NULL_HANDLE;
+
+    VkWriteDescriptorSet writeDescriptorSet{};
+    writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeDescriptorSet.dstSet = s_currentlyBoundPipeline->m_descriptorSets[setIndex];
+    writeDescriptorSet.descriptorCount = 1;
+    writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    writeDescriptorSet.pImageInfo = &descriptorImageInfo;
+    writeDescriptorSet.dstArrayElement = arrayIndex;
+    writeDescriptorSet.dstBinding = binding;
+
+    vkUpdateDescriptorSets(context.device, 1, &writeDescriptorSet, 0, nullptr);
+}
+void VulkanRenderer::setSampler(Handle handle, uint32_t setIndex, uint32_t binding, uint32_t arrayIndex) {
+    TK_ASSERT(s_samplerMap.contains(handle), "Sampler with provided handle does not exist");
+
+    auto sampler = s_samplerMap[handle];
+
+    VkDescriptorImageInfo descriptorImageInfo{};
+    descriptorImageInfo.sampler = sampler->m_sampler;
+
+    VkWriteDescriptorSet writeDescriptorSet{};
+    writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeDescriptorSet.dstSet = s_currentlyBoundPipeline->m_descriptorSets[setIndex];
+    writeDescriptorSet.descriptorCount = 1;
+    writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+    writeDescriptorSet.pImageInfo = &descriptorImageInfo;
+    writeDescriptorSet.dstArrayElement = arrayIndex;
+    writeDescriptorSet.dstBinding = binding;
+
+    vkUpdateDescriptorSets(context.device, 1, &writeDescriptorSet, 0, nullptr);
+}
+
+void VulkanRenderer::setUniformBuffer(Handle handle, uint32_t setIndex, uint32_t binding, uint32_t arrayIndex) {
+    TK_ASSERT(s_bufferMap.contains(handle), "Buffer with provided handle does not exist");
+    auto buffer = s_bufferMap[handle];
+    TK_ASSERT(buffer->m_type == BufferType::UniformBuffer, "Provided buffer was not created as a uniform buffer");
+
+    VkDescriptorBufferInfo descriptorBufferInfo{};
+    descriptorBufferInfo.buffer = buffer->m_buffer;
+    descriptorBufferInfo.range = buffer->m_size;
+    descriptorBufferInfo.offset = 0;
+
+    VkWriteDescriptorSet writeDescriptorSet{};
+    writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeDescriptorSet.dstSet = s_currentlyBoundPipeline->m_descriptorSets[setIndex];
+    writeDescriptorSet.descriptorCount = 1;
+    writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    writeDescriptorSet.pBufferInfo = &descriptorBufferInfo;
+    writeDescriptorSet.dstArrayElement = arrayIndex;
+    writeDescriptorSet.dstBinding = binding;
+
+    vkUpdateDescriptorSets(context.device, 1, &writeDescriptorSet, 0, nullptr);
+}
+
+void VulkanRenderer::setTextureWithSampler(Handle textureHandle, Handle samplerHandle, uint32_t setIndex, uint32_t binding, uint32_t arrayIndex) {
+    TK_ASSERT(s_textureMap.contains(textureHandle), "Texture with provided handle does not exist");
+    TK_ASSERT(s_samplerMap.contains(samplerHandle), "Sampler with provided handle does not exist");
+
+    auto texture = s_textureMap[textureHandle];
+    auto sampler = s_samplerMap[samplerHandle];
+
+    VkDescriptorImageInfo descriptorImageInfo{};
+    descriptorImageInfo.imageView = texture->m_imageView;
+    descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    descriptorImageInfo.sampler = sampler->m_sampler;
+
+    VkWriteDescriptorSet writeDescriptorSet{};
+    writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeDescriptorSet.dstSet = s_currentlyBoundPipeline->m_descriptorSets[setIndex];
+    writeDescriptorSet.descriptorCount = 1;
+    writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    writeDescriptorSet.pImageInfo = &descriptorImageInfo;
+    writeDescriptorSet.dstArrayElement = arrayIndex;
+    writeDescriptorSet.dstBinding = binding;
+
+    vkUpdateDescriptorSets(context.device, 1, &writeDescriptorSet, 0, nullptr);
+}
+
+void VulkanRenderer::bindUniforms(uint32_t firstSet, uint32_t setCount) {
+    TK_ASSERT(s_currentlyBoundPipeline.get(), "There is no shader currently bound");
+    vkCmdBindDescriptorSets(
+        getCommandBuffer(),
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        s_currentlyBoundPipeline->m_pipelineLayout,
+        firstSet,
+        setCount,
+        s_currentlyBoundPipeline->m_descriptorSets.data(),
+        0,
+        nullptr);
+}
 
 void VulkanRenderer::draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) {
     vkCmdDraw(getCommandBuffer(), vertexCount, instanceCount, firstVertex, firstInstance);

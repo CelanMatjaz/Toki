@@ -87,6 +87,8 @@ void VulkanRenderer::init() {
 void VulkanRenderer::shutdown() {
     vkDeviceWaitIdle(context.device);
 
+    s_currentlyBoundPipeline.reset();
+
     s_geometryVertexBuffers.clear();
     s_geometryIndexBuffers.clear();
 
@@ -95,6 +97,7 @@ void VulkanRenderer::shutdown() {
     s_pipelineMap.clear();
     s_framebufferMap.clear();
     s_renderPassMap.clear();
+    s_samplerMap.clear();
     s_swapchainMap.clear();
 
     for (uint32_t i = 0; i < MAX_FRAMES; ++i) {

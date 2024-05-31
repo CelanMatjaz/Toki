@@ -29,6 +29,7 @@ struct Texture {
     VkImage m_image = VK_NULL_HANDLE;
     VkImageView m_imageView = VK_NULL_HANDLE;
     VkDeviceMemory m_memory = VK_NULL_HANDLE;
+    VkImageLayout m_layout = VK_IMAGE_LAYOUT_UNDEFINED;
     VkFormat m_format;
     VkExtent3D m_extent{};
     VkImageUsageFlags m_usage;

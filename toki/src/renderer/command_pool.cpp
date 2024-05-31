@@ -93,6 +93,8 @@ void CommandPool::submitSingleUseCommands(VkQueue queue, std::function<void(VkCo
 
     fn(commandBuffer);
 
+    vkEndCommandBuffer(commandBuffer);
+
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.commandBufferCount = 1;
