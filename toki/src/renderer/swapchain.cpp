@@ -81,6 +81,8 @@ void Swapchain::destroy() {
 }
 
 void Swapchain::recreate() {
+    vkDeviceWaitIdle(context.device);
+
     destroy();
     m_imageIndex = 0;
     create();

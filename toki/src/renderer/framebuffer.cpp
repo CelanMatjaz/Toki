@@ -48,7 +48,7 @@ void Framebuffer::destroy() {
     }
 }
 
-void Framebuffer::recreate(const Point3D& extent) {
+void Framebuffer::recreate(const Extent3D& extent) {
     destroy();
 
     m_extent = { (uint32_t) extent.x, (uint32_t) extent.y, (uint32_t) extent.z };

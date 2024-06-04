@@ -56,15 +56,15 @@ void Application::start() {
         frameData.totalTime += deltaTime;
         frameData.frameNumber++;
 
-        s_renderer->beginFrame(frameData);
+        if (s_renderer->beginFrame(frameData)) {
+            for (auto it = m_layerStack.rbegin(); it != m_layerStack.rend(); ++it) {
+                (*it)->onRender();
+            }
 
-        for (auto it = m_layerStack.rbegin(); it != m_layerStack.rend(); ++it) {
-            (*it)->onRender();
+            s_renderer->endFrame(frameData);
+
+            s_renderer->present(frameData);
         }
-
-        s_renderer->endFrame(frameData);
-
-        s_renderer->present(frameData);
     }
 }
 

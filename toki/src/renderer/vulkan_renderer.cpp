@@ -130,32 +130,30 @@ void VulkanRenderer::bindWindow(Ref<Window> window) {
     s_swapchainMap.emplace(handle, createRef<Swapchain>(createSurface(window)));
 }
 
-void VulkanRenderer::beginFrame(const FrameData& data) {
+bool VulkanRenderer::beginFrame(const FrameData& data) {
     FrameContext& frameContext = s_frameContext[s_currentFrameIndex];
 
     static uint64_t timeout = UINT64_MAX - 1;
 
     for (auto& [_, swapchain] : s_swapchainMap) {
-        swapchain->m_isRendering = true;
-        VkResult result =
-            vkAcquireNextImageKHR(context.device, swapchain->m_swapchain, timeout, frameContext.presentSemaphore, nullptr, &swapchain->m_imageIndex);
-
         VkResult waitFencesResult = vkWaitForFences(context.device, 1, &frameContext.renderFence, VK_TRUE, timeout);
         TK_ASSERT(waitFencesResult == VK_SUCCESS || waitFencesResult == VK_TIMEOUT, "Failed waiting for fences");
 
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || m_wasWindowResized) {
-            swapchain->recreate();
+        VkResult result = vkAcquireNextImageKHR(
+            context.device, swapchain->m_swapchain, timeout, frameContext.presentSemaphore, VK_NULL_HANDLE, &swapchain->m_imageIndex);
+        swapchain->m_isRendering = true;
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
             m_wasWindowResized = false;
+            swapchain->m_isRendering = false;
+            swapchain->recreate();
 
             const auto& [width, height] = swapchain->m_extent;
             for (auto& [_, framebuffer] : s_framebufferMap) {
-                framebuffer->recreate(Point3D{ width, height, 1 });
+                framebuffer->recreate(Extent3D{ width, height, 1 });
             }
 
-            swapchain->m_isRendering = false;
-
-            return;
-
+            return false;
         } else {
             TK_ASSERT(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, "Failed to acquire swapchain image");
         }
@@ -166,6 +164,8 @@ void VulkanRenderer::beginFrame(const FrameData& data) {
     TK_ASSERT_VK_RESULT(vkResetFences(context.device, 1, &frameContext.renderFence), "Error resetting fences");
 
     RenderThread::beginRecordingCommands();
+
+    return true;
 }
 
 void VulkanRenderer::endFrame(const FrameData& data) {
@@ -232,17 +232,20 @@ void VulkanRenderer::present(const FrameData& data) {
     presentInfo.pImageIndices = swapchainIndices.data();
     presentInfo.pResults = results.data();
 
-    TK_ASSERT_VK_RESULT(vkQueuePresentKHR(context.physicalDeviceData.presentQueue, &presentInfo), "Could not submit for presenting");
+    vkQueuePresentKHR(context.physicalDeviceData.presentQueue, &presentInfo);
 
     for (auto& result : results) {
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_wasWindowResized) {
-            s_swapchainMap.begin()->second->recreate();
             m_wasWindowResized = false;
+
+            s_swapchainMap.begin()->second->recreate();
 
             const auto& [width, height] = s_swapchainMap.begin()->second->m_extent;
             for (auto& [_, framebuffer] : s_framebufferMap) {
-                framebuffer->recreate(Point3D{ width, height, 1 });
+                framebuffer->recreate(Extent3D{ width, height, 1 });
             }
+
+            return;
         }
 
         break;

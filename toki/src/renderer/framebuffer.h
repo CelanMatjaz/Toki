@@ -14,7 +14,7 @@ struct Framebuffer {
     ~Framebuffer();
 
     void destroy();
-    void recreate(const Point3D& extent);
+    void recreate(const Extent3D& extent);
 
     operator VkFramebuffer();
 

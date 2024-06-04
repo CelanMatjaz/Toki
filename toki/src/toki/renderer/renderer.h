@@ -24,7 +24,7 @@ private:
 
     virtual void bindWindow(Ref<Window> window) = 0;
 
-    virtual void beginFrame(const FrameData& data) = 0;
+    virtual bool beginFrame(const FrameData& data) = 0;
     virtual void endFrame(const FrameData& data) = 0;
     virtual void present(const FrameData& data) = 0;
 

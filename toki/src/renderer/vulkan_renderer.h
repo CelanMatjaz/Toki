@@ -11,7 +11,7 @@ private:
 
     virtual void bindWindow(Ref<Window> window) override;
 
-    virtual void beginFrame(const FrameData& data) override;
+    virtual bool beginFrame(const FrameData& data) override;
     virtual void endFrame(const FrameData& data) override;
     virtual void present(const FrameData& data) override;
 
