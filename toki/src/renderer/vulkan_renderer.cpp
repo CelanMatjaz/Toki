@@ -9,6 +9,7 @@
 
 #include "platform.h"
 #include "renderer/buffer.h"
+#include "renderer/render_thread.h"
 #include "renderer/renderer_state.h"
 #include "renderer/vulkan_types.h"
 #include "toki/core/assert.h"
@@ -35,7 +36,7 @@ static bool checkValidationLayerSupport();
 static void createInstance();
 static void queryPhysicalDevice();
 static void createDevice();
-static void createCommandPools();
+static void createRenderThreads();
 static void createDescriptorPools();
 static void initFrames();
 static void initResources();
@@ -75,9 +76,11 @@ void VulkanRenderer::init() {
     createInstance();
     queryPhysicalDevice();
     createDevice();
-    createCommandPools();
+    createRenderThreads();
     createDescriptorPools();
     initFrames();
+
+    s_extraCommandPools.resize(EXTRA_COMMAND_POOL_COUNT);
 
     initResources();
 
@@ -116,6 +119,8 @@ void VulkanRenderer::shutdown() {
     s_commandPools.clear();
     s_extraCommandPools.clear();
 
+    RenderThread::stopThreads();
+
     vkDestroyDevice(context.device, context.allocationCallbacks);
     vkDestroyInstance(context.instance, context.allocationCallbacks);
 }
@@ -125,7 +130,7 @@ void VulkanRenderer::bindWindow(Ref<Window> window) {
     s_swapchainMap.emplace(handle, createRef<Swapchain>(createSurface(window)));
 }
 
-void VulkanRenderer::beginFrame([[maybe_unused]] const FrameData& data) {
+void VulkanRenderer::beginFrame(const FrameData& data) {
     FrameContext& frameContext = s_frameContext[s_currentFrameIndex];
 
     static uint64_t timeout = UINT64_MAX - 1;
@@ -148,7 +153,6 @@ void VulkanRenderer::beginFrame([[maybe_unused]] const FrameData& data) {
             }
 
             swapchain->m_isRendering = false;
-            s_commandPools[s_currentFrameIndex].resetCommandBuffers();
 
             return;
 
@@ -161,19 +165,20 @@ void VulkanRenderer::beginFrame([[maybe_unused]] const FrameData& data) {
 
     TK_ASSERT_VK_RESULT(vkResetFences(context.device, 1, &frameContext.renderFence), "Error resetting fences");
 
-    s_commandPools[s_currentFrameIndex].resetCommandBuffers();
-    s_commandPools[s_currentFrameIndex].beginCommandBuffers();
+    RenderThread::beginRecordingCommands();
 }
 
-void VulkanRenderer::endFrame([[maybe_unused]] const FrameData& data) {
+void VulkanRenderer::endFrame(const FrameData& data) {
     if (!s_swapchainMap.begin()->second->m_isRendering) {
         return;
     }
 
-    s_commandPools[s_currentFrameIndex].endCommandBuffers();
+    RenderThread::startWork();
+    RenderThread::waitForThreads();
+    RenderThread::endRecordingCommands();
 }
 
-void VulkanRenderer::present([[maybe_unused]] const FrameData& data) {
+void VulkanRenderer::present(const FrameData& data) {
     if (!s_swapchainMap.begin()->second->m_isRendering) {
         return;
     }
@@ -203,16 +208,13 @@ void VulkanRenderer::present([[maybe_unused]] const FrameData& data) {
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    /* for (uint32_t i = 0; i < MAX_FRAMES; ++i) */ {
-        CommandPool& commandPool = s_commandPools[s_currentFrameIndex];
+    std::vector<std::vector<VkCommandBuffer>> commandBuffersContainer;
 
-        commandPool.setSubmittableCommandBuffers();
-
-        if (const auto& commandBuffers = commandPool.getSubmittableCommandBuffers(); commandBuffers.size() > 0) {
-            submitInfo.commandBufferCount = commandBuffers.size();
-            submitInfo.pCommandBuffers = commandBuffers.data();
-            submitInfos.emplace_back(submitInfo);
-        }
+    if (const auto& commandBuffers = RenderThread::getCommandBuffersForSubmission(); commandBuffers.size() > 0) {
+        commandBuffersContainer.emplace_back(commandBuffers);
+        submitInfo.commandBufferCount = commandBuffersContainer.back().size();
+        submitInfo.pCommandBuffers = commandBuffersContainer.back().data();
+        submitInfos.emplace_back(submitInfo);
     }
 
     TK_ASSERT_VK_RESULT(
@@ -232,7 +234,7 @@ void VulkanRenderer::present([[maybe_unused]] const FrameData& data) {
 
     TK_ASSERT_VK_RESULT(vkQueuePresentKHR(context.physicalDeviceData.presentQueue, &presentInfo), "Could not submit for presenting");
 
-    for (/* uint32_t i = 0; */ auto& result : results) {
+    for (auto& result : results) {
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_wasWindowResized) {
             s_swapchainMap.begin()->second->recreate();
             m_wasWindowResized = false;
@@ -243,7 +245,6 @@ void VulkanRenderer::present([[maybe_unused]] const FrameData& data) {
             }
         }
 
-        // ++i;
         break;
     }
 
@@ -251,6 +252,10 @@ void VulkanRenderer::present([[maybe_unused]] const FrameData& data) {
 
     VkResult waitFencesResult = vkWaitForFences(context.device, 1, &frameContext.renderFence, VK_TRUE, UINT64_MAX);
     TK_ASSERT(waitFencesResult == VK_SUCCESS || waitFencesResult == VK_TIMEOUT, "Failed waiting for fences");
+}
+
+void VulkanRenderer::submit(SubmitFunction submitFn) {
+    RenderThread::submitWork(submitFn);
 }
 
 static void createInstance() {
@@ -403,14 +408,8 @@ static void createDevice() {
     vkGetDeviceQueue(context.device, context.physicalDeviceData.transferFamilyIndex.value(), 0, &context.physicalDeviceData.transferQueue);
 }
 
-static void createCommandPools() {
-    s_commandPools.resize(s_renderThreadCount * MAX_FRAMES);
-
-    for (auto& pool : s_commandPools) {
-        pool.allocateCommandBuffer();
-    }
-
-    s_extraCommandPools.resize(EXTRA_COMMAND_POOL_COUNT);
+static void createRenderThreads() {
+    RenderThread::startThreads(s_renderThreadCount);
 }
 
 static void createDescriptorPools() {

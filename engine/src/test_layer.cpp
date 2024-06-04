@@ -1,5 +1,6 @@
 #include "test_layer.h"
 
+#include "toki/renderer/command.h"
 #include "toki/resources/loaders/config_loader.h"
 
 void TestLayer::onAttach() {
@@ -55,39 +56,48 @@ void TestLayer::onAttach() {
     { m_testTexture = Application::getRenderer().createTexture(ColorFormat::RGBA8, "assets/textures/chad.jpg"); }
 
     { m_testSampler = Application::getRenderer().createSampler(); }
+
+    {
+        BufferConfig config;
+        config.size = sizeof(float);
+        config.type = BufferType::UniformBuffer;
+        m_testUniform = Application::getRenderer().createBuffer(config);
+
+        float rotationZ = 50;
+        Application::getRenderer().setBufferData(m_testUniform, sizeof(float), 0, &rotationZ);
+    }
 }
 
 void TestLayer::onDetach() {
     Toki::Renderer& renderer = Application::getRenderer();
-
-    renderer.destroyBuffer(m_vertexBuffer);
-    renderer.destroyBuffer(m_indexBuffer);
-    renderer.destroyShader(m_shader);
 }
 
 void TestLayer::onRender() {
     Renderer& renderer = Application::getRenderer();
 
-    renderer.resetViewport();
-    renderer.resetScissor();
+    renderer.submit([this](Command& cmd) {
+        cmd.resetViewport();
+        cmd.resetScissor();
 
-    renderer.bindIndexBuffer(m_indexBuffer);
-    renderer.bindVertexBuffers({ { m_vertexBuffer, 0, 0 } });
+        cmd.bindIndexBuffer(m_indexBuffer);
+        cmd.bindVertexBuffers({ { m_vertexBuffer, 0, 0 } });
 
-    renderer.bindFramebuffer(m_framebuffer);
+        cmd.bindFramebuffer(m_framebuffer);
 
-    renderer.bindShader(m_shader);
-    renderer.setTextureWithSampler(m_testTexture, m_testSampler, 0, 0, 0);
-    renderer.bindUniforms(0, 1);
-    renderer.drawIndexed(6, 1, 0, 0, 0);
+        cmd.bindShader(m_shader);
+        cmd.setTextureWithSampler(m_testTexture, m_testSampler, 0, 0, 0);
+        cmd.bindUniforms(0, 1);
+        cmd.drawIndexed(6, 1, 0, 0, 0);
 
-    renderer.bindShader(m_shader2);
-    renderer.setTexture(m_testTexture, 0, 0, 0);
-    renderer.setSampler(m_testSampler, 0, 1, 0);
-    renderer.bindUniforms(0, 1);
-    renderer.drawIndexed(6, 1, 0, 0, 0);
+        cmd.bindShader(m_shader2);
+        cmd.setTexture(m_testTexture, 0, 0, 0);
+        cmd.setSampler(m_testSampler, 0, 1, 0);
+        cmd.setUniformBuffer(m_testUniform, 1, 0, 0);
+        cmd.bindUniforms(0, 2);
+        cmd.drawIndexed(6, 1, 0, 0, 0);
 
-    renderer.unbindFramebuffer();
+        cmd.unbindFramebuffer();
+    });
 }
 
 void TestLayer::onEvent(Toki::Event& event) {}

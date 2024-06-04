@@ -7,6 +7,7 @@
 #include "renderer/framebuffer.h"
 #include "renderer/pipeline.h"
 #include "renderer/render_pass.h"
+#include "renderer/render_thread.h"
 #include "renderer/sampler.h"
 #include "renderer/swapchain.h"
 #include "renderer/texture.h"
@@ -74,8 +75,8 @@ struct VulkanClearValues {
 // State needed for recording commands and presenting
 #pragma region FrameState
 
-inline uint32_t s_renderThreadCount = 1;
-inline std::vector<CommandPool> s_commandPools;
+inline uint32_t s_renderThreadCount = 3;
+inline std::vector<std::array<CommandPool, MAX_FRAMES>> s_commandPools;
 inline std::vector<CommandPool> s_extraCommandPools;
 inline VkDescriptorPool s_descriptorPool = VK_NULL_HANDLE;
 

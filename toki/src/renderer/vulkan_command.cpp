@@ -1,21 +1,12 @@
-#include <vulkan/vulkan.h>
-
-#include "renderer/command_pool.h"
-#include "renderer/renderer_state.h"
-#include "toki/core/assert.h"
-#include "vulkan_renderer.h"
+#include "vulkan_command.h"
 
 namespace Toki {
 
-static CommandBuffer& getCommandBuffer() {
-    auto& commandBuffer = s_commandPools[s_currentFrameIndex].getCommandBuffer();
-    commandBuffer.m_didRecordCommands = true;
-    return commandBuffer;
-}
+VulkanCommand::VulkanCommand(VkCommandBuffer commandBuffer) : m_commandBuffer(commandBuffer) {}
 
 // API implementations
 
-void VulkanRenderer::setViewport(const Region2D& region) {
+void VulkanCommand::setViewport(const Region2D& region) {
     VkViewport viewport{};
     viewport.x = region.position.x;
     viewport.y = region.position.y;
@@ -24,50 +15,34 @@ void VulkanRenderer::setViewport(const Region2D& region) {
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 0.0f;
 
-    vkCmdSetViewport(getCommandBuffer(), 0, 1, &viewport);
+    vkCmdSetViewport(m_commandBuffer, 0, 1, &viewport);
 }
 
-void VulkanRenderer::resetViewport() {
+void VulkanCommand::resetViewport() {
     auto swapchainExtent = s_swapchainMap.begin()->second->m_extent;
     setViewport({ { 0, 0 }, { swapchainExtent.width, swapchainExtent.height } });
 }
 
-void VulkanRenderer::setScissor(const Region2D& region) {
+void VulkanCommand::setScissor(const Region2D& region) {
     VkRect2D scissor{};
     scissor.offset.x = region.position.x;
     scissor.offset.y = region.position.y;
     scissor.extent.width = region.extent.x;
     scissor.extent.height = region.extent.y;
 
-    vkCmdSetScissor(getCommandBuffer(), 0, 1, &scissor);
+    vkCmdSetScissor(m_commandBuffer, 0, 1, &scissor);
 }
 
-void VulkanRenderer::resetScissor() {
+void VulkanCommand::resetScissor() {
     auto swapchainExtent = s_swapchainMap.begin()->second->m_extent;
     setScissor({ { 0, 0 }, { swapchainExtent.width, swapchainExtent.height } });
 }
 
-void VulkanRenderer::setLineWidth(float width) {
-    vkCmdSetLineWidth(getCommandBuffer(), width);
+void VulkanCommand::setLineWidth(float width) {
+    vkCmdSetLineWidth(m_commandBuffer, width);
 }
 
-Handle VulkanRenderer::createFramebuffer(const FramebufferConfig& config) {
-    Handle handle;
-    TK_ASSERT(s_swapchainMap.size() == 1, "Only one swapchain supported");
-    s_framebufferMap.emplace(handle, createRef<Framebuffer>(config.attachments, config.extent, s_swapchainMap.begin()->first));
-    return handle;
-}
-
-void VulkanRenderer::destroyFramebuffer(Handle handle) {
-    bool contains = s_framebufferMap.contains(handle);
-    TK_ASSERT(contains, "Handle used for destroying a framebuffer is not valid");
-
-    if (contains) {
-        s_framebufferMap.erase(handle);
-    }
-}
-
-void VulkanRenderer::bindFramebuffer(Handle handle) {
+void VulkanCommand::bindFramebuffer(Handle handle) {
     TK_ASSERT(s_framebufferMap.contains(handle), "Invalid framebuffer handle provided: Framebuffer does not exist");
     TK_ASSERT(s_currentlyBoundFramebuffer.get() == nullptr, "Cannot bind a framebuffer while one is already bound");
 
@@ -109,87 +84,29 @@ void VulkanRenderer::bindFramebuffer(Handle handle) {
     renderPassBeginInfo.clearValueCount = clearValues.size();
     renderPassBeginInfo.pClearValues = clearValues.data();
 
-    vkCmdBeginRenderPass(getCommandBuffer(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(m_commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void VulkanRenderer::unbindFramebuffer() {
-    vkCmdEndRenderPass(getCommandBuffer());
+void VulkanCommand::unbindFramebuffer() {
+    vkCmdEndRenderPass(m_commandBuffer);
     s_currentlyBoundFramebuffer.reset();
 }
 
-Handle VulkanRenderer::createShader(const ShaderConfig& config) {
-    Handle handle;
-    s_pipelineMap.emplace(handle, createRef<Pipeline>(config));
-    return handle;
-}
-
-void VulkanRenderer::destroyShader(Handle handle) {
-    bool contains = s_pipelineMap.contains(handle);
-
-    TK_ASSERT(contains, "Deleting shader: Provided shader handle not valid")
-
-    if (contains) {
-        s_pipelineMap.erase(handle);
-    }
-}
-
-void VulkanRenderer::bindShader(Handle handle) {
+void VulkanCommand::bindShader(Handle handle) {
     TK_ASSERT(s_pipelineMap.contains(handle), "Invalid shader handle provided: Shader does not exist");
     auto pipeline = s_pipelineMap[handle];
     s_currentlyBoundPipeline = pipeline;
-    vkCmdBindPipeline(getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline);
+    vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline);
 }
 
-Handle VulkanRenderer::createBuffer(const BufferConfig& config) {
-    return createBuffer(config.type, config.size);
-}
-
-Handle VulkanRenderer::createBuffer(BufferType bufferType, uint32_t size) {
-    Handle handle;
-
-    VkBufferUsageFlags usageBits = VK_BUFFER_USAGE_FLAG_BITS_MAX_ENUM;
-
-    switch (bufferType) {
-        case BufferType::VertexBuffer:
-            usageBits = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-            break;
-
-        case BufferType::IndexBuffer:
-            usageBits = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-            break;
-
-        case BufferType::UniformBuffer:
-            usageBits = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-            break;
-
-        default:
-            std::unreachable();
-    }
-
-    s_bufferMap.emplace(
-        handle, createRef<Buffer>(size, usageBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, bufferType));
-
-    return handle;
-}
-
-void VulkanRenderer::destroyBuffer(Handle handle) {
-    TK_ASSERT(s_bufferMap.contains(handle), "Buffer with provided handle does not exist");
-    s_bufferMap.erase(handle);
-}
-
-void VulkanRenderer::setBufferData(Handle handle, uint32_t size, uint32_t offset, void* data) {
-    TK_ASSERT(s_bufferMap.contains(handle), "Buffer with provided handle does not exist");
-    s_bufferMap[handle]->setData(size, offset, data);
-}
-
-void VulkanRenderer::bindIndexBuffer(Handle handle, uint32_t offset) {
+void VulkanCommand::bindIndexBuffer(Handle handle, uint32_t offset) {
     TK_ASSERT(s_bufferMap.contains(handle), "Trying to bind an index buffer that does not exist");
     auto buffer = s_bufferMap[handle];
     TK_ASSERT(buffer->m_type == BufferType::IndexBuffer, "Trying to bind a buffer that is not an index buffer");
-    vkCmdBindIndexBuffer(getCommandBuffer(), buffer->m_buffer, offset, VK_INDEX_TYPE_UINT32);
+    vkCmdBindIndexBuffer(m_commandBuffer, buffer->m_buffer, offset, VK_INDEX_TYPE_UINT32);
 }
 
-void VulkanRenderer::bindVertexBuffers(const std::vector<VertexBufferBinding>& bufferBindings) {
+void VulkanCommand::bindVertexBuffers(const std::vector<VertexBufferBinding>& bufferBindings) {
     std::vector<VkBuffer> buffers(bufferBindings.size());
     std::vector<VkDeviceSize> offsets(bufferBindings.size(), 0);
 
@@ -199,58 +116,24 @@ void VulkanRenderer::bindVertexBuffers(const std::vector<VertexBufferBinding>& b
         offsets[i] = bufferBindings[i].offset;
     }
 
-    vkCmdBindVertexBuffers(getCommandBuffer(), bufferBindings[0].binding, bufferBindings.size(), buffers.data(), offsets.data());
+    vkCmdBindVertexBuffers(m_commandBuffer, bufferBindings[0].binding, bufferBindings.size(), buffers.data(), offsets.data());
 }
 
-Handle VulkanRenderer::createTexture(ColorFormat format, std::filesystem::path path) {
-    Handle handle;
-    s_textureMap.emplace(handle, createRef<Texture>(format, path));
-    return handle;
-}
+void VulkanCommand::uploadGeometry(Ref<Geometry> geometry) {}
 
-Handle VulkanRenderer::createTexture(ColorFormat format, uint32_t width, uint32_t height, uint32_t layers) {
-    Handle handle;
-    s_textureMap.emplace(handle, createRef<Texture>(format, width, height, layers));
-    return handle;
-}
-
-Handle VulkanRenderer::createTexture(const TextureConfig& config) {
-    Handle handle;
-    s_textureMap.emplace(handle, createRef<Texture>(config.format, config.size.x, config.size.y, config.size.z));
-    return handle;
-}
-
-void VulkanRenderer::destroyTexture(Handle handle) {
-    TK_ASSERT(s_textureMap.contains(handle), "Texture with provided handle does not exist");
-    s_textureMap.erase(handle);
-}
-
-Handle VulkanRenderer::createSampler() {
-    Handle handle;
-    s_samplerMap.emplace(handle, createRef<Sampler>());
-    return handle;
-}
-
-void VulkanRenderer::destroySampler(Handle handle) {
-    TK_ASSERT(s_samplerMap.contains(handle), "Sampler with provided handle does not exist");
-    s_samplerMap.erase(handle);
-}
-
-void VulkanRenderer::uploadGeometry(Ref<Geometry> geometry) {}
-
-void VulkanRenderer::setColorClear(const Color& c) {
+void VulkanCommand::setColorClear(const Color& c) {
     s_globalClearValues.colorClear = { { c.r, c.g, c.b, c.a } };
 }
 
-void VulkanRenderer::setDepthClear(float clear) {
+void VulkanCommand::setDepthClear(float clear) {
     s_globalClearValues.depthClear = clear;
 }
 
-void VulkanRenderer::setStencilClear(uint32_t clear) {
+void VulkanCommand::setStencilClear(uint32_t clear) {
     s_globalClearValues.stencilClear = clear;
 }
 
-void VulkanRenderer::setTexture(Handle handle, uint32_t setIndex, uint32_t binding, uint32_t arrayIndex) {
+void VulkanCommand::setTexture(Handle handle, uint32_t setIndex, uint32_t binding, uint32_t arrayIndex) {
     TK_ASSERT(s_textureMap.contains(handle), "Texture with provided handle does not exist");
 
     auto texture = s_textureMap[handle];
@@ -271,7 +154,7 @@ void VulkanRenderer::setTexture(Handle handle, uint32_t setIndex, uint32_t bindi
 
     vkUpdateDescriptorSets(context.device, 1, &writeDescriptorSet, 0, nullptr);
 }
-void VulkanRenderer::setSampler(Handle handle, uint32_t setIndex, uint32_t binding, uint32_t arrayIndex) {
+void VulkanCommand::setSampler(Handle handle, uint32_t setIndex, uint32_t binding, uint32_t arrayIndex) {
     TK_ASSERT(s_samplerMap.contains(handle), "Sampler with provided handle does not exist");
 
     auto sampler = s_samplerMap[handle];
@@ -291,7 +174,7 @@ void VulkanRenderer::setSampler(Handle handle, uint32_t setIndex, uint32_t bindi
     vkUpdateDescriptorSets(context.device, 1, &writeDescriptorSet, 0, nullptr);
 }
 
-void VulkanRenderer::setUniformBuffer(Handle handle, uint32_t setIndex, uint32_t binding, uint32_t arrayIndex) {
+void VulkanCommand::setUniformBuffer(Handle handle, uint32_t setIndex, uint32_t binding, uint32_t arrayIndex) {
     TK_ASSERT(s_bufferMap.contains(handle), "Buffer with provided handle does not exist");
     auto buffer = s_bufferMap[handle];
     TK_ASSERT(buffer->m_type == BufferType::UniformBuffer, "Provided buffer was not created as a uniform buffer");
@@ -313,7 +196,7 @@ void VulkanRenderer::setUniformBuffer(Handle handle, uint32_t setIndex, uint32_t
     vkUpdateDescriptorSets(context.device, 1, &writeDescriptorSet, 0, nullptr);
 }
 
-void VulkanRenderer::setTextureWithSampler(Handle textureHandle, Handle samplerHandle, uint32_t setIndex, uint32_t binding, uint32_t arrayIndex) {
+void VulkanCommand::setTextureWithSampler(Handle textureHandle, Handle samplerHandle, uint32_t setIndex, uint32_t binding, uint32_t arrayIndex) {
     TK_ASSERT(s_textureMap.contains(textureHandle), "Texture with provided handle does not exist");
     TK_ASSERT(s_samplerMap.contains(samplerHandle), "Sampler with provided handle does not exist");
 
@@ -337,10 +220,10 @@ void VulkanRenderer::setTextureWithSampler(Handle textureHandle, Handle samplerH
     vkUpdateDescriptorSets(context.device, 1, &writeDescriptorSet, 0, nullptr);
 }
 
-void VulkanRenderer::bindUniforms(uint32_t firstSet, uint32_t setCount) {
+void VulkanCommand::bindUniforms(uint32_t firstSet, uint32_t setCount) {
     TK_ASSERT(s_currentlyBoundPipeline.get(), "There is no shader currently bound");
     vkCmdBindDescriptorSets(
-        getCommandBuffer(),
+        m_commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         s_currentlyBoundPipeline->m_pipelineLayout,
         firstSet,
@@ -350,12 +233,12 @@ void VulkanRenderer::bindUniforms(uint32_t firstSet, uint32_t setCount) {
         nullptr);
 }
 
-void VulkanRenderer::draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) {
-    vkCmdDraw(getCommandBuffer(), vertexCount, instanceCount, firstVertex, firstInstance);
+void VulkanCommand::draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) {
+    vkCmdDraw(m_commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
 }
 
-void VulkanRenderer::drawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, uint32_t vertexOffset, uint32_t firstInstance) {
-    vkCmdDrawIndexed(getCommandBuffer(), indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+void VulkanCommand::drawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, uint32_t vertexOffset, uint32_t firstInstance) {
+    vkCmdDrawIndexed(m_commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 }
 
 }  // namespace Toki

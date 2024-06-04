@@ -21,4 +21,5 @@ private:
 
     Handle m_testTexture;
     Handle m_testSampler;
+    Handle m_testUniform;
 };
