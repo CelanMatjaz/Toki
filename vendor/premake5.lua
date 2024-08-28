@@ -3,8 +3,7 @@ require "utils"
 project "GLFW"
     kind "StaticLib"
     language "C"
-	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("%{wks.location}/obj/" .. outputdir .. "/%{prj.name}")
+    targetAndObjectDirs()
 
     files {
         "glfw/src/**.h",
@@ -15,13 +14,16 @@ project "GLFW"
         "includes/glfw"
     }
 
-    print ("dwjaiodawjiodjwaojdi")
-    print (LINUX_DISPLAY_SERVER)
+    runIfOS("windows", function ()
+            defines { "_GLFW_WIN32" }
+    end)
 
-if LINUX_DISPLAY_SERVER == "wayland" then
-    generateWaylandProtocolFiles()
-    defines { "_GLFW_WAYLAND" }
-elseif LLINUX_DISPLAY_SERVER == "x11" then
-    defines { "_GLFW_X11" }
-end
+    runIfOS("linux", function ()
+        runIfDisplayServerLinux("wayland", function ()
+            defines { "_GLFW_WAYLAND" }
+        end)
+        runIfDisplayServerLinux("x11", function ()
+            defines { "_GLFW_X11" }
+        end)
+    end)
 

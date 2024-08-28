@@ -1,29 +1,17 @@
-local VULKAN_SDK = os.getenv("VULKAN_SDK")
-
 project "TK_Renderer"
-    buildoptions "-std=c++23"
-    language "C++"
-	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("%{wks.location}/obj/" .. outputdir .. "/%{prj.name}")
+    handleCppDialect()
+    targetAndObjectDirs()
 
     files { "src/**.h", "src/**.cpp" }
-    includedirs { 
-        VULKAN_SDK .. "/include"
-    }
-    libdirs {
-        VULKAN_SDK .. "/lib"
-    }
-    links {
-        "vulkan"
-    }
 
-    filter "configurations:Debug"
-        kind "SharedLib"
-        defines { "TK_DEBUG" }
-        symbols "On"
+    if os.host() == "windows" then
+        includedirs { VULKAN_SDK .. "/Include" }
+        libdirs { VULKAN_SDK .. "/Lib" }
+        links { "vulkan-1" }
+    elseif os.host() == "linux" then 
+        includedirs { VULKAN_SDK .. "/include" }
+        libdirs { VULKAN_SDK .. "/lib" }
+        links { "vulkan" }
+    end
 
-    filter "configurations:Release"
-        kind "StaticLib"
-        defines { "TK_NDEBUG", "TK_RELEASE" }
-        symbols "Off"
-        optimize "On"
+    handleDefaultLibConfiguration()

@@ -1,4 +1,5 @@
 .cache
+.vs
 bin
 obj
 compile_commands
@@ -6,3 +7,5 @@ compile_commands
 **/Makefile
 compile_commands.json
 *.sh
+*.vcxproj*
+*.sln

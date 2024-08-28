@@ -1,9 +1,7 @@
 project "TK_Sandbox"
     kind "ConsoleApp"
-    buildoptions "-std=c++23"
-    language "C++"
-	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("%{wks.location}/obj/" .. outputdir .. "/%{prj.name}")
+    handleCppDialect()
+    targetAndObjectDirs()
 
     files {
         "src/**.h",
@@ -19,9 +17,9 @@ project "TK_Sandbox"
     }
 
     filter "configurations:Debug"
+        symbols "Off"
         defines { "TK_DEBUG" }
         symbols "On"
 
     filter "configurations:Release"
         defines { "TK_NDEBUG", "TK_RELEASE" }
-        symbols "Off"

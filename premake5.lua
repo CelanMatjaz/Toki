@@ -1,8 +1,5 @@
 require "./vendor/export-compile-commands/export-compile-commands"
-
-if os.host() == "linux" then
-    LINUX_DISPLAY_SERVER = os.getenv("XDG_SESSION_TYPE")
-end
+require "common.premake"
 
 workspace "Toki"
     configurations { "Debug", "Release" }
@@ -10,10 +7,12 @@ workspace "Toki"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+startproject "TK_Sandbox"
+
 group "Core"
-    include "./tk_sandbox"
-    include "./tk_core"
     include "./tk_renderer"
+    include "./tk_core"
+    include "./tk_sandbox"
 group ""
 
 group "Dependendies"
