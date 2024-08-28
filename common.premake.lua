@@ -14,7 +14,7 @@ function handleCppDialect()
     if string.startswith(_ACTION, "vs") then
         cppdialect "C++latest"
     else
-        buildoptions "-std=c++23"
+        buildoptions "-std=c++23 "
     end
 end
 

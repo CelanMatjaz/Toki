@@ -3,7 +3,8 @@ project "TK_Core"
     targetAndObjectDirs()
 
     files { "src/**.h", "src/**.cpp" }
-    links { "TK_Renderer" }
-    includedirs { "%{wks.location}/tk_renderer/src" }
+    includedirs { 
+        "%{wks.location}/tk_core/src"
+    }
 
     handleDefaultLibConfiguration()

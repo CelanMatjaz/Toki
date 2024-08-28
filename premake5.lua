@@ -10,8 +10,9 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 startproject "TK_Sandbox"
 
 group "Core"
-    include "./tk_renderer"
     include "./tk_core"
+    include "./tk_renderer"
+    include "./tk_engine"
     include "./tk_sandbox"
 group ""
 

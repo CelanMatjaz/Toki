@@ -6,6 +6,7 @@ compile_commands
 
 **/Makefile
 compile_commands.json
-*.sh
+./*.sh
+./*.bat
 *.vcxproj*
 *.sln

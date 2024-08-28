@@ -8,11 +8,11 @@ project "TK_Sandbox"
         "src/**.cpp",
         "src/**.c"
     }
-    links { "TK_Core", "TK_Renderer", "GLFW" }
+    links { "TK_Core", "TK_Engine", "GLFW" }
     includedirs {
-        "%{wks.location}/tk_core/src",
         "%{wks.location}/tk_sandbox/src",
-        "%{wks.location}/tk_sandbox/src/include",
+        "%{wks.location}/tk_core/include",
+        "%{wks.location}/tk_engine/include",
         "%{wks.location}/vendor/glfw/include"
     }
 

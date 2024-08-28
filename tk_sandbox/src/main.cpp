@@ -1,42 +1,12 @@
-#define GLFW_INCLUDE_NONE
+#include <toki/engine.h>
 
-#include <GLFW/glfw3.h>
-#include <unistd.h>
+int main() {
 
-#include <print>
+    TK_LOG_INFO("LOG INFO");
+    TK_LOG_WARN("LOG WARN");
+    TK_LOG_ERROR("LOG ERROR");
+    TK_LOG_FATAL("LOG FATAL");
 
-#include "include/glad/glad.h"
-
-int main(){
-  GLFWwindow* window;
-
-  if(!glfwInit()) return -1;
-
-
-  glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
-  glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
-  glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
-  window = glfwCreateWindow(640, 480, "Test", NULL, NULL);
-  if(!window) {
-    glfwTerminate();
-    return -1;
-  } 
-
-  glfwMakeContextCurrent(window);
-
-  gladLoadGL();
-  printf("OpenGL version: %s\n", glGetString(GL_VERSION));
-
-
-  while(!glfwWindowShouldClose(window)) {
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glfwSwapBuffers(window);
-
-    glfwPollEvents();
-  }
-
-  glfwDestroyWindow(window);
-  glfwTerminate();
-  return 0;
+    Toki::engine_initialize();
+    Toki::engine_shutdown();
 }
