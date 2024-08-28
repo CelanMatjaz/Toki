@@ -1,5 +1,4 @@
-require "./premake/export-compile-commands/export-compile-commands"
-
+require "./vendor/export-compile-commands/export-compile-commands"
 
 if os.host() == "linux" then
     LINUX_DISPLAY_SERVER = os.getenv("XDG_SESSION_TYPE")
