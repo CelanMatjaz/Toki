@@ -123,7 +123,7 @@ IndentAccessModifiers: false
 IndentCaseBlocks: false
 IndentCaseLabels: true
 IndentExternBlock: AfterExternBlock
-IndentGotoLabels: true
+IndentGotoLabels: false
 IndentPPDirectives: None
 IndentRequiresClause: true
 IndentWidth:     4

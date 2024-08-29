@@ -6,8 +6,10 @@ compile_commands
 
 **/Makefile
 compile_commands.json
-./*.sh
-./*.bat
 *.vcxproj*
 *.sln
 **.log
+
+# Don't add custom script files
+*.sh
+*.bat

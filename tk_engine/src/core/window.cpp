@@ -22,4 +22,9 @@ Window engine_create_window(const WindowConfig& config) {
     return window;
 }
 
+void engine_destroy_window(Window& window) {
+    glfwDestroyWindow(window.glfw_window);
+    window.glfw_window = nullptr;
+}
+
 }  // namespace Toki

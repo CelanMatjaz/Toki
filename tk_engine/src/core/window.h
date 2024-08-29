@@ -29,5 +29,6 @@ struct Window {
 };
 
 Window engine_create_window(const WindowConfig& config);
+void engine_destroy_window(Window& window);
 
 }  // namespace Toki
