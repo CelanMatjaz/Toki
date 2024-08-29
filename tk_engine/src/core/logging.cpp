@@ -10,8 +10,6 @@
 
 namespace Toki {
 
-namespace Core {
-
 #ifdef TK_DIST
 
 #else
@@ -25,13 +23,12 @@ struct LoggingState {
     uint32_t flags;
 } static s_logging_state;
 
-void logging_initialize(uint32_t log_flags, std::filesystem::path path) {
+void engine_logging_initialize(uint32_t log_flags, std::filesystem::path path) {
     TK_ASSERT(s_logging_state.flags == 0, "Logging already initialized");
     TK_ASSERT(log_flags != 0, "Cannot initialize logging without providing LogFlags");
     s_logging_state.flags = log_flags;
-    std::println("FLAGS {}", log_flags);
-    if (s_logging_state.flags & LOG_CONSOLE) {}
-    if (s_logging_state.flags & LOG_FILE) {
+    if (s_logging_state.flags & TK_LOG_FLAGS_CONSOLE) {}
+    if (s_logging_state.flags & TK_LOG_FLAGS_FILE) {
         std::scoped_lock lock(s_logging_state.file_write_lock);
         TK_ASSERT(!path.empty(), "Path for log file cannot be empty when TK_LOG_FILE flag is provided");
         s_logging_state.LOG_FILE_STREAM.open(path, std::ios::app | std::ios::out);
@@ -39,21 +36,18 @@ void logging_initialize(uint32_t log_flags, std::filesystem::path path) {
     }
 }
 
-void logging_shutdown() {
-    {
-        std::scoped_lock lock(s_logging_state.file_write_lock);
-        s_logging_state.LOG_FILE_STREAM.close();
-    }
-
+void engine_logging_shutdown() {
+    std::scoped_lock lock(s_logging_state.file_write_lock);
+    s_logging_state.LOG_FILE_STREAM.close();
     s_logging_state.flags = 0;
 }
 
-void open_log_file_stream(std::filesystem::path path) {
+void engine_open_log_file_stream(std::filesystem::path path) {
     std::scoped_lock lock(s_logging_state.file_write_lock);
     s_logging_state.LOG_FILE_STREAM = std::ofstream(s_logging_state.log_file_path = path, std::ios::app | std::ios::out);
 }
 
-void close_current_log_file_stream() {
+void engine_close_current_log_file_stream() {
     std::scoped_lock lock(s_logging_state.file_write_lock);
     s_logging_state.LOG_FILE_STREAM.close();
 }
@@ -68,29 +62,25 @@ void _log(std::ostream* stream, const char* tag, const std::string& log_string) 
     auto time = get_time();
     auto print_string = std::format("[{:%T}] {}: {}\n", time, tag, log_string);
 
-    if (s_logging_state.flags & LOG_CONSOLE) {
+    if (s_logging_state.flags & TK_LOG_FLAGS_CONSOLE) {
         *stream << print_string;
     }
 
-    if (s_logging_state.flags & LOG_FILE) {
+    if (s_logging_state.flags & TK_LOG_FLAGS_FILE) {
         std::scoped_lock lock(s_logging_state.print_lock);
         TK_ASSERT(s_logging_state.LOG_FILE_STREAM.good(), "Error writing to log file {}", s_logging_state.log_file_path.string());
         s_logging_state.LOG_FILE_STREAM << print_string;
     }
 }
 
-void log(const char* tag,const std::string& log_string) {
+void engine_log(const char* tag, const std::string& log_string) {
     _log(&std::cout, tag, log_string);
 }
 
-void log_error(const char* tag,const std::string& log_string) {
+void engine_log_error(const char* tag, const std::string& log_string) {
     _log(&std::cerr, tag, log_string);
 }
 
-#undef _LOG
-
 #endif
-
-}  // namespace Core
 
 }  // namespace Toki

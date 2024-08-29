@@ -3,20 +3,22 @@ project "TK_Renderer"
     targetAndObjectDirs()
 
     files { "src/**.h", "src/**.cpp" }
-    links { "TK_Core" }
+    links { "TK_Core", "GLFW" }
     includedirs {
+        "%{wks.location}/tk_renderer/src",
         "%{wks.location}/tk_core/include",
+        "%{wks.location}/vendor/glfw/include",
     }
 
     runIfOS("windows", function ()
-        includedirs { VULKAN_SDK .. "/Include" }
-        libdirs { VULKAN_SDK .. "/Lib" }
+        includedirs { path.normalize(path.join(VULKAN_SDK, "Include")) }
+        libdirs { path.normalize(path.join(VULKAN_SDK, "Lib")) }
         links { "vulkan-1" }
     end)
 
     runIfOS("linux", function ()
-        includedirs { VULKAN_SDK .. "/include" }
-        libdirs { VULKAN_SDK .. "/lib" }
+        includedirs { path.normalize(path.join(VULKAN_SDK, "include")) }
+        libdirs { path.normalize(path.join(VULKAN_SDK, "lib")) }
         links { "vulkan" }
     end)
 

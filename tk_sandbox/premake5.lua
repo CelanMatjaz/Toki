@@ -8,7 +8,7 @@ project "TK_Sandbox"
         "src/**.cpp",
         "src/**.c"
     }
-    links { "TK_Core", "TK_Engine", "GLFW" }
+    links { "TK_Core", "TK_Engine", "TK_Renderer", "GLFW" }
     includedirs {
         "%{wks.location}/tk_sandbox/src",
         "%{wks.location}/tk_core/include",
@@ -17,7 +17,8 @@ project "TK_Sandbox"
     }
 
     runIfOS("windows", function ()
-        links { "user32", "gdi32", "shell32" }
+        links { "user32", "gdi32", "shell32", "vulkan-1" }
+        libdirs { path.normalize(path.join(VULKAN_SDK, "Lib")) }
     end)
 
     filter "configurations:Debug"
