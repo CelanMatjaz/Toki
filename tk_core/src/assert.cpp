@@ -7,13 +7,17 @@
 #include <chrono>
 #include <print>
 
-void debugBreak() {
+void debug_break() {
+#if defined(_MSC_VER)
+    __debugbreak();
+#else
     __builtin_trap();
+#endif
 }
 
 static const std::chrono::time_zone* currentZone = std::chrono::get_tzdb().current_zone();
 
-void printAssertError(auto val, const char* file, const char* line) {
+void print_assert_error(auto val, const char* file, const char* line) {
     std::println(stderr, "Toki assertion error: {}", val);
 }
 

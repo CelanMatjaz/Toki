@@ -6,7 +6,6 @@ function generateWaylandProtocolFiles()
     end
 
     local newDirectory = path.join(os.getcwd(), "includes", "glfw")
-    print (newDirectory)
     os.mkdir(newDirectory)
     
     for file in io.popen([[find $(pwd)/glfw/deps/wayland -name *.xml]]):lines() do

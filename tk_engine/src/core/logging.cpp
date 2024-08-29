@@ -25,10 +25,11 @@ struct LoggingState {
     uint32_t flags;
 } static s_logging_state;
 
-void logging_initialize(LogFlags flags, std::filesystem::path path) {
+void logging_initialize(uint32_t log_flags, std::filesystem::path path) {
     TK_ASSERT(s_logging_state.flags == 0, "Logging already initialized");
-    TK_ASSERT(flags != 0, "Cannot initialize logging without providing LogFlags");
-    s_logging_state.flags = flags;
+    TK_ASSERT(log_flags != 0, "Cannot initialize logging without providing LogFlags");
+    s_logging_state.flags = log_flags;
+    std::println("FLAGS {}", log_flags);
     if (s_logging_state.flags & LOG_CONSOLE) {}
     if (s_logging_state.flags & LOG_FILE) {
         std::scoped_lock lock(s_logging_state.file_write_lock);
@@ -78,11 +79,11 @@ void _log(std::ostream* stream, const char* tag, const std::string& log_string) 
     }
 }
 
-void log(const char* tag, std::string log_string) {
+void log(const char* tag,const std::string& log_string) {
     _log(&std::cout, tag, log_string);
 }
 
-void log_error(const char* tag, std::string log_string) {
+void log_error(const char* tag,const std::string& log_string) {
     _log(&std::cerr, tag, log_string);
 }
 

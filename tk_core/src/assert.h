@@ -7,7 +7,7 @@
 
 #else
 
-#include <stacktrace>
+void debug_break();
 
 #define TK_ASSERT(valIn, msg, ...)                              \
     if (bool val = (valIn); val)                                \
@@ -21,8 +21,7 @@
             __LINE__,                                           \
             #valIn,                                             \
             std::format(msg __VA_OPT__(, ) __VA_ARGS__));       \
-        std::cerr << std::stacktrace::current() << '\n';        \
-        __builtin_trap();                                       \
+        debug_break();                                          \
     }
 
 #define TK_ASSERT_VK_RESULT(val, msg, ...) val

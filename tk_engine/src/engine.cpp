@@ -5,7 +5,8 @@
 namespace Toki {
 
 void engine_initialize() {
-    Core::logging_initialize(Core::LOG_CONSOLE);
+    const uint32_t log_flags = Core::LOG_CONSOLE | Core::LOG_FILE;
+    Core::logging_initialize(log_flags, "toki.log");
     TK_LOG_INFO("Initializing engine...");
 }
 

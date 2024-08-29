@@ -13,31 +13,20 @@ function handleCppDialect()
     language "C++"
     if string.startswith(_ACTION, "vs") then
         cppdialect "C++latest"
+        buildoptions "/Zc:preprocessor"
     else
-        buildoptions "-std=c++23 "
+        buildoptions "-std=c++23"
     end
 end
 
 function handleDefaultLibConfiguration()
-    kind "StaticLib"
-
     filter "configurations:Debug"
-        -- kind "SharedLib"
+        kind "StaticLib"
         defines { "TK_DEBUG" }
-    symbols "On"
+        symbols "On"
 
         runIfOS("windows", function ()
-            targetextension ".dll"
-        end)
-
-    filter "configurations:Release"
-        -- kind "StaticLib"
-        defines { "TK_NDEBUG", "TK_RELEASE" }
-        symbols "Off"
-        optimize "On"
-
-        runIfOS("windows", function ()
-            targetextension ".dll"
+            targetextension ".lib"
         end)
 
     filter "configurations:Release"
@@ -52,17 +41,12 @@ function handleDefaultLibConfiguration()
 end
 
 function runIfOS(requiredOS, fn)
-    if os.host() == requiredOS then
-        fn()
-    end
+    filter { "system:" .. requiredOS }
+    fn()
 end
 
 function runIfDisplayServerLinux(displayServer, fn)
-    if os.host() ~= "linux" then
-        print("Trying to run runIfDisplayServerLinux function on a non linux host")
-        os.exit(1)
-    end
-    
+    filter "system:linux"
     if LINUX_DISPLAY_SERVER == displayServer then
         fn()
     end

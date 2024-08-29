@@ -11,14 +11,14 @@ enum LogFlags {
     LOG_FILE = 1 << 1,
 };
 
-void logging_initialize(LogFlags flags, std::filesystem::path path = "");
+void logging_initialize(uint32_t log_flags, std::filesystem::path path = "");
 void logging_shutdown();
 
 void open_log_file_stream(std::filesystem::path path);
 void close_current_log_file_stream();
 
-void log(const char* tag, std::string log_string);
-void log_error(const char* tag, std::string log_string);
+void log(const char* tag, const std::string& log_string);
+void log_error(const char* tag, const std::string& log_string);
 void log_file(std::string print_string);
 
 }  // namespace Core

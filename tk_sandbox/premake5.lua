@@ -16,10 +16,14 @@ project "TK_Sandbox"
         "%{wks.location}/vendor/glfw/include"
     }
 
+    runIfOS("windows", function ()
+        links { "user32", "gdi32", "shell32" }
+    end)
+
     filter "configurations:Debug"
-        symbols "Off"
         defines { "TK_DEBUG" }
         symbols "On"
 
     filter "configurations:Release"
         defines { "TK_NDEBUG", "TK_RELEASE" }
+        symbols "Off"
