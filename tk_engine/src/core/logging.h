@@ -25,10 +25,10 @@ void engine_log_file(std::string print_string);
 
 #else
 
-#define TK_LOG_INFO(str, ...) Toki::Core::log("Info", std::format(str __VA_OPT__(, ) __VA_ARGS__))
-#define TK_LOG_WARN(str, ...) Toki::Core::log("Warn", std::format(str __VA_OPT__(, ) __VA_ARGS__))
-#define TK_LOG_ERROR(str, ...) Toki::Core::log_error("Error", std::format(str __VA_OPT__(, ) __VA_ARGS__))
-#define TK_LOG_FATAL(str, ...) Toki::Core::log_error("Fatal", std::format(str __VA_OPT__(, ) __VA_ARGS__))
+#define TK_LOG_INFO(str, ...) Toki::engine_log("Info", std::format(str __VA_OPT__(, ) __VA_ARGS__))
+#define TK_LOG_WARN(str, ...) Toki::engine_log("Warn", std::format(str __VA_OPT__(, ) __VA_ARGS__))
+#define TK_LOG_ERROR(str, ...) Toki::engine_log_error("Error", std::format(str __VA_OPT__(, ) __VA_ARGS__))
+#define TK_LOG_FATAL(str, ...) Toki::engine_log_error("Fatal", std::format(str __VA_OPT__(, ) __VA_ARGS__))
 // #define TK_LOG_TRACE(str, ...) Toki::Core::log_error("Trace", std::format(str __VA_OPT__(, ) __VA_ARGS__))
 
 #endif

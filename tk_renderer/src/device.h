@@ -12,9 +12,6 @@ struct PhysicalDevice {
 
 struct CreateDeviceConfig {};
 
-void renderer_create_instance();
-void renderer_destroy_instance();
-
 void renderer_create_device(const PhysicalDevice& physical_device, const CreateDeviceConfig& config);
 void renderer_destroy_device();
 

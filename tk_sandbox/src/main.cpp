@@ -9,7 +9,7 @@ int main() {
     Toki::EngineConfig engine_config{};
     engine_config.window_config = window_config;
 
-    Toki::EngineState engine_state = Toki::engine_initialize(engine_config);
-    Toki::engine_run(engine_state);
-    Toki::engine_shutdown(engine_state);
+    Toki::engine_initialize(engine_config);
+    Toki::engine_run();
+    Toki::engine_shutdown();
 }

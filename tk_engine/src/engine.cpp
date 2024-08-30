@@ -1,6 +1,7 @@
 #include "engine.h"
 
 #include <GLFW/glfw3.h>
+#include <toki/core.h>
 #include <toki/renderer.h>
 
 #include <vector>
@@ -10,48 +11,57 @@
 
 namespace Toki {
 
-EngineState engine_initialize(const EngineConfig& engine_config) {
+struct EngineState {
+    bool running = true;
+    std::vector<Window> windows;
+} static* s_engine_state;
+
+void engine_initialize(const EngineConfig& engine_config) {
+    TK_ASSERT(s_engine_state == nullptr, "Engine state is already initialized");
+    s_engine_state = new EngineState();
+
     glfwInit();
 
-    EngineState engine_state{};
-
+    // Engine systems
     const uint32_t log_flags = TK_LOG_FLAGS_CONSOLE | TK_LOG_FLAGS_FILE;
     engine_logging_initialize(log_flags, "toki.log");
 
-    engine_state.windows.emplace_back(engine_create_window(engine_config.window_config));
+    s_engine_state->windows.emplace_back(engine_create_window(engine_config.window_config));
 
-    renderer_initialize(engine_state.windows[0].glfw_window);
-
-    return engine_state;
+    // Renderer
+    RendererStateConfig renderer_state_config{};
+    renderer_initialize_state(renderer_state_config);
 }
 
-void engine_shutdown(EngineState& engine_state) {
-    renderer_shutdown();
+void engine_shutdown() {
+    TK_ASSERT(s_engine_state != nullptr, "Engine state is not initialized");
+
+    renderer_destroy_state();
     engine_logging_shutdown();
-
     glfwTerminate();
+
+    delete s_engine_state;
 }
 
-void engine_run(EngineState& engine_state) {
-    auto should_windows_close = [](EngineState& engine_state) {
+void engine_run() {
+    auto should_windows_close = [](EngineState* engine_state) {
 start_loop:
-        for (auto it = engine_state.windows.begin(); it != engine_state.windows.end(); ++it) {
+        for (auto it = engine_state->windows.begin(); it != engine_state->windows.end(); ++it) {
             if (glfwWindowShouldClose(it->glfw_window)) {
                 engine_destroy_window(*it);
-                engine_state.windows.erase(it);
+                engine_state->windows.erase(it);
                 goto start_loop;
             }
         }
 
-        if (engine_state.windows.size() == 0) {
-            engine_state.running = false;
+        if (engine_state->windows.size() == 0) {
+            engine_state->running = false;
         }
     };
 
-    while (engine_state.running) {
+    while (s_engine_state->running) {
         glfwPollEvents();
-
-        should_windows_close(engine_state);
+        should_windows_close(s_engine_state);
     }
 }
 

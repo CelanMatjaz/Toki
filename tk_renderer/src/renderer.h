@@ -1,10 +1,13 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
+#include <vulkan/vulkan.h>
 
 namespace Toki {
 
-void renderer_initialize(GLFWwindow* initial_window);
-void renderer_shutdown();
+struct RendererStateConfig {};
+
+void renderer_initialize_state(const RendererStateConfig& config);
+void renderer_destroy_state();
 
 }  // namespace Toki
