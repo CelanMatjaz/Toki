@@ -18,6 +18,9 @@ function build_options()
 
     filter "toolset:clang or toolset:gcc"
         buildoptions "-std=c++23"
+
+    filter { "system:windows", "toolset:gcc" }
+        links { "stdc++exp" }
 end
 
 function configuration_configs()
@@ -44,6 +47,7 @@ function configuration_configs()
 
     filter "system:windows"
         defines { "TK_PLATFORM_WINDOWS" }
+        links { "user32", "gdi32", "shell32" }
 
     filter "system:linux"
         defines { "TK_PLATFORM_LINUX" }

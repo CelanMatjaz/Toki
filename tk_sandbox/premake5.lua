@@ -11,8 +11,6 @@ project "TK_Sandbox"
         "%{wks.location}/vendor/glfw/include",
     }
 
-    links { "user32", "gdi32", "shell32" }
-
     set_target_and_object_dirs()
     configuration_configs()
     build_options()

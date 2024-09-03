@@ -9,6 +9,7 @@ project "GLFW"
 
     files { "glfw/src/**.h", "glfw/src/**.c" }
     includedirs { "glfw/include", "includes/glfw" }
+    defines { "_GLFW_VULKAN_STATIC" }
 
     filter "system:windows"
         defines { "_GLFW_WIN32" }

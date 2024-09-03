@@ -4,6 +4,7 @@ project "TK_Renderer"
 
     files { "src/**.h", "src/**.cpp" }
     includedirs { "src" }
+    defines { "GLFW_INCLUDE_VULKAN" }
 
     links { "TK_Core", "glfw" }
     includedirs {
