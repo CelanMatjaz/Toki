@@ -25,7 +25,6 @@ void debug_break();
             __LINE__,                                           \
             #valIn,                                             \
             std::format(msg __VA_OPT__(, ) __VA_ARGS__));       \
-        debug_break();                                          \
     }
 
 #define TK_ASSERT_VK_RESULT(valIn, msg, ...)                               \
@@ -39,7 +38,6 @@ void debug_break();
             __LINE__,                                                      \
             #valIn,                                                        \
             std::format(msg __VA_OPT__(, ) __VA_ARGS__));                  \
-        debug_break();                                                     \
     }
 
 #endif
