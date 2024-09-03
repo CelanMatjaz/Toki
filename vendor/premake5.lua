@@ -1,36 +1,21 @@
 require "utils"
 
 project "GLFW"
-    kind "StaticLib"
     language "C"
-    targetAndObjectDirs()
+    kind "StaticLib"
     warnings "Off"
-    targetextension ".lib"
-    staticruntime "On"
+    set_target_and_object_dirs()
+    linkoptions "-g"
 
-    files {
-        "glfw/src/**.h",
-        "glfw/src/**.c"
-    }
-    includedirs { 
-        "glfw/include",
-        "includes/glfw"
-    }
+    files { "glfw/src/**.h", "glfw/src/**.c" }
+    includedirs { "glfw/include", "includes/glfw" }
 
-    defines {
-        "_CRT_SECURE_NO_WARNINGS"
-    }
-
-    runIfOS("windows", function ()
+    filter "system:windows"
         defines { "_GLFW_WIN32" }
-    end)
 
-    runIfOS("linux", function ()
-        runIfDisplayServerLinux("wayland", function ()
-            defines { "_GLFW_WAYLAND" }
-        end)
-        runIfDisplayServerLinux("x11", function ()
-            defines { "_GLFW_X11" }
-        end)
-    end)
+    filter "system:linux"
+        defines { "_GLFW_WAYLAND", "_GLFW_X11" }
+
+    filter "toolset:msc"
+        staticruntime "On"
 

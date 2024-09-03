@@ -1,10 +1,13 @@
 project "TK_Core"
-    handleCppDialect()
-    targetAndObjectDirs()
+    language "C++"
+    kind "StaticLib"
 
     files { "src/**.h", "src/**.cpp" }
-    includedirs { 
-        "%{wks.location}/tk_core/src"
-    }
+    includedirs { "src" }
 
-    handleDefaultLibConfiguration()
+    filter "system:windows"
+        links { "" }
+
+    set_target_and_object_dirs()
+    configuration_configs()
+    build_options()

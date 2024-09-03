@@ -4,50 +4,59 @@ end
 
 VULKAN_SDK = os.getenv("VULKAN_SDK")
 
-function targetAndObjectDirs()
-	targetdir ("%{wks.location}/bin/" .. outputdir)
-	objdir ("%{wks.location}/obj/" .. outputdir .. "/%{prj.name}")
+outputdir = "%{cfg.system}-%{cfg.architecture}"
+
+function set_target_and_object_dirs()
+    targetdir("%{wks.location}/bin/" .. outputdir .. "/%{cfg.buildcfg}")
+    objdir("%{wks.location}/obj/" .. outputdir)
 end
 
-function handleCppDialect()
-    language "C++"
-    if string.startswith(_ACTION, "vs") then
+function build_options()
+    filter "action:vs*"
         cppdialect "C++latest"
-        buildoptions "/Zc:preprocessor"
-    else
+        buildoptions "/Zc:preprocessor /std:c++latest"
+
+    filter "toolset:clang or toolset:gcc"
         buildoptions "-std=c++23"
-    end
 end
 
-function handleDefaultLibConfiguration()
-    filter "configurations:Debug"
-        kind "StaticLib"
+function configuration_configs()
+    filter "Debug"
         defines { "TK_DEBUG" }
         symbols "On"
+        runtime "Debug"
+        optimize "Debug"
 
-        runIfOS("windows", function ()
-            targetextension ".lib"
-        end)
+    filter {"Debug", "toolset:clang or toolset:gcc" }
+        linkoptions "-g"
 
-    filter "configurations:Release"
-        kind "StaticLib"
+    filter "Release"
         defines { "TK_NDEBUG", "TK_RELEASE" }
         symbols "Off"
+        runtime "Release"
         optimize "On"
 
-        runIfOS("windows", function ()
-            targetextension  ".lib"
-        end)
-end
+    filter "Dist"
+        defines { "TK_NDEBUG", "TK_DIST" }
+        symbols "Off"
+        runtime "Release"
+        optimize "Speed"
 
-function runIfOS(requiredOS, fn)
-    filter { "system:" .. requiredOS }
-    fn()
-end
+    filter "system:windows"
+        defines { "TK_PLATFORM_WINDOWS" }
 
-function runIfDisplayServerLinux(displayServer, fn)
     filter "system:linux"
-    if LINUX_DISPLAY_SERVER == displayServer then
-        fn()
-    end
+        defines { "TK_PLATFORM_LINUX" }
+end
+
+function link_vulkan()
+    filter "system:windows"
+        includedirs { path.join(VULKAN_SDK, "Include") }
+        libdirs { path.join(VULKAN_SDK, "Lib") }
+        links { "vulkan-1" }
+
+    filter "system:linux"
+        includedirs { path.join(VULKAN_SDK, "include") }
+        libdirs { path.join(VULKAN_SDK, "lib") }
+        links { "vulkan" }
 end
