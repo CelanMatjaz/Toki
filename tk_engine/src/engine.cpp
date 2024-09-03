@@ -26,18 +26,25 @@ void engine_initialize(const EngineConfig& engine_config) {
     const uint32_t log_flags = TK_LOG_FLAGS_CONSOLE | TK_LOG_FLAGS_FILE;
     engine_logging_initialize(log_flags, "toki.log");
 
-    s_engine_state->windows.emplace_back(engine_create_window(engine_config.window_config));
+    Window window = engine_create_window(engine_config.window_config);
+    s_engine_state->windows.emplace_back(window);
 
     // Renderer
-    RendererStateConfig renderer_state_config{};
-    renderer_initialize_state(renderer_state_config);
+    renderer_initialize_state();
+
+    RendererInitConfig renderer_init_config{};
+    renderer_init_config.initial_window = s_engine_state->windows[0].glfw_window;
+    renderer_initialize(renderer_init_config);
 }
 
 void engine_shutdown() {
     TK_ASSERT(s_engine_state != nullptr, "Engine state is not initialized");
 
+    renderer_shutdown();
     renderer_destroy_state();
+
     engine_logging_shutdown();
+
     glfwTerminate();
 
     delete s_engine_state;

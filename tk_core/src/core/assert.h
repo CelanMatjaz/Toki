@@ -7,6 +7,7 @@
 
 #else
 
+#include <format>
 #include <iostream>
 #include <print>
 

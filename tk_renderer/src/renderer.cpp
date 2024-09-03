@@ -4,30 +4,31 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
-#include "utils/device_utils.h"
+#include "renderer_types.h"
 
 namespace Toki {
 
-struct RendererState {
-} static* s_renderer_state = nullptr;
+void create_instance();
+void destroy_instance();
 
-void renderer_create_instance();
-void renderer_destroy_instance();
-
-void renderer_initialize_state(const RendererStateConfig& config) {
+void renderer_initialize_state() {
     TK_ASSERT(s_renderer_state == nullptr, "Renderer state is already initialized");
-    s_renderer_state = new RendererState();
-    renderer_create_instance();
+    s_renderer_state = new VulkanState();
+    create_instance();
 }
 
 void renderer_destroy_state() {
     TK_ASSERT(s_renderer_state != nullptr, "Renderer state is not initialized");
-    renderer_destroy_instance();
+    destroy_instance();
     delete s_renderer_state;
     s_renderer_state = nullptr;
 }
 
-void renderer_create_instance() {
+void renderer_initialize(const RendererInitConfig& config) {}
+
+void renderer_shutdown() {}
+
+void create_instance() {
     VkApplicationInfo application_info{};
     application_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     application_info.pApplicationName = "Toki";
@@ -45,20 +46,12 @@ void renderer_create_instance() {
     instance_create_info.enabledExtensionCount = extension_count;
     instance_create_info.ppEnabledExtensionNames = extensions;
 
-#ifndef TK_DIST
-    if (renderer_utils_check_for_validation_layer_support()) {
-        instance_create_info.enabledLayerCount = validation_layers.size();
-        instance_create_info.ppEnabledLayerNames = validation_layers.data();
-    } else {
-        TK_ASSERT(false, "1 or more validation layers not supported by the system");
-    }
-#endif  // !DIST
-
-    TK_ASSERT_VK_RESULT(vkCreateInstance(&instance_create_info, s_context.allocation_callbacks, &s_context.instance), "Could not create instance");
+    TK_ASSERT_VK_RESULT(
+        vkCreateInstance(&instance_create_info, s_renderer_state->allocation_callbacks, &s_renderer_state->instance), "Could not create instance");
 }
 
-void renderer_destroy_instance() {
-    vkDestroyInstance(s_context.instance, s_context.allocation_callbacks);
+void destroy_instance() {
+    vkDestroyInstance(s_renderer_state->instance, s_renderer_state->allocation_callbacks);
 }
 
 }  // namespace Toki
