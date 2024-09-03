@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.h>
 
 #include "renderer_types.h"
+#include "swapchain.h"
 #include "utils/device_utils.h"
 #include "vulkan/vulkan_core.h"
 
@@ -55,8 +56,6 @@ TkError create_device(VulkanState* state, GLFWwindow* window) {
     renderer_window.window = window;
     ASSERT_ERROR(create_surface(state, window, &renderer_window), "Could not create window surface");
 
-    state->windows.emplace_back(renderer_window);
-
     ASSERT_ERROR(query_physical_devices(state), "Could not query physical devices");
     ASSERT_ERROR(query_physical_device_properties(&state->physical_device_data), "Could not query physical device properties");
     ASSERT_ERROR(query_physical_device_queues(&state->physical_device_data, renderer_window.surface), "Could not query physical device queues");
@@ -90,7 +89,12 @@ TkError create_device(VulkanState* state, GLFWwindow* window) {
     VkResult result = vkCreateDevice(state->physical_device_data.physical_device, &device_create_info, state->allocation_callbacks, &state->device);
     ASSERT_VK_RESULT(result, Error::RENDERER_CREATE_DEVICE_ERROR);
 
-    // vkGetDeviceQueue(VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue *pQueue)
+    vkGetDeviceQueue(state->device, state->physical_device_data.present_queue_family_index, 0, &state->physical_device_data.present_queue);
+    vkGetDeviceQueue(state->device, state->physical_device_data.graphics_queue_family_index, 0, &state->physical_device_data.graphics_queue);
+    vkGetDeviceQueue(state->device, state->physical_device_data.transfer_queue_family_index, 0, &state->physical_device_data.transfer_queue);
+
+    ASSERT_ERROR(create_swapchain(state, &renderer_window), "Could not create swapchain");
+    state->windows.emplace_back(renderer_window);
 
     return TkError{};
 }
