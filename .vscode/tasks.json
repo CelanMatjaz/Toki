@@ -1,0 +1,67 @@
+{
+    "tasks": [
+        {
+            "label": "Generate makefiles - clang",
+            "type": "shell",
+            "command": "premake5 --cc=clang gmake2"
+        },
+        {
+            "label": "Generate makefiles - gcc",
+            "type": "shell",
+            "command": "premake5 --cc=gcc gmake2"
+        },
+        {
+            "label": "Build Sandbox - debug",
+            "type": "shell",
+            "command": "make config=debug TK_Sandbox"
+        },
+        {
+            "label": "Build Sandbox - release",
+            "type": "shell",
+            "command": "make config=debug TK_Sandbox"
+        },
+        {
+            "label": "Build Sandbox - dist",
+            "type": "shell",
+            "command": "make config=debug TK_Sandbox"
+        },
+        {
+            "label": "Generate compile_commands.json",
+            "type": "shell",
+            "command": "premake5 export-compile-commands"
+        },
+        {
+            "label": "Generate compile_commands.json - debug",
+            "type": "shell",
+            "dependsOn": "Generate compile_commands.json",
+            "windows": {
+                "command": "copy ${workspaceFolder}/compile_commands/debug.json compile_commands.json"
+            },
+            "linux": {
+                "command": "cp ${workspaceFolder}/compile_commands/debug.json compile_commands.json"
+            }
+        },
+        {
+            "label": "Generate compile_commands.json - release",
+            "type": "shell",
+            "dependsOn": "Generate compile_commands.json",
+            "windows": {
+                "command": "copy ${workspaceFolder}/compile_commands/release.json compile_commands.json"
+            },
+            "linux": {
+                "command": "cp ${workspaceFolder}/compile_commands/release.json compile_commands.json"
+            }
+        },
+        {
+            "label": "Generate compile_commands.json - dist",
+            "type": "shell",
+            "dependsOn": "Generate compile_commands.json",
+            "windows": {
+                "command": "copy ${workspaceFolder}/compile_commands/dist.json compile_commands.json"
+            },
+            "linux": {
+                "command": "cp ${workspaceFolder}/compile_commands/dist.json compile_commands.json"
+            }
+        }
+    ]
+}

@@ -4,7 +4,7 @@ project "TK_Sandbox"
     files { "src/**.h", "src/**.cpp" }
     includedirs { "src" }
 
-    links { "TK_Core", "TK_Engine", "TK_Renderer", "glfw" }
+    links { "TK_Core", "TK_Engine", "TK_Renderer", "GLFW" }
     includedirs {
         "%{wks.location}/tk_core/include",
         "%{wks.location}/tk_engine/include",

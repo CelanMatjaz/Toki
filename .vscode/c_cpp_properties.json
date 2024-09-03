@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "Sandbox - Debug",
+            "compileCommands": "${workspaceFolder}/compile_commands/debug.json"
+        },
+        {
+            "name": "Sandbox - Release",
+            "compileCommands": "${workspaceFolder}/compile_commands/release.json"
+        },
+        {
+            "name": "Sandbox - Dist",
+            "compileCommands": "${workspaceFolder}/compile_commands/dist.json"
+        }
+    ],
+    "version": 4
+}
