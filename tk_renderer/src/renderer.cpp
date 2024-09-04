@@ -10,21 +10,34 @@
 
 namespace Toki {
 
-static VulkanState s_renderer_state{};
+static VulkanState renderer_state{};
+static RendererFrame frames[MAX_FRAMES];
 
 TkError renderer_initialize(const RendererInitConfig& config) {
-    ASSERT_ERROR(create_instance(&s_renderer_state), "Error creating Vulkan instance");
-    ASSERT_ERROR(create_device(&s_renderer_state, config.initial_window), "Error creating Vulkan device");
+    ASSERT_ERROR(create_instance(&renderer_state), "Error creating Vulkan instance");
+    ASSERT_ERROR(create_device(&renderer_state, config.initial_window), "Error creating Vulkan device");
     return TkError{};
 }
 
 TkError renderer_shutdown() {
-    for (uint32_t i = 0; i < s_renderer_state.windows.size(); ++i) {
-        destroy_renderer_window(&s_renderer_state, &s_renderer_state.windows[i]);
+    for (uint32_t i = 0; i < renderer_state.windows.size(); ++i) {
+        destroy_renderer_window(&renderer_state, &renderer_state.windows[i]);
     }
 
-    ASSERT_ERROR(destroy_device(&s_renderer_state), "Error destroyign Vulkan device");
-    ASSERT_ERROR(destroy_instance(&s_renderer_state), "Error destroying Vulkan instance");
+    destroy_device(&renderer_state);
+    destroy_instance(&renderer_state);
+    return TkError{};
+}
+
+TkError renderer_begin_frame(FrameData& frame_data) {
+    return TkError{};
+}
+
+TkError renderer_end_frame(FrameData& frame_data) {
+    return TkError{};
+}
+
+TkError renderer_present(FrameData& frame_data) {
     return TkError{};
 }
 

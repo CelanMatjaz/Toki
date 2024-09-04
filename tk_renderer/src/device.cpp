@@ -46,9 +46,8 @@ TkError create_instance(VulkanState* state) {
     return TkError{};
 }
 
-TkError destroy_instance(VulkanState* state) {
+void destroy_instance(VulkanState* state) {
     vkDestroyInstance(state->instance, state->allocation_callbacks);
-    return TkError{};
 }
 
 TkError create_device(VulkanState* state, GLFWwindow* window) {
@@ -99,9 +98,39 @@ TkError create_device(VulkanState* state, GLFWwindow* window) {
     return TkError{};
 }
 
-TkError destroy_device(VulkanState* state) {
+void destroy_device(VulkanState* state) {
     vkDestroyDevice(state->device, state->allocation_callbacks);
+}
+
+TkError create_frames(VulkanState* state, RendererFrame* frame_data) {
+    VkFenceCreateInfo fence_create_info{};
+    fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+    VkSemaphoreCreateInfo semaphore_create_info{};
+    semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+    VkResult result;
+    for (uint32_t i = 0; i < MAX_FRAMES; ++i) {
+        result = vkCreateFence(state->device, &fence_create_info, state->allocation_callbacks, &frame_data[i].render_fence);
+        ASSERT_VK_RESULT(result, Error::RENDERER_CREATE_FRAME_ERROR);
+
+        result = vkCreateSemaphore(state->device, &semaphore_create_info, state->allocation_callbacks, &frame_data[i].render_semaphore);
+        ASSERT_VK_RESULT(result, Error::RENDERER_CREATE_FRAME_ERROR);
+
+        result = vkCreateSemaphore(state->device, &semaphore_create_info, state->allocation_callbacks, &frame_data[i].present_semaphore);
+        ASSERT_VK_RESULT(result, Error::RENDERER_CREATE_FRAME_ERROR);
+    }
+
     return TkError{};
+}
+
+void destroy_frames(VulkanState* state, RendererFrame* frame_data) {
+    for (uint32_t i = 0; i < MAX_FRAMES; ++i) {
+        vkDestroyFence(state->device, frame_data[i].render_fence, state->allocation_callbacks);
+        vkDestroySemaphore(state->device, frame_data[i].render_semaphore, state->allocation_callbacks);
+        vkDestroySemaphore(state->device, frame_data[i].present_semaphore, state->allocation_callbacks);
+    }
 }
 
 }  // namespace Toki

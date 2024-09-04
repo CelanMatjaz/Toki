@@ -16,6 +16,23 @@ namespace Toki {
 
 inline static const uint32_t MAX_FRAMES = 3;
 
+struct RendererFrame {
+    VkFence render_fence = VK_NULL_HANDLE;
+    VkSemaphore render_semaphore = VK_NULL_HANDLE;
+    VkSemaphore present_semaphore = VK_NULL_HANDLE;
+};
+
+struct RendererImage {
+    VkImage image;
+    VkImageView image_view;
+    VkDeviceMemory memory;
+    VkImageLayout layout;
+    VkFormat format;
+    VkExtent3D extent;
+    VkImageUsageFlags usage;
+    VkMemoryPropertyFlags memory_properties;
+};
+
 struct PhysicalDeviceData {
     VkPhysicalDevice physical_device = VK_NULL_HANDLE;
     VkPhysicalDeviceProperties device_properties;
@@ -40,6 +57,7 @@ struct RendererWindow {
     VkSwapchainKHR swapchain = VK_NULL_HANDLE;
     VkSwapchainKHR old_swapchain = VK_NULL_HANDLE;
     VkExtent2D extent{};
+    std::vector<RendererImage> swapchain_images;
 };
 
 struct VulkanState {
@@ -48,9 +66,7 @@ struct VulkanState {
     PhysicalDeviceData physical_device_data{};
     VkAllocationCallbacks* allocation_callbacks = nullptr;
 
-    operator VkInstance() { return instance; }
-    operator VkDevice() { return device; }
-    operator VkPhysicalDevice() { return physical_device_data.physical_device; }
+    VkDescriptorPool descriptor_pool;
 
     std::vector<RendererWindow> windows;
 };

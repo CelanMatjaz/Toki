@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "resoures/image.h"
 #include "utils/device_utils.h"
 #include "vulkan/vulkan_core.h"
 
@@ -53,7 +54,32 @@ TkError create_swapchain(VulkanState* state, RendererWindow* renderer_window) {
 
     renderer_window->old_swapchain = renderer_window->swapchain;
 
+    uint32_t swapchain_image_count{};
+    result = vkGetSwapchainImagesKHR(state->device, renderer_window->swapchain, &swapchain_image_count, nullptr);
+    ASSERT_VK_RESULT(result, Error::RENDERER_CREATE_SWAPCHAIN_ERROR);
+
+    std::vector<VkImage> images(swapchain_image_count);
+    result = vkGetSwapchainImagesKHR(state->device, renderer_window->swapchain, &swapchain_image_count, images.data());
+    ASSERT_VK_RESULT(result, Error::RENDERER_CREATE_SWAPCHAIN_ERROR);
+
+    renderer_window->swapchain_images.resize(swapchain_image_count);
+    for (uint32_t i = 0; i < swapchain_image_count; ++i) {
+        renderer_window->swapchain_images[i].image = images[i];
+
+        ImageViewConfig image_view_config{};
+        image_view_config.image = images[i];
+        image_view_config.format = surface_format.format;
+        ASSERT_ERROR(create_image_view(state, &image_view_config, &renderer_window->swapchain_images[i].image_view), "Could not create image view");
+    }
+
     return TkError{};
+}
+
+void destroy_swapchain(VulkanState* state, RendererWindow* renderer_window) {
+    for (int i = 0; i < renderer_window->swapchain_images.size(); ++i) {
+        destroy_image_view(state, renderer_window->swapchain_images[i].image_view);
+    }
+    vkDestroySwapchainKHR(state->device, renderer_window->swapchain, state->allocation_callbacks);
 }
 
 }  // namespace Toki

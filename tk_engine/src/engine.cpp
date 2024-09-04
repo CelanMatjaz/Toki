@@ -4,10 +4,16 @@
 #include <toki/core.h>
 #include <toki/renderer.h>
 
+#include <print>
 #include <vector>
 
 #include "core/logging.h"
 #include "core/window.h"
+
+#define CHECK_ERROR(error)                                                       \
+    if (!error) {                                                                 \
+        std::println("Error: {}, code: {}", (uint64_t) error.error, error.code); \
+    }
 
 namespace Toki {
 
@@ -32,13 +38,15 @@ void engine_initialize(const EngineConfig& engine_config) {
     // Renderer
     RendererInitConfig renderer_init_config{};
     renderer_init_config.initial_window = s_engine_state->windows[0].glfw_window;
-    renderer_initialize(renderer_init_config);
+    TkError error = renderer_initialize(renderer_init_config);
+    CHECK_ERROR(error);
 }
 
 void engine_shutdown() {
     TK_ASSERT(s_engine_state != nullptr, "Engine state is not initialized");
 
-    renderer_shutdown();
+    TkError error = renderer_shutdown();
+    CHECK_ERROR(error);
 
     engine_logging_shutdown();
 

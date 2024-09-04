@@ -6,6 +6,7 @@
 
 namespace Toki {
 
-TkError create_swapchain(VulkanState* state, RendererWindow* renderer_window);
+[[nodiscard]] TkError create_swapchain(VulkanState* state, RendererWindow* renderer_window);
+void destroy_swapchain(VulkanState* state, RendererWindow* renderer_window);
 
-}
+}  // namespace Toki

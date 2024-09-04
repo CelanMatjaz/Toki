@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "renderer_types.h"
+#include "swapchain.h"
 #include "vulkan/vulkan_core.h"
 
 namespace Toki {
@@ -47,10 +48,7 @@ TkError query_layer_support(const char* layers[], uint32_t layer_count, bool* su
 }
 
 void destroy_renderer_window(VulkanState* state, RendererWindow* window) {
-    if (window->swapchain) {
-        vkDestroySwapchainKHR(state->device, window->swapchain, state->allocation_callbacks);
-    }
-
+    destroy_swapchain(state, window);
     if (window->surface) {
         vkDestroySurfaceKHR(state->instance, window->surface, state->allocation_callbacks);
     }
