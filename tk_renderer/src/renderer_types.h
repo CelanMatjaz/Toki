@@ -23,13 +23,28 @@ struct RendererFrame {
 };
 
 struct RendererImage {
-    VkImage image;
-    VkImageView image_view;
+    VkImage image = VK_NULL_HANDLE;
+    VkImageView image_view = VK_NULL_HANDLE;
     VkDeviceMemory memory;
     VkImageLayout layout;
     VkFormat format;
     VkExtent3D extent;
     VkImageUsageFlags usage;
+    VkMemoryPropertyFlags memory_properties;
+};
+
+enum class BufferType {
+    NONE = 0,
+    INDEX_BUFFER,
+    VERTEX_BUFFER,
+    UNIFORM_BUFFER
+};
+
+struct RendererBuffer {
+    VkBuffer buffer = VK_NULL_HANDLE;
+    VkDeviceMemory memory;
+    uint32_t size = 0;
+    BufferType type = BufferType::NONE;
     VkMemoryPropertyFlags memory_properties;
 };
 

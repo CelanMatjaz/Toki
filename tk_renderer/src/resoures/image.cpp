@@ -5,7 +5,7 @@
 namespace Toki {
 
 static VkImageAspectFlags get_image_aspect_flags(VkFormat format);
-uint32_t find_memory_type(
+extern uint32_t find_memory_type(
     const VkPhysicalDeviceMemoryProperties& physical_device_memory_properties, uint32_t typeBits, VkMemoryPropertyFlags properties);
 
 TkError create_image(VulkanState* state, const ImageConfig* image_config, RendererImage* renderer_image_out) {
@@ -50,6 +50,8 @@ void destroy_image(VulkanState* state, RendererImage* renderer_image) {
     vkFreeMemory(state->device, renderer_image->memory, state->allocation_callbacks);
     destroy_image_view(state, renderer_image->image_view);
     vkDestroyImage(state->device, renderer_image->image, state->allocation_callbacks);
+    renderer_image->image = VK_NULL_HANDLE;
+    renderer_image->image_view = VK_NULL_HANDLE;
 }
 
 TkError create_image_view(VulkanState* state, const ImageViewConfig* image_view_config, VkImageView* image_view_out) {
