@@ -1,0 +1,12 @@
+.vs
+.cache
+compile_commands
+
+bin
+obj
+
+**/Makefile
+**/*.vcxproj*
+**.sln
+
+compile_commands.json
