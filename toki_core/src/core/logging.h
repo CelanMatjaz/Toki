@@ -1,9 +1,7 @@
 #pragma once
 
 #include <chrono>
-#include <format>
 #include <iostream>
-#include <print>
 #include <string_view>
 
 namespace toki {

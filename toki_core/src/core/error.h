@@ -29,21 +29,16 @@ struct TkError {
     TkError(): error(Error::NoError) {}
     TkError(Error error): error(error) {}
 
-    operator Error() {
+    operator Error() const {
         return error;
     }
 
-    operator bool() {
+    operator bool() const {
         return error == Error::NoError;
     }
 
 public:
     Error error;
 };
-
-#define ASSERT_ERROR(error)         \
-    if (TkError r = error; error) { \
-    } else {                        \
-    }
 
 }  // namespace toki
