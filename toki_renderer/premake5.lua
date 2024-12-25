@@ -1,9 +1,10 @@
 project "Renderer"
     kind "StaticLib"
 
-    links { "glfw", "Core" }
+    links { "GLFW", "Core" }
     includedirs {
         "%{wks.location}/toki_core/include",
+        "%{wks.location}/toki_engine/include",
         "%{wks.location}/vendor/glfw/include",
     }
 

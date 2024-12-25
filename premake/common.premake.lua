@@ -1,6 +1,6 @@
 VULKAN_SDK = os.getenv("VULKAN_SDK")
 
-outputdir = "%{cfg.system}-%{cfg.architecture}"
+outputdir = "%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}"
 
 function set_target_and_object_dirs()
     targetdir("%{wks.location}/bin/" .. outputdir)

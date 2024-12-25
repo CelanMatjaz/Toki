@@ -1,10 +1,10 @@
 project "Sandbox"
     kind "ConsoleApp"
 
-    links { "Core", "Renderer" }
+    links { "GLFW", "Core", "Engine", "Renderer" }
     includedirs {
         "%{wks.location}/toki_core/include",
-        "%{wks.location}/toki_renderer/include",
+        "%{wks.location}/toki_engine/include",
     }
 
     add_files()
@@ -15,3 +15,5 @@ project "Sandbox"
     build_options()
     link_vulkan()
 
+    filter "system:windows"
+        links { "gdi32", "user32", "shell32" }

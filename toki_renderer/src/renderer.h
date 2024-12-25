@@ -1,15 +1,23 @@
 #pragma once
 
+#include <toki/engine.h>
+#include <vulkan/vulkan.h>
+
 namespace toki {
 
-class Renderer {
-public:
-    struct Config {};
+struct Renderer::RendererState {
+    VkInstance instance = VK_NULL_HANDLE;
+    VkDevice device = VK_NULL_HANDLE;
 
-public:
-    Renderer() = delete;
-    Renderer(const Config& config);
-    virtual ~Renderer() = 0;
+    VkAllocationCallbacks* allocation_callbacks = nullptr;
+
+    operator VkInstance() {
+        return instance;
+    }
+
+    operator VkDevice() {
+        return device;
+    }
 };
 
 }  // namespace toki

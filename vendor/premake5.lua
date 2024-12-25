@@ -14,6 +14,7 @@ project "GLFW"
 
     filter "system:windows"
         defines { "_GLFW_WIN32" }
+        links { "gdi32", "user32", "shell32" }
 
     filter "system:linux"
         defines { "_GLFW_WAYLAND", "_GLFW_X11" }
