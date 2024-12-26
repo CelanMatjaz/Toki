@@ -1,10 +1,10 @@
 
 #include "renderer.h"
 
-#include <memory>
 #include <print>
 
 #include "device.h"
+#include "vulkan/vulkan_core.h"
 
 namespace toki {
 
@@ -17,6 +17,9 @@ Renderer::Renderer(const Config& config) {
 
 Renderer::~Renderer() {
     TK_LOG_INFO("Shutting down renderer");
+
+    vkDestroyDevice(m_state.device, m_state.allocation_callbacks);
+    vkDestroyInstance(m_state.instance, m_state.allocation_callbacks);
 }
 
 }  // namespace toki

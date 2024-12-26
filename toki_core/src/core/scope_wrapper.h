@@ -9,9 +9,7 @@ template <typename T, T InvalidValue = T{}>
 class Scope {
 public:
     Scope(): m_value(InvalidValue), m_release(nullptr) {}
-    Scope(T value, std::function<void(T)> release):
-        m_value(value),
-        m_release(release) {}
+    Scope(T value, std::function<void(T)> release): m_value(value), m_release(release) {}
     ~Scope() {
         if (m_value != InvalidValue && m_release) {
             m_release(m_value);
@@ -58,6 +56,10 @@ public:
     }
 
     T value() {
+        return m_value;
+    }
+
+    T& ref() {
         return m_value;
     }
 

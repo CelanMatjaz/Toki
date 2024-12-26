@@ -23,9 +23,9 @@ Engine::~Engine() {
 void Engine::run() {
     m_is_running = true;
 
-    while (m_is_running && !m_window->should_close()) {
-        Window::poll_events();
-    }
+    // while (m_is_running && !m_window->should_close()) {
+    //     Window::poll_events();
+    // }
 }
 
 }  // namespace toki

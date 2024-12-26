@@ -1,6 +1,6 @@
-#include <csignal>
-
 #include "../platform.h"
+
+#include <csignal>
 
 namespace toki {
 

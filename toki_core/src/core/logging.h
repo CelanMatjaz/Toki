@@ -40,13 +40,10 @@ constexpr std::string level_to_string(LogLevel level) {
 
 template <typename... Args>
 constexpr void log(LogLevel level, std::string_view fmt, Args&&... args) {
-    static const std::chrono::time_zone* currentZone =
-        std::chrono::get_tzdb().current_zone();
-    auto now = std::chrono::zoned_time{
-        currentZone,
-        std::chrono::time_point_cast<std::chrono::seconds>(
-            std::chrono::system_clock::now())
-    };
+    static const std::chrono::time_zone* currentZone = std::chrono::get_tzdb().current_zone();
+    auto now = std::chrono::zoned_time{ currentZone,
+                                        std::chrono::time_point_cast<std::chrono::seconds>(
+                                            std::chrono::system_clock::now()) };
     std::cout << std::format("[{:%T}] [{}]: ", now, level_to_string(level))
               << std::vformat(fmt, std::make_format_args(args...)) << '\n';
 }
