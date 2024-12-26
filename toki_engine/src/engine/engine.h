@@ -1,10 +1,10 @@
 #pragma once
 
 #include <toki/core.h>
+#include <toki/renderer.h>
 
 #include <memory>
 
-#include "../renderer/renderer.h"
 #include "window.h"
 
 namespace toki {
@@ -24,10 +24,10 @@ public:
     void run();
 
 private:
-    bool m_isRunning = false;
+    bool m_is_running = false;
 
-    std::unique_ptr<Window> m_window;
-    std::unique_ptr<Renderer> m_renderer;
+    std::shared_ptr<Window> m_window;
+    std::shared_ptr<Renderer> m_renderer;
 };
 
 }  // namespace toki

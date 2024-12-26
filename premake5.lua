@@ -3,6 +3,7 @@ require "premake/common.premake"
 
 workspace "Toki"
     configurations { "debug", "release", "dist" }
+    platforms { "linux_wayland", "linux_x11", "windows" }
     architecture "x64"
 
     startproject "Sandbox"

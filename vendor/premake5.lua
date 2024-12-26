@@ -12,9 +12,12 @@ project "GLFW"
 
     defines { "_GLFW_VULKAN_STATIC" }
 
-    filter "system:windows"
+    filter "platforms:windows"
         defines { "_GLFW_WIN32" }
         links { "gdi32", "user32", "shell32" }
 
-    filter "system:linux"
+    filter "platforms:linux_wayland or platforms:linux_x11"
         defines { "_GLFW_WAYLAND", "_GLFW_X11" }
+        includedirs { "includes/glfw" }
+
+

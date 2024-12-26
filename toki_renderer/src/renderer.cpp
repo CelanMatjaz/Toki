@@ -4,11 +4,15 @@
 #include <memory>
 #include <print>
 
+#include "device.h"
+
 namespace toki {
 
-Renderer::Renderer(const Config& config):
-    m_state(std::make_unique<RendererState>()) {
+Renderer::Renderer(const Config& config) {
     TK_LOG_INFO("Initializing renderer");
+
+    create_instance(&m_state);
+    create_device(&m_state);
 }
 
 Renderer::~Renderer() {

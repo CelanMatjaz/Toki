@@ -3,6 +3,7 @@
 #include <chrono>
 #include <iostream>
 #include <string_view>
+#include <utility>
 
 namespace toki {
 
@@ -33,6 +34,8 @@ constexpr std::string level_to_string(LogLevel level) {
         case LogLevel::Debug:
             return "DEBUG";
     }
+
+    std::unreachable();
 }
 
 template <typename... Args>

@@ -4,19 +4,18 @@
 
 namespace toki {
 
-#define ERRORS(X) \
-    X(TEST)       \
-    X(TEST2)
+#define ERRORS(X) X(RendererInit)
 
 #define ENUM_ERROR(NAME) NAME,
 #define STRING_ERROR(NAME) #NAME,
 
 enum Error : u64 {
     NoError = 0,
+
     ERRORS(ENUM_ERROR) ERROR_COUNT
 };
 
-inline const byte* error_to_string(Error value) {
+inline const byte* error_to_string(enum Error value) {
     static const byte* error_strings[] = { ERRORS(STRING_ERROR) };
     return error_strings[static_cast<u64>(value)];
 }
@@ -27,9 +26,9 @@ inline const byte* error_to_string(Error value) {
 
 struct TkError {
     TkError(): error(Error::NoError) {}
-    TkError(Error error): error(error) {}
+    TkError(enum Error error): error(error) {}
 
-    operator Error() const {
+    operator enum Error() const {
         return error;
     }
 
@@ -37,8 +36,12 @@ struct TkError {
         return error == Error::NoError;
     }
 
+    const byte* to_string() const {
+        return error_to_string(error);
+    }
+
 public:
-    Error error;
+    enum Error error;
 };
 
 }  // namespace toki

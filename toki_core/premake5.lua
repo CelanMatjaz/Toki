@@ -6,7 +6,6 @@ project "Core"
     }
 
     add_files()
-    add_platform_files()
 
     set_target_and_object_dirs()
     configuration_configs()
