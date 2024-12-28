@@ -5,6 +5,7 @@ project "Sandbox"
     includedirs {
         "%{wks.location}/toki_engine/src",
         "%{wks.location}/toki_engine/include",
+        "%{wks.location}/vendor/glfw/include",
     }
 
     add_files()

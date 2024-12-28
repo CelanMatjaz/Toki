@@ -1,9 +1,10 @@
 #pragma once
 
-#include <toki/core.h>
 #include <vulkan/vulkan.h>
 
 #include <format>
+
+#include "core/core.h"
 
 template <>
 struct std::formatter<VkResult> : std::formatter<std::string> {

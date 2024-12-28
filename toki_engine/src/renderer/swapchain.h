@@ -9,31 +9,19 @@ namespace toki {
 
 class Renderer;
 
-class Swapchain {
-    friend Renderer;
+struct Swapchain {
+    static std::shared_ptr<Swapchain> create(RendererContext* ctx, GLFWwindow* window);
 
-public:
-    Swapchain() = delete;
-    Swapchain(RendererContext* ctx, GLFWwindow* window);
-    ~Swapchain() = default;
-
-    DELETE_COPY(Swapchain)
-    DELETE_MOVE(Swapchain)
-
-    void recreate(RendererContext* ctx);
-    void create(RendererContext* ctx);
     void destroy(RendererContext* ctx);
+    void recreate(RendererContext* ctx);
 
-private:
-    GLFWwindow* m_windowHandle;
-    Scope<VkSurfaceKHR, VK_NULL_HANDLE> m_surface{};
-
-    VkSwapchainKHR m_swapchain{};
-    VkSurfaceFormatKHR m_surfaceFormat{};
-    VkPresentModeKHR m_presentMode{};
-    VkExtent2D m_extent{};
-
-    VkImageView m_imageViews[FRAME_COUNT]{};
+    VkSwapchainKHR swapchainHandle{};
+    VkSurfaceKHR surface{};
+    VkSurfaceFormatKHR surfaceFormat{};
+    VkPresentModeKHR presentMode{};
+    VkExtent2D extent{};
+    GLFWwindow* windowHandle{};
+    VkImageView imageViews[FRAME_COUNT]{};
 };
 
 }  // namespace toki

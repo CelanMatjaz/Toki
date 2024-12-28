@@ -6,6 +6,7 @@
 #include "core/logging.h"
 #include "macros.h"
 #include "renderer/platform/renderer_utils.h"
+#include "renderer/renderer_state.h"
 #include "utils.h"
 
 namespace toki {
@@ -42,10 +43,10 @@ TkError create_instance(RendererContext* ctx) {
 }
 
 TkError create_device(RendererContext* ctx, std::shared_ptr<Window> window) {
-    Scope<VkSurfaceKHR, VK_NULL_HANDLE> temp_surface(VK_NULL_HANDLE, [&](VkSurfaceKHR s) {
+    VkSurfaceKHR surface = create_surface(ctx, (GLFWwindow*) window->get_handle());
+    Scope<VkSurfaceKHR, VK_NULL_HANDLE> temp_surface(surface, [ctx](VkSurfaceKHR s) {
         vkDestroySurfaceKHR(ctx->instance, s, ctx->allocationCallbacks);
     });
-    create_surface(ctx, (GLFWwindow*) window->get_handle(), &temp_surface.ref());
 
     u32 physical_device_count{};
     vkEnumeratePhysicalDevices(ctx->instance, &physical_device_count, nullptr);
@@ -64,7 +65,7 @@ TkError create_device(RendererContext* ctx, std::shared_ptr<Window> window) {
         }
     }
 
-    VkPhysicalDevice physical_device = physical_devices[device_index];
+    VkPhysicalDevice physical_device = ctx->physicalDevice = physical_devices[device_index];
 
     const auto [graphics, present, transfer] = find_queue_families(physical_device, temp_surface);
 
@@ -87,6 +88,8 @@ TkError create_device(RendererContext* ctx, std::shared_ptr<Window> window) {
     device_create_info.pQueueCreateInfos = queue_create_infos;
     device_create_info.queueCreateInfoCount = graphics == present ? 1 : 2;
     device_create_info.pEnabledFeatures = &features;
+    device_create_info.enabledExtensionCount = extensions.size();
+    device_create_info.ppEnabledExtensionNames = extensions.data();
 
     TK_ASSERT_VK_RESULT(
         vkCreateDevice(

@@ -25,6 +25,7 @@ Window::Window(const Config& config) {
     }
     ++window_count;
 
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     GLFWwindow* window =
         glfwCreateWindow(config.width, config.height, config.title.c_str(), nullptr, nullptr);
 

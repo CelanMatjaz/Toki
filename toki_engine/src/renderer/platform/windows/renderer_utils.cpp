@@ -15,18 +15,19 @@
 
 namespace toki {
 
-TkError create_surface(RendererContext* ctx, GLFWwindow* window, VkSurfaceKHR* surface_out) {
+VkSurfaceKHR create_surface(RendererContext* ctx, GLFWwindow* window) {
     VkWin32SurfaceCreateInfoKHR surface_create_info{};
     surface_create_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     surface_create_info.hwnd = glfwGetWin32Window(window);
     surface_create_info.hinstance = GetModuleHandle(nullptr);
 
-    VkResult result = vkCreateWin32SurfaceKHR(
-        ctx->instance, &surface_create_info, ctx->allocationCallbacks, surface_out);
+    VkSurfaceKHR surface{};
+    TK_ASSERT_VK_RESULT(
+        vkCreateWin32SurfaceKHR(
+            ctx->instance, &surface_create_info, ctx->allocationCallbacks, &surface),
+        "Could not create window surface");
 
-    TK_ASSERT_VK_RESULT(result, "Could not create window surface");
-
-    return {};
+    return surface;
 }
 
 }  // namespace toki

@@ -8,6 +8,6 @@
 
 namespace toki {
 
-TkError create_surface(RendererContext* ctx, GLFWwindow* window, VkSurfaceKHR* surface_out);
+VkSurfaceKHR create_surface(RendererContext* ctx, GLFWwindow* window);
 
 }

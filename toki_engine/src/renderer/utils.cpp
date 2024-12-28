@@ -3,8 +3,11 @@
 #include <vulkan/vulkan.h>
 
 #include <cstring>
+#include <set>
 #include <vector>
 
+#include "core/assert.h"
+#include "renderer/renderer_state.h"
 #include "vulkan/vulkan_core.h"
 
 namespace toki {
@@ -31,8 +34,25 @@ bool check_validation_layer_support() {
     return true;
 }
 
+bool check_for_extensions(VkPhysicalDevice physical_device) {
+    uint32_t extension_count;
+    vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &extension_count, nullptr);
+    TK_ASSERT(extension_count > 0, "No extensions available on device");
+    std::vector<VkExtensionProperties> available_extensions(extension_count);
+    vkEnumerateDeviceExtensionProperties(
+        physical_device, nullptr, &extension_count, available_extensions.data());
+
+    std::set<std::string> required_extensions(extensions.begin(), extensions.end());
+
+    for (const auto& extension : available_extensions) {
+        required_extensions.erase(extension.extensionName);
+    }
+
+    return required_extensions.empty();
+}
+
 bool is_device_suitable(VkPhysicalDevice physical_device) {
-    return true;
+    return check_for_extensions(physical_device);
 }
 
 QueueFamilyIndices find_queue_families(VkPhysicalDevice physical_device, VkSurfaceKHR surface) {

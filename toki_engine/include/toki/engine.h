@@ -7,4 +7,3 @@
 // Renderer
 
 #include "../../src/renderer/renderer.h"
-

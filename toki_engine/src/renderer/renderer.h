@@ -4,11 +4,16 @@
 
 #include "core/macros.h"
 #include "engine/window.h"
+#include "renderer/swapchain.h"
 #include "renderer_state.h"
 
 namespace toki {
 
+class Engine;
+
 class Renderer {
+    friend Engine;
+
 public:
     struct Config {
         std::shared_ptr<Window> initialWindow;
@@ -23,10 +28,11 @@ public:
     DELETE_MOVE(Renderer);
 
 public:  // API
+private:
     void add_window(std::shared_ptr<Window> window);
 
-private:
     RendererContext m_context;
+    std::vector<std::shared_ptr<Swapchain>> m_swapchains;
 };
 
 }  // namespace toki

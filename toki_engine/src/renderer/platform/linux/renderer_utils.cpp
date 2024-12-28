@@ -1,4 +1,4 @@
-#if defined(TK_PLATFORM_LINUX) && defined(TK_WAYLAND) 
+#if defined(TK_PLATFORM_LINUX) && defined(TK_WAYLAND)
 
 #include "../renderer_utils.h"
 
@@ -21,24 +21,25 @@
 
 namespace toki {
 
-TkError create_surface(RendererState* state, GLFWwindow* window, VkSurfaceKHR* surface_out) {
+void create_surface(RendererState* state, GLFWwindow* window) {
 #if defined(TK_PLATFORM_LINUX) && defined(TK_WAYLAND)
     VkWaylandSurfaceCreateInfoKHR surface_create_info{};
     surface_create_info.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
     surface_create_info.display = glfwGetWaylandDisplay();
     surface_create_info.surface = glfwGetWaylandWindow(window);
 
+    VkSurfaceKHR surface {}
     VkResult result = vkCreateWaylandSurfaceKHR(
-        state->instance, &surface_create_info, state->allocation_callbacks, surface_out);
+        state->instance, &surface_create_info, state->allocation_callbacks, &surface);
 #elif defined(TK_PLATFORM_LINUX) && defined(TK_X11)
     // TODO: add X11 surface creation
 #endif
 
     TK_ASSERT_VK_RESULT(result, "Could not create window surface");
 
-    return {};
+    return surface;
 }
 
 }  // namespace toki
-   
+
 #endif

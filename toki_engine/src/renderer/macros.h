@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/assert.h"
+#include "formatters.h"
 
 #define TK_ASSERT_VK_RESULT(result, message, ...)                        \
     {                                                                    \

@@ -15,73 +15,78 @@
 
 namespace toki {
 
-static VkSurfaceFormatKHR get_surface_format(const std::vector<VkSurfaceFormatKHR> &formats);
-static VkPresentModeKHR get_present_mode(const std::vector<VkPresentModeKHR> &present_modes);
-static VkExtent2D get_surface_extent(
-    GLFWwindow *window, const VkSurfaceCapabilitiesKHR &capabilities);
+static void create_swapchain(RendererContext* ctx, Swapchain* swapchain);
 
-Swapchain::Swapchain(RendererContext *ctx, GLFWwindow *window): m_windowHandle(window) {
-    VkSurfaceKHR surface{};
-    create_surface(ctx, window, &surface);
-    m_surface = Scope<VkSurfaceKHR, VK_NULL_HANDLE>(surface, [&](VkSurfaceKHR s) {
-        vkDestroySurfaceKHR(ctx->instance, s, ctx->allocationCallbacks);
-    });
+static VkSurfaceFormatKHR get_surface_format(const std::vector<VkSurfaceFormatKHR>& formats);
+static VkPresentModeKHR get_present_mode(const std::vector<VkPresentModeKHR>& present_modes);
+static VkExtent2D get_surface_extent(
+    GLFWwindow* window, const VkSurfaceCapabilitiesKHR& capabilities);
+
+std::shared_ptr<Swapchain> Swapchain::create(RendererContext* ctx, GLFWwindow* window) {
+    std::shared_ptr<Swapchain> swapchain = std::make_shared<Swapchain>();
+
+    swapchain->surface = create_surface(ctx, window);
 
     u32 format_count{};
-    vkGetPhysicalDeviceSurfaceFormatsKHR(ctx->physicalDevice, m_surface, &format_count, nullptr);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(
+        ctx->physicalDevice, swapchain->surface, &format_count, nullptr);
     TK_ASSERT(format_count > 0, "No surface formats found on physical device");
     std::vector<VkSurfaceFormatKHR> surface_formats(format_count);
     vkGetPhysicalDeviceSurfaceFormatsKHR(
-        ctx->physicalDevice, m_surface, &format_count, surface_formats.data());
-    m_surfaceFormat = get_surface_format(surface_formats);
+        ctx->physicalDevice, swapchain->surface, &format_count, surface_formats.data());
+    swapchain->surfaceFormat = get_surface_format(surface_formats);
 
     u32 present_mode_count{};
     vkGetPhysicalDeviceSurfacePresentModesKHR(
-        ctx->physicalDevice, m_surface, &present_mode_count, nullptr);
+        ctx->physicalDevice, swapchain->surface, &present_mode_count, nullptr);
     TK_ASSERT(present_mode_count > 0, "No present modes found on physical device");
     std::vector<VkPresentModeKHR> present_modes(present_mode_count);
     vkGetPhysicalDeviceSurfacePresentModesKHR(
-        ctx->physicalDevice, m_surface, &present_mode_count, present_modes.data());
-    m_presentMode = get_present_mode(present_modes);
+        ctx->physicalDevice, swapchain->surface, &present_mode_count, present_modes.data());
+    swapchain->presentMode = get_present_mode(present_modes);
 
-    create(ctx);
+    create_swapchain(ctx, swapchain.get());
+
+    return swapchain;
 }
 
-void Swapchain::recreate(RendererContext *ctx) {
+void Swapchain::recreate(RendererContext* ctx) {
     destroy(ctx);
-    create(ctx);
+    create_swapchain(ctx, this);
 }
 
-void Swapchain::create(RendererContext *ctx) {
+static void create_swapchain(RendererContext* ctx, Swapchain* swapchain) {
     VkSurfaceCapabilitiesKHR capabilities;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(ctx->physicalDevice, m_surface, &capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+        ctx->physicalDevice, swapchain->surface, &capabilities);
 
-    m_extent = get_surface_extent(m_windowHandle, capabilities);
-    TK_ASSERT(m_extent.width > 0 && m_extent.height > 0, "Surface extent is not of valid size");
-
-    TK_LOG_INFO("width {}, height {}", m_extent.width, m_extent.height);
+    swapchain->extent = get_surface_extent(swapchain->windowHandle, capabilities);
+    TK_ASSERT(
+        swapchain->extent.width > 0 && swapchain->extent.height > 0,
+        "Surface extent is not of valid size");
 
     u32 image_count = std::clamp(
         static_cast<u32>(FRAME_COUNT), capabilities.minImageCount, capabilities.maxImageCount);
 
     VkSwapchainCreateInfoKHR swapchain_create_info{};
     swapchain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    swapchain_create_info.surface = m_surface;
+    swapchain_create_info.surface = swapchain->surface;
     swapchain_create_info.minImageCount = image_count;
-    swapchain_create_info.imageFormat = m_surfaceFormat.format;
-    swapchain_create_info.imageColorSpace = m_surfaceFormat.colorSpace;
-    swapchain_create_info.imageExtent = m_extent;
+    swapchain_create_info.imageFormat = swapchain->surfaceFormat.format;
+    swapchain_create_info.imageColorSpace = swapchain->surfaceFormat.colorSpace;
+    swapchain_create_info.imageExtent = swapchain->extent;
     swapchain_create_info.imageArrayLayers = 1;
     swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     swapchain_create_info.minImageCount = image_count;
     swapchain_create_info.minImageCount = image_count;
     swapchain_create_info.preTransform = capabilities.currentTransform;
     swapchain_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    swapchain_create_info.presentMode = m_presentMode;
+    swapchain_create_info.presentMode = swapchain->presentMode;
     swapchain_create_info.clipped = VK_TRUE;
-    swapchain_create_info.oldSwapchain = VK_NULL_HANDLE;
+    swapchain_create_info.oldSwapchain = swapchain->swapchainHandle;
 
-    const auto found_queue_family_indices = find_queue_families(ctx->physicalDevice, m_surface);
+    const auto found_queue_family_indices =
+        find_queue_families(ctx->physicalDevice, swapchain->surface);
     u32 queue_family_indices[] = { static_cast<u32>(found_queue_family_indices.graphics),
                                    static_cast<u32>(found_queue_family_indices.present) };
 
@@ -97,38 +102,42 @@ void Swapchain::create(RendererContext *ctx) {
 
     TK_ASSERT_VK_RESULT(
         vkCreateSwapchainKHR(
-            ctx->device, &swapchain_create_info, ctx->allocationCallbacks, &m_swapchain),
+            ctx->device,
+            &swapchain_create_info,
+            ctx->allocationCallbacks,
+            &swapchain->swapchainHandle),
         "Could not create swapchain");
 
     {
         u32 image_count{};
-        vkGetSwapchainImagesKHR(ctx->device, m_swapchain, &image_count, nullptr);
+        vkGetSwapchainImagesKHR(ctx->device, swapchain->swapchainHandle, &image_count, nullptr);
         TK_ASSERT(image_count > 0, "No images found for swapchain");
         std::vector<VkImage> images(image_count);
-        vkGetSwapchainImagesKHR(ctx->device, m_swapchain, &image_count, images.data());
+        vkGetSwapchainImagesKHR(
+            ctx->device, swapchain->swapchainHandle, &image_count, images.data());
 
-        for (i32 i = 0; i < image_count; i++) {
-            ImageViewConfig config{
-                .image = images[i],
-                .viewType = VK_IMAGE_VIEW_TYPE_2D,
-                .format = m_surfaceFormat.format,
-            };
-            m_imageViews[i] = create_image_view(ctx, config);
+        for (u32 i = 0; i < image_count; i++) {
+            ImageViewConfig config{};
+            config.image = images[i];
+            config.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            config.format = swapchain->surfaceFormat.format;
+            swapchain->imageViews[i] = create_image_view(ctx, config);
         }
     }
 }
 
-void Swapchain::destroy(RendererContext *ctx) {
-    for (VkImageView image_view : m_imageViews) {
+void Swapchain::destroy(RendererContext* ctx) {
+    for (VkImageView image_view : imageViews) {
         vkDestroyImageView(ctx->device, image_view, ctx->allocationCallbacks);
     }
 
-    vkDestroySwapchainKHR(ctx->device, m_swapchain, ctx->allocationCallbacks);
+    vkDestroySwapchainKHR(ctx->device, swapchainHandle, ctx->allocationCallbacks);
+    vkDestroySurfaceKHR(ctx->instance, surface, ctx->allocationCallbacks);
 }
 
-static VkSurfaceFormatKHR get_surface_format(const std::vector<VkSurfaceFormatKHR> &formats) {
-    for (const auto &f : formats) {
-        const auto &[format, color_space] = f;
+static VkSurfaceFormatKHR get_surface_format(const std::vector<VkSurfaceFormatKHR>& formats) {
+    for (const auto& f : formats) {
+        const auto& [format, color_space] = f;
         if (format == VK_FORMAT_B8G8R8A8_SRGB && color_space == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
             return f;
         }
@@ -137,8 +146,8 @@ static VkSurfaceFormatKHR get_surface_format(const std::vector<VkSurfaceFormatKH
     return formats[0];
 }
 
-static VkPresentModeKHR get_present_mode(const std::vector<VkPresentModeKHR> &present_modes) {
-    for (const auto &present_mode : present_modes) {
+static VkPresentModeKHR get_present_mode(const std::vector<VkPresentModeKHR>& present_modes) {
+    for (const auto& present_mode : present_modes) {
         if (present_mode == VK_PRESENT_MODE_MAILBOX_KHR) {
             return present_mode;
         }
@@ -148,7 +157,7 @@ static VkPresentModeKHR get_present_mode(const std::vector<VkPresentModeKHR> &pr
 }
 
 static VkExtent2D get_surface_extent(
-    GLFWwindow *window, const VkSurfaceCapabilitiesKHR &capabilities) {
+    GLFWwindow* window, const VkSurfaceCapabilitiesKHR& capabilities) {
     if (capabilities.currentExtent.width != std::numeric_limits<u32>::max()) {
         return capabilities.currentExtent;
     }
