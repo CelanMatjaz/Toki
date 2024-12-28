@@ -83,14 +83,5 @@ end
 
 function add_files()
     files { "src/**.h", "src/**.cpp" }
-    -- removefiles { "src/platform/**.h", "src/platform/**.cpp" }
-    includedirs { "src"  }
-
-    filter "system:windows"
-        files { "src/platform/windows/**.h", "src/platform/windows/**.cpp" }
-
-    filter "system:linux"
-        files { "src/platform/linux/**.h", "src/platform/linux/**.cpp" }
-
-    filter {}
+    includedirs { "src" }
 end

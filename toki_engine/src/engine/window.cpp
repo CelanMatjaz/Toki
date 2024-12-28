@@ -1,14 +1,21 @@
 #include "window.h"
 
 #include <GLFW/glfw3.h>
-#include <toki/core.h>
 
+#include <memory>
 #include <print>
+#include <utility>
+
+#include "core/core.h"
 
 namespace toki {
 
 static u32 window_count = 0;
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+std::shared_ptr<Window> Window::create(const Config& config) {
+    return std::make_shared<Window>(config);
+}
 
 Window::Window(const Config& config) {
     TK_ASSERT(config.width > 0 && config.height > 0, "Invalid window dimensions");
@@ -30,6 +37,10 @@ Window::~Window() {
     if (window_count == 0) {
         glfwTerminate();
     }
+}
+
+const void* Window::get_handle() const {
+    return m_handle;
 }
 
 bool Window::should_close() const {

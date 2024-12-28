@@ -1,17 +1,17 @@
 #pragma once
 
-#include <toki/core.h>
-#include <toki/renderer.h>
-
 #include <memory>
 
+#include "renderer/renderer.h"
 #include "window.h"
 
 namespace toki {
 
 class Engine {
 public:
-    struct Config {};
+    struct Config {
+        std::shared_ptr<Window> initialWindow;
+    };
 
 public:
     Engine() = delete;
@@ -24,9 +24,9 @@ public:
     void run();
 
 private:
-    bool m_is_running = false;
+    bool m_isRunning = false;
 
-    std::shared_ptr<Window> m_window;
+    std::vector<std::shared_ptr<Window>> m_windows;
     std::shared_ptr<Renderer> m_renderer;
 };
 

@@ -6,14 +6,12 @@ workspace "Toki"
     platforms { "linux_wayland", "linux_x11", "windows" }
     architecture "x64"
 
-    startproject "Sandbox"
+startproject "Sandbox"
 
 group "Dependencies"
     include "./vendor"
 
 group "Toki"
-    include "./toki_core"
-    include "./toki_renderer"
     include "./toki_engine"
 
 group "Misc"

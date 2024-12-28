@@ -1,10 +1,9 @@
 project "Sandbox"
     kind "ConsoleApp"
 
-    links { "Engine", "Renderer", "GLFW", "Core" }
+    links { "Engine", "GLFW" }
     includedirs {
-        "%{wks.location}/toki_core/include",
-        "%{wks.location}/toki_renderer/include",
+        "%{wks.location}/toki_engine/src",
         "%{wks.location}/toki_engine/include",
     }
 

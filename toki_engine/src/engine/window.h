@@ -1,10 +1,12 @@
 #pragma once
 
-#include <toki/core.h>
-
 #include <string>
 
+#include "../core/core.h"
+
 namespace toki {
+
+class Engine;
 
 class Window {
 public:
@@ -15,15 +17,19 @@ public:
     };
 
 public:
+    static std::shared_ptr<Window> create(const Config& config);
     Window() = delete;
     Window(const Config& config);
     ~Window();
 
+    const void* get_handle() const;
     bool should_close() const;
+
+private:
+    friend Engine;
 
     static void poll_events();
 
-private:
     void* m_handle{};
 };
 
