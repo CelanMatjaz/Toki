@@ -16,13 +16,14 @@ public:
     };
 
 public:
-    static std::shared_ptr<Window> create(const Config& config);
+    static Ref<Window> create(const Config& config);
 
     Window() = delete;
     Window(const Config& config);
     virtual ~Window() = 0;
 
     virtual bool should_close() const = 0;
+    virtual void* get_handle() const = 0;
     static void poll_events();
 };
 

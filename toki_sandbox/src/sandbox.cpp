@@ -1,3 +1,4 @@
+#include "test_view.h"
 #include "toki.h"
 
 int main() {
@@ -12,6 +13,7 @@ int main() {
     Engine::Config engine_config{};
     engine_config.initialWindow = window;
     Engine engine(engine_config);
+    engine.add_view(create_ref<TestView>());
     engine.run();
 
     return 0;

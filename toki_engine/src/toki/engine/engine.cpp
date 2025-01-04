@@ -20,6 +20,9 @@ Engine::~Engine() {
 void Engine::run() {
     m_isRunning = true;
 
+    static auto last_frame_time = std::chrono::high_resolution_clock::now();
+    float delta_time = 0;
+
     while (m_isRunning) {
         Window::poll_events();
         for (const auto& window : m_windows) {
@@ -27,7 +30,27 @@ void Engine::run() {
                 m_isRunning = false;
             }
         }
+
+        auto frame_start_time = std::chrono::high_resolution_clock::now();
+        delta_time = std::chrono::duration<float>(frame_start_time - last_frame_time).count();
+        last_frame_time = frame_start_time;
+
+        for (auto it = m_views.rend(); it != m_views.rbegin(); it++) {
+            (*it)->on_update(delta_time);
+        }
+
+        m_renderer->begin_frame();
+        for (auto it = m_views.rend(); it != m_views.rbegin(); it++) {
+            (*it)->on_render(m_renderer->get_renderer_api());
+        }
+        m_renderer->end_frame();
+        m_renderer->present();
     }
+}
+
+void Engine::add_view(Ref<View> view) {
+    view->on_add(m_renderer);
+    m_views.emplace_back(view);
 }
 
 }  // namespace toki

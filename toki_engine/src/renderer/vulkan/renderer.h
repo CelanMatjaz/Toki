@@ -5,8 +5,10 @@
 #include "core/macros.h"
 #include "engine/window.h"
 #include "renderer/renderer.h"
+#include "renderer/vulkan/renderer_api.h"
+#include "renderer/vulkan/renderer_state.h"
+#include "renderer/vulkan/renderer_window.h"
 #include "renderer/vulkan/swapchain.h"
-#include "renderer_state.h"
 
 namespace toki {
 
@@ -19,12 +21,17 @@ public:
     DELETE_COPY(VulkanRenderer);
     DELETE_MOVE(VulkanRenderer);
 
-public:  // API
-    virtual std::shared_ptr<Shader> create_shader(const Shader::Config& config) const override;
-private:
-    void add_window(std::shared_ptr<Window> window);
+public:
+    virtual Ref<Shader> create_shader(const Shader::Config& config) const override;
 
-    std::vector<std::shared_ptr<Swapchain>> m_swapchains;
+private:
+    void add_window(Ref<Window> window);
+
+    void begin_frame() override;
+    void end_frame() override;
+    void present() override;
+
+    std::vector<Ref<RendererWindow>> m_windows;
 };
 
 }  // namespace toki

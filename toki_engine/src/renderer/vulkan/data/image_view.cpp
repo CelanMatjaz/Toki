@@ -6,7 +6,7 @@
 
 namespace toki {
 
-VkImageView create_image_view(const RendererContext* state, const ImageViewConfig& config) {
+VkImageView create_image_view(Ref<RendererContext> ctx, const ImageViewConfig& config) {
     VkImageViewCreateInfo image_view_create_info{};
     image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     image_view_create_info.image = config.image;
@@ -26,8 +26,7 @@ VkImageView create_image_view(const RendererContext* state, const ImageViewConfi
     VkImageView image_view{};
 
     TK_ASSERT_VK_RESULT(
-        vkCreateImageView(
-            state->device, &image_view_create_info, state->allocationCallbacks, &image_view),
+        vkCreateImageView(ctx->device, &image_view_create_info, ctx->allocationCallbacks, &image_view),
         "Could not create image view");
 
     return image_view;

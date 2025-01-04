@@ -1,6 +1,6 @@
 #if defined(TK_PLATFORM_WINDOWS)
 
-#include "../renderer_utils.h"
+#include "renderer/vulkan/platform/renderer_utils.h"
 
 #include "../../macros.h"
 
@@ -15,7 +15,7 @@
 
 namespace toki {
 
-VkSurfaceKHR create_surface(RendererContext* ctx, GLFWwindow* window) {
+VkSurfaceKHR create_surface(Ref<RendererContext> ctx, GLFWwindow* window) {
     VkWin32SurfaceCreateInfoKHR surface_create_info{};
     surface_create_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     surface_create_info.hwnd = glfwGetWin32Window(window);
@@ -23,8 +23,7 @@ VkSurfaceKHR create_surface(RendererContext* ctx, GLFWwindow* window) {
 
     VkSurfaceKHR surface{};
     TK_ASSERT_VK_RESULT(
-        vkCreateWin32SurfaceKHR(
-            ctx->instance, &surface_create_info, ctx->allocationCallbacks, &surface),
+        vkCreateWin32SurfaceKHR(ctx->instance, &surface_create_info, ctx->allocationCallbacks, &surface),
         "Could not create window surface");
 
     return surface;

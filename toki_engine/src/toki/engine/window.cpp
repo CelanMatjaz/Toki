@@ -8,7 +8,7 @@ Window::Window(const Config& config) {}
 
 Window::~Window() {}
 
-std::shared_ptr<Window> Window::create(const Config& config) {
+Ref<Window> Window::create(const Config& config) {
     return std::make_shared<GlfwWindow>(config);
 }
 

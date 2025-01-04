@@ -1,5 +1,5 @@
 @echo off
-set config=release
+set config=release_windows
 set compiler=clang
 
 premake5 export-compile-commands --cc=%compiler% --os=windows

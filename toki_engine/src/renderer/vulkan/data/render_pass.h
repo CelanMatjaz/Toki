@@ -16,11 +16,11 @@ public:
     };
 
     RenderPass() = delete;
-    RenderPass(RendererContext ctx, const Config& config);
+    RenderPass(RendererContext* ctx, const Config& config);
     ~RenderPass();
 
 private:
-    Scope<VkRenderPass, VK_NULL_HANDLE> m_renderPass2;
+    Scoped<VkRenderPass, VK_NULL_HANDLE> m_renderPass2;
     VkRenderPass m_renderPass{};
 };
 

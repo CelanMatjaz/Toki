@@ -22,8 +22,7 @@ GlfwWindow::GlfwWindow(const Config& config): Window(config) {
     ++window_count;
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    GLFWwindow* window =
-        glfwCreateWindow(config.width, config.height, config.title.c_str(), nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(config.width, config.height, config.title.c_str(), nullptr, nullptr);
     TK_ASSERT(window != nullptr, "Window was not created");
 
     m_handle = window;
@@ -41,7 +40,7 @@ bool GlfwWindow::should_close() const {
     return glfwWindowShouldClose(reinterpret_cast<GLFWwindow*>(m_handle)) == GLFW_TRUE;
 }
 
-GLFWwindow* GlfwWindow::get_handle() const {
+void* GlfwWindow::get_handle() const {
     return m_handle;
 }
 

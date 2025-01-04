@@ -9,7 +9,7 @@
 
 namespace toki {
 
-RenderPass::RenderPass(RendererContext ctx, const Config& config) {
+RenderPass::RenderPass(RendererContext* ctx, const Config& config) {
     std::vector<VkAttachmentDescription> attachment_descriptions;
     std::vector<VkAttachmentReference> attachment_references;
     std::vector<VkSubpassDependency> subpass_dependencies;
@@ -19,18 +19,14 @@ RenderPass::RenderPass(RendererContext ctx, const Config& config) {
         const Attachment& attachment = config.attachments[i];
 
         VkAttachmentDescription attachment_description{};
-        attachment_description.format =
-            attachment.presentable ? config.presentFormat : map_format(attachment.colorFormat);
+        attachment_description.format = attachment.presentable ? config.presentFormat : map_format(attachment.colorFormat);
         attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
         attachment_description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        attachment_description.finalLayout = attachment.presentable
-                                                 ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-                                                 : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        attachment_description.finalLayout =
+            attachment.presentable ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-        attachment_description.loadOp = attachment_description.stencilLoadOp =
-            map_attachment_load_op(attachment.loadOp);
-        attachment_description.storeOp = attachment_description.stencilStoreOp =
-            map_attachment_load_op(attachment.storeOp);
+        attachment_description.loadOp = attachment_description.stencilLoadOp = map_attachment_load_op(attachment.loadOp);
+        attachment_description.storeOp = attachment_description.stencilStoreOp = map_attachment_load_op(attachment.storeOp);
 
         VkSubpassDependency subpassDependency{};
         subpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -58,10 +54,10 @@ RenderPass::RenderPass(RendererContext ctx, const Config& config) {
                 attachment_description.finalLayout = VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL;
 
 SETUP_SUBPASS_DEPENDENCY:
-                subpassDependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
-                                                 VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-                subpassDependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
-                                                 VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+                subpassDependency.srcStageMask =
+                    VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+                subpassDependency.dstStageMask =
+                    VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
                 subpassDependency.srcAccessMask = VK_ACCESS_NONE;
                 subpassDependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
                 break;
@@ -89,13 +85,11 @@ SETUP_SUBPASS_DEPENDENCY:
 
     VkRenderPass render_pass{};
     TK_ASSERT_VK_RESULT(
-        vkCreateRenderPass(
-            ctx.device, &render_pass_create_info, ctx.allocationCallbacks, &render_pass),
+        vkCreateRenderPass(ctx->device, &render_pass_create_info, ctx->allocationCallbacks, &render_pass),
         "Could not create render pass");
 
-    m_renderPass2 = Scope<VkRenderPass, VK_NULL_HANDLE>(render_pass, [ctx](VkRenderPass rp) {
-        vkDestroyRenderPass(ctx.device, rp, ctx.allocationCallbacks);
-    });
+    m_renderPass2 = Scoped<VkRenderPass, VK_NULL_HANDLE>(
+        render_pass, [ctx](VkRenderPass rp) { vkDestroyRenderPass(ctx->device, rp, ctx->allocationCallbacks); });
 }
 
 }  // namespace toki

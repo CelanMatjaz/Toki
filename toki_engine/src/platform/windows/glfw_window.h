@@ -16,7 +16,7 @@ public:
     virtual ~GlfwWindow();
 
     virtual bool should_close() const override;
-    GLFWwindow* get_handle() const;
+    virtual void* get_handle() const override;
 
 private:
     GLFWwindow* m_handle{};

@@ -3,17 +3,16 @@
 #include <GLFW/glfw3.h>
 
 #include "renderer_state.h"
-#include "toki/core/core.h"
 
 namespace toki {
 
 class VulkanRenderer;
 
 struct Swapchain {
-    static std::shared_ptr<Swapchain> create(RendererContext* ctx, GLFWwindow* window);
+    static Ref<Swapchain> create(Ref<RendererContext> ctx, Ref<Window> window);
 
-    void destroy(RendererContext* ctx);
-    void recreate(RendererContext* ctx);
+    void destroy(Ref<RendererContext> ctx);
+    void recreate(Ref<RendererContext> ctx);
 
     VkSwapchainKHR swapchainHandle{};
     VkSurfaceKHR surface{};
@@ -22,6 +21,7 @@ struct Swapchain {
     VkExtent2D extent{};
     GLFWwindow* windowHandle{};
     VkImageView imageViews[FRAME_COUNT]{};
+    VkFramebuffer framebuffers[FRAME_COUNT]{};
 };
 
 }  // namespace toki

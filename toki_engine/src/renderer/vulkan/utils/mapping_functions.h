@@ -10,4 +10,4 @@ VkFormat map_format(ColorFormat format);
 VkAttachmentLoadOp map_attachment_load_op(AttachmentLoadOp op);
 VkAttachmentStoreOp map_attachment_load_op(AttachmentStoreOp op);
 
-}
+}  // namespace toki

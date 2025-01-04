@@ -39,8 +39,7 @@ bool check_for_extensions(VkPhysicalDevice physical_device) {
     vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &extension_count, nullptr);
     TK_ASSERT(extension_count > 0, "No extensions available on device");
     std::vector<VkExtensionProperties> available_extensions(extension_count);
-    vkEnumerateDeviceExtensionProperties(
-        physical_device, nullptr, &extension_count, available_extensions.data());
+    vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &extension_count, available_extensions.data());
 
     std::set<std::string> required_extensions(extensions.begin(), extensions.end());
 
@@ -59,8 +58,7 @@ QueueFamilyIndices find_queue_families(VkPhysicalDevice physical_device, VkSurfa
     u32 queue_family_count{};
     vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, nullptr);
     std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
-    vkGetPhysicalDeviceQueueFamilyProperties(
-        physical_device, &queue_family_count, queue_families.data());
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_families.data());
 
     QueueFamilyIndices indices{};
     for (int i = 0; i < queue_families.size(); i++) {
@@ -79,9 +77,7 @@ QueueFamilyIndices find_queue_families(VkPhysicalDevice physical_device, VkSurfa
         }
     }
 
-    TK_ASSERT(
-        indices.present > -1 && indices.graphics > -1 && indices.transfer > -1,
-        "GPU does not support all required queues");
+    TK_ASSERT(indices.present > -1 && indices.graphics > -1 && indices.transfer > -1, "GPU does not support all required queues");
 
     return indices;
 }

@@ -10,6 +10,6 @@ struct ImageViewConfig {
     VkFormat format{};
 };
 
-VkImageView create_image_view(const RendererContext* state, const ImageViewConfig& config);
+VkImageView create_image_view(Ref<RendererContext> ctx, const ImageViewConfig& config);
 
 }  // namespace toki

@@ -1,10 +1,17 @@
-#include "renderer.h"
+#include "renderer_api.h"
+
 #include "renderer/vulkan/data/vulkan_shader.h"
 
 namespace toki {
 
-std::shared_ptr<Shader> VulkanRenderer::create_shader(const Shader::Config& config) const {
-    return std::make_shared<VulkanShader>(m_context.get(), config);
+VulkanRendererApi::VulkanRendererApi(Ref<RendererContext> context): m_context(context) {}
+
+VulkanRendererApi::~VulkanRendererApi() {
+    m_context.reset();
 }
+
+void VulkanRendererApi::reset_viewport() const {}
+
+void VulkanRendererApi::reset_scissor() const {}
 
 }  // namespace toki

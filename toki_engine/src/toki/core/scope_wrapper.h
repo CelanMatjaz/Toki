@@ -6,40 +6,40 @@
 namespace toki {
 
 template <typename T, T InvalidValue = T{}>
-class Scope {
+class Scoped {
 public:
-    Scope(): m_value(InvalidValue), m_release(nullptr) {}
-    Scope(T value, std::function<void(T)> release): m_value(value), m_release(release) {}
-    ~Scope() {
+    Scoped(): m_value(InvalidValue), m_release(nullptr) {}
+    Scoped(T value, std::function<void(T)> release): m_value(value), m_release(release) {}
+    ~Scoped() {
         if (m_value != InvalidValue && m_release) {
             m_release(m_value);
         }
     }
 
-    Scope(const Scope& other): Scope(other.m_value, other.m_release) {}
+    Scoped(const Scoped& other): Scoped(other.m_value, other.m_release) {}
 
-    Scope& operator=(const Scope& other) {
+    Scoped& operator=(const Scoped& other) {
         if (this == &other) {
             return *this;
         }
 
-        Scope temp(other);
+        Scoped temp(other);
         std::swap(m_value, other.m_value);
         std::swap(m_release, other.m_release);
 
         return *this;
     }
 
-    Scope(Scope&& other):
+    Scoped(Scoped&& other):
         m_value(std::exchange(m_value, other.m_value)),
         m_release(std::exchange(m_release, other.m_release)) {}
 
-    Scope& operator=(Scope&& other) {
+    Scoped& operator=(Scoped&& other) {
         return swap(other);
     }
 
-    Scope& swap(Scope& other) {
-        Scope temp(std::move(other));
+    Scoped& swap(Scoped& other) {
+        Scoped temp(std::move(other));
         std::swap(m_value, other.m_value);
         std::swap(m_release, other.m_release);
         return *this;

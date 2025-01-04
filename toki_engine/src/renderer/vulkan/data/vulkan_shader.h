@@ -11,7 +11,7 @@ namespace toki {
 
 class VulkanShader : public Shader {
 public:
-    VulkanShader(RendererContext* ctx, const Shader::Config& config);
+    VulkanShader(Ref<RendererContext> ctx, const Shader::Config& config);
     VulkanShader() = delete;
     ~VulkanShader();
 
@@ -21,7 +21,7 @@ public:
 private:
     VkPipeline m_pipeline{};
 
-    static VkShaderModule create_shader_module(RendererContext* ctx, std::vector<u32>& binary);
+    static VkShaderModule create_shader_module(Ref<RendererContext> ctx, std::vector<u32>& binary);
 };
 
 }  // namespace toki

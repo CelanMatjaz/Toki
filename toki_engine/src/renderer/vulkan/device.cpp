@@ -11,7 +11,7 @@
 
 namespace toki {
 
-TkError create_instance(RendererContext* ctx) {
+TkError create_instance(Ref<RendererContext> ctx) {
     VkApplicationInfo application_info{};
     application_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     application_info.pApplicationName = "Toki";
@@ -36,17 +36,15 @@ TkError create_instance(RendererContext* ctx) {
 #endif
 
     TK_ASSERT_VK_RESULT(
-        vkCreateInstance(&instance_create_info, ctx->allocationCallbacks, &ctx->instance),
-        "Could not initialize renderer");
+        vkCreateInstance(&instance_create_info, ctx->allocationCallbacks, &ctx->instance), "Could not initialize renderer");
 
     return {};
 }
 
-TkError create_device(RendererContext* ctx, std::shared_ptr<Window> window) {
-    VkSurfaceKHR surface = create_surface(ctx, ((GlfwWindow*) window.get())->get_handle());
-    Scope<VkSurfaceKHR, VK_NULL_HANDLE> temp_surface(surface, [ctx](VkSurfaceKHR s) {
-        vkDestroySurfaceKHR(ctx->instance, s, ctx->allocationCallbacks);
-    });
+TkError create_device(Ref<RendererContext> ctx, Ref<Window> window) {
+    VkSurfaceKHR surface = create_surface(ctx, reinterpret_cast<GLFWwindow*>(window->get_handle()));
+    Scoped<VkSurfaceKHR, VK_NULL_HANDLE> temp_surface(
+        surface, [ctx](VkSurfaceKHR s) { vkDestroySurfaceKHR(ctx->instance, s, ctx->allocationCallbacks); });
 
     u32 physical_device_count{};
     vkEnumeratePhysicalDevices(ctx->instance, &physical_device_count, nullptr);
@@ -92,9 +90,7 @@ TkError create_device(RendererContext* ctx, std::shared_ptr<Window> window) {
     device_create_info.ppEnabledExtensionNames = extensions.data();
 
     TK_ASSERT_VK_RESULT(
-        vkCreateDevice(
-            physical_device, &device_create_info, ctx->allocationCallbacks, &ctx->device),
-        "Could not create device");
+        vkCreateDevice(physical_device, &device_create_info, ctx->allocationCallbacks, &ctx->device), "Could not create device");
 
     return {};
 }

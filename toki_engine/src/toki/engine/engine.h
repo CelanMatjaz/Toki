@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "engine/view.h"
 #include "engine/window.h"
 #include "renderer/renderer.h"
 
@@ -10,7 +11,7 @@ namespace toki {
 class Engine {
 public:
     struct Config {
-        std::shared_ptr<Window> initialWindow;
+        Ref<Window> initialWindow;
     };
 
 public:
@@ -23,11 +24,14 @@ public:
 
     void run();
 
+    void add_view(Ref<View> view);
+
 private:
     bool m_isRunning = false;
 
-    std::vector<std::shared_ptr<Window>> m_windows;
-    std::shared_ptr<Renderer> m_renderer;
+    std::vector<Ref<Window>> m_windows;
+    std::vector<Ref<View>> m_views;
+    Ref<Renderer> m_renderer;
 };
 
 }  // namespace toki

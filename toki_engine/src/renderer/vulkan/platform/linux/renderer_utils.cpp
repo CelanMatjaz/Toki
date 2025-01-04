@@ -30,8 +30,7 @@ VkSurfaceKHR create_surface(RendererContext* ctx, GLFWwindow* window) {
     surface_create_info.surface = glfwGetWaylandWindow(window);
 
     VkSurfaceKHR surface{};
-    VkResult result = vkCreateWaylandSurfaceKHR(
-        ctx->instance, &surface_create_info, ctx->allocationCallbacks, &surface);
+    VkResult result = vkCreateWaylandSurfaceKHR(ctx->instance, &surface_create_info, ctx->allocationCallbacks, &surface);
 #elif defined(TK_PLATFORM_LINUX) && defined(TK_X11)
     // TODO: add X11 surface creation
 #endif

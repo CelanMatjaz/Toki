@@ -2,6 +2,7 @@
 
 #include <array>
 
+#include "core/logging.h"
 #include "core/scope_wrapper.h"
 #include "renderer/vulkan/macros.h"
 #include "renderer/vulkan/utils/shader_compiler.h"
@@ -10,21 +11,18 @@
 
 namespace toki {
 
-VulkanShader::VulkanShader(RendererContext* ctx, const Shader::Config& config) {
+VulkanShader::VulkanShader(Ref<RendererContext> ctx, const Shader::Config& config) {
     std::string vertex_shader_source = read_text_file(config.vertex_shader_path);
-    std::vector vertex_shader_binary = compile_shader(ShaderStage::Fragment, vertex_shader_source);
-    Scope<VkShaderModule, VK_NULL_HANDLE> vertex_shader_module(
-        create_shader_module(ctx, vertex_shader_binary), [ctx](VkShaderModule sm) {
-            vkDestroyShaderModule(ctx->device, sm, ctx->allocationCallbacks);
-        });
+    std::vector vertex_shader_binary = compile_shader(ShaderStage::Vertex, vertex_shader_source);
+    Scoped<VkShaderModule, VK_NULL_HANDLE> vertex_shader_module(
+        create_shader_module(ctx, vertex_shader_binary),
+        [ctx](VkShaderModule sm) { vkDestroyShaderModule(ctx->device, sm, ctx->allocationCallbacks); });
 
     std::string fragment_shader_source = read_text_file(config.fragment_shader_path);
-    std::vector fragment_shader_binary =
-        compile_shader(ShaderStage::Fragment, fragment_shader_source);
-    Scope<VkShaderModule, VK_NULL_HANDLE> fragment_shader_module(
-        create_shader_module(ctx, fragment_shader_binary), [ctx](VkShaderModule sm) {
-            vkDestroyShaderModule(ctx->device, sm, ctx->allocationCallbacks);
-        });
+    std::vector fragment_shader_binary = compile_shader(ShaderStage::Fragment, fragment_shader_source);
+    Scoped<VkShaderModule, VK_NULL_HANDLE> fragment_shader_module(
+        create_shader_module(ctx, fragment_shader_binary),
+        [ctx](VkShaderModule sm) { vkDestroyShaderModule(ctx->device, sm, ctx->allocationCallbacks); });
 
     VkPipelineShaderStageCreateInfo vertex_shader_stage_create_info{};
     vertex_shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -38,27 +36,23 @@ VulkanShader::VulkanShader(RendererContext* ctx, const Shader::Config& config) {
     fragment_shader_stage_create_info.module = fragment_shader_module;
     fragment_shader_stage_create_info.pName = "main";
 
-    std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {
-        vertex_shader_stage_create_info, fragment_shader_stage_create_info
-    };
+    std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = { vertex_shader_stage_create_info,
+                                                                     fragment_shader_stage_create_info };
 
     VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info{};
-    vertex_input_state_create_info.sType =
-        VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertex_input_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertex_input_state_create_info.vertexBindingDescriptionCount = 0;
     vertex_input_state_create_info.pVertexBindingDescriptions = nullptr;
     vertex_input_state_create_info.vertexAttributeDescriptionCount = 0;
     vertex_input_state_create_info.pVertexAttributeDescriptions = nullptr;
 
     VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info{};
-    input_assembly_state_create_info.sType =
-        VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    input_assembly_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     input_assembly_state_create_info.primitiveRestartEnable = VK_TRUE;
     input_assembly_state_create_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
     VkPipelineRasterizationStateCreateInfo rasterization_state_create_info{};
-    rasterization_state_create_info.sType =
-        VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterization_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterization_state_create_info.depthClampEnable = VK_FALSE;
     rasterization_state_create_info.rasterizerDiscardEnable = VK_FALSE;
     rasterization_state_create_info.lineWidth = 1.0f;
@@ -80,8 +74,7 @@ VulkanShader::VulkanShader(RendererContext* ctx, const Shader::Config& config) {
     multisample_state_create_info.alphaToOneEnable = VK_FALSE;
 
     VkPipelineDepthStencilStateCreateInfo depth_stencil_state_create_info{};
-    depth_stencil_state_create_info.sType =
-        VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depth_stencil_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     depth_stencil_state_create_info.depthTestEnable = VK_FALSE;
     depth_stencil_state_create_info.depthWriteEnable = VK_FALSE;
     depth_stencil_state_create_info.depthBoundsTestEnable = VK_FALSE;
@@ -93,8 +86,7 @@ VulkanShader::VulkanShader(RendererContext* ctx, const Shader::Config& config) {
 
     VkPipelineColorBlendAttachmentState color_blend_attachment_state{};
     color_blend_attachment_state.colorWriteMask =
-        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
-        VK_COLOR_COMPONENT_A_BIT;
+        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     color_blend_attachment_state.blendEnable = VK_TRUE;
     color_blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
     color_blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -103,8 +95,7 @@ VulkanShader::VulkanShader(RendererContext* ctx, const Shader::Config& config) {
     color_blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     color_blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
 
-    std::vector<VkPipelineColorBlendAttachmentState> color_blend_attachment_states(
-        1, color_blend_attachment_state);
+    std::vector<VkPipelineColorBlendAttachmentState> color_blend_attachment_states(1, color_blend_attachment_state);
 
     VkPipelineColorBlendStateCreateInfo color_blend_state_create_info{};
     color_blend_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -117,8 +108,7 @@ VulkanShader::VulkanShader(RendererContext* ctx, const Shader::Config& config) {
     color_blend_state_create_info.blendConstants[2] = 1.0f;
     color_blend_state_create_info.blendConstants[3] = 1.0f;
 
-    static std::vector<VkDynamicState> dynamic_states = { VK_DYNAMIC_STATE_VIEWPORT,
-                                                          VK_DYNAMIC_STATE_SCISSOR };
+    static std::vector<VkDynamicState> dynamic_states = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
     VkPipelineDynamicStateCreateInfo dynamic_state_create_info{};
     dynamic_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -146,8 +136,7 @@ VulkanShader::VulkanShader(RendererContext* ctx, const Shader::Config& config) {
 
     VkPipelineLayout pipeline_layout{};
     TK_ASSERT_VK_RESULT(
-        vkCreatePipelineLayout(
-            ctx->device, &pipelineLayoutInfo, ctx->allocationCallbacks, &pipeline_layout),
+        vkCreatePipelineLayout(ctx->device, &pipelineLayoutInfo, ctx->allocationCallbacks, &pipeline_layout),
         "Could not create pipeline layout");
 
     VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
@@ -169,16 +158,15 @@ VulkanShader::VulkanShader(RendererContext* ctx, const Shader::Config& config) {
 
 VulkanShader::~VulkanShader() {}
 
-VkShaderModule VulkanShader::create_shader_module(RendererContext* ctx, std::vector<u32>& binary) {
+VkShaderModule VulkanShader::create_shader_module(Ref<RendererContext> ctx, std::vector<u32>& binary) {
     VkShaderModuleCreateInfo shader_module_create_info{};
     shader_module_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    shader_module_create_info.codeSize = binary.size();
-    shader_module_create_info.pCode = reinterpret_cast<const uint32_t*>(binary.data());
+    shader_module_create_info.codeSize = binary.size() * 4;
+    shader_module_create_info.pCode = binary.data();
 
     VkShaderModule shader_module{};
     TK_ASSERT_VK_RESULT(
-        vkCreateShaderModule(
-            ctx->device, &shader_module_create_info, ctx->allocationCallbacks, &shader_module),
+        vkCreateShaderModule(ctx->device, &shader_module_create_info, ctx->allocationCallbacks, &shader_module),
         "Could not create shader module");
 
     return shader_module;

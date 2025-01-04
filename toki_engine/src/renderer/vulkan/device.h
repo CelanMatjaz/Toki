@@ -8,7 +8,7 @@
 
 namespace toki {
 
-TkError create_instance(RendererContext* state);
-TkError create_device(RendererContext* ctx, std::shared_ptr<Window> window);
+TkError create_instance(Ref<RendererContext> ctx);
+TkError create_device(Ref<RendererContext> ctx, Ref<Window> window);
 
 }  // namespace toki
