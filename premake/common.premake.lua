@@ -12,11 +12,12 @@ function build_options()
     architecture "x64"
 
     filter "action:vs*"
-    cppdialect "C++latest"
-    buildoptions "/Zc:preprocessor /std:c++latest"
+        cppdialect "C++latest"
+        buildoptions "/Zc:preprocessor /std:c++latest"
+        flags { "MultiProcessorCompile" }
 
     filter "toolset:clang or toolset:gcc"
-    buildoptions "-std=c++23"
+        buildoptions "-std=c++23"
 
     filter {}
 end
