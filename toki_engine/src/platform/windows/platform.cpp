@@ -1,5 +1,6 @@
-#include "platform/platform.h"
 #if defined(TK_PLATFORM_WINDOWS)
+
+#include "platform.h"
 
 namespace toki {
 

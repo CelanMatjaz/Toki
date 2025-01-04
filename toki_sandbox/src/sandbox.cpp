@@ -1,4 +1,4 @@
-#include <toki/engine.h>
+#include "toki.h"
 
 int main() {
     using namespace toki;
@@ -9,8 +9,9 @@ int main() {
     window_config.title = "Window";
     auto window = Window::create(window_config);
 
-    Engine::Config config{ .initialWindow = window };
-    Engine engine(config);
+    Engine::Config engine_config{};
+    engine_config.initialWindow = window;
+    Engine engine(engine_config);
     engine.run();
 
     return 0;

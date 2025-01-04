@@ -3,6 +3,8 @@ project "Engine"
 
     links { "GLFW" }
     includedirs {
+        "src",
+        "src/toki",
         "%{wks.location}/vendor/glfw/include",
     }
 

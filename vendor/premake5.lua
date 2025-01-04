@@ -9,6 +9,7 @@ project "GLFW"
     optimize "Speed"
 
     set_target_and_object_dirs()
+    configuration_configs()
 
     defines { "_GLFW_VULKAN_STATIC" }
 

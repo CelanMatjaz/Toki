@@ -1,6 +1,6 @@
 #if defined(TK_PLATFORM_LINUX)
 
-#include "../platform.h"
+#include "platform.h"
 
 #include <csignal>
 

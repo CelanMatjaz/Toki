@@ -3,9 +3,7 @@ project "Sandbox"
 
     links { "Engine", "GLFW" }
     includedirs {
-        "%{wks.location}/toki_engine/src",
-        "%{wks.location}/toki_engine/include",
-        "%{wks.location}/vendor/glfw/include",
+        "%{wks.location}/toki_engine/src/toki",
     }
 
     add_files()
