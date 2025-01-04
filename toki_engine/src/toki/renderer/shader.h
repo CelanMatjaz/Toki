@@ -2,6 +2,8 @@
 
 #include <filesystem>
 
+#include "core/macros.h"
+
 namespace toki {
 
 class Shader {
@@ -10,12 +12,6 @@ public:
         std::filesystem::path vertex_shader_path{};
         std::filesystem::path fragment_shader_path{};
     };
-
-    static std::shared_ptr<Shader> create(const Config& config);
-
-    Shader(const Config& config);
-    Shader() = delete;
-    ~Shader() = default;
 };
 
 }  // namespace toki

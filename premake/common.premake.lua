@@ -65,7 +65,7 @@ function link_vulkan()
     filter "platforms:windows"
         includedirs { path.join(VULKAN_SDK, "Include") }
         libdirs { path.join(VULKAN_SDK, "Lib") }
-        links { "vulkan-1" }
+        links { "vulkan-1", "spirv-cross-core", "shaderc_shared", "spirv-cross-glsl" }
 
     filter "platforms:linux_wayland or platforms:linux_x11"
         includedirs { path.join(VULKAN_SDK, "include") }
@@ -83,5 +83,4 @@ end
 
 function add_files()
     files { "src/**.h", "src/**.cpp" }
-    includedirs { "src" }
 end

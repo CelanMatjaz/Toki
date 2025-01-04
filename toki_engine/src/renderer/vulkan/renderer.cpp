@@ -7,29 +7,31 @@
 #include "core/logging.h"
 #include "device.h"
 #include "platform/windows/glfw_window.h"
+#include "renderer/renderer.h"
 #include "renderer/vulkan/swapchain.h"
 
 namespace toki {
 
-Renderer::Renderer(const Config& config) {
+VulkanRenderer::VulkanRenderer(const Config& config): Renderer(config) {
     TK_LOG_INFO("Initializing renderer");
+    m_context = std::make_unique<RendererContext>();
 
-    create_instance(&m_context);
-    create_device(&m_context, config.initialWindow);
+    create_instance(m_context.get());
+    create_device(m_context.get(), config.initialWindow);
 
-    m_swapchains.emplace_back(
-        Swapchain::create(&m_context, ((GlfwWindow*) config.initialWindow.get())->get_handle()));
+    m_swapchains.emplace_back(Swapchain::create(
+        m_context.get(), ((GlfwWindow*) config.initialWindow.get())->get_handle()));
 }
 
-Renderer::~Renderer() {
+VulkanRenderer::~VulkanRenderer() {
     TK_LOG_INFO("Shutting down renderer");
 
     for (auto& swapchain : m_swapchains) {
-        swapchain->destroy(&m_context);
+        swapchain->destroy(m_context.get());
     }
 
-    vkDestroyDevice(m_context.device, m_context.allocationCallbacks);
-    vkDestroyInstance(m_context.instance, m_context.allocationCallbacks);
+    vkDestroyDevice(m_context->device, m_context->allocationCallbacks);
+    vkDestroyInstance(m_context->instance, m_context->allocationCallbacks);
 }
 
 }  // namespace toki

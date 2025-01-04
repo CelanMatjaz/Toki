@@ -9,7 +9,7 @@ namespace toki {
 
 std::string read_text_file(std::filesystem::path path) {
     std::ifstream file(path, std::ios::in | std::ios::ate);
-    TK_ASSERT(file.is_open(), "File {} was not opened", path.c_str());
+    TK_ASSERT(file.is_open(), "File {} was not opened", path);
 
     u32 length = file.tellg();
     std::string buf(length, 0);

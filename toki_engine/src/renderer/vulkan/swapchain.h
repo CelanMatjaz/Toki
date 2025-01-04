@@ -7,7 +7,7 @@
 
 namespace toki {
 
-class Renderer;
+class VulkanRenderer;
 
 struct Swapchain {
     static std::shared_ptr<Swapchain> create(RendererContext* ctx, GLFWwindow* window);

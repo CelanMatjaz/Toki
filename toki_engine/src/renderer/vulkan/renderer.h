@@ -4,34 +4,26 @@
 
 #include "core/macros.h"
 #include "engine/window.h"
+#include "renderer/renderer.h"
 #include "renderer/vulkan/swapchain.h"
 #include "renderer_state.h"
 
 namespace toki {
 
-class Engine;
-
-class Renderer {
-    friend Engine;
-
+class VulkanRenderer : public Renderer {
 public:
-    struct Config {
-        std::shared_ptr<Window> initialWindow;
-    };
+    VulkanRenderer() = delete;
+    VulkanRenderer(const Config& config);
+    ~VulkanRenderer();
 
-public:
-    Renderer() = delete;
-    Renderer(const Config& config);
-    ~Renderer();
-
-    DELETE_COPY(Renderer);
-    DELETE_MOVE(Renderer);
+    DELETE_COPY(VulkanRenderer);
+    DELETE_MOVE(VulkanRenderer);
 
 public:  // API
+    virtual std::shared_ptr<Shader> create_shader(const Shader::Config& config) const override;
 private:
     void add_window(std::shared_ptr<Window> window);
 
-    RendererContext m_context;
     std::vector<std::shared_ptr<Swapchain>> m_swapchains;
 };
 

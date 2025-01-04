@@ -11,17 +11,17 @@ namespace toki {
 
 class VulkanShader : public Shader {
 public:
-    VulkanShader(RendererContext ctx, const Config& config);
+    VulkanShader(RendererContext* ctx, const Shader::Config& config);
     VulkanShader() = delete;
     ~VulkanShader();
 
-    DELETE_COPY(VulkanShader);
-    DELETE_MOVE(VulkanShader);
+    // DELETE_COPY(VulkanShader)
+    // DELETE_MOVE(VulkanShader)
 
 private:
     VkPipeline m_pipeline{};
 
-    static VkShaderModule create_shader_module(RendererContext ctx, std::vector<u32>& binary);
+    static VkShaderModule create_shader_module(RendererContext* ctx, std::vector<u32>& binary);
 };
 
 }  // namespace toki

@@ -9,7 +9,7 @@ Engine::Engine(const Config& config) {
 
     Renderer::Config renderer_config{};
     renderer_config.initialWindow = config.initialWindow;
-    m_renderer = std::make_shared<Renderer>(renderer_config);
+    m_renderer = Renderer::create(renderer_config);
 }
 
 Engine::~Engine() {
