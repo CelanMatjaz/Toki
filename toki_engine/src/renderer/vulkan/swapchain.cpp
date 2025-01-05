@@ -96,11 +96,10 @@ static void create_swapchain(Ref<RendererContext> ctx, Swapchain* swapchain) {
         "Could not create swapchain");
 
     {
-        u32 image_count{};
-        vkGetSwapchainImagesKHR(ctx->device, swapchain->swapchainHandle, &image_count, nullptr);
-        TK_ASSERT(image_count > 0, "No images found for swapchain");
+        vkGetSwapchainImagesKHR(ctx->device, swapchain->swapchainHandle, &swapchain->imageCount, nullptr);
+        TK_ASSERT(swapchain->imageCount > 0, "No images found for swapchain");
         std::vector<VkImage> images(image_count);
-        vkGetSwapchainImagesKHR(ctx->device, swapchain->swapchainHandle, &image_count, images.data());
+        vkGetSwapchainImagesKHR(ctx->device, swapchain->swapchainHandle, &swapchain->imageCount, images.data());
 
         for (u32 i = 0; i < image_count; i++) {
             ImageViewConfig config{};

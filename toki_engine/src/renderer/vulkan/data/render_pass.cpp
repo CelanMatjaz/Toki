@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include "core/base.h"
 #include "core/scope_wrapper.h"
 #include "renderer/vulkan/macros.h"
 #include "renderer/vulkan/utils/mapping_functions.h"
@@ -9,7 +10,15 @@
 
 namespace toki {
 
-RenderPass::RenderPass(RendererContext* ctx, const Config& config) {
+Ref<RenderPass> RenderPass::create(Ref<RendererContext> ctx, const Config& config) {
+    if (!s_context) {
+        s_context = ctx;
+    }
+
+    return create_ref<RenderPass>(ctx, config);
+}
+
+RenderPass::RenderPass(Ref<RendererContext> ctx, const Config& config): m_attachmentHash(config.attachments) {
     std::vector<VkAttachmentDescription> attachment_descriptions;
     std::vector<VkAttachmentReference> attachment_references;
     std::vector<VkSubpassDependency> subpass_dependencies;
@@ -83,13 +92,21 @@ SETUP_SUBPASS_DEPENDENCY:
     render_pass_create_info.dependencyCount = subpass_dependencies.size();
     render_pass_create_info.pDependencies = subpass_dependencies.data();
 
-    VkRenderPass render_pass{};
     TK_ASSERT_VK_RESULT(
-        vkCreateRenderPass(ctx->device, &render_pass_create_info, ctx->allocationCallbacks, &render_pass),
+        vkCreateRenderPass(ctx->device, &render_pass_create_info, ctx->allocationCallbacks, &m_renderPass),
         "Could not create render pass");
+}
 
-    m_renderPass2 = Scoped<VkRenderPass, VK_NULL_HANDLE>(
-        render_pass, [ctx](VkRenderPass rp) { vkDestroyRenderPass(ctx->device, rp, ctx->allocationCallbacks); });
+RenderPass::~RenderPass() {
+    vkDestroyRenderPass(s_context->device, m_renderPass, s_context->allocationCallbacks);
+}
+
+const AttachmentsHash RenderPass::get_attachment_hash() const {
+    return m_attachmentHash;
+}
+
+RenderPass::operator VkRenderPass() const {
+    return m_renderPass;
 }
 
 }  // namespace toki

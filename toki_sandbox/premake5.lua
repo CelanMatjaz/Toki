@@ -15,3 +15,6 @@ project "Sandbox"
 
     filter "system:windows"
         links { "gdi32", "user32", "shell32" }
+
+    filter "action:vs*"
+        debugargs "."

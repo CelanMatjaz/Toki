@@ -2,19 +2,26 @@
 
 #include <vulkan/vulkan.h>
 
+#include <unordered_map>
 #include <vector>
 
 #include "core/core.h"
 #include "renderer/renderer.h"
+#include "renderer/vulkan/data/attachment_hash.h"
 
 namespace toki {
-
-#define FRAME_COUNT 3
 
 inline const std::vector<const char*> extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
 struct Frame {
     VkCommandBuffer commandBuffer{};
+};
+
+class RenderPass;
+
+struct RenderPassWithRefCount {
+    Ref<RenderPass> renderPass;
+    u64 refCount{};
 };
 
 struct RendererContext {
@@ -25,7 +32,9 @@ struct RendererContext {
     VkAllocationCallbacks* allocationCallbacks{};
 
     u32 currentFrameIndex{};
-    Frame frames[FRAME_COUNT]{};
+    Frame frames[ERROR_COUNT]{};
+
+    std::unordered_map<AttachmentsHash, RenderPassWithRefCount, AttachmentsHash> renderPassMap;
 };
 
 }  // namespace toki

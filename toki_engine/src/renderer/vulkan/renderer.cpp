@@ -27,15 +27,18 @@ VulkanRenderer::VulkanRenderer(const Config& config): Renderer(config) {
 VulkanRenderer::~VulkanRenderer() {
     TK_LOG_INFO("Shutting down renderer");
 
+    m_shaderMap.clear();
+
     m_windows.clear();
 
     vkDestroyDevice(m_context->device, m_context->allocationCallbacks);
     vkDestroyInstance(m_context->instance, m_context->allocationCallbacks);
 }
 
-Ref<Shader> VulkanRenderer::create_shader(const Shader::Config& config) const {
-    TK_LOG_DEBUG("Tesst");
-    return create_ref<VulkanShader>(m_context, config);
+Handle VulkanRenderer::create_shader(const Shader::Config& config) {
+    Handle handle;
+    m_shaderMap.emplace(handle, create_ref<VulkanShader>(m_context, config));
+    return handle;
 }
 
 void VulkanRenderer::begin_frame() {}

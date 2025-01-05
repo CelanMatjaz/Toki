@@ -4,6 +4,7 @@
 
 #include "core/scope_wrapper.h"
 #include "renderer/renderer_types.h"
+#include "renderer/vulkan/data/attachment_hash.h"
 #include "renderer/vulkan/renderer_state.h"
 
 namespace toki {
@@ -15,13 +16,20 @@ public:
         VkFormat presentFormat{};
     };
 
+    static Ref<RenderPass> create(Ref<RendererContext> ctx, const Config& config);
+
     RenderPass() = delete;
-    RenderPass(RendererContext* ctx, const Config& config);
+    RenderPass(Ref<RendererContext> ctx, const Config& config);
     ~RenderPass();
 
+    inline static Ref<RendererContext> s_context;
+
+    const AttachmentsHash get_attachment_hash() const;
+    operator VkRenderPass() const;
+
 private:
-    Scoped<VkRenderPass, VK_NULL_HANDLE> m_renderPass2;
     VkRenderPass m_renderPass{};
+    AttachmentsHash m_attachmentHash{};
 };
 
 }  // namespace toki

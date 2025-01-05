@@ -2,8 +2,9 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 
-namespace Toki {
+namespace toki {
 
 class Id {
 public:
@@ -22,7 +23,7 @@ public:
 
     bool operator==(const Id& other) const;
     bool operator<(const Id& other) const;
-    uint64_t operator()(const Id& p) const;
+    uint64_t operator()(const Id& id) const;
 
     operator bool() const;
 
@@ -32,5 +33,7 @@ private:
         uint32_t u32[2];
     } m_values;
 };
+
+using Handle = Id;
 
 }  // namespace Toki

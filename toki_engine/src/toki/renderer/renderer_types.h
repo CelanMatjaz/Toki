@@ -1,9 +1,10 @@
 #pragma once
 
 #include "core/core.h"
+
 namespace toki {
 
-enum class ColorFormat {
+enum class ColorFormat : u8 {
     R8,
     RGBA8,
     DepthStencil,
@@ -29,23 +30,23 @@ enum class AttachmentType : u8 {
 
 struct Attachment {
     ColorFormat colorFormat;
-    AttachmentLoadOp loadOp : 4 = AttachmentLoadOp::Load;
-    AttachmentStoreOp storeOp : 4 = AttachmentStoreOp::DontCare;
-    AttachmentType typeBits : 4 = AttachmentType::Color;
-    bool presentable : 4 = false;
+    AttachmentLoadOp loadOp : 2 = AttachmentLoadOp::Load;
+    AttachmentStoreOp storeOp : 2 = AttachmentStoreOp::DontCare;
+    AttachmentType typeBits : 2 = AttachmentType::Color;
+    bool presentable : 2 = false;
 };
 
-enum class ShaderStage {
+enum class ShaderStage : u8 {
     Vertex,
     Fragment
 };
 
-enum class VertexInputRate {
+enum class VertexInputRate : u8 {
     Vertex,
     Instance,
 };
 
-enum class VertexFormat {
+enum class VertexFormat : u8 {
     Float1,
     Float2,
     Float3,

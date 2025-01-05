@@ -15,11 +15,14 @@ public:
     VulkanShader() = delete;
     ~VulkanShader();
 
+    inline static Ref<RendererContext> s_context;
+
     // DELETE_COPY(VulkanShader)
     // DELETE_MOVE(VulkanShader)
 
 private:
     VkPipeline m_pipeline{};
+    VkPipelineLayout m_pipelineLayout{};
 
     static VkShaderModule create_shader_module(Ref<RendererContext> ctx, std::vector<u32>& binary);
 };

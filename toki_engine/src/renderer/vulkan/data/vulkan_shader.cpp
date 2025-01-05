@@ -2,8 +2,9 @@
 
 #include <array>
 
-#include "core/logging.h"
 #include "core/scope_wrapper.h"
+#include "renderer/vulkan/data/attachment_hash.h"
+#include "renderer/vulkan/data/render_pass.h"
 #include "renderer/vulkan/macros.h"
 #include "renderer/vulkan/utils/shader_compiler.h"
 #include "resources/loaders/text.h"
@@ -11,7 +12,24 @@
 
 namespace toki {
 
-VulkanShader::VulkanShader(Ref<RendererContext> ctx, const Shader::Config& config) {
+VulkanShader::VulkanShader(Ref<RendererContext> ctx, const Shader::Config& config): Shader(config) {
+    if (!s_context) {
+        s_context = ctx;
+    }
+
+    Ref<RenderPass> render_pass;
+    {
+        AttachmentsHash hash(config.attachments);
+        if (ctx->renderPassMap.contains(hash)) {
+            render_pass = ctx->renderPassMap.at(hash).renderPass;
+        } else {
+            RenderPass::Config render_pass_config{};
+            render_pass_config.attachments = config.attachments;
+            render_pass = RenderPass::create(ctx, render_pass_config);
+            ctx->renderPassMap.emplace(hash, RenderPassWithRefCount{ render_pass, 1 });
+        }
+    }
+
     std::string vertex_shader_source = read_text_file(config.vertex_shader_path);
     std::vector vertex_shader_binary = compile_shader(ShaderStage::Vertex, vertex_shader_source);
     Scoped<VkShaderModule, VK_NULL_HANDLE> vertex_shader_module(
@@ -32,7 +50,7 @@ VulkanShader::VulkanShader(Ref<RendererContext> ctx, const Shader::Config& confi
 
     VkPipelineShaderStageCreateInfo fragment_shader_stage_create_info{};
     fragment_shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    fragment_shader_stage_create_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    fragment_shader_stage_create_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
     fragment_shader_stage_create_info.module = fragment_shader_module;
     fragment_shader_stage_create_info.pName = "main";
 
@@ -48,7 +66,7 @@ VulkanShader::VulkanShader(Ref<RendererContext> ctx, const Shader::Config& confi
 
     VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info{};
     input_assembly_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    input_assembly_state_create_info.primitiveRestartEnable = VK_TRUE;
+    input_assembly_state_create_info.primitiveRestartEnable = VK_FALSE;
     input_assembly_state_create_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
     VkPipelineRasterizationStateCreateInfo rasterization_state_create_info{};
@@ -134,29 +152,41 @@ VulkanShader::VulkanShader(Ref<RendererContext> ctx, const Shader::Config& confi
     pipelineLayoutInfo.pushConstantRangeCount = 0;
     pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
-    VkPipelineLayout pipeline_layout{};
     TK_ASSERT_VK_RESULT(
-        vkCreatePipelineLayout(ctx->device, &pipelineLayoutInfo, ctx->allocationCallbacks, &pipeline_layout),
+        vkCreatePipelineLayout(ctx->device, &pipelineLayoutInfo, ctx->allocationCallbacks, &m_pipelineLayout),
         "Could not create pipeline layout");
 
-    VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
-    pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineCreateInfo.stageCount = shader_stages.size();
-    pipelineCreateInfo.pStages = shader_stages.data();
-    pipelineCreateInfo.pVertexInputState = &vertex_input_state_create_info;
-    pipelineCreateInfo.pInputAssemblyState = &input_assembly_state_create_info;
-    pipelineCreateInfo.pRasterizationState = &rasterization_state_create_info;
-    pipelineCreateInfo.pMultisampleState = &multisample_state_create_info;
-    pipelineCreateInfo.pColorBlendState = &color_blend_state_create_info;
-    pipelineCreateInfo.pDepthStencilState = &depth_stencil_state_create_info;
-    pipelineCreateInfo.pViewportState = &viewportState;
-    pipelineCreateInfo.pDynamicState = &dynamic_state_create_info;
-    pipelineCreateInfo.renderPass = nullptr;
-    pipelineCreateInfo.subpass = 0;
-    pipelineCreateInfo.layout = pipeline_layout;
+    VkGraphicsPipelineCreateInfo graphics_pipeline_create_info{};
+    graphics_pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    graphics_pipeline_create_info.stageCount = shader_stages.size();
+    graphics_pipeline_create_info.pStages = shader_stages.data();
+    graphics_pipeline_create_info.pVertexInputState = &vertex_input_state_create_info;
+    graphics_pipeline_create_info.pInputAssemblyState = &input_assembly_state_create_info;
+    graphics_pipeline_create_info.pRasterizationState = &rasterization_state_create_info;
+    graphics_pipeline_create_info.pMultisampleState = &multisample_state_create_info;
+    graphics_pipeline_create_info.pColorBlendState = &color_blend_state_create_info;
+    graphics_pipeline_create_info.pDepthStencilState = &depth_stencil_state_create_info;
+    graphics_pipeline_create_info.pViewportState = &viewportState;
+    graphics_pipeline_create_info.pDynamicState = &dynamic_state_create_info;
+    graphics_pipeline_create_info.renderPass = *render_pass;
+    graphics_pipeline_create_info.subpass = 0;
+    graphics_pipeline_create_info.layout = m_pipelineLayout;
+
+    TK_ASSERT_VK_RESULT(
+        vkCreateGraphicsPipelines(
+            ctx->device, VK_NULL_HANDLE, 1, &graphics_pipeline_create_info, ctx->allocationCallbacks, &m_pipeline),
+        "Could not create graphics pipeline");
 }
 
-VulkanShader::~VulkanShader() {}
+VulkanShader::~VulkanShader() {
+    vkDestroyPipeline(s_context->device, m_pipeline, s_context->allocationCallbacks);
+    vkDestroyPipelineLayout(s_context->device, m_pipelineLayout, s_context->allocationCallbacks);
+
+    AttachmentsHash hash(m_config.attachments);
+    if (s_context->renderPassMap[hash].refCount == 1) {
+        s_context->renderPassMap.erase(hash);
+    }
+}
 
 VkShaderModule VulkanShader::create_shader_module(Ref<RendererContext> ctx, std::vector<u32>& binary) {
     VkShaderModuleCreateInfo shader_module_create_info{};

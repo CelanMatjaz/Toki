@@ -10,5 +10,5 @@ public:
     virtual void on_update(const float deltaTime) override;
 
 private:
-    toki::Ref<toki::Shader> m_shader;
+    toki::Handle m_shader;
 };

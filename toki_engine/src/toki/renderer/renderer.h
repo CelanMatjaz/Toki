@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/id.h"
 #include "engine/window.h"
 #include "renderer/renderer_api.h"
 #include "renderer/shader.h"
@@ -17,9 +18,10 @@ public:
         std::shared_ptr<Window> initialWindow;
     };
 
-public:
+private:
     static std::shared_ptr<Renderer> create(const Config& config);
 
+public:
     Renderer() = delete;
     Renderer(const Config& config);
     ~Renderer() = default;
@@ -30,7 +32,7 @@ public:
     std::shared_ptr<RendererApi> get_renderer_api() const;
 
 public:
-    virtual std::shared_ptr<Shader> create_shader(const Shader::Config& config) const = 0;
+    virtual Handle create_shader(const Shader::Config& config) = 0;
 
 protected:
     virtual void begin_frame() = 0;

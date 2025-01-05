@@ -1,10 +1,13 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 
+#include "core/id.h"
 #include "core/macros.h"
 #include "engine/window.h"
 #include "renderer/renderer.h"
+#include "renderer/vulkan/data/vulkan_shader.h"
 #include "renderer/vulkan/renderer_api.h"
 #include "renderer/vulkan/renderer_state.h"
 #include "renderer/vulkan/renderer_window.h"
@@ -22,7 +25,7 @@ public:
     DELETE_MOVE(VulkanRenderer);
 
 public:
-    virtual Ref<Shader> create_shader(const Shader::Config& config) const override;
+    virtual Handle create_shader(const Shader::Config& config) override;
 
 private:
     void add_window(Ref<Window> window);
@@ -32,6 +35,9 @@ private:
     void present() override;
 
     std::vector<Ref<RendererWindow>> m_windows;
+
+private:
+    std::unordered_map<Handle, Ref<VulkanShader>, Handle> m_shaderMap;
 };
 
 }  // namespace toki

@@ -20,6 +20,7 @@ struct Swapchain {
     VkPresentModeKHR presentMode{};
     VkExtent2D extent{};
     GLFWwindow* windowHandle{};
+    u32 imageCount{};
     VkImageView imageViews[FRAME_COUNT]{};
     VkFramebuffer framebuffers[FRAME_COUNT]{};
 };

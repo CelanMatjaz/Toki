@@ -8,6 +8,8 @@ RendererWindow::RendererWindow(Ref<RendererContext> ctx, Ref<Window> window): m_
     m_swapchain = Swapchain::create(ctx, window);
 }
 
-RendererWindow::~RendererWindow() {}
+RendererWindow::~RendererWindow() {
+    m_swapchain->destroy(m_context);
+}
 
 }  // namespace toki

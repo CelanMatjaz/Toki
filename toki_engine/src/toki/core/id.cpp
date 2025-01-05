@@ -2,7 +2,7 @@
 
 #include <ctime>
 
-namespace Toki {
+namespace toki {
 
 Id Id::createId() {
     return Id();
@@ -40,7 +40,7 @@ Id& Id::operator=(const Id&& other) {
         return *this;
     }
 
-     m_values.u64 = other.m_values.u64;
+    m_values.u64 = other.m_values.u64;
     return *this;
 }
 
@@ -57,12 +57,12 @@ bool Id::operator<(const Id& other) const {
     return m_values.u64 < other.m_values.u64;
 }
 
-uint64_t Id::operator()(const Id& p) const {
-    return p.m_values.u64;
+uint64_t Id::operator()(const Id& id) const {
+    return std::hash<int>()(id.m_values.u32[0]) ^ (std::hash<int>()(id.m_values.u32[1]) << 1);
 }
 
 Id::operator bool() const {
     return m_values.u64 != 0;
 }
 
-}  // namespace Toki
+}  // namespace toki

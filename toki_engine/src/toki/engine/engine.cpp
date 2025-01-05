@@ -13,7 +13,12 @@ Engine::Engine(const Config& config) {
 }
 
 Engine::~Engine() {
-    m_renderer = nullptr;
+    for (auto it = m_views.rbegin(); it != m_views.rend(); it++) {
+        (*it)->on_destroy();
+    }
+    m_views.clear();
+
+    m_renderer.reset();
     m_windows.clear();
 }
 
@@ -35,12 +40,12 @@ void Engine::run() {
         delta_time = std::chrono::duration<float>(frame_start_time - last_frame_time).count();
         last_frame_time = frame_start_time;
 
-        for (auto it = m_views.rend(); it != m_views.rbegin(); it++) {
+        for (auto it = m_views.rbegin(); it != m_views.rend(); it++) {
             (*it)->on_update(delta_time);
         }
 
         m_renderer->begin_frame();
-        for (auto it = m_views.rend(); it != m_views.rbegin(); it++) {
+        for (auto it = m_views.rbegin(); it != m_views.rend(); it++) {
             (*it)->on_render(m_renderer->get_renderer_api());
         }
         m_renderer->end_frame();
