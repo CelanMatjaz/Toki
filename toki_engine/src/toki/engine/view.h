@@ -21,7 +21,7 @@ public:
     virtual void on_add(const Ref<Renderer> renderer) {};
     virtual void on_destroy() {};
     virtual void on_render(const Ref<RendererApi> renderer) {};
-    virtual void on_update(const float deltaTime) {};
+    virtual void on_update(const float delta_time) {};
 
 private:
 };

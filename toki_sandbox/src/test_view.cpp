@@ -14,4 +14,4 @@ void TestView::on_render(toki::Ref<toki::RendererApi> api) {
     api->reset_scissor();
 }
 
-void TestView::on_update(const float deltaTime) {}
+void TestView::on_update(const float delta_time) {}
