@@ -14,7 +14,7 @@ public:
 private:
     Ref<RendererContext> m_context;
     Ref<Window> m_window;
-    Ref<Swapchain> m_swapchain;
+    Swapchain m_swapchain;
 };
 
 }  // namespace toki

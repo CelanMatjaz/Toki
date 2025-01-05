@@ -8,6 +8,7 @@
 #include "core/core.h"
 #include "renderer/renderer.h"
 #include "renderer/vulkan/data/attachment_hash.h"
+#include "renderer/vulkan/data/render_pass.h"
 
 namespace toki {
 
@@ -17,10 +18,8 @@ struct Frame {
     VkCommandBuffer commandBuffer{};
 };
 
-class RenderPass;
-
 struct RenderPassWithRefCount {
-    Ref<RenderPass> renderPass;
+    RenderPass renderPass;
     u64 refCount{};
 };
 

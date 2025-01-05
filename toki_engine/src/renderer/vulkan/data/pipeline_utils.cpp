@@ -1,10 +1,24 @@
-#include "shader_compiler.h"
+#include "pipeline_utils.h"
 
 #include <shaderc/shaderc.hpp>
 
-#include "core/logging.h"
+#include "renderer/vulkan/macros.h"
 
 namespace toki {
+
+VkShaderModule create_shader_module(Ref<RendererContext> ctx, std::vector<u32>& binary) {
+    VkShaderModuleCreateInfo shader_module_create_info{};
+    shader_module_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    shader_module_create_info.codeSize = binary.size() * 4;
+    shader_module_create_info.pCode = binary.data();
+
+    VkShaderModule shader_module{};
+    TK_ASSERT_VK_RESULT(
+        vkCreateShaderModule(ctx->device, &shader_module_create_info, ctx->allocationCallbacks, &shader_module),
+        "Could not create shader module");
+
+    return shader_module;
+}
 
 std::vector<u32> compile_shader(ShaderStage stage, std::string& source) {
     shaderc::Compiler compiler;

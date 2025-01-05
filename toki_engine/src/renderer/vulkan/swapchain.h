@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 
+#include "renderer/vulkan/data/image_view.h"
 #include "renderer_state.h"
 
 namespace toki {
@@ -9,10 +10,9 @@ namespace toki {
 class VulkanRenderer;
 
 struct Swapchain {
-    static Ref<Swapchain> create(Ref<RendererContext> ctx, Ref<Window> window);
-
-    void destroy(Ref<RendererContext> ctx);
-    void recreate(Ref<RendererContext> ctx);
+    static Swapchain create(Ref<RendererContext> ctx, Ref<Window> window);
+    static void cleanup(Ref<RendererContext> ctx, Swapchain& swapchain);
+    static void recreate(Ref<RendererContext> ctx, Swapchain& swapchain);
 
     VkSwapchainKHR swapchainHandle{};
     VkSurfaceKHR surface{};
@@ -21,8 +21,13 @@ struct Swapchain {
     VkExtent2D extent{};
     GLFWwindow* windowHandle{};
     u32 imageCount{};
-    VkImageView imageViews[FRAME_COUNT]{};
+    ImageView imageViews[FRAME_COUNT]{};
     VkFramebuffer framebuffers[FRAME_COUNT]{};
+
+private:
+    static VkSurfaceFormatKHR get_surface_format(const std::vector<VkSurfaceFormatKHR>& formats);
+    static VkPresentModeKHR get_present_mode(const std::vector<VkPresentModeKHR>& present_modes);
+    static VkExtent2D get_surface_extent(GLFWwindow* window, const VkSurfaceCapabilitiesKHR& capabilities);
 };
 
 }  // namespace toki

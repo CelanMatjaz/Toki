@@ -8,7 +8,6 @@
 
 #include "core/assert.h"
 #include "renderer/vulkan/renderer_state.h"
-#include "vulkan/vulkan_core.h"
 
 namespace toki {
 

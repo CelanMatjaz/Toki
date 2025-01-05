@@ -7,9 +7,7 @@
 #include "core/macros.h"
 #include "engine/window.h"
 #include "renderer/renderer.h"
-#include "renderer/vulkan/data/vulkan_shader.h"
-#include "renderer/vulkan/renderer_api.h"
-#include "renderer/vulkan/renderer_state.h"
+#include "renderer/vulkan/data/graphics_pipeline.h"
 #include "renderer/vulkan/renderer_window.h"
 #include "renderer/vulkan/swapchain.h"
 
@@ -37,7 +35,7 @@ private:
     std::vector<Ref<RendererWindow>> m_windows;
 
 private:
-    std::unordered_map<Handle, Ref<VulkanShader>, Handle> m_shaderMap;
+    std::unordered_map<Handle, GraphicsPipeline, Handle> m_shaderMap;
 };
 
 }  // namespace toki

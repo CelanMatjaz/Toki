@@ -1,7 +1,5 @@
 #include "renderer_api.h"
 
-#include "renderer/vulkan/data/vulkan_shader.h"
-
 namespace toki {
 
 VulkanRendererApi::VulkanRendererApi(Ref<RendererContext> context): m_context(context) {}

@@ -6,7 +6,7 @@
 
 namespace toki {
 
-VkImageView create_image_view(Ref<RendererContext> ctx, const ImageViewConfig& config) {
+ImageView ImageView::create(Ref<RendererContext> ctx, const Config& config) {
     VkImageViewCreateInfo image_view_create_info{};
     image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     image_view_create_info.image = config.image;
@@ -23,13 +23,17 @@ VkImageView create_image_view(Ref<RendererContext> ctx, const ImageViewConfig& c
     image_view_create_info.subresourceRange.baseArrayLayer = 0;
     image_view_create_info.subresourceRange.layerCount = 1;
 
-    VkImageView image_view{};
-
+    ImageView image_view{};
     TK_ASSERT_VK_RESULT(
-        vkCreateImageView(ctx->device, &image_view_create_info, ctx->allocationCallbacks, &image_view),
+        vkCreateImageView(ctx->device, &image_view_create_info, ctx->allocationCallbacks, &image_view.imageView),
         "Could not create image view");
 
     return image_view;
+}
+
+void ImageView::cleanup(Ref<RendererContext> ctx, ImageView& image_view) {
+    vkDestroyImageView(ctx->device, image_view.imageView, ctx->allocationCallbacks);
+    image_view.imageView = VK_NULL_HANDLE;
 }
 
 }  // namespace toki

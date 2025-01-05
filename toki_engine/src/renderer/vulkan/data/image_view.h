@@ -4,12 +4,17 @@
 
 namespace toki {
 
-struct ImageViewConfig {
-    VkImage image{};
-    VkImageViewType viewType{};
-    VkFormat format{};
-};
+struct ImageView {
+    struct Config {
+        VkImage image{};
+        VkImageViewType viewType{};
+        VkFormat format{};
+    };
 
-VkImageView create_image_view(Ref<RendererContext> ctx, const ImageViewConfig& config);
+    static ImageView create(Ref<RendererContext> ctx, const Config& config);
+    static void cleanup(Ref<RendererContext> ctx, ImageView& image_view);
+
+    VkImageView imageView{};
+};
 
 }  // namespace toki

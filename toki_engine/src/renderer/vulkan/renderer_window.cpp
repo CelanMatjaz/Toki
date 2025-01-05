@@ -9,7 +9,7 @@ RendererWindow::RendererWindow(Ref<RendererContext> ctx, Ref<Window> window): m_
 }
 
 RendererWindow::~RendererWindow() {
-    m_swapchain->destroy(m_context);
+    Swapchain::cleanup(m_context, m_swapchain);
 }
 
 }  // namespace toki
