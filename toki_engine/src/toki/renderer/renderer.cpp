@@ -4,14 +4,14 @@
 
 namespace toki {
 
-std::shared_ptr<renderer> renderer::create(const Config& config) {
-    return std::make_shared<vulkan_renderer>(config);
+std::shared_ptr<Renderer> Renderer::create(const Config& config) {
+    return std::make_shared<VulkanRenderer>(config);
 }
 
-renderer::renderer(const Config& config) {}
+Renderer::Renderer(const Config& config) {}
 
-std::shared_ptr<renderer_api> renderer::get_renderer_api() const {
-    return _renderer_api;
+std::shared_ptr<RendererApi> Renderer::get_renderer_api() const {
+    return m_rendererApi;
 }
 
 }  // namespace toki

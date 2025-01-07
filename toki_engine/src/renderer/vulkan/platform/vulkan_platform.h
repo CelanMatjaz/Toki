@@ -8,6 +8,6 @@
 
 namespace toki {
 
-VkSurfaceKHR create_surface(ref<renderer_context> ctx, GLFWwindow* window);
+VkSurfaceKHR create_surface(Ref<RendererContext> ctx, GLFWwindow* window);
 
 }

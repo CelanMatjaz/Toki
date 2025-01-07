@@ -9,10 +9,10 @@
 
 namespace toki {
 
-class glfw_window : public window {
+class glfw_window : public Window {
 public:
     glfw_window() = delete;
-    glfw_window(const config& config);
+    glfw_window(const Config& config);
     virtual ~glfw_window();
 
     virtual Vec2i get_dimensions() const override;

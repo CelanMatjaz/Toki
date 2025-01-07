@@ -5,16 +5,14 @@
 
 namespace toki {
 
-vulkan_graphics_pipeline vulkan_graphics_pipeline_create(ref<renderer_context> ctx, const create_graphics_pipeline_config& config) {
-    vulkan_graphics_pipeline pipeline{};
-
+void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& config) {
     std::string vertex_shader_source = read_text_file(config.vertex_shader_path);
-    std::vector vertex_shader_binary = compile_shader(shader_stage::VERTEX, vertex_shader_source);
+    std::vector vertex_shader_binary = compile_shader(ShaderStage::VERTEX, vertex_shader_source);
     Scoped<VkShaderModule, VK_NULL_HANDLE> vertex_shader_module(
         create_shader_module(ctx, vertex_shader_binary), [ctx](VkShaderModule sm) { vkDestroyShaderModule(ctx->device, sm, ctx->allocation_callbacks); });
 
     std::string fragment_shader_source = read_text_file(config.fragment_shader_path);
-    std::vector fragment_shader_binary = compile_shader(shader_stage::FRAGMENT, fragment_shader_source);
+    std::vector fragment_shader_binary = compile_shader(ShaderStage::FRAGMENT, fragment_shader_source);
     Scoped<VkShaderModule, VK_NULL_HANDLE> fragment_shader_module(
         create_shader_module(ctx, fragment_shader_binary), [ctx](VkShaderModule sm) { vkDestroyShaderModule(ctx->device, sm, ctx->allocation_callbacks); });
 
@@ -87,7 +85,7 @@ vulkan_graphics_pipeline vulkan_graphics_pipeline_create(ref<renderer_context> c
     color_blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     color_blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
 
-    std::vector<VkPipelineColorBlendAttachmentState> color_blend_attachment_states(config.framebuffer.color_render_target_count, color_blend_attachment_state);
+    std::vector<VkPipelineColorBlendAttachmentState> color_blend_attachment_states(config.framebuffer.get_color_attachments_rendering_infos().size(), color_blend_attachment_state);
 
     VkPipelineColorBlendStateCreateInfo color_blend_state_create_info{};
     color_blend_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -126,14 +124,13 @@ vulkan_graphics_pipeline vulkan_graphics_pipeline_create(ref<renderer_context> c
     pipelineLayoutInfo.pushConstantRangeCount = 0;
     pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
-    VK_CHECK(vkCreatePipelineLayout(ctx->device, &pipelineLayoutInfo, ctx->allocation_callbacks, &pipeline.layout), "Could not create pipeline layout");
+    VK_CHECK(vkCreatePipelineLayout(ctx->device, &pipelineLayoutInfo, ctx->allocation_callbacks, &m_layout), "Could not create pipeline layout");
 
-    VkPipelineRenderingCreateInfoKHR test = config.framebuffer.pipeline_rendering_create_info;
-    test.pColorAttachmentFormats = config.framebuffer.render_target_formats.data();
+    VkPipelineRenderingCreateInfoKHR pipeline_rendering_info_create_info = config.framebuffer.get_pipeline_rendering_create_info();
 
     VkGraphicsPipelineCreateInfo graphics_pipeline_create_info{};
     graphics_pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    graphics_pipeline_create_info.pNext = &test;
+    graphics_pipeline_create_info.pNext = &pipeline_rendering_info_create_info;
     graphics_pipeline_create_info.stageCount = shader_stages.size();
     graphics_pipeline_create_info.pStages = shader_stages.data();
     graphics_pipeline_create_info.pVertexInputState = &vertex_input_state_create_info;
@@ -145,19 +142,25 @@ vulkan_graphics_pipeline vulkan_graphics_pipeline_create(ref<renderer_context> c
     graphics_pipeline_create_info.pViewportState = &viewportState;
     graphics_pipeline_create_info.pDynamicState = &dynamic_state_create_info;
     graphics_pipeline_create_info.subpass = 0;
-    graphics_pipeline_create_info.layout = pipeline.layout;
+    graphics_pipeline_create_info.layout = m_layout;
 
     TK_LOG_INFO("Creating new graphics pipeline");
-    VK_CHECK(vkCreateGraphicsPipelines(ctx->device, VK_NULL_HANDLE, 1, &graphics_pipeline_create_info, ctx->allocation_callbacks, &pipeline.handle), "Could not create graphics pipeline");
-
-    return pipeline;
+    VK_CHECK(vkCreateGraphicsPipelines(ctx->device, VK_NULL_HANDLE, 1, &graphics_pipeline_create_info, ctx->allocation_callbacks, &m_handle), "Could not create graphics pipeline");
 }
 
-void vulkan_graphics_pipeline_destroy(ref<renderer_context> ctx, vulkan_graphics_pipeline& pipeline) {
-    vkDestroyPipeline(ctx->device, pipeline.handle, ctx->allocation_callbacks);
-    pipeline.handle = VK_NULL_HANDLE;
-    vkDestroyPipelineLayout(ctx->device, pipeline.layout, ctx->allocation_callbacks);
-    pipeline.layout = VK_NULL_HANDLE;
+void VulkanGraphicsPipeline::destroy(Ref<RendererContext> ctx) {
+    vkDestroyPipeline(ctx->device, m_handle, ctx->allocation_callbacks);
+    m_handle = VK_NULL_HANDLE;
+    vkDestroyPipelineLayout(ctx->device, m_layout, ctx->allocation_callbacks);
+    m_layout = VK_NULL_HANDLE;
+}
+
+VkPipeline VulkanGraphicsPipeline::get_handle() const {
+    return m_handle;
+}
+
+VkPipelineLayout VulkanGraphicsPipeline::get_layout() const {
+    return m_layout;
 }
 
 }  // namespace toki

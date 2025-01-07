@@ -8,19 +8,19 @@
 
 namespace toki {
 
-class view {
+class View {
 public:
-    ref<view> create();
+    Ref<View> create();
 
-    view() = default;
-    ~view() = default;
+    View() = default;
+    ~View() = default;
 
-    DELETE_COPY(view)
-    DELETE_MOVE(view)
+    DELETE_COPY(View)
+    DELETE_MOVE(View)
 
-    virtual void on_add(const ref<renderer> renderer){};
-    virtual void on_destroy(const ref<renderer> renderer){};
-    virtual void on_render(const ref<renderer_api> renderer){};
+    virtual void on_add(const Ref<Renderer> renderer){};
+    virtual void on_destroy(const Ref<Renderer> renderer){};
+    virtual void on_render(const Ref<RendererApi> renderer){};
     virtual void on_update(const float delta_time){};
 };
 

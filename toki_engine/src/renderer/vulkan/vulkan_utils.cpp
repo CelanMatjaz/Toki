@@ -95,7 +95,7 @@ u32 find_memory_type(VkPhysicalDevice physical_device, u32 type_filter, VkMemory
     std::unreachable();
 }
 
-VkShaderModule create_shader_module(ref<renderer_context> ctx, std::vector<u32>& binary) {
+VkShaderModule create_shader_module(Ref<RendererContext> ctx, std::vector<u32>& binary) {
     VkShaderModuleCreateInfo shader_module_create_info{};
     shader_module_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     shader_module_create_info.codeSize = binary.size() * 4;
@@ -107,7 +107,7 @@ VkShaderModule create_shader_module(ref<renderer_context> ctx, std::vector<u32>&
     return shader_module;
 }
 
-std::vector<u32> compile_shader(shader_stage stage, std::string& source) {
+std::vector<u32> compile_shader(ShaderStage stage, std::string& source) {
     shaderc::Compiler compiler;
     shaderc::CompileOptions options;
     options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
@@ -122,10 +122,10 @@ std::vector<u32> compile_shader(shader_stage stage, std::string& source) {
     shaderc_shader_kind shader_kind;
 
     switch (stage) {
-        case shader_stage::VERTEX:
+        case ShaderStage::VERTEX:
             shader_kind = shaderc_shader_kind::shaderc_glsl_vertex_shader;
             break;
-        case shader_stage::FRAGMENT:
+        case ShaderStage::FRAGMENT:
             shader_kind = shaderc_shader_kind::shaderc_glsl_fragment_shader;
             break;
         default:
@@ -142,65 +142,65 @@ std::vector<u32> compile_shader(shader_stage stage, std::string& source) {
     return std::vector<u32>{ spirv_module.begin(), spirv_module.end() };
 }
 
-VkFormat map_format(color_format format) {
+VkFormat map_format(ColorFormat format) {
     switch (format) {
-        case color_format::R8:
+        case ColorFormat::R8:
             return VK_FORMAT_R8_SRGB;
-        case color_format::RGBA8:
+        case ColorFormat::RGBA8:
             return VK_FORMAT_R8G8B8A8_SRGB;
-        case color_format::DEPTH:
+        case ColorFormat::DEPTH:
             return VK_FORMAT_D24_UNORM_S8_UINT;
-        case color_format::STENCIL:
+        case ColorFormat::STENCIL:
             return VK_FORMAT_S8_UINT;
-        case color_format::DEPTH_STENCIL:
+        case ColorFormat::DEPTH_STENCIL:
             return VK_FORMAT_D24_UNORM_S8_UINT;
         default:
             std::unreachable();
     }
 }
 
-VkAttachmentLoadOp map_attachment_load_op(render_target_load_op op) {
+VkAttachmentLoadOp map_attachment_load_op(RenderTargetLoadOp op) {
     switch (op) {
-        case toki::render_target_load_op::LOAD:
+        case toki::RenderTargetLoadOp::LOAD:
             return VK_ATTACHMENT_LOAD_OP_LOAD;
-        case render_target_load_op::CLEAR:
+        case RenderTargetLoadOp::CLEAR:
             return VK_ATTACHMENT_LOAD_OP_CLEAR;
-        case render_target_load_op::DONT_CARE:
+        case RenderTargetLoadOp::DONT_CARE:
             return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         default:
             std::unreachable();
     }
 }
 
-VkAttachmentStoreOp map_attachment_store_op(render_target_store_op op) {
+VkAttachmentStoreOp map_attachment_store_op(RenderTargetStoreOp op) {
     switch (op) {
-        case render_target_store_op::STORE:
+        case RenderTargetStoreOp::STORE:
             return VK_ATTACHMENT_STORE_OP_STORE;
-        case render_target_store_op::DONT_CARE:
+        case RenderTargetStoreOp::DONT_CARE:
             return VK_ATTACHMENT_STORE_OP_DONT_CARE;
         default:
             std::unreachable();
     }
 }
 
-VkBufferUsageFlags map_buffer_type(buffer_type type) {
+VkBufferUsageFlags map_buffer_type(BufferType type) {
     switch (type) {
-        case buffer_type::VERTEX:
+        case BufferType::VERTEX:
             return VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-        case buffer_type::INDEX:
+        case BufferType::INDEX:
             return VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
         default:
             std::unreachable();
     }
 }
 
-VkMemoryPropertyFlags map_buffer_memory_properties(buffer_usage usage) {
+VkMemoryPropertyFlags map_buffer_memory_properties(BufferUsage usage) {
     VkMemoryPropertyFlags flags = 0;
     switch (usage) {
-        case buffer_usage::STATIC:
+        case BufferUsage::STATIC:
             flags |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
             break;
-        case toki::buffer_usage::DYNAMIC:
+        case toki::BufferUsage::DYNAMIC:
             flags |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
             flags |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
             break;

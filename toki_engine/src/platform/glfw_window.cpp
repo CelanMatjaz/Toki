@@ -15,7 +15,7 @@ namespace toki {
 static u32 window_count = 0;
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-glfw_window::glfw_window(const config& config): window(config) {
+glfw_window::glfw_window(const Config& config): Window(config) {
     TK_ASSERT(config.width > 0 && config.height > 0, "Invalid window dimensions");
 
     if (window_count == 0) {
@@ -52,7 +52,7 @@ void* glfw_window::get_handle() const {
     return m_handle;
 }
 
-void window::poll_events() {
+void Window::poll_events() {
     glfwPollEvents();
 }
 

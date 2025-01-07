@@ -5,11 +5,11 @@
 
 namespace toki {
 
-window::window(const config& config) {}
+Window::Window(const Config& config) {}
 
-window::~window() {}
+Window::~Window() {}
 
-ref<window> window::create(const config& config) {
+Ref<Window> Window::create(const Config& config) {
     TK_LOG_INFO("Creating new window");
     return std::make_shared<glfw_window>(config);
 }

@@ -9,20 +9,20 @@
 
 namespace toki {
 
-class window {
+class Window {
 public:
-    struct config {
+    struct Config {
         i32 width = 0;
         i32 height = 0;
         std::string title;
     };
 
 public:
-    static ref<window> create(const config& config);
+    static Ref<Window> create(const Config& config);
 
-    window() = delete;
-    window(const config& config);
-    virtual ~window() = 0;
+    Window() = delete;
+    Window(const Config& config);
+    virtual ~Window() = 0;
 
     virtual Vec2i get_dimensions() const = 0;
 

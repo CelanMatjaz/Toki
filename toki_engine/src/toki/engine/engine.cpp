@@ -4,34 +4,34 @@
 
 namespace toki {
 
-engine::engine(const config& config) {
-    _windows.emplace_back(config.initialWindow);
+Engine::Engine(const Config& config) {
+    m_windows.emplace_back(config.initialWindow);
 
-    renderer::Config renderer_config{};
+    Renderer::Config renderer_config{};
     renderer_config.initialWindow = config.initialWindow;
-    _renderer = renderer::create(renderer_config);
+    m_renderer = Renderer::create(renderer_config);
 }
 
-engine::~engine() {
-    for (auto it = _views.rbegin(); it != _views.rend(); it++) {
-        (*it)->on_destroy(_renderer);
+Engine::~Engine() {
+    for (auto it = m_views.rbegin(); it != m_views.rend(); it++) {
+        (*it)->on_destroy(m_renderer);
     }
-    _views.clear();
+    m_views.clear();
 
-    _renderer.reset();
-    _windows.clear();
+    m_renderer.reset();
+    m_windows.clear();
 }
 
-void engine::run() {
+void Engine::run() {
     m_isRunning = true;
 
     static auto last_frame_time = std::chrono::high_resolution_clock::now();
     float delta_time = 0;
 
     while (m_isRunning) {
-        window::poll_events();
-        for (const auto& window : _windows) {
-            if (window->should_close() && _windows.size() == 1) {
+        Window::poll_events();
+        for (const auto& window : m_windows) {
+            if (window->should_close() && m_windows.size() == 1) {
                 m_isRunning = false;
             }
         }
@@ -40,25 +40,25 @@ void engine::run() {
         delta_time = std::chrono::duration<float>(frame_start_time - last_frame_time).count();
         last_frame_time = frame_start_time;
 
-        for (auto it = _views.rbegin(); it != _views.rend(); it++) {
+        for (auto it = m_views.rbegin(); it != m_views.rend(); it++) {
             (*it)->on_update(delta_time);
         }
 
-        if (_renderer->begin_frame()) {
-            for (auto it = _views.rbegin(); it != _views.rend(); it++) {
-                (*it)->on_render(_renderer->get_renderer_api());
+        if (m_renderer->begin_frame()) {
+            for (auto it = m_views.rbegin(); it != m_views.rend(); it++) {
+                (*it)->on_render(m_renderer->get_renderer_api());
             }
-            _renderer->end_frame();
-            _renderer->present();
+            m_renderer->end_frame();
+            m_renderer->present();
         }
-
-        // break;
     }
+
+    m_renderer->wait_for_resources();
 }
 
-void engine::add_view(ref<view> view) {
-    view->on_add(_renderer);
-    _views.emplace_back(view);
+void Engine::add_view(Ref<View> view) {
+    view->on_add(m_renderer);
+    m_views.emplace_back(view);
 }
 
 }  // namespace toki

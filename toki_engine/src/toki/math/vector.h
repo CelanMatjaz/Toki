@@ -5,7 +5,7 @@
 namespace toki {
 
 template <typename T>
-struct vector2 {
+struct Vector2 {
     union {
         T x;
         T r;
@@ -20,7 +20,7 @@ struct vector2 {
 };
 
 template <typename T>
-struct vector3 {
+struct Vector3 {
     union {
         T x;
         T r;
@@ -40,7 +40,7 @@ struct vector3 {
 };
 
 template <typename T>
-struct vector4 {
+struct Vector4 {
     union {
         T x;
         T r;
@@ -62,13 +62,13 @@ struct vector4 {
     };
 };
 
-using Vec4i = vector4<u32>;
-using Vec4f = vector4<f32>;
+using Vec4i = Vector4<u32>;
+using Vec4f = Vector4<f32>;
 
-using Vec3i = vector3<u32>;
-using Vec3f = vector3<f32>;
+using Vec3i = Vector3<u32>;
+using Vec3f = Vector3<f32>;
 
-using Vec2i = vector2<u32>;
-using Vec2f = vector2<f32>;
+using Vec2i = Vector2<u32>;
+using Vec2f = Vector2<f32>;
 
 }  // namespace toki

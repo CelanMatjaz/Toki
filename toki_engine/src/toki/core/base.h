@@ -29,17 +29,17 @@ static_assert(sizeof(word) == 2, "Type word does not contain 16 bits");
 template <typename T>
 using Scope = std::unique_ptr<T>;
 template <typename T, typename... Args>
-constexpr Scope<T> create_scope(Args&&... args) {
+constexpr Scope<T> createScope(Args&&... args) {
     return std::make_unique<T>(std::forward<Args>(args)...);
 }
 
 template <typename T>
-using ref = std::shared_ptr<T>;
+using Ref = std::shared_ptr<T>;
 template <typename T, typename... Args>
-constexpr ref<T> create_ref(Args&&... args) {
+constexpr Ref<T> createRef(Args&&... args) {
     return std::make_shared<T>(std::forward<Args>(args)...);
 }
 
-using handle = u64;
+using Handle = u64;
 
 }  // namespace toki

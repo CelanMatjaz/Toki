@@ -4,15 +4,15 @@
 
 namespace toki {
 
-struct rect2d {
-    vector2<u32> pos;
-    vector2<u32> size;
+struct Rect2D {
+    Vector2<u32> pos;
+    Vector2<u32> size;
 };
 
-using extent2D = vector2<u32>;
-using offset2D = vector2<u32>;
+using Extent2D = Vector2<u32>;
+using Offset2D = Vector2<u32>;
 
-using extent3D = vector2<u32>;
-using offset3D = vector2<u32>;
+using Extent3D = Vector2<u32>;
+using Offset3D = Vector2<u32>;
 
 }  // namespace toki

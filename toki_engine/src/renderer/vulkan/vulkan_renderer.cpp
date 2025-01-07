@@ -1,7 +1,6 @@
 #include "vulkan_renderer.h"
 
 #include <vulkan/vulkan.h>
-#include <winnt.h>
 
 #include <print>
 #include <utility>
@@ -10,92 +9,91 @@
 #include "core/logging.h"
 #include "renderer/renderer.h"
 #include "renderer/vulkan/platform/vulkan_platform.h"
-#include "renderer/vulkan/vulkan_buffer.h"
-#include "renderer/vulkan/vulkan_framebuffer.h"
-#include "renderer/vulkan/vulkan_pipeline.h"
+#include "renderer/vulkan/state/vulkan_state.h"
 #include "renderer/vulkan/vulkan_renderer_api.h"
-#include "renderer/vulkan/vulkan_swapchain.h"
-#include "renderer/vulkan/vulkan_types.h"
 #include "renderer/vulkan/vulkan_utils.h"
 #include "vulkan/vulkan_core.h"
 
 namespace toki {
 
-vulkan_renderer::vulkan_renderer(const Config& config): renderer(config) {
+VulkanRenderer::VulkanRenderer(const Config& config): Renderer(config) {
     TK_LOG_INFO("Initializing renderer");
-    _context = create_ref<renderer_context>();
-    _renderer_api = create_ref<vulkan_renderer_api>(_context);
+    m_context = createRef<RendererContext>();
+    m_rendererApi = createRef<VulkanRendererApi>(m_context);
 
     create_instance();
     create_device(config.initialWindow);
     create_command_pools();
 
-    create_vulkan_swapchain_config swapchain_config{};
+    VulkanSwapchain::Config swapchain_config{};
     swapchain_config.window = config.initialWindow;
-    swapchain_config.command_pool = _context->command_pools.front();
-    _context->swapchain = vulkan_swapchain_create(_context, swapchain_config);
+    swapchain_config.command_pool = m_context->command_pools.front();
+    m_context->swapchain.create(m_context, swapchain_config);
 }
 
-vulkan_renderer::~vulkan_renderer() {
+VulkanRenderer::~VulkanRenderer() {
     TK_LOG_INFO("Shutting down renderer");
 
-    for (auto& command_pool : _context->command_pools) {
-        vkDestroyCommandPool(_context->device, command_pool, _context->allocation_callbacks);
+    vkDeviceWaitIdle(m_context->device);
+
+    for (auto& command_pool : m_context->command_pools) {
+        vkDestroyCommandPool(m_context->device, command_pool, m_context->allocation_callbacks);
     }
 
-    for (auto& command_pool : _context->extra_command_pools) {
-        vkDestroyCommandPool(_context->device, command_pool, _context->allocation_callbacks);
+    for (auto& command_pool : m_context->extra_command_pools) {
+        vkDestroyCommandPool(m_context->device, command_pool, m_context->allocation_callbacks);
     }
 
-    for (auto& shader : _context->shaders) {
-        vulkan_graphics_pipeline_destroy(_context, shader);
+    for (auto& shader : m_context->shaders) {
+        shader.destroy(m_context);
     }
-    _context->shaders.clear();
+    m_context->shaders.clear();
 
-    for (auto& buffer : _context->buffers) {
-        vulkan_buffer_destroy(_context, buffer);
+    for (auto& buffer : m_context->buffers) {
+        buffer.destroy(m_context);
     }
-    _context->buffers.clear();
+    m_context->buffers.clear();
 
-    vulkan_swapchain_destroy(_context, _context->swapchain);
+    m_context->swapchain.destroy(m_context);
 
-    vkDestroyDevice(_context->device, _context->allocation_callbacks);
-    vkDestroyInstance(_context->instance, _context->allocation_callbacks);
+    vkDestroyDevice(m_context->device, m_context->allocation_callbacks);
+    vkDestroyInstance(m_context->instance, m_context->allocation_callbacks);
 }
 
-handle vulkan_renderer::create_shader(const shader_create_config& config) {
-    TK_ASSERT(_context->framebuffers.contains(config.framebuffer_handle), "Cannot create shader with a non existing framebuffer");
+Handle VulkanRenderer::create_shader(const shader_create_config& config) {
+    TK_ASSERT(m_context->framebuffers.contains(config.framebuffer_handle), "Cannot create shader with a non existing framebuffer");
 
-    handle new_shader_handle = _context->shaders.size() + 1;
+    Handle new_shader_handle = m_context->shaders.size() + 1;
 
-    auto framebuffer = _context->framebuffers.get(config.framebuffer_handle);
-    create_graphics_pipeline_config graphics_pipeline_config{ .framebuffer = _context->framebuffers.get(config.framebuffer_handle) };
+    auto framebuffer = m_context->framebuffers.get(config.framebuffer_handle);
+    VulkanGraphicsPipeline::Config graphics_pipeline_config{ .framebuffer = m_context->framebuffers.get(config.framebuffer_handle) };
     graphics_pipeline_config.vertex_shader_path = config.vertex_shader_path;
     graphics_pipeline_config.fragment_shader_path = config.fragment_shader_path;
-    _context->shaders.emplace(new_shader_handle, vulkan_graphics_pipeline_create(_context, graphics_pipeline_config));
-
+    VulkanGraphicsPipeline pipeline{};
+    pipeline.create(m_context, graphics_pipeline_config);
+    m_context->shaders.emplace(new_shader_handle, pipeline);
     return new_shader_handle;
 }
 
-void vulkan_renderer::destroy_shader(handle shader_handle) {
-    TK_ASSERT(_context->shaders.contains(shader_handle), "Shader with provided handle does not exist");
-    vulkan_graphics_pipeline_destroy(_context, _context->shaders[shader_handle]);
-    _context->shaders.remove(shader_handle);
+void VulkanRenderer::destroy_shader(Handle shader_handle) {
+    TK_ASSERT(m_context->shaders.contains(shader_handle), "Shader with provided handle does not exist");
+    m_context->shaders[shader_handle].destroy(m_context);
+    m_context->shaders.remove(shader_handle);
 }
 
-handle vulkan_renderer::create_buffer(const buffer_create_config& config) {
+Handle VulkanRenderer::create_buffer(const buffer_create_config& config) {
     TK_ASSERT(config.size > 0, "Cannot create a buffer of size 0");
 
-    handle new_buffer_handle = _context->buffers.size() + 1;
+    Handle new_buffer_handle = m_context->buffers.size() + 1;
 
-    create_buffer_config create_buffer_config{};
+    VulkanBuffer::Config create_buffer_config{};
     create_buffer_config.size = config.size;
 
     switch (config.type) {
-        case buffer_type::VERTEX:
+        case BufferType::VERTEX:
             create_buffer_config.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
             break;
-        case buffer_type::INDEX:
+        case BufferType::INDEX:
             create_buffer_config.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
             break;
         default:
@@ -103,65 +101,70 @@ handle vulkan_renderer::create_buffer(const buffer_create_config& config) {
     }
 
     switch (config.usage) {
-        case buffer_usage::STATIC:
-        case buffer_usage::DYNAMIC:
+        case BufferUsage::STATIC:
+        case BufferUsage::DYNAMIC:
             create_buffer_config.memory_properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
             break;
         default:
             std::unreachable();
     }
 
-    _context->buffers.emplace(new_buffer_handle, vulkan_buffer_create(_context, create_buffer_config));
+    VulkanBuffer buffer{};
+    buffer.create(m_context, create_buffer_config);
+    m_context->buffers.emplace(new_buffer_handle, buffer);
 
     return new_buffer_handle;
 }
 
-void vulkan_renderer::destroy_buffer(handle buffer_handle) {
-    TK_ASSERT(_context->buffers.contains(buffer_handle), "Shader with provided handle does not exist");
-    vulkan_buffer_destroy(_context, _context->buffers[buffer_handle]);
-    _context->buffers.remove(buffer_handle);
+void VulkanRenderer::destroy_buffer(Handle buffer_handle) {
+    TK_ASSERT(m_context->buffers.contains(buffer_handle), "Shader with provided handle does not exist");
+    m_context->buffers[buffer_handle].destroy(m_context);
+    m_context->buffers.remove(buffer_handle);
 }
 
-handle vulkan_renderer::create_framebuffer(const framebuffer_create_config& config) {
-    handle handle = _context->framebuffers.size() + 1;
+Handle VulkanRenderer::create_framebuffer(const framebuffer_create_config& config) {
+    Handle handle = m_context->framebuffers.size() + 1;
 
-    create_framebuffer_config framebuffer_config{};
+    VulkanFramebuffer::Config framebuffer_config{};
     framebuffer_config.render_targets = config.render_targets;
-    _context->framebuffers.emplace(handle, vulkan_framebuffer_create(_context, framebuffer_config));
+
+    VulkanFramebuffer framebuffer{};
+    framebuffer.create(m_context, framebuffer_config);
+    m_context->framebuffers.emplace(handle, framebuffer);
 
     return handle;
 }
 
-void vulkan_renderer::destroy_framebuffer(handle handle) {
-    TK_ASSERT(_context->framebuffers.contains(handle), "Framebuffer with provided handle does not exist");
-    vulkan_framebuffer_destroy(_context, _context->framebuffers.get(handle));
-    _context->framebuffers.remove(handle);
+void VulkanRenderer::destroy_framebuffer(Handle framebuffer_handle) {
+    TK_ASSERT(m_context->framebuffers.contains(framebuffer_handle), "Framebuffer with provided handle does not exist");
+    m_context->framebuffers[framebuffer_handle].destroy(m_context);
+    m_context->framebuffers.remove(framebuffer_handle);
 }
 
-b8 vulkan_renderer::begin_frame() {
-    vulkan_swapchain& swapchain = _context->swapchain;
-    frame& frame = swapchain.frames[swapchain.current_image_index];
+b8 VulkanRenderer::begin_frame() {
+    VulkanSwapchain& swapchain = m_context->swapchain;
+    Frame& frame = swapchain.get_current_frame();
 
-    VkResult waitFencesResult = vkWaitForFences(_context->device, 1, &frame.render_fence, VK_TRUE, UINT64_MAX);
+    VkResult waitFencesResult = vkWaitForFences(m_context->device, 1, &frame.render_fence, VK_TRUE, UINT64_MAX);
     TK_ASSERT(waitFencesResult == VK_SUCCESS || waitFencesResult == VK_TIMEOUT, "Failed waiting for fences");
 
-    if (!vulkan_swapchain_start_recording(_context, swapchain)) {
+    if (!swapchain.start_recording(m_context)) {
         return false;
     }
 
-    VK_CHECK(vkResetFences(_context->device, 1, &frame.render_fence), "Could not reset fence");
+    VK_CHECK(vkResetFences(m_context->device, 1, &frame.render_fence), "Could not reset fence");
 
     return true;
 }
 
-void vulkan_renderer::end_frame() {
-    vulkan_swapchain swapchain = _context->swapchain;
-    vulkan_swapchain_stop_recording(_context, swapchain);
+void VulkanRenderer::end_frame() {
+    VulkanSwapchain& swapchain = m_context->swapchain;
+    swapchain.stop_recording(m_context);
 }
 
-void vulkan_renderer::present() {
-    vulkan_swapchain& swapchain = _context->swapchain;
-    frame& frame = swapchain.frames[swapchain.current_image_index];
+void VulkanRenderer::present() {
+    VulkanSwapchain& swapchain = m_context->swapchain;
+    Frame& frame = swapchain.get_current_frame();
 
     VkSemaphore wait_semaphores[] = { frame.present_semaphore };
     VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -177,30 +180,34 @@ void vulkan_renderer::present() {
     submit_info.pCommandBuffers = &frame.command.handle;
     submit_info.commandBufferCount = 1;
 
-    VK_CHECK(vkQueueSubmit(_context->queues.graphics, 1, &submit_info, frame.render_fence), "Could not submit for rendering");
+    VK_CHECK(vkQueueSubmit(m_context->queues.graphics, 1, &submit_info, frame.render_fence), "Could not submit for rendering");
+
+    VkSwapchainKHR swapchain_handles[] = { swapchain.get_handle() };
+    u32 swapchain_indices[] = { swapchain.get_current_image_index() };
 
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signal_semaphores;
     presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains = &swapchain.handle;
-    presentInfo.pImageIndices = &swapchain.current_image_index;
+    presentInfo.pSwapchains = swapchain_handles;
+    presentInfo.pImageIndices = swapchain_indices;
 
-    VkResult result = vkQueuePresentKHR(_context->queues.present, &presentInfo);
+    VkResult result = vkQueuePresentKHR(m_context->queues.present, &presentInfo);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-        vulkan_swapchain_recreate(_context, swapchain);
-        const auto& [width, height] = swapchain.extent;
+        swapchain.recreate(m_context);
+        const auto& [width, height] = swapchain.get_extent();
         return;
     }
 
-    swapchain.current_frame = (swapchain.current_frame + 1) % swapchain.image_count;
-
-    VkResult waitFencesResult = vkWaitForFences(_context->device, 1, &frame.render_fence, VK_TRUE, UINT64_MAX);
-    TK_ASSERT(waitFencesResult == VK_SUCCESS || waitFencesResult == VK_TIMEOUT, "Failed waiting for fences");
+    swapchain.end_frame(m_context);
 }
 
-void vulkan_renderer::create_instance() {
+void VulkanRenderer::wait_for_resources() {
+    vkDeviceWaitIdle(m_context->device);
+}
+
+void VulkanRenderer::create_instance() {
     VkApplicationInfo application_info{};
     application_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     application_info.pApplicationName = "Toki";
@@ -230,18 +237,18 @@ void vulkan_renderer::create_instance() {
     instance_create_info.ppEnabledExtensionNames = extensions.data();
 
     TK_LOG_INFO("Creating new Vulkan instance");
-    VK_CHECK(vkCreateInstance(&instance_create_info, _context->allocation_callbacks, &_context->instance), "Could not initialize renderer");
+    VK_CHECK(vkCreateInstance(&instance_create_info, m_context->allocation_callbacks, &m_context->instance), "Could not initialize renderer");
 }
 
-void vulkan_renderer::create_device(ref<window> window) {
-    VkSurfaceKHR surface = create_surface(_context, reinterpret_cast<GLFWwindow*>(window->get_handle()));
-    Scoped<VkSurfaceKHR, VK_NULL_HANDLE> temp_surface(surface, [ctx = _context](VkSurfaceKHR s) { vkDestroySurfaceKHR(ctx->instance, s, ctx->allocation_callbacks); });
+void VulkanRenderer::create_device(Ref<Window> window) {
+    VkSurfaceKHR surface = create_surface(m_context, reinterpret_cast<GLFWwindow*>(window->get_handle()));
+    Scoped<VkSurfaceKHR, VK_NULL_HANDLE> temp_surface(surface, [ctx = m_context](VkSurfaceKHR s) { vkDestroySurfaceKHR(ctx->instance, s, ctx->allocation_callbacks); });
 
     u32 physical_device_count{};
-    vkEnumeratePhysicalDevices(_context->instance, &physical_device_count, nullptr);
+    vkEnumeratePhysicalDevices(m_context->instance, &physical_device_count, nullptr);
     TK_ASSERT(physical_device_count > 0, "No GPUs found");
     std::vector<VkPhysicalDevice> physical_devices(physical_device_count);
-    vkEnumeratePhysicalDevices(_context->instance, &physical_device_count, physical_devices.data());
+    vkEnumeratePhysicalDevices(m_context->instance, &physical_device_count, physical_devices.data());
 
     u32 device_index = 0;
     for (u32 i = 0; i < physical_devices.size(); i++) {
@@ -254,9 +261,9 @@ void vulkan_renderer::create_device(ref<window> window) {
         }
     }
 
-    VkPhysicalDevice physical_device = _context->physical_device = physical_devices[device_index];
+    VkPhysicalDevice physical_device = m_context->physical_device = physical_devices[device_index];
 
-    const auto [graphics, present, transfer] = _context->queue_family_indices = find_queue_families(physical_device, temp_surface);
+    const auto [graphics, present, transfer] = m_context->queue_family_indices = find_queue_families(physical_device, temp_surface);
     TK_ASSERT(graphics != -1, "Graphics family index not found");
     TK_ASSERT(present != -1, "Present family index not found");
     TK_ASSERT(transfer != -1, "Transfer family index not found");
@@ -295,25 +302,25 @@ void vulkan_renderer::create_device(ref<window> window) {
     device_create_info.ppEnabledExtensionNames = vulkan_extensions.data();
 
     TK_LOG_INFO("Creating new Vulkan device");
-    VK_CHECK(vkCreateDevice(_context->physical_device, &device_create_info, _context->allocation_callbacks, &_context->device), "Could not create device");
+    VK_CHECK(vkCreateDevice(m_context->physical_device, &device_create_info, m_context->allocation_callbacks, &m_context->device), "Could not create device");
 
-    vkGetDeviceQueue(_context->device, graphics, 0, &_context->queues.graphics);
-    vkGetDeviceQueue(_context->device, present, 0, &_context->queues.present);
-    vkGetDeviceQueue(_context->device, transfer, 0, &_context->queues.transfer);
+    vkGetDeviceQueue(m_context->device, graphics, 0, &m_context->queues.graphics);
+    vkGetDeviceQueue(m_context->device, present, 0, &m_context->queues.present);
+    vkGetDeviceQueue(m_context->device, transfer, 0, &m_context->queues.transfer);
 }
 
-void vulkan_renderer::create_command_pools() {
+void VulkanRenderer::create_command_pools() {
     VkCommandPoolCreateInfo command_pool_create_info{};
     command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    command_pool_create_info.queueFamilyIndex = _context->queue_family_indices.graphics;
+    command_pool_create_info.queueFamilyIndex = m_context->queue_family_indices.graphics;
 
     VkCommandPool command_pool;
-    VK_CHECK(vkCreateCommandPool(_context->device, &command_pool_create_info, _context->allocation_callbacks, &command_pool), "Could not create command pool");
-    _context->command_pools.emplace_back(command_pool);
+    VK_CHECK(vkCreateCommandPool(m_context->device, &command_pool_create_info, m_context->allocation_callbacks, &command_pool), "Could not create command pool");
+    m_context->command_pools.emplace_back(command_pool);
 
-    VK_CHECK(vkCreateCommandPool(_context->device, &command_pool_create_info, _context->allocation_callbacks, &command_pool), "Could not create extra command pool");
-    _context->extra_command_pools.emplace_back(command_pool);
+    VK_CHECK(vkCreateCommandPool(m_context->device, &command_pool_create_info, m_context->allocation_callbacks, &command_pool), "Could not create extra command pool");
+    m_context->extra_command_pools.emplace_back(command_pool);
 }
 
 }  // namespace toki

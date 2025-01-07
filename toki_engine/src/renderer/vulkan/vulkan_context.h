@@ -5,11 +5,11 @@
 #include <vector>
 
 #include "containers/array_map.h"
-#include "renderer/vulkan/vulkan_types.h"
+#include "renderer/vulkan/state/vulkan_state.h"
 
 namespace toki {
 
-struct renderer_context {
+struct RendererContext {
     VkInstance instance{};
     VkDevice device{};
     VkPhysicalDevice physical_device{};
@@ -18,18 +18,14 @@ struct renderer_context {
 
     VkAllocationCallbacks* allocation_callbacks{};
 
-    vulkan_swapchain swapchain;
+    VulkanSwapchain swapchain;
 
     std::vector<VkCommandPool> command_pools;
     std::vector<VkCommandPool> extra_command_pools;
 
-    array_map<handle, vulkan_graphics_pipeline> shaders;
-    array_map<handle, vulkan_buffer> buffers;
-    array_map<handle, vulkan_framebuffer> framebuffers;
-
-    VkCommandBuffer get_current_command_buffer() const {
-        return swapchain.frames[swapchain.current_frame].command.handle;
-    }
+    array_map<Handle, VulkanGraphicsPipeline> shaders;
+    array_map<Handle, VulkanBuffer> buffers;
+    array_map<Handle, VulkanFramebuffer> framebuffers;
 };
 
 }  // namespace toki
