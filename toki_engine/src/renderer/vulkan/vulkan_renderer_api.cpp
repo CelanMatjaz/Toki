@@ -22,8 +22,9 @@ void vulkan_renderer_api::begin_pass(const begin_pass_config& config) {
     color_attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    color_attachment.clearValue.color = VkClearColorValue{ config.clear_value.r, config.clear_value.g, config.clear_value.b, config.clear_value.a };
-    color_attachment.clearValue.depthStencil = VkClearDepthStencilValue{ .depth = 0.0f, .stencil = 1 };
+    // color_attachment.clearValue.color = VkClearColorValue{ config.clear_value.r, config.clear_value.g, config.clear_value.b, config.clear_value.a };
+    // color_attachment.clearValue.depthStencil = VkClearDepthStencilValue{ .depth = 0.0f, .stencil = 1 };
+    color_attachment.clearValue.color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
     VkRenderingInfo rendering_info{ VK_STRUCTURE_TYPE_RENDERING_INFO };
     rendering_info.renderArea.extent.width = render_area.size.width;
@@ -38,6 +39,7 @@ void vulkan_renderer_api::begin_pass(const begin_pass_config& config) {
 };
 
 void vulkan_renderer_api::end_pass() {
+    vkCmdDraw(_context->get_current_command_buffer(), 3, 1, 0, 0);
     vkCmdEndRendering(_context->get_current_command_buffer());
 }
 
@@ -74,7 +76,8 @@ void vulkan_renderer_api::reset_scissor() {
     scissor.extent.height = window_dimensions.height;
     scissor.offset.x = 0;
     scissor.offset.y = 0;
-    vkCmdSetScissorWithCount(_context->get_current_command_buffer(), 1, &scissor);
+
+    vkCmdSetScissor(_context->get_current_command_buffer(), 0, 1, &scissor);
 }
 
 void vulkan_renderer_api::fix_render_area(rect2d& render_area) {

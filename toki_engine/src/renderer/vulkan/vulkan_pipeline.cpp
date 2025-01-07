@@ -53,7 +53,7 @@ vulkan_graphics_pipeline vulkan_graphics_pipeline_create(ref<renderer_context> c
     rasterization_state_create_info.depthBiasConstantFactor = 0.0f;
     rasterization_state_create_info.depthBiasClamp = 0.0f;
     rasterization_state_create_info.depthBiasSlopeFactor = 0.0f;
-    rasterization_state_create_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    rasterization_state_create_info.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterization_state_create_info.polygonMode = VK_POLYGON_MODE_FILL;
     rasterization_state_create_info.cullMode = VK_CULL_MODE_BACK_BIT;
 
@@ -130,7 +130,11 @@ vulkan_graphics_pipeline vulkan_graphics_pipeline_create(ref<renderer_context> c
 
     VkFormat formats[MAX_COLOR_RENDER_TARGETS];
     for (int i = 0; i < config.render_targets.size(); i++) {
-        formats[i] = map_format(config.render_targets[i].color_format);
+        if (config.render_targets[i].presentable) {
+            formats[i] = ctx->swapchain.surface_format.format;
+        } else {
+            formats[i] = map_format(config.render_targets[i].color_format);
+        }
     }
 
     VkPipelineRenderingCreateInfoKHR rendering_create_info{};
