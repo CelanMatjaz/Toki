@@ -25,6 +25,7 @@ struct renderer_context {
 
     array_map<handle, vulkan_graphics_pipeline> shaders;
     array_map<handle, vulkan_buffer> buffers;
+    array_map<handle, vulkan_framebuffer> framebuffers;
 
     VkCommandBuffer get_current_command_buffer() const {
         return swapchain.frames[swapchain.current_frame].command.handle;

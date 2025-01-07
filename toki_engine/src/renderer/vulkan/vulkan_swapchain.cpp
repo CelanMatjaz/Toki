@@ -2,6 +2,7 @@
 
 #include "core/logging.h"
 #include "renderer/vulkan/platform/vulkan_platform.h"
+#include "renderer/vulkan/vulkan_framebuffer.h"
 #include "renderer/vulkan/vulkan_types.h"
 #include "vulkan/vulkan_core.h"
 
@@ -99,7 +100,7 @@ void vulkan_swapchain_recreate(ref<renderer_context> ctx, vulkan_swapchain& swap
     TK_LOG_INFO("(Re)creating swapchain");
 
     for (u32 i = 0; i < swapchain.image_count; i++) {
-        if(swapchain.image_views[i] == VK_NULL_HANDLE) {
+        if (swapchain.image_views[i] == VK_NULL_HANDLE) {
             continue;
         }
         vkDestroyImageView(ctx->device, swapchain.image_views[i], ctx->allocation_callbacks);
@@ -165,6 +166,10 @@ void vulkan_swapchain_recreate(ref<renderer_context> ctx, vulkan_swapchain& swap
             image_view_create_info.image = swapchain.images[i];
             VK_CHECK(vkCreateImageView(ctx->device, &image_view_create_info, ctx->allocation_callbacks, &swapchain.image_views[i]), "Could not create swapchain image view");
         }
+    }
+
+    for (auto& framebuffer : ctx->framebuffers) {
+        vulkan_framebuffer_resize(ctx, VkExtent3D{ swapchain.extent.width, swapchain.extent.height, 1 }, framebuffer);
     }
 }
 

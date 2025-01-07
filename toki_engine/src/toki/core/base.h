@@ -40,6 +40,6 @@ constexpr ref<T> create_ref(Args&&... args) {
     return std::make_shared<T>(std::forward<Args>(args)...);
 }
 
-using handle = u32;
+using handle = u64;
 
 }  // namespace toki

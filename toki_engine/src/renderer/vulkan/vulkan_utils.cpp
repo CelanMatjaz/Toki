@@ -172,7 +172,7 @@ VkAttachmentLoadOp map_attachment_load_op(render_target_load_op op) {
     }
 }
 
-VkAttachmentStoreOp map_attachment_load_op(render_target_store_op op) {
+VkAttachmentStoreOp map_attachment_store_op(render_target_store_op op) {
     switch (op) {
         case render_target_store_op::STORE:
             return VK_ATTACHMENT_STORE_OP_STORE;

@@ -79,7 +79,7 @@ vulkan_graphics_pipeline vulkan_graphics_pipeline_create(ref<renderer_context> c
 
     VkPipelineColorBlendAttachmentState color_blend_attachment_state{};
     color_blend_attachment_state.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    color_blend_attachment_state.blendEnable = VK_TRUE;
+    color_blend_attachment_state.blendEnable = VK_FALSE;  // TODO: enable blending
     color_blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
     color_blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     color_blend_attachment_state.colorBlendOp = VK_BLEND_OP_ADD;
@@ -87,7 +87,7 @@ vulkan_graphics_pipeline vulkan_graphics_pipeline_create(ref<renderer_context> c
     color_blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     color_blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
 
-    std::vector<VkPipelineColorBlendAttachmentState> color_blend_attachment_states(1, color_blend_attachment_state);
+    std::vector<VkPipelineColorBlendAttachmentState> color_blend_attachment_states(config.framebuffer.color_render_target_count, color_blend_attachment_state);
 
     VkPipelineColorBlendStateCreateInfo color_blend_state_create_info{};
     color_blend_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -128,23 +128,12 @@ vulkan_graphics_pipeline vulkan_graphics_pipeline_create(ref<renderer_context> c
 
     VK_CHECK(vkCreatePipelineLayout(ctx->device, &pipelineLayoutInfo, ctx->allocation_callbacks, &pipeline.layout), "Could not create pipeline layout");
 
-    VkFormat formats[MAX_COLOR_RENDER_TARGETS];
-    for (int i = 0; i < config.render_targets.size(); i++) {
-        if (config.render_targets[i].presentable) {
-            formats[i] = ctx->swapchain.surface_format.format;
-        } else {
-            formats[i] = map_format(config.render_targets[i].color_format);
-        }
-    }
-
-    VkPipelineRenderingCreateInfoKHR rendering_create_info{};
-    rendering_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
-    rendering_create_info.colorAttachmentCount = config.render_targets.size();
-    rendering_create_info.pColorAttachmentFormats = formats;
+    VkPipelineRenderingCreateInfoKHR test = config.framebuffer.pipeline_rendering_create_info;
+    test.pColorAttachmentFormats = config.framebuffer.render_target_formats.data();
 
     VkGraphicsPipelineCreateInfo graphics_pipeline_create_info{};
     graphics_pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    graphics_pipeline_create_info.pNext = &rendering_create_info;
+    graphics_pipeline_create_info.pNext = &test;
     graphics_pipeline_create_info.stageCount = shader_stages.size();
     graphics_pipeline_create_info.pStages = shader_stages.data();
     graphics_pipeline_create_info.pVertexInputState = &vertex_input_state_create_info;

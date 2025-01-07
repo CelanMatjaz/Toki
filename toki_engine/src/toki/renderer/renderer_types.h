@@ -13,6 +13,8 @@ enum class color_format : u8 {
     DEPTH,
     STENCIL,
     DEPTH_STENCIL,
+
+    COLOR_FORMAT_COUNT
 };
 
 enum class render_target_load_op : u8 {
@@ -28,8 +30,8 @@ enum class render_target_store_op : u8 {
 
 struct render_target {
     color_format color_format = color_format::NONE;
-    render_target_load_op load_op : 3 = render_target_load_op::LOAD;
-    render_target_store_op store_op : 3 = render_target_store_op::DONT_CARE;
+    render_target_load_op load_op : 2 = render_target_load_op::LOAD;
+    render_target_store_op store_op : 2 = render_target_store_op::STORE;
     bool presentable : 2 = false;
 };
 
@@ -77,11 +79,7 @@ enum class buffer_usage : u8 {
 
 struct begin_pass_config {
     rect2d render_area{};
-    i32 present_target_index = -1;
-    u32 color_render_target_count = 0;
-    color_format render_target_color_formats[MAX_COLOR_RENDER_TARGETS]{};
-    color_format render_target_depth_format = color_format::NONE;
-    color_format render_target_stencil_format = color_format::NONE;
+    handle framebuffer_handle{};
     vector4<f32> clear_value;
 };
 

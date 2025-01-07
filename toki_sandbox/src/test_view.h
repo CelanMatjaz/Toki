@@ -10,6 +10,7 @@ public:
     virtual void on_update(const float delta_time) override;
 
 private:
+    toki::handle _framebuffer_handle;
     toki::handle _shader_handle;
     toki::handle _vertex_buffer_handle;
 };

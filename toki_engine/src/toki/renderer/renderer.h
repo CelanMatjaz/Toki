@@ -38,6 +38,9 @@ public:
     virtual handle create_buffer(const buffer_create_config& config) = 0;
     virtual void destroy_buffer(handle handle) = 0;
 
+    virtual handle create_framebuffer(const framebuffer_create_config& config) = 0;
+    virtual void destroy_framebuffer(handle handle) = 0;
+
 protected:
     virtual b8 begin_frame() = 0;
     virtual void end_frame() = 0;

@@ -5,10 +5,18 @@ void test_view::on_add(const toki::ref<toki::renderer> renderer) {
     default_render_target.color_format = toki::color_format::RGBA8;
     default_render_target.presentable = true;
 
+    toki::render_target color_render_target{};
+    color_render_target.color_format = toki::color_format::RGBA8;
+
+    toki::framebuffer_create_config framebuffer_config{};
+    framebuffer_config.render_targets.emplace_back(default_render_target);
+    framebuffer_config.render_targets.emplace_back(color_render_target);
+    _framebuffer_handle = renderer->create_framebuffer(framebuffer_config);
+
     toki::shader_create_config shader_config{};
     shader_config.vertex_shader_path = "assets/shaders/test_shader.vert.glsl";
     shader_config.fragment_shader_path = "assets/shaders/test_shader.frag.glsl";
-    shader_config.render_targets.emplace_back(default_render_target);
+    shader_config.framebuffer_handle = _framebuffer_handle;
     _shader_handle = renderer->create_shader(shader_config);
 
     toki::buffer_create_config vertex_buffer_config{};
@@ -21,10 +29,12 @@ void test_view::on_add(const toki::ref<toki::renderer> renderer) {
 void test_view::on_destroy(const toki::ref<toki::renderer> renderer) {
     renderer->destroy_shader(_shader_handle);
     renderer->destroy_buffer(_vertex_buffer_handle);
+    renderer->destroy_framebuffer(_framebuffer_handle);
 }
 
 void test_view::on_render(toki::ref<toki::renderer_api> api) {
     toki::begin_pass_config begin_pass_config{};
+    begin_pass_config.framebuffer_handle = _framebuffer_handle;
     api->begin_pass(begin_pass_config);
 
     api->reset_viewport();

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vulkan/vulkan.h>
+
 #include "core/macros.h"
 #include "engine/window.h"
 #include "renderer/renderer.h"
@@ -21,6 +23,9 @@ public:
 
     virtual handle create_buffer(const buffer_create_config& config) override;
     virtual void destroy_buffer(handle handle) override;
+
+    virtual handle create_framebuffer(const framebuffer_create_config& config) override;
+    virtual void destroy_framebuffer(handle handle) override;
 
 private:
     void add_window(ref<window> window);

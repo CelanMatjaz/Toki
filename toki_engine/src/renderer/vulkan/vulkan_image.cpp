@@ -10,6 +10,8 @@ vulkan_image vulkan_image_create(ref<renderer_context> ctx, const create_image_c
     vulkan_image image{};
     image.extent = config.extent;
     image.format = config.format;
+    image.usage = config.usage;
+    image.memory_properties = config.memory_properties;
 
     VkImageCreateInfo image_create_info{};
     image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -20,7 +22,7 @@ vulkan_image vulkan_image_create(ref<renderer_context> ctx, const create_image_c
     image_create_info.arrayLayers = 1;
     image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
     image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
-    image_create_info.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+    image_create_info.usage = config.usage | VK_IMAGE_USAGE_SAMPLED_BIT;
 
     VK_CHECK(vkCreateImage(ctx->device, &image_create_info, nullptr, &image.handle), "Could not create image");
 
@@ -56,6 +58,16 @@ void vulkan_image_destroy(ref<renderer_context> ctx, vulkan_image& image) {
     image.handle = VK_NULL_HANDLE;
 }
 
+void vulkan_image_resize(ref<renderer_context> ctx, VkExtent3D extent, vulkan_image& image) {
+    create_image_config config{};
+    config.format = image.format;
+    config.extent = extent;
+    config.usage = image.usage;
+    config.memory_properties = image.memory_properties;
+    vulkan_image_destroy(ctx, image);
+    image = vulkan_image_create(ctx, config);
+}
+
 void vulkan_image_transition_layout(VkCommandBuffer cmd, VkImageLayout old_layout, VkImageLayout new_layout, vulkan_image& image) {
     VkImageMemoryBarrier image_memory_barrier{ VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
     image_memory_barrier.image = image.handle;
@@ -78,7 +90,6 @@ void vulkan_image_transition_layout(VkCommandBuffer cmd, VkImageLayout old_layou
         source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
     }
-
 
     vkCmdPipelineBarrier(cmd, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &image_memory_barrier);
 }

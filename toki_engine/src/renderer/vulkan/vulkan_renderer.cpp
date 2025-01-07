@@ -11,6 +11,7 @@
 #include "renderer/renderer.h"
 #include "renderer/vulkan/platform/vulkan_platform.h"
 #include "renderer/vulkan/vulkan_buffer.h"
+#include "renderer/vulkan/vulkan_framebuffer.h"
 #include "renderer/vulkan/vulkan_pipeline.h"
 #include "renderer/vulkan/vulkan_renderer_api.h"
 #include "renderer/vulkan/vulkan_swapchain.h"
@@ -63,13 +64,15 @@ vulkan_renderer::~vulkan_renderer() {
 }
 
 handle vulkan_renderer::create_shader(const shader_create_config& config) {
+    TK_ASSERT(_context->framebuffers.contains(config.framebuffer_handle), "Cannot create shader with a non existing framebuffer");
+
     handle new_shader_handle = _context->shaders.size() + 1;
 
-    create_graphics_pipeline_config create_graphics_pipeline_config{};
-    create_graphics_pipeline_config.vertex_shader_path = config.vertex_shader_path;
-    create_graphics_pipeline_config.fragment_shader_path = config.fragment_shader_path;
-    create_graphics_pipeline_config.render_targets = config.render_targets;
-    _context->shaders.emplace(new_shader_handle, vulkan_graphics_pipeline_create(_context, create_graphics_pipeline_config));
+    auto framebuffer = _context->framebuffers.get(config.framebuffer_handle);
+    create_graphics_pipeline_config graphics_pipeline_config{ .framebuffer = _context->framebuffers.get(config.framebuffer_handle) };
+    graphics_pipeline_config.vertex_shader_path = config.vertex_shader_path;
+    graphics_pipeline_config.fragment_shader_path = config.fragment_shader_path;
+    _context->shaders.emplace(new_shader_handle, vulkan_graphics_pipeline_create(_context, graphics_pipeline_config));
 
     return new_shader_handle;
 }
@@ -117,6 +120,22 @@ void vulkan_renderer::destroy_buffer(handle buffer_handle) {
     TK_ASSERT(_context->buffers.contains(buffer_handle), "Shader with provided handle does not exist");
     vulkan_buffer_destroy(_context, _context->buffers[buffer_handle]);
     _context->buffers.remove(buffer_handle);
+}
+
+handle vulkan_renderer::create_framebuffer(const framebuffer_create_config& config) {
+    handle handle = _context->framebuffers.size() + 1;
+
+    create_framebuffer_config framebuffer_config{};
+    framebuffer_config.render_targets = config.render_targets;
+    _context->framebuffers.emplace(handle, vulkan_framebuffer_create(_context, framebuffer_config));
+
+    return handle;
+}
+
+void vulkan_renderer::destroy_framebuffer(handle handle) {
+    TK_ASSERT(_context->framebuffers.contains(handle), "Framebuffer with provided handle does not exist");
+    vulkan_framebuffer_destroy(_context, _context->framebuffers.get(handle));
+    _context->framebuffers.remove(handle);
 }
 
 b8 vulkan_renderer::begin_frame() {
@@ -190,20 +209,25 @@ void vulkan_renderer::create_instance() {
     application_info.engineVersion = VK_MAKE_VERSION(0, 0, 0);
     application_info.apiVersion = VK_API_VERSION_1_3;
 
-    uint32_t extensionCount = 0;
-    const char** extensions = glfwGetRequiredInstanceExtensions(&extensionCount);
+    uint32_t glfw_extension_count = 0;
+    const char** glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+
+    std::vector<const char*> extensions(glfw_extensions, glfw_extensions + glfw_extension_count);
 
     VkInstanceCreateInfo instance_create_info{};
     instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instance_create_info.pApplicationInfo = &application_info;
-    instance_create_info.enabledExtensionCount = extensionCount;
-    instance_create_info.ppEnabledExtensionNames = extensions;
 
 #ifndef TK_DIST
     TK_ASSERT(check_validation_layer_support(), "Validation layers not supported");
     instance_create_info.enabledLayerCount = validation_layers.size();
     instance_create_info.ppEnabledLayerNames = validation_layers.data();
+
+    extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
+
+    instance_create_info.enabledExtensionCount = extensions.size();
+    instance_create_info.ppEnabledExtensionNames = extensions.data();
 
     TK_LOG_INFO("Creating new Vulkan instance");
     VK_CHECK(vkCreateInstance(&instance_create_info, _context->allocation_callbacks, &_context->instance), "Could not initialize renderer");

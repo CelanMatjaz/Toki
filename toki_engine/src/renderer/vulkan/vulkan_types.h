@@ -3,7 +3,10 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 
+#include <array>
+
 #include "engine/window.h"
+#include "renderer/renderer_types.h"
 
 namespace toki {
 
@@ -41,6 +44,21 @@ struct vulkan_image {
     VkImageView image_view;
     VkFormat format;
     VkExtent3D extent;
+    VkImageUsageFlagBits usage;
+    VkMemoryPropertyFlags memory_properties;
+};
+
+struct vulkan_framebuffer {
+    u32 color_render_target_count;
+    render_target initial_render_targets[MAX_FRAMEBUFFER_ATTACHMENTS];
+    VkRenderingAttachmentInfo color_attachments[MAX_FRAMEBUFFER_ATTACHMENTS - 1];
+    // VkRenderingAttachmentInfo depth_attachment;
+    // VkRenderingAttachmentInfo stencil_attachment;
+    std::array<VkFormat, MAX_FRAMEBUFFER_ATTACHMENTS> render_target_formats;
+    VkPipelineRenderingCreateInfoKHR pipeline_rendering_create_info;
+
+    vulkan_image images[MAX_FRAMEBUFFER_ATTACHMENTS];
+    i32 present_target_index = -1;
 };
 
 struct vulkan_graphics_pipeline {

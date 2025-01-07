@@ -14,17 +14,18 @@ vulkan_renderer_api::~vulkan_renderer_api() {
 }
 
 void vulkan_renderer_api::begin_pass(const begin_pass_config& config) {
+    TK_ASSERT(_context->framebuffers.contains(config.framebuffer_handle), "Cannot begin render pass without an existing framebuffer");
+
     rect2d render_area = config.render_area;
     fix_render_area(render_area);
 
-    VkRenderingAttachmentInfo color_attachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-    color_attachment.imageView = _context->swapchain.image_views[_context->swapchain.current_frame];
-    color_attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    // color_attachment.clearValue.color = VkClearColorValue{ config.clear_value.r, config.clear_value.g, config.clear_value.b, config.clear_value.a };
-    // color_attachment.clearValue.depthStencil = VkClearDepthStencilValue{ .depth = 0.0f, .stencil = 1 };
-    color_attachment.clearValue.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+    vulkan_framebuffer& framebuffer = _context->framebuffers.get(config.framebuffer_handle);
+    auto& color_attachments = framebuffer.color_attachments;
+    auto& color_attachment_count = framebuffer.color_render_target_count;
+
+    if (framebuffer.present_target_index >= 0) {
+        color_attachments[framebuffer.present_target_index].imageView = _context->swapchain.image_views[_context->swapchain.current_image_index];
+    }
 
     VkRenderingInfo rendering_info{ VK_STRUCTURE_TYPE_RENDERING_INFO };
     rendering_info.renderArea.extent.width = render_area.size.width;
@@ -32,14 +33,14 @@ void vulkan_renderer_api::begin_pass(const begin_pass_config& config) {
     rendering_info.renderArea.offset.x = render_area.pos.x;
     rendering_info.renderArea.offset.y = render_area.pos.y;
     rendering_info.layerCount = 1;
-    rendering_info.pColorAttachments = &color_attachment;
-    rendering_info.colorAttachmentCount = 1;
+    rendering_info.pColorAttachments = color_attachments;
+    rendering_info.colorAttachmentCount = color_attachment_count;
 
     vkCmdBeginRendering(_context->get_current_command_buffer(), &rendering_info);
 };
 
 void vulkan_renderer_api::end_pass() {
-    vkCmdDraw(_context->get_current_command_buffer(), 3, 1, 0, 0);
+    vkCmdDraw(_context->get_current_command_buffer(), 6, 1, 0, 0);
     vkCmdEndRendering(_context->get_current_command_buffer());
 }
 
