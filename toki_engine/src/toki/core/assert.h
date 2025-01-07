@@ -1,8 +1,6 @@
 #pragma once
 
-#include "error.h"
-#include "formatters.h"
-#include "logging.h"
+#include "core/core.h"
 #include "platform.h"
 
 namespace toki {

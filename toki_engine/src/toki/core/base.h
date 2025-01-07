@@ -16,8 +16,15 @@ using u32 = uint32_t;
 using i64 = int64_t;
 using u64 = uint64_t;
 
-using byte = unsigned char;
+using f32 = float;
+static_assert(sizeof(f32) == 4, "Type f32 does not contain 32 bits");
+using f64 = double;
+static_assert(sizeof(f64) == 8, "Type f64 does not contain 64 bits");
+
+using byte = std::byte;
+static_assert(sizeof(byte) == 1, "Type byte does not contain 8 bits");
 using word = wchar_t;
+static_assert(sizeof(word) == 2, "Type word does not contain 16 bits");
 
 template <typename T>
 using Scope = std::unique_ptr<T>;
@@ -27,10 +34,12 @@ constexpr Scope<T> create_scope(Args&&... args) {
 }
 
 template <typename T>
-using Ref = std::shared_ptr<T>;
+using ref = std::shared_ptr<T>;
 template <typename T, typename... Args>
-constexpr Ref<T> create_ref(Args&&... args) {
+constexpr ref<T> create_ref(Args&&... args) {
     return std::make_shared<T>(std::forward<Args>(args)...);
 }
+
+using handle = u32;
 
 }  // namespace toki

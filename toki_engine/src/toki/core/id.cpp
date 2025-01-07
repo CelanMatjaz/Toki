@@ -4,29 +4,29 @@
 
 namespace toki {
 
-Id Id::createId() {
-    return Id();
+id id::createId() {
+    return id();
 }
 
-static uint32_t id = 0;
+static uint32_t static_id = 0;
 
-Id::Id(): m_values{ .u32{ ~(id++), (uint32_t) time(0) } } {}
+id::id(): m_values{ .u32{ ~(static_id++), (uint32_t) time(0) } } {}
 
-Id::Id(uint64_t n): m_values{ n } {}
+id::id(uint64_t n): m_values{ n } {}
 
-Id::Id(const Id& other) {
+id::id(const id& other) {
     m_values.u64 = other.m_values.u64;
 }
 
-Id::Id(Id&& other) {
+id::id(id&& other) {
     m_values.u64 = other.m_values.u64;
 }
 
-uint64_t Id::getId() const {
+uint64_t id::getId() const {
     return m_values.u64;
 }
 
-Id& Id::operator=(const Id& other) {
+id& id::operator=(const id& other) {
     if (this == &other) {
         return *this;
     }
@@ -35,7 +35,7 @@ Id& Id::operator=(const Id& other) {
     return *this;
 }
 
-Id& Id::operator=(const Id&& other) {
+id& id::operator=(const id&& other) {
     if (this == &other) {
         return *this;
     }
@@ -44,24 +44,24 @@ Id& Id::operator=(const Id&& other) {
     return *this;
 }
 
-Id& Id::operator=(const uint64_t&& n) {
+id& id::operator=(const uint64_t&& n) {
     m_values.u64 = n;
     return *this;
 }
 
-bool Id::operator==(const Id& other) const {
+bool id::operator==(const id& other) const {
     return m_values.u64 == other.m_values.u64;
 }
 
-bool Id::operator<(const Id& other) const {
+bool id::operator<(const id& other) const {
     return m_values.u64 < other.m_values.u64;
 }
 
-uint64_t Id::operator()(const Id& id) const {
+uint64_t id::operator()(const id& id) const {
     return std::hash<int>()(id.m_values.u32[0]) ^ (std::hash<int>()(id.m_values.u32[1]) << 1);
 }
 
-Id::operator bool() const {
+id::operator bool() const {
     return m_values.u64 != 0;
 }
 

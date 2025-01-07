@@ -8,16 +8,16 @@ int main(int argc, char* argv[]) {
 
     std::filesystem::current_path(argv[1]);
 
-    Window::Config window_config{};
+    window::config window_config{};
     window_config.width = 800;
     window_config.height = 600;
     window_config.title = "Window";
-    auto window = Window::create(window_config);
+    auto window = window::create(window_config);
 
-    Engine::Config engine_config{};
+    engine::config engine_config{};
     engine_config.initialWindow = window;
-    Engine engine(engine_config);
-    engine.add_view(create_ref<TestView>());
+    engine engine(engine_config);
+    engine.add_view(create_ref<test_view>());
     engine.run();
 
     return 0;

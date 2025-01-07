@@ -6,24 +6,24 @@
 
 namespace toki {
 
-class Id {
+class id {
 public:
-    static Id createId();
+    static id createId();
 
-    Id();
-    Id(uint64_t n);
-    Id(const Id& other);
-    Id(Id&& other);
-    Id& operator=(const Id& other);
-    Id& operator=(const Id&& other);
-    Id& operator=(const uint64_t&& n);
-    ~Id() = default;
+    id();
+    id(uint64_t n);
+    id(const id& other);
+    id(id&& other);
+    id& operator=(const id& other);
+    id& operator=(const id&& other);
+    id& operator=(const uint64_t&& n);
+    ~id() = default;
 
     uint64_t getId() const;
 
-    bool operator==(const Id& other) const;
-    bool operator<(const Id& other) const;
-    uint64_t operator()(const Id& id) const;
+    bool operator==(const id& other) const;
+    bool operator<(const id& other) const;
+    uint64_t operator()(const id& id) const;
 
     operator bool() const;
 
@@ -34,6 +34,4 @@ private:
     } m_values;
 };
 
-using Handle = Id;
-
-}  // namespace Toki
+}  // namespace toki

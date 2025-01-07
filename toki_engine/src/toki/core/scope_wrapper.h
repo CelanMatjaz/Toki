@@ -30,9 +30,7 @@ public:
         return *this;
     }
 
-    Scoped(Scoped&& other):
-        m_value(std::exchange(m_value, other.m_value)),
-        m_release(std::exchange(m_release, other.m_release)) {}
+    Scoped(Scoped&& other): m_value(std::exchange(m_value, other.m_value)), m_release(std::exchange(m_release, other.m_release)) {}
 
     Scoped& operator=(Scoped&& other) {
         return swap(other);

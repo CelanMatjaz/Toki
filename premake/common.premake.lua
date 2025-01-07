@@ -71,7 +71,7 @@ function link_vulkan()
     filter "platforms:linux_wayland or platforms:linux_x11"
         includedirs { path.join(VULKAN_SDK, "include") }
         libdirs { path.join(VULKAN_SDK, "lib") }
-        links { "vulkan" }
+        links { "vulkan", "spirv-cross-core", "shaderc_shared", "spirv-cross-glsl" }
 
     filter "platforms:linux_wayland"
         defines { "VK_USE_PLATFORM_WAYLAND_KHR" }

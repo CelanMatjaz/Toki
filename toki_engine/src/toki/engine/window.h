@@ -4,23 +4,27 @@
 #include <string>
 
 #include "core/core.h"
+#include "math/types.h"
+#include "math/vector.h"
 
 namespace toki {
 
-class Window {
+class window {
 public:
-    struct Config {
+    struct config {
         i32 width = 0;
         i32 height = 0;
         std::string title;
     };
 
 public:
-    static Ref<Window> create(const Config& config);
+    static ref<window> create(const config& config);
 
-    Window() = delete;
-    Window(const Config& config);
-    virtual ~Window() = 0;
+    window() = delete;
+    window(const config& config);
+    virtual ~window() = 0;
+
+    virtual Vec2i get_dimensions() const = 0;
 
     virtual bool should_close() const = 0;
     virtual void* get_handle() const = 0;

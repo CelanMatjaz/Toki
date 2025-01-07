@@ -8,30 +8,30 @@
 
 namespace toki {
 
-class Engine {
+class engine {
 public:
-    struct Config {
-        Ref<Window> initialWindow;
+    struct config {
+        ref<window> initialWindow;
     };
 
 public:
-    Engine() = delete;
-    Engine(const Config& config);
-    ~Engine();
+    engine() = delete;
+    engine(const config& config);
+    ~engine();
 
-    DELETE_COPY(Engine);
-    DELETE_MOVE(Engine);
+    DELETE_COPY(engine);
+    DELETE_MOVE(engine);
 
     void run();
 
-    void add_view(Ref<View> view);
+    void add_view(ref<view> view);
 
 private:
     bool m_isRunning = false;
 
-    std::vector<Ref<Window>> m_windows;
-    std::vector<Ref<View>> m_views;
-    Ref<Renderer> m_renderer;
+    std::vector<ref<window>> _windows;
+    std::vector<ref<view>> _views;
+    ref<renderer> _renderer;
 };
 
 }  // namespace toki

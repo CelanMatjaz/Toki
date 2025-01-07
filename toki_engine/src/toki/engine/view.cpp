@@ -2,8 +2,8 @@
 
 namespace toki {
 
-Ref<View> View::create() {
-    return std::make_shared<View>();
+ref<view> view::create() {
+    return std::make_shared<view>();
 }
 
 }  // namespace toki

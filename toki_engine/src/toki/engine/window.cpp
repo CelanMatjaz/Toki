@@ -1,15 +1,17 @@
 #include "window.h"
 
-#include "platform/windows/glfw_window.h"
+#include "core/logging.h"
+#include "platform/glfw_window.h"
 
 namespace toki {
 
-Window::Window(const Config& config) {}
+window::window(const config& config) {}
 
-Window::~Window() {}
+window::~window() {}
 
-Ref<Window> Window::create(const Config& config) {
-    return std::make_shared<GlfwWindow>(config);
+ref<window> window::create(const config& config) {
+    TK_LOG_INFO("Creating new window");
+    return std::make_shared<glfw_window>(config);
 }
 
 }  // namespace toki

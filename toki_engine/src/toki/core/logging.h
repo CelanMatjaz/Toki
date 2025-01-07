@@ -40,10 +40,9 @@ template <typename... Args>
 constexpr void log(LogLevel level, std::string_view fmt, Args&&... args) {
     static const std::chrono::time_zone* currentZone = std::chrono::get_tzdb().current_zone();
     auto now = std::chrono::system_clock::now();
-    auto time = std::chrono::zoned_time{ currentZone, std::chrono::time_point_cast<std::chrono::seconds>(now) };
+    auto time = std::chrono::zoned_time{ currentZone, std::chrono::time_point_cast<std::chrono::nanoseconds>(now) };
     auto ymd = std::chrono::year_month_day(std::chrono::floor<std::chrono::days>(now));
-    std::cout << std::format("[{:%Y-%m-%d} {:%T}] [{}]: ", ymd, time, level_to_string(level))
-              << std::vformat(fmt, std::make_format_args(args...)) << '\n';
+    std::cout << std::format("[{:%Y-%m-%d} {:%T}] [{}]: ", ymd, time, level_to_string(level)) << std::vformat(fmt, std::make_format_args(args...)) << '\n';
 }
 
 #if defined(LOG_INFO_OFF) || defined(LOGGING_OFF)
