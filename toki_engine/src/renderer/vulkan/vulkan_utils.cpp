@@ -6,11 +6,14 @@
 #include <vector>
 
 #include "core/assert.h"
+#include "core/logging.h"
 #include "renderer/renderer_types.h"
 #include "renderer/vulkan/vulkan_context.h"
 #include "shaderc/shaderc.hpp"
 
 namespace toki {
+
+#ifndef TK_DIST
 
 bool check_validation_layer_support() {
     uint32_t layer_count{};
@@ -33,6 +36,8 @@ bool check_validation_layer_support() {
 
     return true;
 }
+
+#endif
 
 bool check_for_extensions(VkPhysicalDevice physical_device) {
     uint32_t extension_count;

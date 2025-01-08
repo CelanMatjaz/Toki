@@ -221,8 +221,6 @@ void VulkanRenderer::create_instance() {
     TK_ASSERT(check_validation_layer_support(), "Validation layers not supported");
     instance_create_info.enabledLayerCount = validation_layers.size();
     instance_create_info.ppEnabledLayerNames = validation_layers.data();
-
-    extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
 
     instance_create_info.enabledExtensionCount = extensions.size();
@@ -254,6 +252,9 @@ void VulkanRenderer::create_device(Ref<Window> window) {
     }
 
     VkPhysicalDevice physical_device = m_context->physical_device = physical_devices[device_index];
+    VkPhysicalDeviceProperties properties;
+    vkGetPhysicalDeviceProperties(physical_device, &properties);
+    TK_LOG_INFO("GPU name: {}", properties.deviceName);
 
     const auto [graphics, present, transfer] = m_context->queue_family_indices = find_queue_families(physical_device, temp_surface);
     TK_ASSERT(graphics != -1, "Graphics family index not found");
@@ -276,20 +277,16 @@ void VulkanRenderer::create_device(Ref<Window> window) {
     queue_create_infos[2].queueCount = 1;
     queue_create_infos[2].pQueuePriorities = &queue_priority;
 
-    VkPhysicalDeviceFeatures2 device_features{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR };
-
     // Extra features
-    {
-        VkPhysicalDeviceDynamicRenderingFeatures dynamic_rendering_feature{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES };
-        dynamic_rendering_feature.dynamicRendering = VK_TRUE;
-        device_features.pNext = &dynamic_rendering_feature;
-    }
+    VkPhysicalDeviceDynamicRenderingFeatures dynamic_rendering_feature{};
+    dynamic_rendering_feature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
+    dynamic_rendering_feature.dynamicRendering = VK_TRUE;
 
     VkDeviceCreateInfo device_create_info{};
     device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    device_create_info.pNext = &device_features;
+    device_create_info.pNext = &dynamic_rendering_feature;
     device_create_info.pQueueCreateInfos = queue_create_infos;
-    device_create_info.queueCreateInfoCount = graphics == present ? 1 : 3;
+    device_create_info.queueCreateInfoCount = 1;
     device_create_info.enabledExtensionCount = vulkan_extensions.size();
     device_create_info.ppEnabledExtensionNames = vulkan_extensions.data();
 
