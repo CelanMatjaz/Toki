@@ -31,7 +31,6 @@ public:
 
     Frame& get_current_frame();
     u32 get_current_frame_index() const;
-
     u32 get_current_image_index() const;
 
     VkSwapchainKHR m_handle;

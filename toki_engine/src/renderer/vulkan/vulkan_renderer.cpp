@@ -143,16 +143,10 @@ void VulkanRenderer::destroy_framebuffer(Handle framebuffer_handle) {
 
 b8 VulkanRenderer::begin_frame() {
     VulkanSwapchain& swapchain = m_context->swapchain;
-    Frame& frame = swapchain.get_current_frame();
-
-    VkResult waitFencesResult = vkWaitForFences(m_context->device, 1, &frame.render_fence, VK_TRUE, UINT64_MAX);
-    TK_ASSERT(waitFencesResult == VK_SUCCESS || waitFencesResult == VK_TIMEOUT, "Failed waiting for fences");
 
     if (!swapchain.start_recording(m_context)) {
         return false;
     }
-
-    VK_CHECK(vkResetFences(m_context->device, 1, &frame.render_fence), "Could not reset fence");
 
     return true;
 }
@@ -166,7 +160,7 @@ void VulkanRenderer::present() {
     VulkanSwapchain& swapchain = m_context->swapchain;
     Frame& frame = swapchain.get_current_frame();
 
-    VkSemaphore wait_semaphores[] = { frame.present_semaphore };
+    VkSemaphore wait_semaphores[] = { frame.image_available_semaphore };
     VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
     VkSemaphore signal_semaphores[] = { frame.present_semaphore };
 
@@ -196,8 +190,6 @@ void VulkanRenderer::present() {
     VkResult result = vkQueuePresentKHR(m_context->queues.present, &presentInfo);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
         swapchain.recreate(m_context);
-        const auto& [width, height] = swapchain.get_extent();
-        return;
     }
 
     swapchain.end_frame(m_context);

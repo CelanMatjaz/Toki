@@ -45,7 +45,7 @@ struct vulkan_command_buffer {
 
 struct Frame {
     VkSemaphore present_semaphore;
-    VkSemaphore render_semaphore;
+    VkSemaphore image_available_semaphore;
     VkFence render_fence;
     vulkan_command_buffer command;
     Vec2i window_dimensions;

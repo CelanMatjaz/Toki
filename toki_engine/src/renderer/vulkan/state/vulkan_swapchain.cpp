@@ -1,5 +1,7 @@
 #include "vulkan_swapchain.h"
 
+#include "GLFW/glfw3.h"
+#include "core/assert.h"
 #include "core/logging.h"
 #include "renderer/vulkan/platform/vulkan_platform.h"
 #include "renderer/vulkan/vulkan_types.h"
@@ -65,7 +67,7 @@ void VulkanSwapchain::create(Ref<RendererContext> ctx, const Config& config) {
 
         for (uint32_t i = 0; i < m_imageCount; ++i) {
             VK_CHECK(vkCreateFence(ctx->device, &fence_create_info, ctx->allocation_callbacks, &m_frames[i].render_fence), "Could not create render fence");
-            VK_CHECK(vkCreateSemaphore(ctx->device, &semaphore_create_info, ctx->allocation_callbacks, &m_frames[i].render_semaphore), "Could not create render semaphore");
+            VK_CHECK(vkCreateSemaphore(ctx->device, &semaphore_create_info, ctx->allocation_callbacks, &m_frames[i].image_available_semaphore), "Could not create render semaphore");
             VK_CHECK(vkCreateSemaphore(ctx->device, &semaphore_create_info, ctx->allocation_callbacks, &m_frames[i].present_semaphore), "Could not create present semaphore");
         }
     }
@@ -75,8 +77,8 @@ void VulkanSwapchain::destroy(Ref<RendererContext> ctx) {
     for (uint32_t i = 0; i < FRAME_COUNT; ++i) {
         vkDestroyFence(ctx->device, m_frames[i].render_fence, ctx->allocation_callbacks);
         m_frames[i].render_fence = VK_NULL_HANDLE;
-        vkDestroySemaphore(ctx->device, m_frames[i].render_semaphore, ctx->allocation_callbacks);
-        m_frames[i].render_semaphore = VK_NULL_HANDLE;
+        vkDestroySemaphore(ctx->device, m_frames[i].image_available_semaphore, ctx->allocation_callbacks);
+        m_frames[i].image_available_semaphore = VK_NULL_HANDLE;
         vkDestroySemaphore(ctx->device, m_frames[i].present_semaphore, ctx->allocation_callbacks);
         m_frames[i].present_semaphore = VK_NULL_HANDLE;
     }
@@ -95,6 +97,7 @@ void VulkanSwapchain::destroy(Ref<RendererContext> ctx) {
 void VulkanSwapchain::recreate(Ref<RendererContext> ctx) {
     TK_LOG_INFO("(Re)creating swapchain");
 
+    vkDeviceWaitIdle(ctx->device);
     for (u32 i = 0; i < m_imageCount; i++) {
         if (m_imageViews[i] == VK_NULL_HANDLE) {
             continue;
@@ -102,8 +105,6 @@ void VulkanSwapchain::recreate(Ref<RendererContext> ctx) {
         vkDestroyImageView(ctx->device, m_imageViews[i], ctx->allocation_callbacks);
         m_imageViews[i] = VK_NULL_HANDLE;
     }
-
-    m_currentFrameIndex = 0;
 
     VkSurfaceCapabilitiesKHR capabilities;
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(ctx->physical_device, m_surface, &capabilities);
@@ -170,8 +171,12 @@ void VulkanSwapchain::recreate(Ref<RendererContext> ctx) {
 }
 
 b8 VulkanSwapchain::start_recording(Ref<RendererContext> ctx) {
-    Frame& frame = m_frames[m_currentFrameIndex];
-    VkResult result = vkAcquireNextImageKHR(ctx->device, m_handle, UINT64_MAX, frame.present_semaphore, VK_NULL_HANDLE, &m_currentImageIndex);
+    Frame& frame = get_current_frame();
+
+    VkResult waitFencesResult = vkWaitForFences(ctx->device, 1, &frame.render_fence, VK_TRUE, UINT64_MAX);
+    TK_ASSERT(waitFencesResult == VK_SUCCESS || waitFencesResult == VK_TIMEOUT, "Failed waiting for fences");
+
+    VkResult result = vkAcquireNextImageKHR(ctx->device, m_handle, UINT64_MAX, frame.image_available_semaphore, VK_NULL_HANDLE, &m_currentImageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         recreate(ctx);
@@ -180,6 +185,11 @@ b8 VulkanSwapchain::start_recording(Ref<RendererContext> ctx) {
         TK_ASSERT(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, "Could not acquire swapchain image");
     }
 
+    VK_CHECK(vkResetFences(ctx->device, 1, &frame.render_fence), "Could not reset fence");
+
+    vkResetCommandBuffer(frame.command.handle, 0);
+
+    TK_ASSERT(frame.command.state == vulkan_command_buffer_state::READY, "Command buffer is not ready for recording");
     VkCommandBufferBeginInfo command_buffer_begin_info{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
     command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     vkBeginCommandBuffer(frame.command.handle, &command_buffer_begin_info);
@@ -189,16 +199,18 @@ b8 VulkanSwapchain::start_recording(Ref<RendererContext> ctx) {
 }
 
 void VulkanSwapchain::stop_recording(Ref<RendererContext> ctx) {
-    Frame& frame = m_frames[m_currentImageIndex];
-    vkEndCommandBuffer(frame.command.handle);
+    Frame& frame = get_current_frame();
+    TK_ASSERT(frame.command.state == vulkan_command_buffer_state::RECORDING_STARTED, "Command buffer has not started recording");
+    VK_CHECK(vkEndCommandBuffer(frame.command.handle), "Could not end command buffer");
     frame.command.state = vulkan_command_buffer_state::RECORDING_STOPPED;
 }
 
 void VulkanSwapchain::end_frame(Ref<RendererContext> ctx) {
-    m_currentFrameIndex = (m_currentFrameIndex + 1) % m_imageCount;
-
-    VkResult waitFencesResult = vkWaitForFences(ctx->device, 1, &get_current_frame().render_fence, VK_TRUE, UINT64_MAX);
-    TK_ASSERT(waitFencesResult == VK_SUCCESS || waitFencesResult == VK_TIMEOUT, "Failed waiting for fences");
+    // VkResult wait_for_fences_result = vkWaitForFences(ctx->device, 1, &get_current_frame().render_fence, VK_TRUE, UINT64_MAX);
+    // TK_ASSERT(wait_for_fences_result == VK_SUCCESS || wait_for_fences_result == VK_TIMEOUT, "Failed waiting for fences");
+    Frame& frame = get_current_frame();
+    frame.command.state = vulkan_command_buffer_state::READY;
+    m_currentFrameIndex = (m_currentFrameIndex + 1) % FRAME_COUNT;
 }
 
 void VulkanSwapchain::transition_current_frame_image() {
@@ -234,7 +246,7 @@ u32 VulkanSwapchain::get_current_frame_index() const {
 }
 
 u32 VulkanSwapchain::get_current_image_index() const {
-    return m_currentFrameIndex;
+    return m_currentImageIndex;
 }
 
 static VkSurfaceFormatKHR get_surface_format(const std::vector<VkSurfaceFormatKHR>& formats) {
