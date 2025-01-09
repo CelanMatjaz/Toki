@@ -1,7 +1,12 @@
 #include "test_view.h"
 
+#include <print>
+
+#include "core/logging.h"
+
 void TestView::on_add(const toki::Ref<toki::Renderer> renderer) {
     toki::RenderTarget default_render_target{};
+    default_render_target.loadOp = toki::RenderTargetLoadOp::CLEAR;
     default_render_target.colorFormat = toki::ColorFormat::RGBA8;
     default_render_target.presentable = true;
 
@@ -24,6 +29,9 @@ void TestView::on_add(const toki::Ref<toki::Renderer> renderer) {
     vertex_buffer_config.type = toki::BufferType::VERTEX;
     vertex_buffer_config.usage = toki::BufferUsage::DYNAMIC;
     m_vertex_buffer_handle = renderer->create_buffer(vertex_buffer_config);
+
+    m_camera.set_position({ 0.0f, -1.0, 0.0f });
+    m_camera.set_ortho_projection(-2, 2, 2, -2);
 }
 
 void TestView::on_destroy(const toki::Ref<toki::Renderer> renderer) {
@@ -35,6 +43,7 @@ void TestView::on_destroy(const toki::Ref<toki::Renderer> renderer) {
 void TestView::on_render(toki::Ref<toki::RendererApi> api) {
     toki::BeginPassConfig begin_pass_config{};
     begin_pass_config.framebufferHandle = m_framebuffer_handle;
+    begin_pass_config.viewProjectionMatrix = m_camera.get_view_projection_matrix();
     api->begin_pass(begin_pass_config);
 
     api->reset_viewport();
@@ -47,4 +56,24 @@ void TestView::on_render(toki::Ref<toki::RendererApi> api) {
     api->submit();
 }
 
-void TestView::on_update(const float delta_time) {}
+void TestView::on_update(const float delta_time) {
+    static float z_rotation = 0.0f;
+    z_rotation += 1 * delta_time;
+    m_camera.set_rotation(z_rotation);
+}
+
+void TestView::on_event(toki::Event& event) {
+    using namespace toki;
+    EventData data = event.get_data();
+
+    switch (event.get_type()) {
+        case EventType::KeyPress:
+        case EventType::KeyRepeat:
+            if (data.u16[0] == 32) {
+                TK_LOG_INFO("space clicked");
+            }
+            break;
+
+        default:
+    }
+}

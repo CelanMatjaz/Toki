@@ -1,6 +1,9 @@
 #include "vulkan_renderer_api.h"
 
+#include <cstring>
+
 #include "core/assert.h"
+#include "vulkan/vulkan_core.h"
 
 namespace toki {
 
@@ -20,8 +23,14 @@ void VulkanRendererApi::begin_pass(const BeginPassConfig& config) {
     VulkanFramebuffer& framebuffer = m_context->framebuffers.get(config.framebufferHandle);
     std::vector color_attachment_infos = framebuffer.get_color_attachments_rendering_infos();
 
-    if (i32 index = framebuffer.get_present_target_index(); index >= 0) {
-        color_attachment_infos[index].imageView = m_context->swapchain.get_current_frame_image_view();
+    i32 present_index = framebuffer.get_present_target_index();
+    if (present_index >= 0) {
+        color_attachment_infos[present_index].imageView = m_context->swapchain.get_current_frame_image_view();
+        color_attachment_infos[present_index].clearValue.color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+        m_context->swapchain.prepare_current_frame_image();
+    }
+    for (auto& attachment : color_attachment_infos) {
+        memset(attachment.clearValue.color.float32, 0, sizeof(attachment.clearValue.color.float32));
     }
 
     VkRenderingInfo rendering_info{ VK_STRUCTURE_TYPE_RENDERING_INFO };
@@ -35,20 +44,20 @@ void VulkanRendererApi::begin_pass(const BeginPassConfig& config) {
 
     vkCmdBeginRendering(m_context->swapchain.get_current_command_buffer(), &rendering_info);
 
+    vkCmdPushConstants(m_context->swapchain.get_current_command_buffer(), m_context->shaders.begin()->get_layout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &config.viewProjectionMatrix);
+
     m_isPassStarted = true;
 };
 
 void VulkanRendererApi::end_pass() {
     TK_ASSERT(m_isPassStarted, "No render pass was started");
-    vkCmdDraw(m_context->swapchain.get_current_command_buffer(), 6, 1, 0, 0);
+    vkCmdDraw(m_context->swapchain.get_current_command_buffer(), 3, 1, 0, 0);
     vkCmdEndRendering(m_context->swapchain.get_current_command_buffer());
 
     m_isPassStarted = false;
 }
 
-void VulkanRendererApi::submit() {
-    m_context->swapchain.transition_current_frame_image();
-}
+void VulkanRendererApi::submit() {}
 
 void VulkanRendererApi::bind_shader(Handle shader_handle) {
     TK_ASSERT(m_context->shaders.contains(shader_handle), "Shader with provided handle does not exist");

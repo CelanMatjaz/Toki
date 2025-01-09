@@ -127,7 +127,7 @@ void GlfwWindow::mouse_move_callback(GLFWwindow* window, double xpos, double ypo
 
 void GlfwWindow::mouse_enter_callback(GLFWwindow* window, int entered) {
     if (entered) {
-        DISPATCH_WINDOW_EVENT(Event(EventType::MouseEnter));
+            DISPATCH_WINDOW_EVENT(Event(EventType::MouseEnter));
     } else {
         DISPATCH_WINDOW_EVENT(Event(EventType::MouseLeave));
     }

@@ -21,6 +21,7 @@ public:
     void stop_recording(Ref<RendererContext> ctx);
     void end_frame(Ref<RendererContext> ctx);
 
+    void prepare_current_frame_image();
     void transition_current_frame_image();
 
     VkSwapchainKHR get_handle() const;

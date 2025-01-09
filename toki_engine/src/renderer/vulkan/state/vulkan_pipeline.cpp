@@ -51,7 +51,8 @@ void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& conf
     rasterization_state_create_info.depthBiasConstantFactor = 0.0f;
     rasterization_state_create_info.depthBiasClamp = 0.0f;
     rasterization_state_create_info.depthBiasSlopeFactor = 0.0f;
-    rasterization_state_create_info.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterization_state_create_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    // rasterization_state_create_info.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterization_state_create_info.polygonMode = VK_POLYGON_MODE_FILL;
     rasterization_state_create_info.cullMode = VK_CULL_MODE_BACK_BIT;
 
@@ -110,21 +111,26 @@ void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& conf
 
     VkRect2D scissor{};
 
-    VkPipelineViewportStateCreateInfo viewportState{};
-    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportState.viewportCount = 1;
-    viewportState.pViewports = &viewport;
-    viewportState.scissorCount = 1;
-    viewportState.pScissors = &scissor;
+    VkPipelineViewportStateCreateInfo viewport_state_create_info{};
+    viewport_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewport_state_create_info.viewportCount = 1;
+    viewport_state_create_info.pViewports = &viewport;
+    viewport_state_create_info.scissorCount = 1;
+    viewport_state_create_info.pScissors = &scissor;
 
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 0;
-    pipelineLayoutInfo.pSetLayouts = nullptr;
-    pipelineLayoutInfo.pushConstantRangeCount = 0;
-    pipelineLayoutInfo.pPushConstantRanges = nullptr;
+    VkPushConstantRange push_constant{};
+    push_constant.size = sizeof(glm::mat4);
+    push_constant.offset = 0;
+    push_constant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-    VK_CHECK(vkCreatePipelineLayout(ctx->device, &pipelineLayoutInfo, ctx->allocation_callbacks, &m_layout), "Could not create pipeline layout");
+    VkPipelineLayoutCreateInfo pipeline_layout_create_info{};
+    pipeline_layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipeline_layout_create_info.setLayoutCount = 0;
+    pipeline_layout_create_info.pSetLayouts = nullptr;
+    pipeline_layout_create_info.pushConstantRangeCount = 1;
+    pipeline_layout_create_info.pPushConstantRanges = &push_constant;
+
+    VK_CHECK(vkCreatePipelineLayout(ctx->device, &pipeline_layout_create_info, ctx->allocation_callbacks, &m_layout), "Could not create pipeline layout");
 
     VkPipelineRenderingCreateInfoKHR pipeline_rendering_info_create_info = config.framebuffer.get_pipeline_rendering_create_info();
 
@@ -139,7 +145,7 @@ void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& conf
     graphics_pipeline_create_info.pMultisampleState = &multisample_state_create_info;
     graphics_pipeline_create_info.pColorBlendState = &color_blend_state_create_info;
     graphics_pipeline_create_info.pDepthStencilState = &depth_stencil_state_create_info;
-    graphics_pipeline_create_info.pViewportState = &viewportState;
+    graphics_pipeline_create_info.pViewportState = &viewport_state_create_info;
     graphics_pipeline_create_info.pDynamicState = &dynamic_state_create_info;
     graphics_pipeline_create_info.subpass = 0;
     graphics_pipeline_create_info.layout = m_layout;

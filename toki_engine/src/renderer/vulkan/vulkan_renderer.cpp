@@ -152,6 +152,7 @@ b8 VulkanRenderer::begin_frame() {
 
 void VulkanRenderer::end_frame() {
     VulkanSwapchain& swapchain = m_context->swapchain;
+    swapchain.transition_current_frame_image();
     swapchain.stop_recording(m_context);
 }
 

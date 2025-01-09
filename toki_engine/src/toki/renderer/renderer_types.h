@@ -79,6 +79,7 @@ struct BeginPassConfig {
     Rect2D renderArea{};
     Handle framebufferHandle{};
     Vec4 clearValue;
+    glm::mat4 viewProjectionMatrix;
 };
 
 }  // namespace toki
