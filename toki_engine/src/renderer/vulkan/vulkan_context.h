@@ -13,8 +13,8 @@ struct RendererContext {
     VkInstance instance{};
     VkDevice device{};
     VkPhysicalDevice physical_device{};
-    queue_family_indices queue_family_indices{};
-    queues queues{};
+    QueueFamilyIndices queue_family_indices{};
+    Queues queues{};
 
     VkAllocationCallbacks* allocation_callbacks{};
 

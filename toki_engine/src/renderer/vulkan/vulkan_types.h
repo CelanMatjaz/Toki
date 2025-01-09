@@ -18,19 +18,19 @@ namespace toki {
 
 inline const std::vector<const char*> vulkan_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME };
 
-struct queue_family_indices {
+struct QueueFamilyIndices {
     i32 graphics = -1;
     i32 present = -1;
     i32 transfer = -1;
 };
 
-struct queues {
+struct Queues {
     VkQueue graphics{};
     VkQueue present{};
     VkQueue transfer{};
 };
 
-enum class vulkan_command_buffer_state {
+enum class CommandBufferState {
     UNINITIALIZED,
     READY,
     RECORDING_STARTED,
@@ -38,17 +38,17 @@ enum class vulkan_command_buffer_state {
     SUBMITED
 };
 
-struct vulkan_command_buffer {
+struct VulkanCommandBuffer {
     VkCommandBuffer handle;
-    vulkan_command_buffer_state state;
+    CommandBufferState state;
 };
 
 struct Frame {
     VkSemaphore present_semaphore;
     VkSemaphore image_available_semaphore;
     VkFence render_fence;
-    vulkan_command_buffer command;
-    Vec2i window_dimensions;
+    VulkanCommandBuffer command;
+    Vec2 window_dimensions;
 };
 
 }  // namespace toki

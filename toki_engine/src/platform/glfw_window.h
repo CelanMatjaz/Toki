@@ -15,7 +15,7 @@ public:
     glfw_window(const Config& config);
     virtual ~glfw_window();
 
-    virtual Vec2i get_dimensions() const override;
+    virtual Vec2 get_dimensions() const override;
 
     virtual bool should_close() const override;
     virtual void* get_handle() const override;

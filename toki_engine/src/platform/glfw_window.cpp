@@ -42,10 +42,10 @@ bool glfw_window::should_close() const {
     return glfwWindowShouldClose(reinterpret_cast<GLFWwindow*>(m_handle)) == GLFW_TRUE;
 }
 
-Vec2i glfw_window::get_dimensions() const {
+Vec2 glfw_window::get_dimensions() const {
     int width, height;
     glfwGetFramebufferSize(m_handle, &width, &height);
-    return Vec2i{ .width = static_cast<u32>(width), .height = static_cast<u32>(height) };
+    return Vec2{ width, height };
 }
 
 void* glfw_window::get_handle() const {

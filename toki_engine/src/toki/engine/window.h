@@ -4,8 +4,7 @@
 #include <string>
 
 #include "core/core.h"
-#include "math/types.h"
-#include "math/vector.h"
+#include "detail/qualifier.hpp"
 
 namespace toki {
 
@@ -24,7 +23,7 @@ public:
     Window(const Config& config);
     virtual ~Window() = 0;
 
-    virtual Vec2i get_dimensions() const = 0;
+    virtual Vec2 get_dimensions() const = 0;
 
     virtual bool should_close() const = 0;
     virtual void* get_handle() const = 0;

@@ -21,7 +21,10 @@ public:
     virtual void reset_scissor() override;
 
 private:
-    Ref<RendererContext> _context{};
+    Ref<RendererContext> m_context{};
+
+    b8 m_isPassStarted = false;
+
 
     void fix_render_area(Rect2D& render_area);
 };

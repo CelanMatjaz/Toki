@@ -1,7 +1,6 @@
 #include "vulkan_buffer.h"
 
 #include "renderer/vulkan/vulkan_utils.h"
-#include "vulkan/vulkan_core.h"
 
 namespace toki {
 

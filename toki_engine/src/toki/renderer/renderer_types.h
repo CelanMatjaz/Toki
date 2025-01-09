@@ -1,7 +1,6 @@
 #pragma once
 
-#include "math/types.h"
-#include "math/vector.h"
+#include "core/core.h"
 
 namespace toki {
 
@@ -59,8 +58,8 @@ struct VertexAttributeDescription {
 };
 
 struct VertexBindingDescription {
-    uint32_t binding;
-    uint32_t stride;
+    u32 binding;
+    u32 stride;
     VertexInputRate inputRate;
 };
 
@@ -79,7 +78,7 @@ enum class BufferUsage : u8 {
 struct BeginPassConfig {
     Rect2D renderArea{};
     Handle framebufferHandle{};
-    Vector4<f32> clearValue;
+    Vec4 clearValue;
 };
 
 }  // namespace toki

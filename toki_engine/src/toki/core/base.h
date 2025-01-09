@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <glm.hpp>
 #include <memory>
 #include <utility>
 
@@ -41,5 +42,6 @@ constexpr Ref<T> createRef(Args&&... args) {
 }
 
 using Handle = u64;
+
 
 }  // namespace toki

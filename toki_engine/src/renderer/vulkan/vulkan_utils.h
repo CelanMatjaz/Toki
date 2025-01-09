@@ -18,7 +18,7 @@ static std::array validation_layers = {
 bool check_validation_layer_support();
 bool is_device_suitable(VkPhysicalDevice physical_device);
 
-queue_family_indices find_queue_families(VkPhysicalDevice physical_device, VkSurfaceKHR surface);
+QueueFamilyIndices find_queue_families(VkPhysicalDevice physical_device, VkSurfaceKHR surface);
 u32 find_memory_type(VkPhysicalDevice physical_device, u32 type_filter, VkMemoryPropertyFlags properties);
 
 // Shaders

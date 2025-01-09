@@ -12,7 +12,6 @@
 #include "renderer/vulkan/state/vulkan_state.h"
 #include "renderer/vulkan/vulkan_renderer_api.h"
 #include "renderer/vulkan/vulkan_utils.h"
-#include "vulkan/vulkan_core.h"
 
 namespace toki {
 

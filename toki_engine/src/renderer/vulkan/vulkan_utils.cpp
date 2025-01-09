@@ -59,13 +59,13 @@ bool is_device_suitable(VkPhysicalDevice physical_device) {
     return check_for_extensions(physical_device);
 }
 
-queue_family_indices find_queue_families(VkPhysicalDevice physical_device, VkSurfaceKHR surface) {
+QueueFamilyIndices find_queue_families(VkPhysicalDevice physical_device, VkSurfaceKHR surface) {
     u32 queue_family_count{};
     vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, nullptr);
     std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
     vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_families.data());
 
-    queue_family_indices indices{};
+    QueueFamilyIndices indices{};
     for (int i = 0; i < queue_families.size(); i++) {
         VkBool32 supports_present = false;
         vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, i, surface, &supports_present);

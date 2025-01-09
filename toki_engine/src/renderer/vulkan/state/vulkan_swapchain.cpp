@@ -5,7 +5,6 @@
 #include "core/logging.h"
 #include "renderer/vulkan/platform/vulkan_platform.h"
 #include "renderer/vulkan/vulkan_types.h"
-#include "vulkan/vulkan_core.h"
 
 namespace toki {
 
@@ -53,7 +52,7 @@ void VulkanSwapchain::create(Ref<RendererContext> ctx, const Config& config) {
 
         for (u32 i = 0; i < m_imageCount; i++) {
             m_frames[i].command.handle = m_command_buffers[i];
-            m_frames[i].command.state = vulkan_command_buffer_state::READY;
+            m_frames[i].command.state = CommandBufferState::READY;
         }
     }
 
@@ -189,27 +188,27 @@ b8 VulkanSwapchain::start_recording(Ref<RendererContext> ctx) {
 
     vkResetCommandBuffer(frame.command.handle, 0);
 
-    TK_ASSERT(frame.command.state == vulkan_command_buffer_state::READY, "Command buffer is not ready for recording");
+    TK_ASSERT(frame.command.state == CommandBufferState::READY, "Command buffer is not ready for recording");
     VkCommandBufferBeginInfo command_buffer_begin_info{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
     command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     vkBeginCommandBuffer(frame.command.handle, &command_buffer_begin_info);
-    frame.command.state = vulkan_command_buffer_state::RECORDING_STARTED;
+    frame.command.state = CommandBufferState::RECORDING_STARTED;
 
     return true;
 }
 
 void VulkanSwapchain::stop_recording(Ref<RendererContext> ctx) {
     Frame& frame = get_current_frame();
-    TK_ASSERT(frame.command.state == vulkan_command_buffer_state::RECORDING_STARTED, "Command buffer has not started recording");
+    TK_ASSERT(frame.command.state == CommandBufferState::RECORDING_STARTED, "Command buffer has not started recording");
     VK_CHECK(vkEndCommandBuffer(frame.command.handle), "Could not end command buffer");
-    frame.command.state = vulkan_command_buffer_state::RECORDING_STOPPED;
+    frame.command.state = CommandBufferState::RECORDING_STOPPED;
 }
 
 void VulkanSwapchain::end_frame(Ref<RendererContext> ctx) {
     // VkResult wait_for_fences_result = vkWaitForFences(ctx->device, 1, &get_current_frame().render_fence, VK_TRUE, UINT64_MAX);
     // TK_ASSERT(wait_for_fences_result == VK_SUCCESS || wait_for_fences_result == VK_TIMEOUT, "Failed waiting for fences");
     Frame& frame = get_current_frame();
-    frame.command.state = vulkan_command_buffer_state::READY;
+    frame.command.state = CommandBufferState::READY;
     m_currentFrameIndex = (m_currentFrameIndex + 1) % FRAME_COUNT;
 }
 

@@ -6,6 +6,7 @@ project "Engine"
         "src",
         "src/toki",
         "%{wks.location}/vendor/glfw/include",
+        "%{wks.location}/vendor/glm/glm",
     }
 
     add_files()
