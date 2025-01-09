@@ -4,6 +4,7 @@
 
 #include "engine/view.h"
 #include "engine/window.h"
+#include "events/event_handler.h"
 #include "renderer/renderer.h"
 
 namespace toki {
@@ -11,7 +12,7 @@ namespace toki {
 class Engine {
 public:
     struct Config {
-        Ref<Window> initialWindow;
+        Window::Config window_config;
     };
 
 public:
@@ -27,11 +28,14 @@ public:
     void add_view(Ref<View> view);
 
 private:
-    bool m_isRunning = false;
+    static void handle_event(Engine* engine, Event event);
+
+    b8 m_isRunning = false;
 
     std::vector<Ref<Window>> m_windows;
     std::vector<Ref<View>> m_views;
     Ref<Renderer> m_renderer;
+    Scope<EventHandler> m_eventHandler;
 };
 
 }  // namespace toki

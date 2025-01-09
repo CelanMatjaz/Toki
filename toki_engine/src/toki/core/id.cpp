@@ -49,11 +49,11 @@ id& id::operator=(const uint64_t&& n) {
     return *this;
 }
 
-bool id::operator==(const id& other) const {
+b8 id::operator==(const id& other) const {
     return m_values.u64 == other.m_values.u64;
 }
 
-bool id::operator<(const id& other) const {
+b8 id::operator<(const id& other) const {
     return m_values.u64 < other.m_values.u64;
 }
 
@@ -61,7 +61,7 @@ uint64_t id::operator()(const id& id) const {
     return std::hash<int>()(id.m_values.u32[0]) ^ (std::hash<int>()(id.m_values.u32[1]) << 1);
 }
 
-id::operator bool() const {
+id::operator b8() const {
     return m_values.u64 != 0;
 }
 

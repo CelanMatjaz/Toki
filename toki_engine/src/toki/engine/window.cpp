@@ -5,13 +5,11 @@
 
 namespace toki {
 
-Window::Window(const Config& config) {}
+Window::Window(const InternalConfig& config): m_enginePtr(config.engine_ptr), m_eventDispatchFn(config.event_dispatch_fn) {}
 
-Window::~Window() {}
-
-Ref<Window> Window::create(const Config& config) {
+Ref<Window> Window::create(const InternalConfig& config) {
     TK_LOG_INFO("Creating new window");
-    return std::make_shared<glfw_window>(config);
+    return std::make_shared<GlfwWindow>(config);
 }
 
 }  // namespace toki

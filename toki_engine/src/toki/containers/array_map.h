@@ -47,7 +47,7 @@ public:
         _map.clear();
     }
 
-    bool contains(const Key& key) const {
+    b8 contains(const Key& key) const {
         return _map.contains(key);
     }
 
@@ -79,7 +79,7 @@ public:
             return *this;
         }
 
-        bool operator!=(const Iterator& other) const {
+        b8 operator!=(const Iterator& other) const {
             return current != other.current;
         }
     };

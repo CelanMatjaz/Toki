@@ -34,7 +34,7 @@ struct TkError {
         return error;
     }
 
-    operator bool() const {
+    operator b8() const {
         return error == Error::NoError;
     }
 

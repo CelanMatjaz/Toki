@@ -1,12 +1,14 @@
 #pragma once
 
-#include <memory>
+#include <functional>
 #include <string>
 
-#include "core/core.h"
-#include "detail/qualifier.hpp"
+#include "core/math_types.h"
+#include "events/event.h"
 
 namespace toki {
+
+class Engine;
 
 class Window {
 public:
@@ -16,18 +18,32 @@ public:
         std::string title;
     };
 
+protected:
+    friend Engine;
+
+    using WindowEventDispatchFn = std::function<void(Engine*, Event)>;
+
+    struct InternalConfig : Config {
+        Engine* engine_ptr;
+        WindowEventDispatchFn event_dispatch_fn;
+    };
+
 public:
-    static Ref<Window> create(const Config& config);
+    static Ref<Window> create(const InternalConfig& config);
 
     Window() = delete;
-    Window(const Config& config);
-    virtual ~Window() = 0;
+    Window(const InternalConfig& config);
+    virtual ~Window() = default;
 
     virtual Vec2 get_dimensions() const = 0;
 
-    virtual bool should_close() const = 0;
+    virtual b8 should_close() const = 0;
     virtual void* get_handle() const = 0;
     static void poll_events();
+
+protected:
+    Engine* m_enginePtr;
+    WindowEventDispatchFn m_eventDispatchFn;
 };
 
 }  // namespace toki

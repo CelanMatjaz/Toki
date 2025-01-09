@@ -15,14 +15,14 @@ namespace toki {
 
 #ifndef TK_DIST
 
-bool check_validation_layer_support() {
+b8 check_validation_layer_support() {
     uint32_t layer_count{};
     vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
     std::vector<VkLayerProperties> layers(layer_count);
     vkEnumerateInstanceLayerProperties(&layer_count, layers.data());
 
     for (const char* required_layer : validation_layers) {
-        bool layer_found = false;
+        b8 layer_found = false;
 
         for (const auto& found_layer : layers) {
             if (strcmp(required_layer, found_layer.layerName) == 0) {
@@ -39,7 +39,7 @@ bool check_validation_layer_support() {
 
 #endif
 
-bool check_for_extensions(VkPhysicalDevice physical_device) {
+b8 check_for_extensions(VkPhysicalDevice physical_device) {
     uint32_t extension_count;
     vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &extension_count, nullptr);
     TK_ASSERT(extension_count > 0, "No extensions available on device");
@@ -55,7 +55,7 @@ bool check_for_extensions(VkPhysicalDevice physical_device) {
     return required_extensions.empty();
 }
 
-bool is_device_suitable(VkPhysicalDevice physical_device) {
+b8 is_device_suitable(VkPhysicalDevice physical_device) {
     return check_for_extensions(physical_device);
 }
 

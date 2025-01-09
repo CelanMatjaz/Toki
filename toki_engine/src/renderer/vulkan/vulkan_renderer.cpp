@@ -17,8 +17,8 @@ namespace toki {
 
 VulkanRenderer::VulkanRenderer(const Config& config): Renderer(config) {
     TK_LOG_INFO("Initializing renderer");
-    m_context = createRef<RendererContext>();
-    m_rendererApi = createRef<VulkanRendererApi>(m_context);
+    m_context = create_ref<RendererContext>();
+    m_rendererApi = create_ref<VulkanRendererApi>(m_context);
 
     create_instance();
     create_device(config.initialWindow);
@@ -241,7 +241,7 @@ void VulkanRenderer::create_device(Ref<Window> window) {
 
     u32 device_index = 0;
     for (u32 i = 0; i < physical_devices.size(); i++) {
-        bool is_suitable = is_device_suitable(physical_devices[i]);
+        b8 is_suitable = is_device_suitable(physical_devices[i]);
         if (is_suitable) {
             device_index = i;
             break;

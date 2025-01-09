@@ -21,11 +21,11 @@ public:
 
     uint64_t getId() const;
 
-    bool operator==(const id& other) const;
-    bool operator<(const id& other) const;
+    b8 operator==(const id& other) const;
+    b8 operator<(const id& other) const;
     uint64_t operator()(const id& id) const;
 
-    operator bool() const;
+    operator b8() const;
 
 private:
     union {

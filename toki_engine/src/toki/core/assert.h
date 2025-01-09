@@ -1,5 +1,7 @@
 #pragma once
 
+#include <format>
+
 #include "core/core.h"
 #include "platform.h"
 

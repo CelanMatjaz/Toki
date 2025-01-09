@@ -30,7 +30,7 @@ struct RenderTarget {
     ColorFormat colorFormat = ColorFormat::NONE;
     RenderTargetLoadOp loadOp : 2 = RenderTargetLoadOp::LOAD;
     RenderTargetStoreOp storeOp : 2 = RenderTargetStoreOp::STORE;
-    bool presentable : 2 = false;
+    b8 presentable : 2 = false;
 };
 
 enum class ShaderStage : u8 {

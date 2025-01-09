@@ -49,7 +49,7 @@ public:
         m_value = InvalidValue;
     }
 
-    bool is_valid() const {
+    b8 is_valid() const {
         return m_value != InvalidValue;
     }
 
