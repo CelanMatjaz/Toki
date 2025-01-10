@@ -6,7 +6,9 @@
 #include <utility>
 
 #include "core/assert.h"
+#include "core/defer.h"
 #include "core/logging.h"
+#include "core/defer.h"
 #include "renderer/renderer.h"
 #include "renderer/vulkan/platform/vulkan_platform.h"
 #include "renderer/vulkan/state/vulkan_state.h"
@@ -236,7 +238,7 @@ void VulkanRenderer::create_instance() {
 
 void VulkanRenderer::create_device(Ref<Window> window) {
     VkSurfaceKHR surface = create_surface(m_context, reinterpret_cast<GLFWwindow*>(window->get_handle()));
-    Scoped<VkSurfaceKHR, VK_NULL_HANDLE> temp_surface(surface, [ctx = m_context](VkSurfaceKHR s) { vkDestroySurfaceKHR(ctx->instance, s, ctx->allocation_callbacks); });
+    Defer defer([ctx = m_context, surface]() { vkDestroySurfaceKHR(ctx->instance, surface, ctx->allocation_callbacks); });
 
     u32 physical_device_count{};
     vkEnumeratePhysicalDevices(m_context->instance, &physical_device_count, nullptr);
@@ -260,7 +262,7 @@ void VulkanRenderer::create_device(Ref<Window> window) {
     vkGetPhysicalDeviceProperties(physical_device, &properties);
     TK_LOG_INFO("GPU name: {}", properties.deviceName);
 
-    const auto [graphics, present, transfer] = m_context->queue_family_indices = find_queue_families(physical_device, temp_surface);
+    const auto [graphics, present, transfer] = m_context->queue_family_indices = find_queue_families(physical_device, surface);
     TK_ASSERT(graphics != -1, "Graphics family index not found");
     TK_ASSERT(present != -1, "Present family index not found");
     TK_ASSERT(transfer != -1, "Transfer family index not found");

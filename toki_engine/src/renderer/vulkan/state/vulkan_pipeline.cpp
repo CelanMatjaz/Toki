@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include "core/defer.h"
 #include "renderer/vulkan/vulkan_utils.h"
 #include "resources/loaders/text.h"
 
@@ -28,6 +29,12 @@ void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& conf
                 std::unreachable();
         }
     }
+
+    Defer defer([ctx, shader_modules]() {
+        for (auto& sm : shader_modules) {
+            vkDestroyShaderModule(ctx->device, sm, ctx->allocation_callbacks);
+        }
+    });
 
     std::vector<VkVertexInputBindingDescription> vertex_binding_descriptions(config.shader_config.bindings.size());
     for (u32 i = 0; i < vertex_binding_descriptions.size(); i++) {
@@ -286,10 +293,6 @@ void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& conf
 
     TK_LOG_INFO("Creating new graphics pipeline");
     VK_CHECK(vkCreateGraphicsPipelines(ctx->device, VK_NULL_HANDLE, 1, &graphics_pipeline_create_info, ctx->allocation_callbacks, &m_handle), "Could not create graphics pipeline");
-
-    for (auto& sm : shader_modules) {
-        vkDestroyShaderModule(ctx->device, sm, ctx->allocation_callbacks);
-    }
 }
 
 void VulkanGraphicsPipeline::destroy(Ref<RendererContext> ctx) {
