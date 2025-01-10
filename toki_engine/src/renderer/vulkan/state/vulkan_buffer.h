@@ -17,6 +17,10 @@ public:
     void create(Ref<RendererContext> ctx, const Config& config);
     void destroy(Ref<RendererContext> ctx);
 
+    void set_data(Ref<RendererContext> ctx, u32 size, void* data);
+
+    VkBuffer get_buffer() const;
+
 private:
     VkBuffer m_handle;
     VkDeviceMemory m_memory;

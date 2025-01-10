@@ -27,6 +27,8 @@ public:
     virtual Handle create_framebuffer(const framebuffer_create_config& config) override;
     virtual void destroy_framebuffer(Handle framebuffer_handle) override;
 
+    virtual void set_buffer_data(Handle buffer_handle, u32 size, void* data) override;
+
 private:
     void add_window(Ref<Window> window);
 

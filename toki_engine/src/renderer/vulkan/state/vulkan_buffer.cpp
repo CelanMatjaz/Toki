@@ -1,6 +1,9 @@
 #include "vulkan_buffer.h"
 
+#include <cstring>
+
 #include "renderer/vulkan/vulkan_utils.h"
+#include "vulkan/vulkan_core.h"
 
 namespace toki {
 
@@ -30,6 +33,17 @@ void VulkanBuffer::destroy(Ref<RendererContext> ctx) {
     m_memory = VK_NULL_HANDLE;
     vkDestroyBuffer(ctx->device, m_handle, ctx->allocation_callbacks);
     m_handle = VK_NULL_HANDLE;
+}
+
+void VulkanBuffer::set_data(Ref<RendererContext> ctx, u32 size, void* data) {
+    void* mapped_data;
+    vkMapMemory(ctx->device, m_memory, 0, size, 0, &mapped_data);
+    std::memcpy(mapped_data, data, size);
+    vkUnmapMemory(ctx->device, m_memory);
+}
+
+VkBuffer VulkanBuffer::get_buffer() const {
+    return m_handle;
 }
 
 }  // namespace toki

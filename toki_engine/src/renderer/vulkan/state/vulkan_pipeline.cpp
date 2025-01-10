@@ -30,12 +30,23 @@ void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& conf
 
     std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = { vertex_shader_stage_create_info, fragment_shader_stage_create_info };
 
+    VkVertexInputBindingDescription vertex_binding_description{};
+    vertex_binding_description.stride = 3 * sizeof(f32);
+    vertex_binding_description.binding = 0;
+    vertex_binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    VkVertexInputAttributeDescription vertex_attribute_description{};
+    vertex_attribute_description.binding = 0;
+    vertex_attribute_description.format = VK_FORMAT_R32G32B32_SFLOAT;
+    vertex_attribute_description.offset = 0;
+    vertex_attribute_description.location = 0;
+
     VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info{};
     vertex_input_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertex_input_state_create_info.vertexBindingDescriptionCount = 0;
-    vertex_input_state_create_info.pVertexBindingDescriptions = nullptr;
-    vertex_input_state_create_info.vertexAttributeDescriptionCount = 0;
-    vertex_input_state_create_info.pVertexAttributeDescriptions = nullptr;
+    vertex_input_state_create_info.vertexBindingDescriptionCount = 1;
+    vertex_input_state_create_info.pVertexBindingDescriptions = &vertex_binding_description;
+    vertex_input_state_create_info.vertexAttributeDescriptionCount = 1;
+    vertex_input_state_create_info.pVertexAttributeDescriptions = &vertex_attribute_description;
 
     VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info{};
     input_assembly_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -51,8 +62,8 @@ void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& conf
     rasterization_state_create_info.depthBiasConstantFactor = 0.0f;
     rasterization_state_create_info.depthBiasClamp = 0.0f;
     rasterization_state_create_info.depthBiasSlopeFactor = 0.0f;
-    rasterization_state_create_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-    // rasterization_state_create_info.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    // rasterization_state_create_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    rasterization_state_create_info.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterization_state_create_info.polygonMode = VK_POLYGON_MODE_FILL;
     rasterization_state_create_info.cullMode = VK_CULL_MODE_BACK_BIT;
 

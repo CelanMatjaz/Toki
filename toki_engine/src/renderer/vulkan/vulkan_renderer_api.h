@@ -16,15 +16,19 @@ public:
     virtual void submit() override;
 
     virtual void bind_shader(Handle handle) override;
+    virtual void bind_vertex_buffer(Handle handle) override;
+    virtual void bind_index_buffer(Handle handle) override;
 
     virtual void reset_viewport() override;
     virtual void reset_scissor() override;
+
+    virtual void draw(u32 vertex_count, u32 instance_count, u32 first_vertex, u32 first_instance) override;
+    virtual void draw_indexed(u32 index_count, u32 instance_count, u32 first_index, i32 vertex_offset, u32 first_instance) override;
 
 private:
     Ref<RendererContext> m_context{};
 
     b8 m_isPassStarted = false;
-
 
     void fix_render_area(Rect2D& render_area);
 };

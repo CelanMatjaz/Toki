@@ -22,7 +22,7 @@ public:
     virtual void on_add(const Ref<Renderer> renderer) {};
     virtual void on_destroy(const Ref<Renderer> renderer) {};
     virtual void on_render(const Ref<RendererApi> renderer) {};
-    virtual void on_update(const float delta_time) {};
+    virtual void on_update(const toki::Ref<toki::Renderer> renderer, const float delta_time) {};
     virtual void on_event(Event& event) {};
 };
 

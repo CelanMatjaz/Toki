@@ -54,7 +54,7 @@ void Engine::run() {
         last_frame_time = frame_start_time;
 
         for (auto it = m_views.rbegin(); it != m_views.rend(); it++) {
-            (*it)->on_update(delta_time);
+            (*it)->on_update(m_renderer, delta_time);
         }
 
         if (m_renderer->begin_frame()) {

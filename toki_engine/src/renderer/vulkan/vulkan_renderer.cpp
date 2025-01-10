@@ -93,7 +93,7 @@ Handle VulkanRenderer::create_buffer(const buffer_create_config& config) {
             create_buffer_config.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
             break;
         case BufferType::INDEX:
-            create_buffer_config.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+            create_buffer_config.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
             break;
         default:
             std::unreachable();
@@ -138,6 +138,11 @@ void VulkanRenderer::destroy_framebuffer(Handle framebuffer_handle) {
     TK_ASSERT(m_context->framebuffers.contains(framebuffer_handle), "Framebuffer with provided handle does not exist");
     m_context->framebuffers[framebuffer_handle].destroy(m_context);
     m_context->framebuffers.remove(framebuffer_handle);
+}
+
+void VulkanRenderer::set_buffer_data(Handle buffer_handle, u32 size, void* data) {
+    TK_ASSERT(m_context->buffers.contains(buffer_handle), "Buffer with provided handle does not exist");
+    m_context->buffers[buffer_handle].set_data(m_context, size, data);
 }
 
 b8 VulkanRenderer::begin_frame() {

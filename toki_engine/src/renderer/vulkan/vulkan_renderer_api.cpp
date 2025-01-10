@@ -51,7 +51,6 @@ void VulkanRendererApi::begin_pass(const BeginPassConfig& config) {
 
 void VulkanRendererApi::end_pass() {
     TK_ASSERT(m_isPassStarted, "No render pass was started");
-    vkCmdDraw(m_context->swapchain.get_current_command_buffer(), 3, 1, 0, 0);
     vkCmdEndRendering(m_context->swapchain.get_current_command_buffer());
 
     m_isPassStarted = false;
@@ -63,6 +62,19 @@ void VulkanRendererApi::bind_shader(Handle shader_handle) {
     TK_ASSERT(m_context->shaders.contains(shader_handle), "Shader with provided handle does not exist");
     VulkanGraphicsPipeline& pipeline = m_context->shaders.get(shader_handle);
     vkCmdBindPipeline(m_context->swapchain.get_current_command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.get_handle());
+}
+
+void VulkanRendererApi::bind_vertex_buffer(Handle handle) {
+    TK_ASSERT(m_context->buffers.contains(handle), "Buffer with provided handle does not exist");
+    VkBuffer buf = m_context->buffers[handle].get_buffer();
+    u64 offsets = 0;
+    vkCmdBindVertexBuffers(m_context->swapchain.get_current_command_buffer(), 0, 1, &buf, &offsets);
+}
+
+void VulkanRendererApi::bind_index_buffer(Handle handle) {
+    TK_ASSERT(m_context->buffers.contains(handle), "Buffer with provided handle does not exist");
+    VkBuffer buf = m_context->buffers[handle].get_buffer();
+    vkCmdBindIndexBuffer(m_context->swapchain.get_current_command_buffer(), buf, 0, VK_INDEX_TYPE_UINT32);
 }
 
 void VulkanRendererApi::reset_viewport() {
@@ -89,6 +101,14 @@ void VulkanRendererApi::reset_scissor() {
     scissor.offset.y = 0;
 
     vkCmdSetScissor(m_context->swapchain.get_current_command_buffer(), 0, 1, &scissor);
+}
+
+void VulkanRendererApi::draw(u32 vertex_count, u32 instance_count, u32 first_vertex, u32 first_instance) {
+    vkCmdDraw(m_context->swapchain.get_current_command_buffer(), vertex_count, instance_count, first_vertex, first_instance);
+}
+
+void VulkanRendererApi::draw_indexed(u32 index_count, u32 instance_count, u32 first_index, i32 vertex_offset, u32 first_instance) {
+    vkCmdDrawIndexed(m_context->swapchain.get_current_command_buffer(), index_count, instance_count, first_index, vertex_offset, first_instance);
 }
 
 void VulkanRendererApi::fix_render_area(Rect2D& render_area) {

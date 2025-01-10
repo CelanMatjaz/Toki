@@ -5,16 +5,18 @@
 
 namespace toki {
 
-class OrthographicCamera {
+class Camera {
 public:
-    OrthographicCamera() = default;
-    OrthographicCamera(float left, float right, float bottom, float top);
-    ~OrthographicCamera() = default;
+    Camera() = default;
+    Camera(float left, float right, float bottom, float top);
+    ~Camera() = default;
 
+    void add_position(glm::vec3 position);
     void set_position(glm::vec3 position);
     void set_rotation(f32 rotation);
 
     void set_ortho_projection(float left, float right, float bottom, float top);
+    void set_perspective_projection(float fovy, float aspect, float near, float far);
 
     const glm::mat4& get_view_projection_matrix();
 

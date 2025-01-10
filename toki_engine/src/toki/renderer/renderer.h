@@ -17,10 +17,9 @@ public:
         std::shared_ptr<Window> initialWindow;
     };
 
-private:
+protected:
     static std::shared_ptr<Renderer> create(const Config& config);
 
-public:
     Renderer() = delete;
     Renderer(const Config& config);
     ~Renderer() = default;
@@ -39,6 +38,8 @@ public:
 
     virtual Handle create_framebuffer(const framebuffer_create_config& config) = 0;
     virtual void destroy_framebuffer(Handle framebuffer_handle) = 0;
+
+    virtual void set_buffer_data(Handle buffer_handle, u32 size, void* data) = 0;
 
 protected:
     virtual b8 begin_frame() = 0;
