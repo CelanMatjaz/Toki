@@ -33,6 +33,10 @@ struct RenderTarget {
     b8 presentable : 2 = false;
 };
 
+enum class ShaderType : u8 {
+    GRAPHICS
+};
+
 enum class ShaderStage : u8 {
     VERTEX,
     FRAGMENT
@@ -73,6 +77,49 @@ enum class BufferUsage : u8 {
     NONE,
     STATIC,
     DYNAMIC,
+};
+
+enum class CompareOp : u8 {
+    NEVER,
+    LESS,
+    EQUAL,
+    LESS_OR_EQUAL,
+    GREATER,
+    NOT_EQUAL,
+    GREATER_OR_EQUAL,
+    ALWAYS,
+};
+
+enum class PrimitiveTopology : u8 {
+    POINT_LIST,
+    LINE_LIST,
+    LINE_STRIP,
+    TRIANGLE_LIST,
+    TRIANGLE_STRIP,
+    TRIANGLE_FAN,
+    LINE_LIST_WITH_ADJACENCY,
+    LINE_STRIP_WITH_ADJACENCY,
+    TRIANGLE_LIST_WITH_ADJACENCY,
+    TRIANGLE_STRIP_WITH_ADJACENCY,
+    PATCH_LIST,
+};
+
+enum class CullMode : u8 {
+    NONE,
+    FRONT,
+    BACK,
+    BOTH
+};
+
+enum class PolygonMode : u8 {
+    FILL,
+    LINE,
+    POINT,
+};
+
+enum class FrontFace : u8 {
+    CounterClockwise,
+    Clockwise,
 };
 
 struct BeginPassConfig {

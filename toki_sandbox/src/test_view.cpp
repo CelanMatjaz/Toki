@@ -3,6 +3,7 @@
 #include <print>
 
 #include "core/logging.h"
+#include "resources/configs/shader_config_loader.h"
 
 void TestView::on_add(const toki::Ref<toki::Renderer> renderer) {
     toki::RenderTarget default_render_target{};
@@ -13,28 +14,24 @@ void TestView::on_add(const toki::Ref<toki::Renderer> renderer) {
     toki::RenderTarget color_render_target{};
     color_render_target.colorFormat = toki::ColorFormat::RGBA8;
 
-    toki::framebuffer_create_config framebuffer_config{};
+    toki::FramebufferCreateConfig framebuffer_config{};
     framebuffer_config.render_targets.emplace_back(default_render_target);
     framebuffer_config.render_targets.emplace_back(color_render_target);
     m_framebufferHandle = renderer->create_framebuffer(framebuffer_config);
 
-    toki::shader_create_config shader_config{};
-    shader_config.vertex_shader_path = "assets/shaders/test_shader.vert.glsl";
-    shader_config.fragment_shader_path = "assets/shaders/test_shader.frag.glsl";
+    toki::ShaderCreateConfig shader_config{};
+    shader_config.config = toki::configs::load_shader_config("configs/test_shader_config.yaml");
     shader_config.framebuffer_handle = m_framebufferHandle;
     m_shaderHandle = renderer->create_shader(shader_config);
 
     float vertices[] = {
-        // -0.5f, -0.5f, 0.0f,  //
-        // +0.5f, -0.5f, 0.0f,  //
-        // +0.0f, +0.5f, 0.0f,  //
-        //
-        //
-        0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-
+        0.0f, 0.0f, 0.0f,  //
+        1.0f, 1.0f, 0.0f,  //
+        1.0f, 0.0f, 0.0f,  //
+        0.0f, 1.0f, 0.0f,  //
     };
 
-    toki::buffer_create_config vertex_buffer_config{};
+    toki::BufferCreateConfig vertex_buffer_config{};
     vertex_buffer_config.size = sizeof(vertices);
     vertex_buffer_config.type = toki::BufferType::VERTEX;
     vertex_buffer_config.usage = toki::BufferUsage::DYNAMIC;
@@ -44,7 +41,7 @@ void TestView::on_add(const toki::Ref<toki::Renderer> renderer) {
 
     uint32_t indices[] = { 0, 1, 2, 0, 3, 1 };
 
-    toki::buffer_create_config index_buffer_config{};
+    toki::BufferCreateConfig index_buffer_config{};
     index_buffer_config.size = sizeof(indices);
     index_buffer_config.type = toki::BufferType::INDEX;
     index_buffer_config.usage = toki::BufferUsage::DYNAMIC;
@@ -112,6 +109,7 @@ void TestView::on_event(toki::Event& event) {
             m_camera.set_ortho_projection(-a, a, a, -a);
         }
 
-        default:
+        default: {
+        }
     }
 }

@@ -5,6 +5,7 @@ compile_commands
 bin
 obj
 
+**.make
 **/Makefile
 **/*.vcxproj*
 **.sln

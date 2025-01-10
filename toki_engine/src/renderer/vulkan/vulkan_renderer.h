@@ -18,13 +18,13 @@ public:
     DELETE_MOVE(VulkanRenderer);
 
 public:
-    virtual Handle create_shader(const shader_create_config& config) override;
+    virtual Handle create_shader(const ShaderCreateConfig& config) override;
     virtual void destroy_shader(Handle shader_handle) override;
 
-    virtual Handle create_buffer(const buffer_create_config& config) override;
+    virtual Handle create_buffer(const BufferCreateConfig& config) override;
     virtual void destroy_buffer(Handle buffer_handle) override;
 
-    virtual Handle create_framebuffer(const framebuffer_create_config& config) override;
+    virtual Handle create_framebuffer(const FramebufferCreateConfig& config) override;
     virtual void destroy_framebuffer(Handle framebuffer_handle) override;
 
     virtual void set_buffer_data(Handle buffer_handle, u32 size, void* data) override;

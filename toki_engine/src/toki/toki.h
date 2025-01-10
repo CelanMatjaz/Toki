@@ -10,3 +10,6 @@
 
 // Platform
 #include "platform.h"
+
+// Resources
+#include "resources/configs/shader_config_loader.h"

@@ -30,13 +30,13 @@ protected:
     std::shared_ptr<RendererApi> get_renderer_api() const;
 
 public:
-    virtual Handle create_shader(const shader_create_config& config) = 0;
+    virtual Handle create_shader(const ShaderCreateConfig& config) = 0;
     virtual void destroy_shader(Handle shader_handle) = 0;
 
-    virtual Handle create_buffer(const buffer_create_config& config) = 0;
+    virtual Handle create_buffer(const BufferCreateConfig& config) = 0;
     virtual void destroy_buffer(Handle buffer_handle) = 0;
 
-    virtual Handle create_framebuffer(const framebuffer_create_config& config) = 0;
+    virtual Handle create_framebuffer(const FramebufferCreateConfig& config) = 0;
     virtual void destroy_framebuffer(Handle framebuffer_handle) = 0;
 
     virtual void set_buffer_data(Handle buffer_handle, u32 size, void* data) = 0;

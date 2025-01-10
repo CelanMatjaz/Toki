@@ -32,3 +32,6 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
+
+#define YAML_CPP_STATIC_DEFINE
+#include <yaml-cpp/yaml.h>

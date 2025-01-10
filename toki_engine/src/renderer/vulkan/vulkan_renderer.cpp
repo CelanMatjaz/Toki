@@ -59,15 +59,14 @@ VulkanRenderer::~VulkanRenderer() {
     vkDestroyInstance(m_context->instance, m_context->allocation_callbacks);
 }
 
-Handle VulkanRenderer::create_shader(const shader_create_config& config) {
+Handle VulkanRenderer::create_shader(const ShaderCreateConfig& config) {
     TK_ASSERT(m_context->framebuffers.contains(config.framebuffer_handle), "Cannot create shader with a non existing framebuffer");
 
     Handle new_shader_handle = m_context->shaders.size() + 1;
 
     auto framebuffer = m_context->framebuffers.get(config.framebuffer_handle);
     VulkanGraphicsPipeline::Config graphics_pipeline_config{ .framebuffer = m_context->framebuffers.get(config.framebuffer_handle) };
-    graphics_pipeline_config.vertex_shader_path = config.vertex_shader_path;
-    graphics_pipeline_config.fragment_shader_path = config.fragment_shader_path;
+    graphics_pipeline_config.shader_config = config.config;
     VulkanGraphicsPipeline pipeline{};
     pipeline.create(m_context, graphics_pipeline_config);
     m_context->shaders.emplace(new_shader_handle, pipeline);
@@ -80,7 +79,7 @@ void VulkanRenderer::destroy_shader(Handle shader_handle) {
     m_context->shaders.remove(shader_handle);
 }
 
-Handle VulkanRenderer::create_buffer(const buffer_create_config& config) {
+Handle VulkanRenderer::create_buffer(const BufferCreateConfig& config) {
     TK_ASSERT(config.size > 0, "Cannot create a buffer of size 0");
 
     Handle new_buffer_handle = m_context->buffers.size() + 1;
@@ -121,7 +120,7 @@ void VulkanRenderer::destroy_buffer(Handle buffer_handle) {
     m_context->buffers.remove(buffer_handle);
 }
 
-Handle VulkanRenderer::create_framebuffer(const framebuffer_create_config& config) {
+Handle VulkanRenderer::create_framebuffer(const FramebufferCreateConfig& config) {
     Handle handle = m_context->framebuffers.size() + 1;
 
     VulkanFramebuffer::Config framebuffer_config{};

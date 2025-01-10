@@ -1,12 +1,13 @@
 project "Engine"
     kind "StaticLib"
 
-    links { "GLFW" }
+    links { "GLFW", "yaml-cpp" }
     includedirs {
         "src",
         "src/toki",
         "%{wks.location}/vendor/glfw/include",
         "%{wks.location}/vendor/glm",
+        "%{wks.location}/vendor/yaml-cpp/include",
     }
 
     add_files()

@@ -4,22 +4,22 @@
 #include <vector>
 
 #include "renderer/renderer_types.h"
+#include "resources/configs/shader_config_loader.h"
 
 namespace toki {
 
-struct shader_create_config {
-    std::filesystem::path vertex_shader_path{};
-    std::filesystem::path fragment_shader_path{};
+struct ShaderCreateConfig {
+    configs::ShaderConfig config;
     Handle framebuffer_handle;
 };
 
-struct buffer_create_config {
+struct BufferCreateConfig {
     u32 size{};
     BufferType type{};
     BufferUsage usage{};
 };
 
-struct framebuffer_create_config {
+struct FramebufferCreateConfig {
     std::vector<RenderTarget> render_targets;
 };
 
