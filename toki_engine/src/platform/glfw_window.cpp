@@ -1,4 +1,5 @@
 #include "glfw_window.h"
+#include <print>
 
 // Compile file on linux while using glfw
 #if defined(TK_PLATFORM_WINDOWS) || defined(TK_PLATFORM_LINUX)
@@ -45,6 +46,7 @@ GlfwWindow::GlfwWindow(const InternalConfig& config): Window(config) {
     glfwSetWindowCloseCallback(window, window_close_callback);
     glfwSetWindowPosCallback(window, window_move_callback);
     glfwSetWindowSizeCallback(window, window_resize_callback);
+    glfwSetFramebufferSizeCallback(window, window_resize_callback);
     glfwSetWindowMaximizeCallback(window, window_maximize_callback);
     glfwSetWindowFocusCallback(window, window_focus_callback);
 }
@@ -127,7 +129,7 @@ void GlfwWindow::mouse_move_callback(GLFWwindow* window, double xpos, double ypo
 
 void GlfwWindow::mouse_enter_callback(GLFWwindow* window, int entered) {
     if (entered) {
-            DISPATCH_WINDOW_EVENT(Event(EventType::MouseEnter));
+        DISPATCH_WINDOW_EVENT(Event(EventType::MouseEnter));
     } else {
         DISPATCH_WINDOW_EVENT(Event(EventType::MouseLeave));
     }

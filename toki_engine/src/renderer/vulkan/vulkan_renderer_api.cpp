@@ -66,14 +66,32 @@ void VulkanRendererApi::bind_shader(Handle shader_handle) {
 
 void VulkanRendererApi::bind_vertex_buffer(Handle handle) {
     TK_ASSERT(m_context->buffers.contains(handle), "Buffer with provided handle does not exist");
-    VkBuffer buf = m_context->buffers[handle].get_buffer();
+    VkBuffer buf = m_context->buffers[handle].get_handle();
     u64 offsets = 0;
     vkCmdBindVertexBuffers(m_context->swapchain.get_current_command_buffer(), 0, 1, &buf, &offsets);
 }
 
+void VulkanRendererApi::bind_vertex_buffer(Handle handle, u32 binding) {
+    TK_ASSERT(m_context->buffers.contains(handle), "Buffer with provided handle does not exist");
+    VkBuffer buf = m_context->buffers[handle].get_handle();
+    u64 offsets = 0;
+    vkCmdBindVertexBuffers(m_context->swapchain.get_current_command_buffer(), binding, 1, &buf, &offsets);
+}
+
+void VulkanRendererApi::bind_vertex_buffers(const BindVertexBuffersConfig& config) {
+    std::vector<VkBuffer> buffers(config.handles.size());
+    std::vector<VkDeviceSize> offsets(config.handles.size(), 0);
+    u64 offset = 0;
+    for (u32 i = 0; i < buffers.size(); i++) {
+        TK_ASSERT(m_context->buffers.contains(config.handles[i]), "Buffer with provided handle does not exist");
+        VkBuffer buffer = m_context->buffers.get(config.handles[i]).get_handle();
+        vkCmdBindVertexBuffers(m_context->swapchain.get_current_command_buffer(), i, 1, &buffer, &offset);
+    }
+}
+
 void VulkanRendererApi::bind_index_buffer(Handle handle) {
     TK_ASSERT(m_context->buffers.contains(handle), "Buffer with provided handle does not exist");
-    VkBuffer buf = m_context->buffers[handle].get_buffer();
+    VkBuffer buf = m_context->buffers[handle].get_handle();
     vkCmdBindIndexBuffer(m_context->swapchain.get_current_command_buffer(), buf, 0, VK_INDEX_TYPE_UINT32);
 }
 

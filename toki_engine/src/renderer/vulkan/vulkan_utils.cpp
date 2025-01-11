@@ -118,7 +118,7 @@ std::vector<u32> compile_shader(ShaderStage stage, std::string& source) {
     options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
     options.SetSourceLanguage(shaderc_source_language::shaderc_source_language_glsl);
 
-#ifdef TK_NDEBUG
+#ifdef TK_DIST
     options.SetOptimizationLevel(shaderc_optimization_level_performance);
 #else
     options.SetOptimizationLevel(shaderc_optimization_level_zero);

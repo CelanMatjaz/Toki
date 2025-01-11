@@ -38,39 +38,37 @@ void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& conf
 
     std::vector<VkVertexInputBindingDescription> vertex_binding_descriptions(config.shader_config.bindings.size());
     for (u32 i = 0; i < vertex_binding_descriptions.size(); i++) {
-        VkVertexInputBindingDescription& vertex_binding_description = vertex_binding_descriptions[i];
-        vertex_binding_description.binding = config.shader_config.bindings[i].binding;
-        vertex_binding_description.stride = config.shader_config.bindings[i].stride;
+        vertex_binding_descriptions[i].binding = config.shader_config.bindings[i].binding;
+        vertex_binding_descriptions[i].stride = config.shader_config.bindings[i].stride;
 
         switch (config.shader_config.bindings[i].inputRate) {
             case VertexInputRate::VERTEX:
-                vertex_binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+                vertex_binding_descriptions[i].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
                 break;
             case VertexInputRate::INSTANCE:
-                vertex_binding_description.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+                vertex_binding_descriptions[i].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
                 break;
         }
     }
 
     std::vector<VkVertexInputAttributeDescription> vertex_attribute_descriptions(config.shader_config.attributes.size());
-    for (u32 i = 0; i < vertex_binding_descriptions.size(); i++) {
-        VkVertexInputAttributeDescription& vertex_attribute_description = vertex_attribute_descriptions[i];
-        vertex_attribute_description.binding = config.shader_config.attributes[i].binding;
-        vertex_attribute_description.offset = config.shader_config.attributes[i].offset;
-        vertex_attribute_description.location = config.shader_config.attributes[i].location;
+    for (u32 i = 0; i < vertex_attribute_descriptions.size(); i++) {
+        vertex_attribute_descriptions[i].binding = config.shader_config.attributes[i].binding;
+        vertex_attribute_descriptions[i].offset = config.shader_config.attributes[i].offset;
+        vertex_attribute_descriptions[i].location = config.shader_config.attributes[i].location;
 
         switch (config.shader_config.attributes[i].format) {
             case VertexFormat::FLOAT1:
-                vertex_attribute_description.format = VK_FORMAT_R32_SFLOAT;
+                vertex_attribute_descriptions[i].format = VK_FORMAT_R32_SFLOAT;
                 break;
             case VertexFormat::FLOAT2:
-                vertex_attribute_description.format = VK_FORMAT_R32G32_SFLOAT;
+                vertex_attribute_descriptions[i].format = VK_FORMAT_R32G32_SFLOAT;
                 break;
             case VertexFormat::FLOAT3:
-                vertex_attribute_description.format = VK_FORMAT_R32G32B32_SFLOAT;
+                vertex_attribute_descriptions[i].format = VK_FORMAT_R32G32B32_SFLOAT;
                 break;
             case VertexFormat::FLOAT4:
-                vertex_attribute_description.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+                vertex_attribute_descriptions[i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
                 break;
             default:
                 std::unreachable();
@@ -219,7 +217,7 @@ void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& conf
 
     VkPipelineColorBlendAttachmentState color_blend_attachment_state{};
     color_blend_attachment_state.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    color_blend_attachment_state.blendEnable = VK_FALSE;  // TODO: enable blending
+    color_blend_attachment_state.blendEnable = VK_TRUE;  // TODO: enable blending
     color_blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
     color_blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     color_blend_attachment_state.colorBlendOp = VK_BLEND_OP_ADD;
@@ -311,7 +309,7 @@ VkPipelineLayout VulkanGraphicsPipeline::get_layout() const {
 }
 
 VkShaderModule VulkanGraphicsPipeline::create_shader_module(Ref<RendererContext> ctx, configs::Shader shader) {
-    std::string shader_source = read_text_file("assets/shaders" / shader.path);
+    std::string shader_source = loaders::read_text_file("assets/shaders" / shader.path);
     std::vector shader_binary = compile_shader(shader.stage, shader_source);
     return toki::create_shader_module(ctx, shader_binary);
 }

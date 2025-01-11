@@ -19,7 +19,7 @@ public:
 
     void set_data(Ref<RendererContext> ctx, u32 size, void* data);
 
-    VkBuffer get_buffer() const;
+    VkBuffer get_handle() const;
 
 private:
     VkBuffer m_handle;

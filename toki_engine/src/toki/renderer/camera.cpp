@@ -30,11 +30,13 @@ void Camera::set_rotation(f32 rotation) {
 
 void Camera::set_ortho_projection(float left, float right, float bottom, float top) {
     m_projection = glm::ortho(left, right, bottom, top, -1.0f, 1.0f);
+    m_projection[1][1] *= -1;
     m_dirty = true;
 }
 
-void Camera::set_perspective_projection(float fovy, float aspect, float near, float far) {
-    m_projection = glm::perspective(fovy, 1.0f, 0.1f, 100.0f);
+void Camera::set_perspective_projection(float fovy, float aspect, float near_, float far_) {
+    m_projection = glm::perspective<float>(fovy, aspect, near_, far_);
+    m_projection[1][1] *= -1;
     m_dirty = true;
 }
 

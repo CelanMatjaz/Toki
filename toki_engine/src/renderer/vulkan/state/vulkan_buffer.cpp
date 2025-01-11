@@ -42,7 +42,7 @@ void VulkanBuffer::set_data(Ref<RendererContext> ctx, u32 size, void* data) {
     vkUnmapMemory(ctx->device, m_memory);
 }
 
-VkBuffer VulkanBuffer::get_buffer() const {
+VkBuffer VulkanBuffer::get_handle() const {
     return m_handle;
 }
 

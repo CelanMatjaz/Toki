@@ -41,7 +41,7 @@ Event create_window_move_event(double xpos, double ypos) {
 }
 
 Event create_window_resize_event(int width, int height) {
-    return Event(EventType::WindowMove, EventData{ .u32 = { (u32) width, (u32) height } });
+    return Event(EventType::WindowResize, EventData{ .u32 = { (u32) width, (u32) height } });
 }
 
 }  // namespace toki

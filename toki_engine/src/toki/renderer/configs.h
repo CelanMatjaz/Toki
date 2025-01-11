@@ -23,4 +23,9 @@ struct FramebufferCreateConfig {
     std::vector<RenderTarget> render_targets;
 };
 
+struct BindVertexBuffersConfig {
+    std::vector<Handle> handles;
+    u32 first_binding = 0;
+};
+
 }  // namespace toki

@@ -8,6 +8,8 @@
 
 namespace toki {
 
+namespace loaders {
+
 std::string read_text_file(std::filesystem::path path) {
     std::ifstream file(path, std::ios::in | std::ios::ate);
     TK_ASSERT(file.is_open(), "File {} was not opened", path);
@@ -19,5 +21,7 @@ std::string read_text_file(std::filesystem::path path) {
 
     return buf;
 }
+
+}  // namespace loaders
 
 }  // namespace toki

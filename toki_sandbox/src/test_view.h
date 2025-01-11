@@ -16,5 +16,6 @@ private:
     toki::Handle m_framebufferHandle;
     toki::Handle m_shaderHandle;
     toki::Handle m_vertexBufferHandle;
+    toki::Handle m_instanceBufferHandle;
     toki::Handle m_indexBufferHandle;
 };

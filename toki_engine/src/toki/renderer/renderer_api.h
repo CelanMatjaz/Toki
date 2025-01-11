@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/base.h"
+#include "renderer/configs.h"
 #include "renderer/renderer_types.h"
 
 namespace toki {
@@ -13,6 +14,8 @@ public:
 
     virtual void bind_shader(Handle handle) = 0;
     virtual void bind_vertex_buffer(Handle handle) = 0;
+    virtual void bind_vertex_buffer(Handle handle, u32 binding) = 0;
+    virtual void bind_vertex_buffers(const BindVertexBuffersConfig& config) = 0;
     virtual void bind_index_buffer(Handle handle) = 0;
 
     virtual void reset_viewport() = 0;

@@ -17,6 +17,8 @@ public:
 
     virtual void bind_shader(Handle handle) override;
     virtual void bind_vertex_buffer(Handle handle) override;
+    virtual void bind_vertex_buffer(Handle handle, u32 binding) override;
+    virtual void bind_vertex_buffers(const BindVertexBuffersConfig& config) override;
     virtual void bind_index_buffer(Handle handle) override;
 
     virtual void reset_viewport() override;

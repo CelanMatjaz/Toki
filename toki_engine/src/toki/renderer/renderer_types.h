@@ -28,7 +28,7 @@ enum class RenderTargetStoreOp : u8 {
 
 struct RenderTarget {
     ColorFormat colorFormat = ColorFormat::NONE;
-    RenderTargetLoadOp loadOp : 2 = RenderTargetLoadOp::LOAD;
+    RenderTargetLoadOp loadOp : 2 = RenderTargetLoadOp::CLEAR;
     RenderTargetStoreOp storeOp : 2 = RenderTargetStoreOp::STORE;
     b8 presentable : 2 = false;
 };

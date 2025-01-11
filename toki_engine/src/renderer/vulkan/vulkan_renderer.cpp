@@ -8,7 +8,6 @@
 #include "core/assert.h"
 #include "core/defer.h"
 #include "core/logging.h"
-#include "core/defer.h"
 #include "renderer/renderer.h"
 #include "renderer/vulkan/platform/vulkan_platform.h"
 #include "renderer/vulkan/state/vulkan_state.h"
@@ -288,6 +287,9 @@ void VulkanRenderer::create_device(Ref<Window> window) {
     dynamic_rendering_feature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
     dynamic_rendering_feature.dynamicRendering = VK_TRUE;
 
+    VkPhysicalDeviceFeatures features{};
+    features.fillModeNonSolid = VK_TRUE;
+
     VkDeviceCreateInfo device_create_info{};
     device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     device_create_info.pNext = &dynamic_rendering_feature;
@@ -295,6 +297,7 @@ void VulkanRenderer::create_device(Ref<Window> window) {
     device_create_info.queueCreateInfoCount = 1;
     device_create_info.enabledExtensionCount = vulkan_extensions.size();
     device_create_info.ppEnabledExtensionNames = vulkan_extensions.data();
+    device_create_info.pEnabledFeatures = &features;
 
     TK_LOG_INFO("Creating new Vulkan device");
     VK_CHECK(vkCreateDevice(m_context->physical_device, &device_create_info, m_context->allocation_callbacks, &m_context->device), "Could not create device");
