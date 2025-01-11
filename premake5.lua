@@ -3,8 +3,15 @@ require "premake/common.premake"
 
 workspace "Toki"
     configurations { "debug", "release", "dist" }
-    platforms { "linux_wayland", "linux_x11", "windows" }
     architecture "x64"
+
+if os.host() == "linux" then
+    platforms { "linux_wayland", "linux_x11" }
+end
+
+if os.host() == "windows" then
+    platforms { "windows" }
+end
 
 startproject "Sandbox"
 

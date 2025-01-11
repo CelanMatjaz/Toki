@@ -24,7 +24,7 @@ static_assert(sizeof(f64) == 8, "Type f64 does not contain 64 bits");
 
 using byte = std::byte;
 static_assert(sizeof(byte) == 1, "Type byte does not contain 8 bits");
-using word = wchar_t;
+using word = u16;
 static_assert(sizeof(word) == 2, "Type word does not contain 16 bits");
 
 template <typename T>
@@ -42,6 +42,5 @@ constexpr Ref<T> create_ref(Args&&... args) {
 }
 
 using Handle = u64;
-
 
 }  // namespace toki

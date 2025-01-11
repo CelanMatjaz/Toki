@@ -1,5 +1,4 @@
-// Use file on Linux and Windows when using GLFW
-#if defined(TK_PLATFORM_WINDOWS) || defined(TK_PLATFORM_LINUX)
+#if defined(TK_WINDOW_SYSTEM_GLFW)
 
 #pragma once
 
@@ -22,7 +21,7 @@ public:
     virtual void* get_handle() const override;
 
 private:
-    GLFWwindow* m_handle{};
+    GLFWwindow* m_handle;
 
     static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 

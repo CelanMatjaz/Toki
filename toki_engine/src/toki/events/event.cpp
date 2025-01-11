@@ -24,12 +24,18 @@ Event create_key_event(EventType type, int key, int scancode, int action, int mo
     return Event(type, EventData{ .u16 = { (u16) key, (u16) scancode, (u16) action, (u16) mods } });
 }
 
-Event create_mouse_button_event(EventType type, int button, int action, int mods) {
-    return Event(type, EventData{ .u16 = { (u16) button, (u16) action, (u16) mods } });
+Event create_mouse_button_event(EventType type, int button, int action, int mods, double xpos, double ypos) {
+    EventData data{};
+    data.u8[0] = button;
+    data.u8[1] = action;
+    data.u8[2] = mods;
+    data.i16[2] = xpos;
+    data.i16[3] = ypos;
+    return Event(type, data);
 }
 
 Event create_mouse_move_event(double xpos, double ypos) {
-    return Event(EventType::MouseMove, EventData{ .f32 = { (f32) xpos, (f32) ypos } });
+    return Event(EventType::MouseMove, EventData{ .i32 = { (i32) xpos, (i32) ypos } });
 }
 
 Event create_mouse_scroll_event(double xoffset, double yoffset) {

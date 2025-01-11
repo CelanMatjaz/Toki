@@ -8,6 +8,7 @@
 #include "resources/configs/shader_config_loader.h"
 
 float rotation = 0.0f;
+bool holding = false;
 
 void TestView::on_add(const toki::Ref<toki::Renderer> renderer) {
     {
@@ -77,7 +78,7 @@ void TestView::on_destroy(const toki::Ref<toki::Renderer> renderer) {
 void TestView::on_render(toki::Ref<toki::RendererApi> api) {
     toki::BeginPassConfig begin_pass_config{};
     begin_pass_config.framebufferHandle = m_framebufferHandle;
-    begin_pass_config.viewProjectionMatrix = m_camera.get_view_projection_matrix() * glm::rotate(glm::mat4{ 1.0f }, glm::radians(rotation), glm::vec3{ 1.0f, 1.0f, 1.0f });
+    begin_pass_config.viewProjectionMatrix = m_camera.get_view_projection_matrix() * glm::rotate(glm::mat4{ 1.0f }, glm::radians(rotation), glm::vec3{ 1.0f, 2.0f, 3.0f });
     api->begin_pass(begin_pass_config);
 
     api->reset_viewport();
@@ -97,21 +98,61 @@ void TestView::on_render(toki::Ref<toki::RendererApi> api) {
     api->submit();
 }
 
-void TestView::on_update(const toki::Ref<toki::Renderer> renderer, const float delta_time) {
-    rotation += 25 * delta_time;
+void TestView::on_update(toki::UpdateData& update_data) {
+    rotation += 25 * update_data.delta_time;
+
+    using namespace toki;
+    if (update_data.input->is_key_down(KeyCode::KEY_W)) {
+        m_camera.add_position(glm::vec3{ 0.0f, 0.0f, -1.0f } * update_data.delta_time);
+    } else if (update_data.input->is_key_down(KeyCode::KEY_S)) {
+        m_camera.add_position(glm::vec3{ 0.0f, 0.0f, +1.0f } * update_data.delta_time);
+    }
+
+    if (update_data.input->is_key_down(KeyCode::KEY_A)) {
+        m_camera.add_position(glm::vec3{ -1.0f, 0.0f, 0.0f } * update_data.delta_time);
+    } else if (update_data.input->is_key_down(KeyCode::KEY_D)) {
+        m_camera.add_position(glm::vec3{ +1.0f, 0.0f, 0.0f } * update_data.delta_time);
+    }
 }
 
 void TestView::on_event(toki::Event& event) {
     using toki::EventType, toki::EventData;
     EventData data = event.get_data();
+    static int32_t prev_x = 0;
 
     switch (event.get_type()) {
+        case EventType::MouseClick: {
+            prev_x = data.i16[2];
+            holding = true;
+            break;
+        }
+        case EventType::MouseRelease: {
+            holding = false;
+            prev_x = 0;
+
+            break;
+        }
+
+        case EventType::MouseMove: {
+            if (!holding) {
+                break;
+            }
+
+            static float rotation = 0.0f;
+            rotation += (prev_x - data.i32[0]) * 0.001;
+            prev_x = data.i32[0];
+            m_camera.set_rotation(rotation);
+
+            break;
+        }
+
         case EventType::WindowResize: {
             static float width, height;
             width = data.u32[0];
             height = data.u32[1];
 
             m_camera.set_perspective_projection(glm::radians(90.0f), width / height, 0.01f, 100.0f);
+            break;
         }
 
         case EventType::KeyPress:
@@ -122,15 +163,15 @@ void TestView::on_event(toki::Event& event) {
             break;
 
         case EventType::MouseScroll: {
-            static float a = 2.0f;
+            float a = 0;
             if (data.f32[1] > 0) {
                 a -= 0.1f;
-            }
-
-            else if (data.f32[1] < 0) {
+            } else if (data.f32[1] < 0) {
                 a += 0.1f;
             }
-            m_camera.set_ortho_projection(-a, a, a, -a);
+
+            m_camera.add_position(glm::vec3{ 0.0f, 0.0f, a });
+            break;
         }
 
         default: {

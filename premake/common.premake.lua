@@ -13,7 +13,7 @@ function build_options()
 
     filter "action:vs*"
         cppdialect "C++latest"
-        buildoptions "/Zc:preprocessor /std:c++latest"
+        buildoptions { "/Zc:preprocessor", "/std:c++latest" }
         flags { "MultiProcessorCompile" }
 
     filter "toolset:clang or toolset:gcc"
@@ -23,6 +23,8 @@ function build_options()
 end
 
 function configuration_configs()
+    defines { "TK_WINDOW_SYSTEM_GLFW" }
+
     filter "configurations:debug"
         defines { "TK_DEBUG" }
         symbols "On"

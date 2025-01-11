@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <print>
 
 #include "glm/ext/matrix_clip_space.hpp"
 
@@ -42,7 +43,7 @@ void Camera::set_perspective_projection(float fovy, float aspect, float near_, f
 
 const glm::mat4& Camera::get_view_projection_matrix() {
     if (m_dirty) {
-        glm::mat4 transform = glm::translate(glm::mat4(1.0f), m_position) * glm::rotate(glm::mat4(1.0f), m_rotation, glm::vec3(0.0f, 0.0f, 1.0f));
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), m_position) * glm::rotate(glm::mat4(1.0f), m_rotation, glm::vec3(0.0f, 1.0f, 0.0f));
         m_view = glm::inverse(transform);
         m_viewProjection = m_projection * m_view;
 

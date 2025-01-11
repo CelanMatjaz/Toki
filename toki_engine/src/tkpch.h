@@ -10,6 +10,7 @@
 // std
 
 #include <array>
+#include <bitset>
 #include <chrono>
 #include <cstring>
 #include <filesystem>

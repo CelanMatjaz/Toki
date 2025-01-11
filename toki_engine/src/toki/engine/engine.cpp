@@ -53,8 +53,12 @@ void Engine::run() {
         delta_time = std::chrono::duration<float>(frame_start_time - last_frame_time).count();
         last_frame_time = frame_start_time;
 
+        UpdateData update_data{};
+        update_data.renderer = m_renderer;
+        update_data.input = m_windows[0]->get_input();
+        update_data.delta_time = delta_time;
         for (auto it = m_views.rbegin(); it != m_views.rend(); it++) {
-            (*it)->on_update(m_renderer, delta_time);
+            (*it)->on_update(update_data);
         }
 
         if (m_renderer->begin_frame()) {

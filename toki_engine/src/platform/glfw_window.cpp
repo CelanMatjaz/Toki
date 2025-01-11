@@ -1,22 +1,22 @@
-#include "glfw_window.h"
-#include <print>
+#if defined(TK_WINDOW_SYSTEM_GLFW)
 
-// Compile file on linux while using glfw
-#if defined(TK_PLATFORM_WINDOWS) || defined(TK_PLATFORM_LINUX)
+#include "glfw_window.h"
 
 #include <GLFW/glfw3.h>
 
 #include <utility>
 
 #include "core/assert.h"
-#include "core/logging.h"
 #include "core/math_types.h"
 #include "events/event.h"
-#include "platform.h"
 
 namespace toki {
 
 static u32 window_count = 0;
+
+void Window::poll_events() {
+    glfwPollEvents();
+}
 
 GlfwWindow::GlfwWindow(const InternalConfig& config): Window(config) {
     TK_ASSERT(config.width > 0 && config.height > 0, "Invalid window dimensions");
@@ -31,24 +31,26 @@ GlfwWindow::GlfwWindow(const InternalConfig& config): Window(config) {
     TK_ASSERT(window != nullptr, "Window was not created");
 
     m_handle = window;
-    glfwShowWindow(window);
+    m_input = create_ref<Input>(m_handle);
 
-    glfwSetWindowUserPointer(window, this);
+    glfwShowWindow(m_handle);
+
+    glfwSetWindowUserPointer(m_handle, this);
 
     // Window callbacks
-    glfwSetKeyCallback(window, key_callback);
+    glfwSetKeyCallback(m_handle, key_callback);
 
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
-    glfwSetCursorPosCallback(window, mouse_move_callback);
-    glfwSetCursorEnterCallback(window, mouse_enter_callback);
-    glfwSetScrollCallback(window, scroll_callback);
+    glfwSetMouseButtonCallback(m_handle, mouse_button_callback);
+    glfwSetCursorPosCallback(m_handle, mouse_move_callback);
+    glfwSetCursorEnterCallback(m_handle, mouse_enter_callback);
+    glfwSetScrollCallback(m_handle, scroll_callback);
 
-    glfwSetWindowCloseCallback(window, window_close_callback);
-    glfwSetWindowPosCallback(window, window_move_callback);
-    glfwSetWindowSizeCallback(window, window_resize_callback);
-    glfwSetFramebufferSizeCallback(window, window_resize_callback);
-    glfwSetWindowMaximizeCallback(window, window_maximize_callback);
-    glfwSetWindowFocusCallback(window, window_focus_callback);
+    glfwSetWindowCloseCallback(m_handle, window_close_callback);
+    glfwSetWindowPosCallback(m_handle, window_move_callback);
+    glfwSetWindowSizeCallback(m_handle, window_resize_callback);
+    glfwSetFramebufferSizeCallback(m_handle, window_resize_callback);
+    glfwSetWindowMaximizeCallback(m_handle, window_maximize_callback);
+    glfwSetWindowFocusCallback(m_handle, window_focus_callback);
 }
 
 GlfwWindow::~GlfwWindow() {
@@ -70,10 +72,6 @@ Vec2 GlfwWindow::get_dimensions() const {
 
 void* GlfwWindow::get_handle() const {
     return m_handle;
-}
-
-void Window::poll_events() {
-    glfwPollEvents();
 }
 
 #define DISPATCH_WINDOW_EVENT(event)                                      \
@@ -105,26 +103,26 @@ void GlfwWindow::mouse_button_callback(GLFWwindow* window, int button, int actio
     EventType type;
     switch (action) {
         case GLFW_PRESS:
-            type = EventType::KeyPress;
+            type = EventType::MouseClick;
             break;
         case GLFW_RELEASE:
-            type = EventType::KeyRelease;
+            type = EventType::MouseRelease;
             break;
         case GLFW_REPEAT:
-            type = EventType::KeyRepeat;
+            type = EventType::MouseHold;
             break;
         default:
             std::unreachable();
     }
 
-    DISPATCH_WINDOW_EVENT(create_mouse_button_event(type, button, action, mods));
+    double xpos, ypos;
+    glfwGetCursorPos(window, &xpos, &ypos);
+
+    DISPATCH_WINDOW_EVENT(create_mouse_button_event(type, button, action, mods, xpos, ypos));
 }
 
 void GlfwWindow::mouse_move_callback(GLFWwindow* window, double xpos, double ypos) {
-    {
-        GlfwWindow* win = (GlfwWindow*) glfwGetWindowUserPointer(window);
-        win->m_eventDispatchFn(win->m_enginePtr, create_mouse_move_event(xpos, ypos));
-    };
+    DISPATCH_WINDOW_EVENT(create_mouse_move_event(xpos, ypos));
 }
 
 void GlfwWindow::mouse_enter_callback(GLFWwindow* window, int entered) {

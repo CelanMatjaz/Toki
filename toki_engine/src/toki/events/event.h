@@ -11,6 +11,7 @@ enum class EventType {
 
     MouseClick,
     MouseRelease,
+    MouseHold,
     MouseMove,
     MouseScroll,
     MouseEnter,
@@ -65,7 +66,7 @@ private:
 };
 
 Event create_key_event(EventType type, int key, int scancode, int action, int mods);
-Event create_mouse_button_event(EventType type, int button, int action, int mods);
+Event create_mouse_button_event(EventType type, int button, int action, int mods, double xpos, double ypos);
 Event create_mouse_move_event(double xpos, double ypos);
 Event create_mouse_scroll_event(double xoffset, double yoffset);
 Event create_window_move_event(double xpos, double ypos);

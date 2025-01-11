@@ -7,7 +7,7 @@ public:
     virtual void on_add(const toki::Ref<toki::Renderer> renderer) override;
     virtual void on_destroy(const toki::Ref<toki::Renderer> renderer) override;
     virtual void on_render(const toki::Ref<toki::RendererApi> api) override;
-    virtual void on_update(const toki::Ref<toki::Renderer> renderer, const float delta_time) override;
+    virtual void on_update(toki::UpdateData& update_data) override;
     virtual void on_event(toki::Event& event) override;
 
 private:
