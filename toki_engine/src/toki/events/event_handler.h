@@ -20,7 +20,7 @@ public:
     void dispatch_event(const Event& event, void* sender);
 
 private:
-    std::array<array_map<void*, EventDispatch>, (u64) EventType::EVENT_COUNT> m_handlers;
+    std::array<std::unordered_map<void*, EventDispatch>, (u64) EventType::EVENT_COUNT> m_handlers;
 };
 
 }  // namespace toki

@@ -1,7 +1,5 @@
 #include "vulkan_renderer_api.h"
 
-#include <cstring>
-
 #include "core/assert.h"
 #include "renderer/vulkan/vulkan_utils.h"
 #include "vulkan/vulkan_core.h"
@@ -24,7 +22,7 @@ void VulkanRendererApi::begin_pass(const BeginPassConfig& config) {
     fix_render_area(render_area);
 
     static std::vector<VkRenderingAttachmentInfo> color_attachment_infos(MAX_FRAMEBUFFER_ATTACHMENTS);
-    VulkanFramebuffer& framebuffer = m_context->framebuffers.get(config.framebufferHandle);
+    VulkanFramebuffer& framebuffer = m_context->framebuffers.at(config.framebufferHandle);
     const std::vector<RenderTarget> render_targets = framebuffer.get_render_target_configs();
     const std::vector<VkFormat>& color_formats = framebuffer.get_color_formats();
     const std::vector<VulkanImage>& images = framebuffer.get_images();
@@ -68,7 +66,8 @@ void VulkanRendererApi::begin_pass(const BeginPassConfig& config) {
 
     vkCmdBeginRendering(m_context->swapchain.get_current_command_buffer(), &rendering_info);
 
-    vkCmdPushConstants(m_context->swapchain.get_current_command_buffer(), m_context->shaders.begin()->get_layout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &config.viewProjectionMatrix);
+    vkCmdPushConstants(
+        m_context->swapchain.get_current_command_buffer(), m_context->shaders.begin()->second.get_layout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &config.viewProjectionMatrix);
 
     m_isPassStarted = true;
 };
@@ -84,7 +83,7 @@ void VulkanRendererApi::submit() {}
 
 void VulkanRendererApi::bind_shader(Handle shader_handle) {
     TK_ASSERT(m_context->shaders.contains(shader_handle), "Shader with provided handle does not exist");
-    VulkanGraphicsPipeline& pipeline = m_context->shaders.get(shader_handle);
+    VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
     vkCmdBindPipeline(m_context->swapchain.get_current_command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.get_handle());
 }
 
@@ -108,7 +107,7 @@ void VulkanRendererApi::bind_vertex_buffers(const BindVertexBuffersConfig& confi
     u64 offset = 0;
     for (u32 i = 0; i < buffers.size(); i++) {
         TK_ASSERT(m_context->buffers.contains(config.handles[i]), "Buffer with provided handle does not exist");
-        VkBuffer buffer = m_context->buffers.get(config.handles[i]).get_handle();
+        VkBuffer buffer = m_context->buffers.at(config.handles[i]).get_handle();
         vkCmdBindVertexBuffers(m_context->swapchain.get_current_command_buffer(), i, 1, &buffer, &offset);
     }
 }

@@ -43,12 +43,12 @@ VulkanRenderer::~VulkanRenderer() {
         vkDestroyCommandPool(m_context->device, command_pool, m_context->allocation_callbacks);
     }
 
-    for (auto& shader : m_context->shaders) {
+    for (auto& [_, shader] : m_context->shaders) {
         shader.destroy(m_context);
     }
     m_context->shaders.clear();
 
-    for (auto& buffer : m_context->buffers) {
+    for (auto& [_, buffer] : m_context->buffers) {
         buffer.destroy(m_context);
     }
     m_context->buffers.clear();
@@ -64,8 +64,8 @@ Handle VulkanRenderer::create_shader(const ShaderCreateConfig& config) {
 
     Handle new_shader_handle = m_context->shaders.size() + 1;
 
-    auto framebuffer = m_context->framebuffers.get(config.framebuffer_handle);
-    VulkanGraphicsPipeline::Config graphics_pipeline_config{ .framebuffer = m_context->framebuffers.get(config.framebuffer_handle) };
+    auto framebuffer = m_context->framebuffers.at(config.framebuffer_handle);
+    VulkanGraphicsPipeline::Config graphics_pipeline_config{ .framebuffer = m_context->framebuffers.at(config.framebuffer_handle) };
     graphics_pipeline_config.shader_config = config.config;
     VulkanGraphicsPipeline pipeline{};
     pipeline.create(m_context, graphics_pipeline_config);
@@ -76,7 +76,7 @@ Handle VulkanRenderer::create_shader(const ShaderCreateConfig& config) {
 void VulkanRenderer::destroy_shader(Handle shader_handle) {
     TK_ASSERT(m_context->shaders.contains(shader_handle), "Shader with provided handle does not exist");
     m_context->shaders[shader_handle].destroy(m_context);
-    m_context->shaders.remove(shader_handle);
+    m_context->shaders.erase(shader_handle);
 }
 
 Handle VulkanRenderer::create_buffer(const BufferCreateConfig& config) {
@@ -94,12 +94,16 @@ Handle VulkanRenderer::create_buffer(const BufferCreateConfig& config) {
         case BufferType::INDEX:
             create_buffer_config.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
             break;
+        case BufferType::UNIFORM:
+            create_buffer_config.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+            break;
         default:
             std::unreachable();
     }
 
     switch (config.usage) {
         case BufferUsage::STATIC:
+            std::unreachable();  // TODO: need to implement staging buffers
         case BufferUsage::DYNAMIC:
             create_buffer_config.memory_properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
             break;
@@ -115,9 +119,9 @@ Handle VulkanRenderer::create_buffer(const BufferCreateConfig& config) {
 }
 
 void VulkanRenderer::destroy_buffer(Handle buffer_handle) {
-    TK_ASSERT(m_context->buffers.contains(buffer_handle), "Shader with provided handle does not exist");
+    TK_ASSERT(m_context->buffers.contains(buffer_handle), "Buffer with provided handle does not exist");
     m_context->buffers[buffer_handle].destroy(m_context);
-    m_context->buffers.remove(buffer_handle);
+    m_context->buffers.erase(buffer_handle);
 }
 
 Handle VulkanRenderer::create_framebuffer(const FramebufferCreateConfig& config) {
@@ -135,7 +139,7 @@ Handle VulkanRenderer::create_framebuffer(const FramebufferCreateConfig& config)
 void VulkanRenderer::destroy_framebuffer(Handle framebuffer_handle) {
     TK_ASSERT(m_context->framebuffers.contains(framebuffer_handle), "Framebuffer with provided handle does not exist");
     m_context->framebuffers[framebuffer_handle].destroy(m_context);
-    m_context->framebuffers.remove(framebuffer_handle);
+    m_context->framebuffers.erase(framebuffer_handle);
 }
 
 void VulkanRenderer::set_buffer_data(Handle buffer_handle, u32 size, void* data) {

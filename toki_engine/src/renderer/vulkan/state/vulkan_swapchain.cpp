@@ -167,7 +167,7 @@ void VulkanSwapchain::recreate(Ref<RendererContext> ctx) {
         }
     }
 
-    for (auto& framebuffer : ctx->framebuffers) {
+    for (auto& [_, framebuffer] : ctx->framebuffers) {
         framebuffer.resize(ctx, VkExtent3D{ m_extent.width, m_extent.height, 1 });
     }
 }

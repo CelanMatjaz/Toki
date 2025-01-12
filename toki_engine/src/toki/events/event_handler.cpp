@@ -13,12 +13,12 @@ void EventHandler::bind_event(EventType event_type, void* receiver, EventFunctio
 void EventHandler::unbind_event(EventType event_type, void* receiver) {
     u32 index = (u32) event_type;
     TK_ASSERT(m_handlers[index].contains(receiver), "Reciever not bound for event");
-    m_handlers[index].remove(receiver);
+    m_handlers[index].erase(receiver);
 }
 
 void EventHandler::dispatch_event(const Event& event, void* sender) {
     u32 index = (u32) event.get_type();
-    for (auto& handler : m_handlers[index]) {
+    for (auto& [_, handler] : m_handlers[index]) {
         handler.fn(sender, handler.receiver, event);
     }
 }

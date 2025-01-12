@@ -9,50 +9,51 @@
 namespace toki {
 
 template <typename Key, typename Value>
-class array_map {
+class ArrayMap {
 public:
-    array_map() = default;
-    ~array_map() = default;
+    ArrayMap() = default;
+    ~ArrayMap() = default;
 
     void add(const Key& key, const Value& value) {
-        _array.push_back(value);
-        _map.emplace(key, _array.size() - 1);
+        m_array.push_back(value);
+        m_map.emplace(key, m_array.size() - 1);
     }
 
     template <typename... Args>
     void emplace(Key key, Args&&... args) {
-        _array.emplace_back(std::forward<Args>(args)...);
-        _map.emplace(key, _array.size() - 1);
+        m_array.emplace_back(std::forward<Args>(args)...);
+        m_map.emplace(key, m_array.size() - 1);
     }
 
     void emplace(Key key, const Value& value) {
-        _array.emplace_back(std::forward(value));
-        _map.emplace(key, _array.size() - 1);
+        m_array.emplace_back(std::forward(value));
+        m_map.emplace(key, m_array.size() - 1);
     }
 
     Value& get(const Key& key) {
-        return _array.at(_map.at(key));
+        return m_array.at(m_map.at(key));
     }
 
-    void remove(const Key& key) {
-        TK_ASSERT(_array.size() > 0, "Internal array size should not be 0");
-        u32 current_index = _map[key];
-        std::swap(_array[current_index], _array.back());
-        _array.resize(_array.size() - 1);
-        _map.erase(key);
+    // TODO: switch map values too
+    void erase(const Key& key) {
+        TK_ASSERT(m_array.size() > 0, "Internal array size should not be 0");
+        u32 current_index = m_map[key];
+        std::swap(m_array[current_index], m_array.back());
+        m_array.resize(m_array.size() - 1);
+        m_map.erase(key);
     }
 
     void clear() {
-        _array.clear();
-        _map.clear();
+        m_array.clear();
+        m_map.clear();
     }
 
     b8 contains(const Key& key) const {
-        return _map.contains(key);
+        return m_map.contains(key);
     }
 
     u32 size() const {
-        return _map.size();
+        return m_map.size();
     }
 
     Value& operator[](const Key& key) {
@@ -85,16 +86,16 @@ public:
     };
 
     Iterator begin() {
-        return Iterator(_array.data());
+        return Iterator(m_array.data());
     }
 
     Iterator end() {
-        return Iterator(_array.data() + _array.size());
+        return Iterator(m_array.data() + m_array.size());
     }
 
 private:
-    std::unordered_map<Key, u32> _map;
-    std::vector<Value> _array;
+    std::unordered_map<Key, u32> m_map;
+    std::vector<Value> m_array;
 };
 
 }  // namespace toki

@@ -23,9 +23,9 @@ struct RendererContext {
     std::vector<VkCommandPool> command_pools;
     std::vector<VkCommandPool> extra_command_pools;
 
-    array_map<Handle, VulkanGraphicsPipeline> shaders;
-    array_map<Handle, VulkanBuffer> buffers;
-    array_map<Handle, VulkanFramebuffer> framebuffers;
+    std::unordered_map<Handle, VulkanGraphicsPipeline> shaders;
+    std::unordered_map<Handle, VulkanBuffer> buffers;
+    std::unordered_map<Handle, VulkanFramebuffer> framebuffers;
 };
 
 }  // namespace toki
