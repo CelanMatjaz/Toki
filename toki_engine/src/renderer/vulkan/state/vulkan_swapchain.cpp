@@ -213,11 +213,11 @@ void VulkanSwapchain::end_frame(Ref<RendererContext> ctx) {
 }
 
 void VulkanSwapchain::prepare_current_frame_image() {
-    VulkanImage::transition_layout(get_current_command_buffer(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, m_images[m_currentImageIndex]);
+    VulkanImage::transition_layout(get_current_command_buffer(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, m_images[m_currentImageIndex], VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void VulkanSwapchain::transition_current_frame_image() {
-    VulkanImage::transition_layout(get_current_command_buffer(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, m_images[m_currentImageIndex]);
+    VulkanImage::transition_layout(get_current_command_buffer(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, m_images[m_currentImageIndex], VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 VkSwapchainKHR VulkanSwapchain::get_handle() const {

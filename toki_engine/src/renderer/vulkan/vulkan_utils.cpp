@@ -154,7 +154,7 @@ VkFormat map_format(ColorFormat format) {
         case ColorFormat::RGBA8:
             return VK_FORMAT_R8G8B8A8_SRGB;
         case ColorFormat::DEPTH:
-            return VK_FORMAT_D24_UNORM_S8_UINT;
+            return VK_FORMAT_D32_SFLOAT;
         case ColorFormat::STENCIL:
             return VK_FORMAT_S8_UINT;
         case ColorFormat::DEPTH_STENCIL:
@@ -214,6 +214,24 @@ VkMemoryPropertyFlags map_buffer_memory_properties(BufferUsage usage) {
     }
 
     return flags;
+}
+
+VkImageLayout get_image_layout(ColorFormat format) {
+    switch (format) {
+        case ColorFormat::DEPTH:
+            return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+        case ColorFormat::STENCIL:
+            return VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL;
+            break;
+        case ColorFormat::DEPTH_STENCIL:
+            return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            break;
+        case ColorFormat::NONE:
+        case ColorFormat::COLOR_FORMAT_COUNT:
+            std::unreachable();
+        default:
+            return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    }
 }
 
 }  // namespace toki

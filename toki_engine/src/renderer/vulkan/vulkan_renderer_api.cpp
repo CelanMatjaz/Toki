@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include "core/assert.h"
+#include "renderer/vulkan/vulkan_utils.h"
 #include "vulkan/vulkan_core.h"
 
 namespace toki {
@@ -17,20 +18,31 @@ void VulkanRendererApi::begin_pass(const BeginPassConfig& config) {
     TK_ASSERT(!m_isPassStarted, "A render pass was already started");
     TK_ASSERT(m_context->framebuffers.contains(config.framebufferHandle), "Cannot begin render pass without an existing framebuffer");
 
+    VkCommandBuffer cmd = m_context->swapchain.get_current_command_buffer();
+
     Rect2D render_area = config.renderArea;
     fix_render_area(render_area);
 
+    static std::vector<VkRenderingAttachmentInfo> color_attachment_infos(MAX_FRAMEBUFFER_ATTACHMENTS);
     VulkanFramebuffer& framebuffer = m_context->framebuffers.get(config.framebufferHandle);
-    std::vector color_attachment_infos = framebuffer.get_color_attachments_rendering_infos();
+    const std::vector<RenderTarget> render_targets = framebuffer.get_render_target_configs();
+    const std::vector<VkFormat>& color_formats = framebuffer.get_color_formats();
+    const std::vector<VulkanImage>& images = framebuffer.get_images();
 
     i32 present_index = framebuffer.get_present_target_index();
-    if (present_index >= 0) {
-        color_attachment_infos[present_index].imageView = m_context->swapchain.get_current_frame_image_view();
-        color_attachment_infos[present_index].clearValue.color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-        m_context->swapchain.prepare_current_frame_image();
-    }
-    for (auto& attachment : color_attachment_infos) {
-        memset(attachment.clearValue.color.float32, 0, sizeof(attachment.clearValue.color.float32));
+    for (u32 i = 0; i < color_formats.size(); i++) {
+        auto& info = color_attachment_infos[i];
+        color_attachment_infos[i] = { VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+        color_attachment_infos[i].storeOp = map_attachment_store_op(render_targets[i].storeOp);
+        color_attachment_infos[i].loadOp = map_attachment_load_op(render_targets[i].loadOp);
+        color_attachment_infos[i].imageLayout = get_image_layout(render_targets[i].colorFormat);
+
+        if (i == present_index) {
+            m_context->swapchain.prepare_current_frame_image();
+            color_attachment_infos[i].imageView = m_context->swapchain.get_current_frame_image_view();
+        } else {
+            color_attachment_infos[i].imageView = images[i].get_image_view();
+        }
     }
 
     VkRenderingInfo rendering_info{ VK_STRUCTURE_TYPE_RENDERING_INFO };
@@ -40,7 +52,19 @@ void VulkanRendererApi::begin_pass(const BeginPassConfig& config) {
     rendering_info.renderArea.offset.y = render_area.pos.y;
     rendering_info.layerCount = 1;
     rendering_info.pColorAttachments = color_attachment_infos.data();
-    rendering_info.colorAttachmentCount = color_attachment_infos.size();
+    rendering_info.colorAttachmentCount = color_formats.size();
+
+    VkRenderingAttachmentInfo depth_attachment_info{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+    if (const auto& depth_image = framebuffer.get_depth_image(); depth_image) {
+        depth_attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        depth_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        depth_attachment_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+        depth_attachment_info.imageView = depth_image->get_image_view();
+        depth_attachment_info.clearValue.depthStencil = { 1.0f, 0 };
+        rendering_info.pDepthAttachment = &depth_attachment_info;
+    }
+
+    framebuffer.transition_images(cmd);
 
     vkCmdBeginRendering(m_context->swapchain.get_current_command_buffer(), &rendering_info);
 
@@ -104,7 +128,7 @@ void VulkanRendererApi::reset_viewport() {
     viewport.width = window_dimensions.x;
     viewport.height = window_dimensions.y;
     viewport.minDepth = 0.0f;
-    viewport.minDepth = 1.0f;
+    viewport.maxDepth = 1.0f;
 
     vkCmdSetViewport(m_context->swapchain.get_current_command_buffer(), 0, 1, &viewport);
 }

@@ -225,7 +225,7 @@ void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& conf
     color_blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     color_blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
 
-    std::vector<VkPipelineColorBlendAttachmentState> color_blend_attachment_states(config.framebuffer.get_color_attachments_rendering_infos().size(), color_blend_attachment_state);
+    std::vector<VkPipelineColorBlendAttachmentState> color_blend_attachment_states(config.framebuffer.get_color_formats().size(), color_blend_attachment_state);
 
     VkPipelineColorBlendStateCreateInfo color_blend_state_create_info{};
     color_blend_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -271,7 +271,13 @@ void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& conf
 
     VK_CHECK(vkCreatePipelineLayout(ctx->device, &pipeline_layout_create_info, ctx->allocation_callbacks, &m_layout), "Could not create pipeline layout");
 
-    VkPipelineRenderingCreateInfoKHR pipeline_rendering_info_create_info = config.framebuffer.get_pipeline_rendering_create_info();
+    const auto& color_formats = config.framebuffer.get_color_formats();
+
+    VkPipelineRenderingCreateInfoKHR pipeline_rendering_info_create_info{ VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO };
+    pipeline_rendering_info_create_info.colorAttachmentCount = color_formats.size();
+    pipeline_rendering_info_create_info.pColorAttachmentFormats = color_formats.data();
+    pipeline_rendering_info_create_info.depthAttachmentFormat = config.framebuffer.get_depth_format();
+    pipeline_rendering_info_create_info.stencilAttachmentFormat = config.framebuffer.get_stencil_format();
 
     VkGraphicsPipelineCreateInfo graphics_pipeline_create_info{};
     graphics_pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;

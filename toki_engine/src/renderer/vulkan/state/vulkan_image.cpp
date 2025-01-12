@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "renderer/vulkan/vulkan_utils.h"
+#include "vulkan/vulkan_core.h"
 
 namespace toki {
 
@@ -11,6 +12,20 @@ void VulkanImage::create(Ref<RendererContext> ctx, const Config& config) {
     m_format = config.format;
     m_usage = config.usage;
     m_memoryProperties = config.memory_properties;
+
+    switch (config.format) {
+        case VK_FORMAT_D32_SFLOAT:
+            m_aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
+            break;
+        case VK_FORMAT_S8_UINT:
+            m_aspectFlags = VK_IMAGE_ASPECT_STENCIL_BIT;
+            break;
+        case VK_FORMAT_D24_UNORM_S8_UINT:
+            m_aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+            break;
+        default:
+            m_aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
+    }
 
     VkImageCreateInfo image_create_info{};
     image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -40,7 +55,7 @@ void VulkanImage::create(Ref<RendererContext> ctx, const Config& config) {
     image_view_create_info.image = m_handle;
     image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
     image_view_create_info.format = config.format;
-    image_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    image_view_create_info.subresourceRange.aspectMask = m_aspectFlags;
     image_view_create_info.subresourceRange.levelCount = 1;
     image_view_create_info.subresourceRange.layerCount = 1;
 
@@ -66,17 +81,17 @@ void VulkanImage::resize(Ref<RendererContext> ctx, VkExtent3D extent) {
 }
 
 void VulkanImage::transition_layout(VkCommandBuffer cmd, VkImageLayout old_layout, VkImageLayout new_layout) {
-    transition_layout(cmd, old_layout, new_layout, m_handle);
+    transition_layout(cmd, old_layout, new_layout, m_handle, m_aspectFlags);
 }
 
-void VulkanImage::transition_layout(VkCommandBuffer cmd, VkImageLayout old_layout, VkImageLayout new_layout, VkImage image) {
+void VulkanImage::transition_layout(VkCommandBuffer cmd, VkImageLayout old_layout, VkImageLayout new_layout, VkImage image, VkImageAspectFlags aspect_flags) {
     VkImageMemoryBarrier image_memory_barrier{ VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
     image_memory_barrier.image = image;
     image_memory_barrier.oldLayout = old_layout;
     image_memory_barrier.newLayout = new_layout;
     image_memory_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     image_memory_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    image_memory_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    image_memory_barrier.subresourceRange.aspectMask = aspect_flags;
     image_memory_barrier.subresourceRange.baseMipLevel = 0;
     image_memory_barrier.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
     image_memory_barrier.subresourceRange.baseArrayLayer = 0;
@@ -85,14 +100,19 @@ void VulkanImage::transition_layout(VkCommandBuffer cmd, VkImageLayout old_layou
     VkPipelineStageFlags source_stage;
     VkPipelineStageFlags destination_stage;
 
+    // TODO: rewrite
     if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
-        image_memory_barrier.srcAccessMask = 0;
+        image_memory_barrier.srcAccessMask = VK_ACCESS_NONE;
         image_memory_barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         source_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         destination_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    }
-    else if (old_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
-        image_memory_barrier.srcAccessMask = 0;
+    } else if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) {
+        image_memory_barrier.srcAccessMask = VK_ACCESS_NONE;
+        image_memory_barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        destination_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    } else if (old_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
+        image_memory_barrier.srcAccessMask = VK_ACCESS_NONE;
         image_memory_barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
@@ -101,6 +121,10 @@ void VulkanImage::transition_layout(VkCommandBuffer cmd, VkImageLayout old_layou
     }
 
     vkCmdPipelineBarrier(cmd, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &image_memory_barrier);
+}
+
+void VulkanImage::transition_layout(VkCommandBuffer cmd, VkImageLayout old_layout, VkImageLayout new_layout, VulkanImage& image) {
+    transition_layout(cmd, old_layout, new_layout, image.m_handle, image.m_aspectFlags);
 }
 
 VkImage VulkanImage::get_handle() const {

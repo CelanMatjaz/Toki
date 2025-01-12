@@ -2,6 +2,8 @@
 
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/glm.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/euler_angles.hpp>
 
 #include "core/logging.h"
 #include "cube_data.h"
@@ -19,9 +21,15 @@ void TestView::on_add(const toki::Ref<toki::Renderer> renderer) {
         toki::RenderTarget color_render_target{};
         color_render_target.colorFormat = toki::ColorFormat::RGBA8;
 
+        toki::RenderTarget depth_render_target{};
+        depth_render_target.colorFormat = toki::ColorFormat::DEPTH;
+        depth_render_target.loadOp = toki::RenderTargetLoadOp::CLEAR;
+        depth_render_target.storeOp = toki::RenderTargetStoreOp::STORE;
+
         toki::FramebufferCreateConfig framebuffer_config{};
         framebuffer_config.render_targets.emplace_back(default_render_target);
         framebuffer_config.render_targets.emplace_back(color_render_target);
+        framebuffer_config.render_targets.emplace_back(depth_render_target);
         m_framebufferHandle = renderer->create_framebuffer(framebuffer_config);
     }
 
@@ -53,20 +61,22 @@ void TestView::on_add(const toki::Ref<toki::Renderer> renderer) {
     {
         struct InstanceData {
             glm::vec3 pos;
+            glm::vec3 color;
         };
 
-        InstanceData instances[] = { glm::vec3{ /*-1.0f, -1.0f, -1.0f*/ } };
+        InstanceData instances[] = { { glm::vec3{ -0.0f, -0.0f, 0.0f }, glm::vec3{ 0.0f, 0.4f, 0.6f } },  //
+                                     { glm::vec3{ -0.5f, -0.5f, 0.5f }, glm::vec3{ 0.6f, 0.4f, 0.7f } } };
 
         toki::BufferCreateConfig instance_buffer_config{};
-        instance_buffer_config.size = sizeof(InstanceData);
+        instance_buffer_config.size = sizeof(instances);
         instance_buffer_config.type = toki::BufferType::VERTEX;
         instance_buffer_config.usage = toki::BufferUsage::DYNAMIC;
         m_instanceBufferHandle = renderer->create_buffer(instance_buffer_config);
         renderer->set_buffer_data(m_instanceBufferHandle, sizeof(instances), instances);
     }
 
-    m_camera.set_position({ 0.0f, 0.0f, 5.0f });
-    m_camera.set_perspective_projection(glm::radians(90.0f), 1.0f, 0.01f, 100.0f);
+    m_camera.set_position({ 0.0f, 0.0f, -5.0f });
+    m_camera.set_perspective_projection(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
 }
 
 void TestView::on_destroy(const toki::Ref<toki::Renderer> renderer) {
@@ -75,10 +85,12 @@ void TestView::on_destroy(const toki::Ref<toki::Renderer> renderer) {
     renderer->destroy_framebuffer(m_framebufferHandle);
 }
 
+glm::mat4 model;
+
 void TestView::on_render(toki::Ref<toki::RendererApi> api) {
     toki::BeginPassConfig begin_pass_config{};
     begin_pass_config.framebufferHandle = m_framebufferHandle;
-    begin_pass_config.viewProjectionMatrix = m_camera.get_view_projection_matrix() * glm::rotate(glm::mat4{ 1.0f }, glm::radians(rotation), glm::vec3{ 1.0f, 2.0f, 3.0f });
+    begin_pass_config.viewProjectionMatrix = m_camera.get_view_projection_matrix() * model;
     api->begin_pass(begin_pass_config);
 
     api->reset_viewport();
@@ -91,7 +103,7 @@ void TestView::on_render(toki::Ref<toki::RendererApi> api) {
     api->bind_vertex_buffers(bind_vertex_buffers_config);
     api->bind_index_buffer(m_indexBufferHandle);
 
-    api->draw_indexed(36, 1, 0, 0, 0);
+    api->draw_indexed(36, 2, 0, 0, 0);
 
     api->end_pass();
 
@@ -99,19 +111,21 @@ void TestView::on_render(toki::Ref<toki::RendererApi> api) {
 }
 
 void TestView::on_update(toki::UpdateData& update_data) {
-    rotation += 25 * update_data.delta_time;
+    rotation += 0.0001;
+
+    model = glm::eulerAngleXYZ(rotation * 1, rotation * 2, rotation * 3) * update_data.delta_time;
 
     using namespace toki;
     if (update_data.input->is_key_down(KeyCode::KEY_W)) {
-        m_camera.add_position(glm::vec3{ 0.0f, 0.0f, -1.0f } * update_data.delta_time);
-    } else if (update_data.input->is_key_down(KeyCode::KEY_S)) {
         m_camera.add_position(glm::vec3{ 0.0f, 0.0f, +1.0f } * update_data.delta_time);
+    } else if (update_data.input->is_key_down(KeyCode::KEY_S)) {
+        m_camera.add_position(glm::vec3{ 0.0f, 0.0f, -1.0f } * update_data.delta_time);
     }
 
     if (update_data.input->is_key_down(KeyCode::KEY_A)) {
-        m_camera.add_position(glm::vec3{ -1.0f, 0.0f, 0.0f } * update_data.delta_time);
-    } else if (update_data.input->is_key_down(KeyCode::KEY_D)) {
         m_camera.add_position(glm::vec3{ +1.0f, 0.0f, 0.0f } * update_data.delta_time);
+    } else if (update_data.input->is_key_down(KeyCode::KEY_D)) {
+        m_camera.add_position(glm::vec3{ -1.0f, 0.0f, 0.0f } * update_data.delta_time);
     }
 }
 
@@ -165,9 +179,9 @@ void TestView::on_event(toki::Event& event) {
         case EventType::MouseScroll: {
             float a = 0;
             if (data.f32[1] > 0) {
-                a -= 0.1f;
-            } else if (data.f32[1] < 0) {
                 a += 0.1f;
+            } else if (data.f32[1] < 0) {
+                a -= 0.1f;
             }
 
             m_camera.add_position(glm::vec3{ 0.0f, 0.0f, a });

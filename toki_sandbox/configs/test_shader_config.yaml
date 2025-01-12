@@ -6,12 +6,12 @@ stages:
   - type: fragment
     path: test_shader.frag.glsl
 options:
-  depth_test_enable: false
+  depth_test_enable: true
   depth_write_enable: true
   depth_compare_op: less
   primitive_topology: triangle_list
   cull_mode: back
-  polygon_mode: line
+  polygon_mode: fill
   front_face: counter_clockwise
 bindings:
   - binding: 0
@@ -19,7 +19,7 @@ bindings:
     stride: 12
   - binding: 1
     input_rate: instance
-    stride: 12
+    stride: 24
 attributes:
   - type: float3 # model position
     location: 0
@@ -29,3 +29,7 @@ attributes:
     location: 1
     binding: 1
     offset: 0
+  - type: float3 # instance color
+    location: 2
+    binding: 1
+    offset: 12

@@ -23,7 +23,8 @@ public:
     void resize(Ref<RendererContext> ctx, VkExtent3D extent);
     void transition_layout(VkCommandBuffer cmd, VkImageLayout old_layout, VkImageLayout new_layout);
 
-    static void transition_layout(VkCommandBuffer cmd, VkImageLayout old_layout, VkImageLayout new_layout, VkImage image);
+    static void transition_layout(VkCommandBuffer cmd, VkImageLayout old_layout, VkImageLayout new_layout, VkImage image, VkImageAspectFlags aspect_flags);
+    static void transition_layout(VkCommandBuffer cmd, VkImageLayout old_layout, VkImageLayout new_layout, VulkanImage& image);
 
     VkImage get_handle() const;
     VkImageView get_image_view() const;
@@ -36,6 +37,7 @@ private:
     VkExtent3D m_extent;
     VkImageUsageFlagBits m_usage;
     VkMemoryPropertyFlags m_memoryProperties;
+    VkImageAspectFlags m_aspectFlags;
 };
 
 }  // namespace toki

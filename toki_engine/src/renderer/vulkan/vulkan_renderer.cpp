@@ -10,7 +10,6 @@
 #include "core/logging.h"
 #include "renderer/renderer.h"
 #include "renderer/vulkan/platform/vulkan_platform.h"
-#include "renderer/vulkan/state/vulkan_state.h"
 #include "renderer/vulkan/vulkan_renderer_api.h"
 #include "renderer/vulkan/vulkan_utils.h"
 
@@ -122,13 +121,12 @@ void VulkanRenderer::destroy_buffer(Handle buffer_handle) {
 }
 
 Handle VulkanRenderer::create_framebuffer(const FramebufferCreateConfig& config) {
+    TK_ASSERT(config.render_targets.size() <= MAX_FRAMEBUFFER_ATTACHMENTS, "Max {} render attachments supported, including depth and/or stencil", MAX_FRAMEBUFFER_ATTACHMENTS);
+
     Handle handle = m_context->framebuffers.size() + 1;
 
-    VulkanFramebuffer::Config framebuffer_config{};
-    framebuffer_config.render_targets = config.render_targets;
-
     VulkanFramebuffer framebuffer{};
-    framebuffer.create(m_context, framebuffer_config);
+    framebuffer.create(m_context, config);
     m_context->framebuffers.emplace(handle, framebuffer);
 
     return handle;

@@ -1,7 +1,7 @@
 #pragma once
 
+#include "renderer/configs.h"
 #include "renderer/vulkan/state/vulkan_image.h"
-#include "renderer/vulkan/vulkan_types.h"
 
 namespace toki {
 
@@ -9,26 +9,31 @@ struct RendererContext;
 
 class VulkanFramebuffer {
 public:
-    struct Config {
-        std::vector<RenderTarget> render_targets;
-    };
+    using Config = FramebufferCreateConfig;
 
     void create(Ref<RendererContext> ctx, const Config& config);
     void destroy(Ref<RendererContext> ctx);
 
     void resize(Ref<RendererContext> ctx, VkExtent3D extent);
 
-    const std::vector<VkRenderingAttachmentInfo>& get_color_attachments_rendering_infos() const;
-    const VkPipelineRenderingCreateInfoKHR get_pipeline_rendering_create_info() const;
+    const std::vector<RenderTarget>& get_render_target_configs() const;
+    const std::vector<VkFormat>& get_color_formats() const;
+    const std::vector<VulkanImage>& get_images() const;
+    const std::optional<VulkanImage>& get_depth_image() const;
+    VkFormat get_depth_format() const;
+    VkFormat get_stencil_format() const;
 
     i32 get_present_target_index() const;
 
+    void transition_images(VkCommandBuffer cmd);
+
 private:
-    RenderTarget m_initialRenderTargets[MAX_FRAMEBUFFER_ATTACHMENTS];
-    std::vector<VkRenderingAttachmentInfo> m_colorAttachmentInfos;
-    std::vector<VkFormat> m_attachmentFormats;
-    VkPipelineRenderingCreateInfoKHR m_pipelineRenderingCreateInfo;
+    std::vector<RenderTarget> m_initialRenderTargets;
+    std::vector<VkFormat> m_colorAttachmentFormats;
+    VkFormat m_depthAttachmentFormat = VK_FORMAT_UNDEFINED;
+    VkFormat m_stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
     std::vector<VulkanImage> m_images;
+    std::optional<VulkanImage> m_depthImage;
     i32 m_presentTargetIndex = -1;
 };
 
