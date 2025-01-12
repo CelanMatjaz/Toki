@@ -43,15 +43,15 @@ private:
     VkPresentModeKHR m_presentMode;
     VkExtent2D m_extent;
 
-    VkCommandPool m_commandPoll;
+    VkCommandPool m_commandPool;
 
     u32 m_currentImageIndex;
     u32 m_imageCount;
-    VkImage m_images[FRAME_COUNT];
-    VkImageView m_imageViews[FRAME_COUNT];
+    std::vector<VkImage> m_images;
+    std::vector<VkImageView> m_imageViews;
 
     u32 m_currentFrameIndex;
-    Frame m_frames[FRAME_COUNT];
+    std::vector<Frame> m_frames;
 };
 
 }  // namespace toki

@@ -37,19 +37,20 @@ void VulkanSwapchain::create(Ref<RendererContext> ctx, const Config& config) {
             VkCommandPoolCreateInfo command_pool_create_info{ VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
             command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
             command_pool_create_info.queueFamilyIndex = ctx->queue_family_indices.graphics;
-            VK_CHECK(vkCreateCommandPool(ctx->device, &command_pool_create_info, ctx->allocation_callbacks, &m_commandPoll), "Could not create dedicatedm_command pool");
+            VK_CHECK(vkCreateCommandPool(ctx->device, &command_pool_create_info, ctx->allocation_callbacks, &m_commandPool), "Could not create dedicatedm_command pool");
         } else {
-            m_commandPoll = config.command_pool;
+            m_commandPool = config.command_pool;
         }
 
         VkCommandBufferAllocateInfo command_buffer_allocate_info{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
         command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         command_buffer_allocate_info.commandBufferCount = m_imageCount;
-        command_buffer_allocate_info.commandPool = m_commandPoll;
+        command_buffer_allocate_info.commandPool = m_commandPool;
 
-        VkCommandBuffer m_command_buffers[FRAME_COUNT];
-        VK_CHECK(vkAllocateCommandBuffers(ctx->device, &command_buffer_allocate_info, m_command_buffers), "Could not allocatem_command buffers")
+        std::vector<VkCommandBuffer> m_command_buffers(m_imageCount);
+        VK_CHECK(vkAllocateCommandBuffers(ctx->device, &command_buffer_allocate_info, m_command_buffers.data()), "Could not allocatem_command buffers")
 
+        m_frames.resize(m_imageCount);
         for (u32 i = 0; i < m_imageCount; i++) {
             m_frames[i].command.handle = m_command_buffers[i];
             m_frames[i].command.state = CommandBufferState::READY;
@@ -73,7 +74,7 @@ void VulkanSwapchain::create(Ref<RendererContext> ctx, const Config& config) {
 }
 
 void VulkanSwapchain::destroy(Ref<RendererContext> ctx) {
-    for (uint32_t i = 0; i < FRAME_COUNT; ++i) {
+    for (uint32_t i = 0; i < m_imageCount; ++i) {
         vkDestroyFence(ctx->device, m_frames[i].render_fence, ctx->allocation_callbacks);
         m_frames[i].render_fence = VK_NULL_HANDLE;
         vkDestroySemaphore(ctx->device, m_frames[i].image_available_semaphore, ctx->allocation_callbacks);
@@ -105,13 +106,12 @@ void VulkanSwapchain::recreate(Ref<RendererContext> ctx) {
         m_imageViews[i] = VK_NULL_HANDLE;
     }
 
-    VkSurfaceCapabilitiesKHR capabilities;
+    VkSurfaceCapabilitiesKHR capabilities{};
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(ctx->physical_device, m_surface, &capabilities);
 
     m_extent = get_surface_extent(m_window, capabilities);
     TK_ASSERT(m_extent.width > 0 && m_extent.height > 0, "Surface extent is not of valid size");
-
-    m_imageCount = std::clamp(static_cast<u32>(FRAME_COUNT), capabilities.minImageCount, capabilities.maxImageCount);
+    m_imageCount = std::clamp(static_cast<u32>(FRAME_COUNT), capabilities.minImageCount, capabilities.maxImageCount == 0 ? 99 : capabilities.maxImageCount);
 
     VkSwapchainCreateInfoKHR swapchain_create_info{};
     swapchain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -148,7 +148,9 @@ void VulkanSwapchain::recreate(Ref<RendererContext> ctx) {
     }
 
     {
-        vkGetSwapchainImagesKHR(ctx->device, m_handle, &m_imageCount, m_images);
+        vkGetSwapchainImagesKHR(ctx->device, m_handle, &m_imageCount, nullptr);
+        m_images.resize(m_imageCount);
+        vkGetSwapchainImagesKHR(ctx->device, m_handle, &m_imageCount, m_images.data());
         TK_ASSERT(m_imageCount > 0, "No images found for swapchain");
 
         VkImageViewCreateInfo image_view_create_info{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
@@ -158,6 +160,7 @@ void VulkanSwapchain::recreate(Ref<RendererContext> ctx) {
         image_view_create_info.subresourceRange.levelCount = 1;
         image_view_create_info.subresourceRange.layerCount = 1;
 
+        m_imageViews.resize(m_imageCount);
         for (u32 i = 0; i < m_imageCount; i++) {
             image_view_create_info.image = m_images[i];
             VK_CHECK(vkCreateImageView(ctx->device, &image_view_create_info, ctx->allocation_callbacks, &m_imageViews[i]), "Could not createm_image view");
