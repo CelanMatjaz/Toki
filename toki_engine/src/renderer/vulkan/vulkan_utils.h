@@ -31,5 +31,6 @@ VkAttachmentStoreOp map_attachment_store_op(RenderTargetStoreOp op);
 VkBufferUsageFlags map_buffer_type(BufferType type);
 VkMemoryPropertyFlags map_buffer_memory_properties(BufferUsage usage);
 VkImageLayout get_image_layout(ColorFormat format);
+VkShaderStageFlagBits map_shader_stage(ShaderStage stage);
 
 }  // namespace toki

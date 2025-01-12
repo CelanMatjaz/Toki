@@ -16,6 +16,9 @@ namespace toki {
 #define MAX_FRAMEBUFFER_ATTACHMENTS 8
 #define STAGING_BUFFER_SIZE 1024 * 1024 * 1024
 
+#define MAX_DESCRIPTOR_SETS 8
+#define MAX_DESCRIPTOR_BINDINGS 8
+
 inline const std::vector<const char*> vulkan_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME };
 
 struct QueueFamilyIndices {
@@ -49,6 +52,22 @@ struct Frame {
     VkFence render_fence;
     VulkanCommandBuffer command;
     Vec2 window_dimensions;
+};
+
+struct DescriptorBindings {
+    DescriptorBindings() {
+        binding_counts.resize(MAX_DESCRIPTOR_SETS);
+        bindings.resize(MAX_DESCRIPTOR_SETS * MAX_DESCRIPTOR_BINDINGS, {});
+    }
+
+    std::vector<u32> binding_counts;
+    std::vector<VkDescriptorSetLayoutBinding> bindings;
+};
+
+struct PipelineLayout {
+    VkPipelineLayout handle;
+    std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
+    VkShaderStageFlags push_constant_stage_bits;
 };
 
 }  // namespace toki

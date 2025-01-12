@@ -70,7 +70,8 @@ struct VertexBindingDescription {
 enum class BufferType : u8 {
     NONE,
     VERTEX,
-    INDEX
+    INDEX,
+    UNIFORM
 };
 
 enum class BufferUsage : u8 {

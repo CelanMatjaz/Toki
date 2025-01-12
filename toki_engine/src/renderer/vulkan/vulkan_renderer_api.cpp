@@ -67,7 +67,12 @@ void VulkanRendererApi::begin_pass(const BeginPassConfig& config) {
     vkCmdBeginRendering(m_context->swapchain.get_current_command_buffer(), &rendering_info);
 
     vkCmdPushConstants(
-        m_context->swapchain.get_current_command_buffer(), m_context->shaders.begin()->second.get_layout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &config.viewProjectionMatrix);
+        m_context->swapchain.get_current_command_buffer(),
+        m_context->shaders.begin()->second.get_layout(),
+        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+        0,
+        sizeof(glm::mat4),
+        &config.viewProjectionMatrix);
 
     m_isPassStarted = true;
 };

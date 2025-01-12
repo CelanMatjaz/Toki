@@ -75,14 +75,24 @@ void TestView::on_add(const toki::Ref<toki::Renderer> renderer) {
         renderer->set_buffer_data(m_instanceBufferHandle, sizeof(instances), instances);
     }
 
+    {
+        toki::BufferCreateConfig uniform_buffer_config{};
+        uniform_buffer_config.size = sizeof(glm::mat4);
+        uniform_buffer_config.type = toki::BufferType::UNIFORM;
+        uniform_buffer_config.usage = toki::BufferUsage::DYNAMIC;
+        m_uniformBufferHandle = renderer->create_buffer(uniform_buffer_config);
+    }
+
     m_camera.set_position({ 0.0f, 0.0f, -5.0f });
     m_camera.set_perspective_projection(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
 }
 
 void TestView::on_destroy(const toki::Ref<toki::Renderer> renderer) {
     renderer->destroy_shader(m_shaderHandle);
-    renderer->destroy_buffer(m_vertexBufferHandle);
     renderer->destroy_framebuffer(m_framebufferHandle);
+    renderer->destroy_buffer(m_indexBufferHandle);
+    renderer->destroy_buffer(m_vertexBufferHandle);
+    renderer->destroy_buffer(m_uniformBufferHandle);
 }
 
 glm::mat4 model;

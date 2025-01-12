@@ -4,8 +4,10 @@
 
 #include <vector>
 
-#include "containers/array_map.h"
-#include "renderer/vulkan/state/vulkan_state.h"
+#include "renderer/vulkan/state/vulkan_buffer.h"
+#include "renderer/vulkan/state/vulkan_pipeline.h"
+#include "renderer/vulkan/state/vulkan_swapchain.h"
+#include "renderer/vulkan/vulkan_types.h"
 
 namespace toki {
 

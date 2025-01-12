@@ -2,9 +2,12 @@
 
 #include <utility>
 
+#include "core/assert.h"
 #include "core/defer.h"
+#include "renderer/vulkan/vulkan_types.h"
 #include "renderer/vulkan/vulkan_utils.h"
 #include "resources/loaders/text.h"
+#include "vulkan/vulkan_core.h"
 
 namespace toki {
 
@@ -12,27 +15,20 @@ void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& conf
     std::vector<VkShaderModule> shader_modules(config.shader_config.stages.size());
     std::vector<VkPipelineShaderStageCreateInfo> shader_stage_create_infos(shader_modules.size());
 
-    for (u32 i = 0; i < shader_modules.size(); i++) {
-        VkPipelineShaderStageCreateInfo& shader_stage_create_info = shader_stage_create_infos[i];
-        shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        shader_stage_create_info.module = shader_modules[i] = create_shader_module(ctx, config.shader_config.stages[i]);
-        shader_stage_create_info.pName = "main";
+    PipelineResources resources = create_pipeline_resources(ctx, config.shader_config.stages);
+    m_layout = resources.layout;
 
-        switch (config.shader_config.stages[i].stage) {
-            case ShaderStage::VERTEX:
-                shader_stage_create_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
-                break;
-            case ShaderStage::FRAGMENT:
-                shader_stage_create_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-                break;
-            default:
-                std::unreachable();
-        }
+    for (u32 i = 0; const auto& [stage, module] : resources.shader_modules) {
+        VkPipelineShaderStageCreateInfo& shader_stage_create_info = shader_stage_create_infos[i++];
+        shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shader_stage_create_info.module = module;
+        shader_stage_create_info.pName = "main";
+        shader_stage_create_info.stage = map_shader_stage(stage);
     }
 
-    Defer defer([ctx, shader_modules]() {
-        for (auto& sm : shader_modules) {
-            vkDestroyShaderModule(ctx->device, sm, ctx->allocation_callbacks);
+    Defer defer([ctx, shader_stage_create_infos]() {
+        for (auto& sm : shader_stage_create_infos) {
+            vkDestroyShaderModule(ctx->device, sm.module, ctx->allocation_callbacks);
         }
     });
 
@@ -269,8 +265,6 @@ void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& conf
     pipeline_layout_create_info.pushConstantRangeCount = 1;
     pipeline_layout_create_info.pPushConstantRanges = &push_constant;
 
-    VK_CHECK(vkCreatePipelineLayout(ctx->device, &pipeline_layout_create_info, ctx->allocation_callbacks, &m_layout), "Could not create pipeline layout");
-
     const auto& color_formats = config.framebuffer.get_color_formats();
 
     VkPipelineRenderingCreateInfoKHR pipeline_rendering_info_create_info{ VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO };
@@ -293,7 +287,7 @@ void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& conf
     graphics_pipeline_create_info.pViewportState = &viewport_state_create_info;
     graphics_pipeline_create_info.pDynamicState = &dynamic_state_create_info;
     graphics_pipeline_create_info.subpass = 0;
-    graphics_pipeline_create_info.layout = m_layout;
+    graphics_pipeline_create_info.layout = m_layout.handle;
 
     TK_LOG_INFO("Creating new graphics pipeline");
     VK_CHECK(vkCreateGraphicsPipelines(ctx->device, VK_NULL_HANDLE, 1, &graphics_pipeline_create_info, ctx->allocation_callbacks, &m_handle), "Could not create graphics pipeline");
@@ -302,8 +296,13 @@ void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& conf
 void VulkanGraphicsPipeline::destroy(Ref<RendererContext> ctx) {
     vkDestroyPipeline(ctx->device, m_handle, ctx->allocation_callbacks);
     m_handle = VK_NULL_HANDLE;
-    vkDestroyPipelineLayout(ctx->device, m_layout, ctx->allocation_callbacks);
-    m_layout = VK_NULL_HANDLE;
+
+    for (auto& layout : m_layout.descriptor_set_layouts) {
+        vkDestroyDescriptorSetLayout(ctx->device, layout, ctx->allocation_callbacks);
+    }
+
+    vkDestroyPipelineLayout(ctx->device, m_layout.handle, ctx->allocation_callbacks);
+    m_layout.handle = {};
 }
 
 VkPipeline VulkanGraphicsPipeline::get_handle() const {
@@ -311,13 +310,113 @@ VkPipeline VulkanGraphicsPipeline::get_handle() const {
 }
 
 VkPipelineLayout VulkanGraphicsPipeline::get_layout() const {
-    return m_layout;
+    return m_layout.handle;
 }
 
-VkShaderModule VulkanGraphicsPipeline::create_shader_module(Ref<RendererContext> ctx, configs::Shader shader) {
-    std::string shader_source = loaders::read_text_file("assets/shaders" / shader.path);
-    std::vector shader_binary = compile_shader(shader.stage, shader_source);
-    return toki::create_shader_module(ctx, shader_binary);
+PipelineLayout VulkanGraphicsPipeline::create_pipeline_layout(Ref<RendererContext> ctx, const PipelineLayoutCreateConfig& config) {
+    PipelineLayout layout;
+    layout.descriptor_set_layouts.reserve(MAX_DESCRIPTOR_SETS);
+
+    for (u32 i = 0; i < config.bindings.binding_counts.size(); i++) {
+        u32 binding_count = config.bindings.binding_counts[i];
+        if (binding_count == 0) {
+            continue;
+        }
+
+        VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info{};
+        descriptor_set_layout_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        descriptor_set_layout_create_info.bindingCount = binding_count;
+        descriptor_set_layout_create_info.pBindings = &config.bindings.bindings[MAX_DESCRIPTOR_SETS * i];
+
+        VkDescriptorSetLayout descriptor_set_layout;
+        VK_CHECK(
+            vkCreateDescriptorSetLayout(ctx->device, &descriptor_set_layout_create_info, ctx->allocation_callbacks, &descriptor_set_layout) != VK_SUCCESS, "Could not create descriptor set layout");
+        layout.descriptor_set_layouts.emplace_back(descriptor_set_layout);
+    }
+
+    VkPipelineLayoutCreateInfo pipeline_layout_create_info{};
+    pipeline_layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipeline_layout_create_info.setLayoutCount = layout.descriptor_set_layouts.size();
+    pipeline_layout_create_info.pSetLayouts = layout.descriptor_set_layouts.data();
+    pipeline_layout_create_info.pushConstantRangeCount = std::min(config.push_constants.size(), 1ULL);
+    pipeline_layout_create_info.pPushConstantRanges = config.push_constants.data();
+
+    VK_CHECK(vkCreatePipelineLayout(ctx->device, &pipeline_layout_create_info, ctx->allocation_callbacks, &layout.handle), "Could not create pipeline layout");
+
+    if (config.push_constants.size() > 0) {
+        layout.push_constant_stage_bits = config.push_constants[0].stageFlags;
+    }
+
+    return layout;
+}
+
+void VulkanGraphicsPipeline::reflect_shader(ShaderStage stage, std::vector<u32>& binary, DescriptorBindings& bindings, std::vector<VkPushConstantRange>& push_constants) {
+    spirv_cross::Compiler compiler(binary);
+    const auto& resources = compiler.get_shader_resources();
+
+    VkShaderStageFlags shader_stage = map_shader_stage(stage);
+
+    for (u32 i = 0; i < resources.push_constant_buffers.size(); i++) {
+        auto element_type = compiler.get_type(resources.push_constant_buffers[i].base_type_id);
+        if (push_constants.size() == 1) {
+            push_constants[i].stageFlags |= shader_stage;
+        } else {
+            VkPushConstantRange push_constant;
+            push_constant.size = compiler.get_declared_struct_size(element_type);
+            push_constant.offset = compiler.get_decoration(resources.push_constant_buffers[i].id, spv::DecorationOffset);
+            push_constant.stageFlags = shader_stage;
+            push_constants.emplace_back(push_constant);
+        }
+    }
+
+    struct ResourceDescriptorType {
+        VkDescriptorType type;
+        spirv_cross::SmallVector<spirv_cross::Resource> resources;
+    };
+
+    // Supported descriptor types
+    std::vector<ResourceDescriptorType> descriptor_type_arrays = {
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, resources.uniform_buffers }, { VK_DESCRIPTOR_TYPE_SAMPLER, resources.separate_samplers },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, resources.separate_images },  { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, resources.sampled_images },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, resources.storage_buffers }, { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, resources.storage_images },
+    };
+
+    for (const auto& [descriptor_type, descriptor_array] : descriptor_type_arrays) {
+        for (u32 descriptor_index = 0; descriptor_index < descriptor_array.size(); descriptor_index++) {
+            auto& element_type = compiler.get_type(descriptor_array[descriptor_index].base_type_id);
+
+            u32 set_index = compiler.get_decoration(descriptor_array[descriptor_index].id, spv::DecorationDescriptorSet);
+            TK_ASSERT(set_index <= MAX_DESCRIPTOR_SETS, "A maximum of {} descriptor sets supported (indices 0 - {})", MAX_DESCRIPTOR_SETS, MAX_DESCRIPTOR_SETS);
+            TK_ASSERT(bindings.binding_counts[set_index] <= MAX_DESCRIPTOR_BINDINGS, "A maximum of {} descriptor set bindings supported", MAX_DESCRIPTOR_BINDINGS);
+
+            u32 binding_index = compiler.get_decoration(descriptor_array[descriptor_index].id, spv::DecorationBinding);
+
+            bindings.bindings[set_index + bindings.binding_counts[set_index]].binding = binding_index;
+            bindings.bindings[set_index + bindings.binding_counts[set_index]].descriptorCount = element_type.array.size() == 0 ? 1 : element_type.array[0];
+            bindings.bindings[set_index + bindings.binding_counts[set_index]].descriptorType = descriptor_type;
+            bindings.bindings[set_index + bindings.binding_counts[set_index]].stageFlags |= shader_stage;
+
+            bindings.binding_counts[set_index]++;
+        }
+    }
+}
+
+VulkanGraphicsPipeline::PipelineResources VulkanGraphicsPipeline::create_pipeline_resources(Ref<RendererContext> ctx, const std::vector<configs::Shader>& stages) {
+    PipelineResources resources;
+
+    DescriptorBindings bindings;
+    std::vector<VkPushConstantRange> push_constants;
+    for (const auto& shader : stages) {
+        std::string shader_source = loaders::read_text_file("assets/shaders" / shader.path);
+        std::vector shader_binary = compile_shader(shader.stage, shader_source);
+        resources.shader_modules[shader.stage] = create_shader_module(ctx, shader_binary);
+        reflect_shader(shader.stage, shader_binary, bindings, push_constants);
+    }
+
+    PipelineLayoutCreateConfig pipeline_layout_config{ .bindings = bindings, .push_constants = push_constants };
+    resources.layout = create_pipeline_layout(ctx, pipeline_layout_config);
+
+    return resources;
 }
 
 }  // namespace toki

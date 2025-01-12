@@ -1,6 +1,9 @@
 #pragma once
 
+#include <spirv_cross/spirv_cross.hpp>
+
 #include "renderer/vulkan/state/vulkan_framebuffer.h"
+#include "renderer/vulkan/vulkan_types.h"
 #include "resources/configs/shader_config_loader.h"
 
 namespace toki {
@@ -22,9 +25,23 @@ public:
 
 private:
     VkPipeline m_handle;
-    VkPipelineLayout m_layout;
+    PipelineLayout m_layout;
 
-    static VkShaderModule create_shader_module(Ref<RendererContext> ctx, configs::Shader shader);
+private:
+    struct PipelineLayoutCreateConfig {
+        const DescriptorBindings& bindings;
+        const std::vector<VkPushConstantRange>& push_constants;
+    };
+
+    static PipelineLayout create_pipeline_layout(Ref<RendererContext> ctx, const PipelineLayoutCreateConfig& config);
+
+    struct PipelineResources {
+        PipelineLayout layout;
+        std::unordered_map<ShaderStage, VkShaderModule> shader_modules;
+    };
+
+    static PipelineResources create_pipeline_resources(Ref<RendererContext> ctx, const std::vector<configs::Shader>& stages);
+    static void reflect_shader(ShaderStage stage, std::vector<u32>& binary, DescriptorBindings& bindings, std::vector<VkPushConstantRange>& push_constants);
 };
 
 }  // namespace toki

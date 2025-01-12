@@ -65,15 +65,21 @@ function configuration_configs()
 end
 
 function link_vulkan()
+    filter { "configurations:debug" }
+        links { "spirv-cross-reflectd" , "spirv-cross-cppd", "spirv-cross-cored", "shaderc_sharedd", "spirv-cross-glsld" }
+
+    filter "configurations:release or configurations:dist"
+        links { "spirv-cross-reflect" , "spirv-cross-cpp", "spirv-cross-core", "shaderc_shared", "spirv-cross-glsl" }
+
     filter "platforms:windows"
         includedirs { path.join(VULKAN_SDK, "Include") }
         libdirs { path.join(VULKAN_SDK, "Lib") }
-        links { "vulkan-1", "spirv-cross-core", "shaderc_shared", "spirv-cross-glsl" }
+        links { "vulkan-1" }
 
     filter "platforms:linux_wayland or platforms:linux_x11"
         includedirs { path.join(VULKAN_SDK, "include") }
         libdirs { path.join(VULKAN_SDK, "lib") }
-        links { "vulkan", "spirv-cross-core", "shaderc_shared", "spirv-cross-glsl" }
+        links { "vulkan" }
 
     filter "platforms:linux_wayland"
         defines { "VK_USE_PLATFORM_WAYLAND_KHR" }
@@ -82,6 +88,7 @@ function link_vulkan()
         defines { "VK_USE_PLATFORM_X11_KHR" }
 
     filter {}
+
 end
 
 function add_files()

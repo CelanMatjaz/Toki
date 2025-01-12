@@ -234,4 +234,15 @@ VkImageLayout get_image_layout(ColorFormat format) {
     }
 }
 
+VkShaderStageFlagBits map_shader_stage(ShaderStage stage) {
+    switch (stage) {
+        case ShaderStage::VERTEX:
+            return VK_SHADER_STAGE_VERTEX_BIT;
+        case ShaderStage::FRAGMENT:
+            return VK_SHADER_STAGE_FRAGMENT_BIT;
+        default:
+            std::unreachable();
+    }
+}
+
 }  // namespace toki
