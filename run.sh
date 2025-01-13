@@ -9,4 +9,4 @@ COMPILER=clang
 premake5 export-compile-commands --cc="$COMPILER" --os=linux > /dev/null
 cp "compile_commands/$CONFIG.json" compile_commands.json > /dev/null
 premake5 gmake2 "--cc=$COMPILER" --os=linux
-make "config=$CONFIG" && ./bin/${PLATFORM}-x86_64/${OPTIMIZE}/Sandbox ./toki_sandbox
+make -j$(nproc) "config=$CONFIG" && ./bin/${PLATFORM}-x86_64/${OPTIMIZE}/Sandbox ./toki_sandbox

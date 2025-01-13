@@ -65,11 +65,26 @@ function configuration_configs()
 end
 
 function link_vulkan()
-    filter { "configurations:debug" }
-        links { "spirv-cross-reflectd" , "spirv-cross-cppd", "spirv-cross-cored", "shaderc_sharedd", "spirv-cross-glsld" }
+    filter { "platforms:windows", "configurations:debug" }
+        links {
+            "spirv-cross-cppd",
+            "shadercd",
+        }
 
-    filter "configurations:release or configurations:dist"
-        links { "spirv-cross-reflect" , "spirv-cross-cpp", "spirv-cross-core", "shaderc_shared", "spirv-cross-glsl" }
+    filter { "platforms:windows", "configurations:not debug" }
+        links {
+            "spirv-cross-cpp",
+            "shaderc",
+        }
+
+    filter { "platforms:linux_wayland or platforms:linux_x11" }
+        links {
+            "spirv-cross-core",
+            "spirv-cross-cpp",
+            "spirv-cross-glsl",
+            "spirv-cross-reflect",
+            "shaderc_combined"
+        }
 
     filter "platforms:windows"
         includedirs { path.join(VULKAN_SDK, "Include") }
