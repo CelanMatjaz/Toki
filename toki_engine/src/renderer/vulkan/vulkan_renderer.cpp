@@ -10,6 +10,7 @@
 #include "core/logging.h"
 #include "renderer/renderer.h"
 #include "renderer/vulkan/platform/vulkan_platform.h"
+#include "renderer/vulkan/vulkan_commands.h"
 #include "renderer/vulkan/vulkan_renderer_api.h"
 #include "renderer/vulkan/vulkan_utils.h"
 
@@ -28,12 +29,16 @@ VulkanRenderer::VulkanRenderer(const Config& config): Renderer(config) {
     swapchain_config.window = config.initialWindow;
     swapchain_config.command_pool = m_context->command_pools.front();
     m_context->swapchain.create(m_context, swapchain_config);
+
+    create_default_resources();
 }
 
 VulkanRenderer::~VulkanRenderer() {
     TK_LOG_INFO("Shutting down renderer");
 
     vkDeviceWaitIdle(m_context->device);
+
+    cleanup_default_resources();
 
     m_context->descriptor_pool_manager.destroy(m_context);
 
@@ -126,6 +131,32 @@ void VulkanRenderer::destroy_buffer(Handle buffer_handle) {
     m_context->buffers.erase(buffer_handle);
 }
 
+Handle VulkanRenderer::create_texture(const TextureCreateConfig& config) {
+    TK_ASSERT(config.size.x > 0, "Cannot create an image with width 0");
+    TK_ASSERT(config.size.y > 0, "Cannot create an image with height 0");
+
+    Handle new_image_handle = m_context->buffers.size() + 1;
+
+    VulkanImage::Config create_image_config{};
+    create_image_config.extent = { config.size.x, config.size.y, 1 };
+    create_image_config.format = VK_FORMAT_R8G8B8A8_SRGB;
+    create_image_config.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    create_image_config.memory_properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    VulkanImage image{};
+    image.create(m_context, create_image_config);
+    vulkan_commands::submit_single_use_command_buffer(
+        m_context, [image](VkCommandBuffer cmd) mutable { image.transition_layout(cmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL); });
+    m_context->images.emplace(new_image_handle, image);
+
+    return new_image_handle;
+}
+
+void VulkanRenderer::destroy_texture(Handle texture_handle) {
+    TK_ASSERT(m_context->images.contains(texture_handle), "Texture with provided handle does not exist");
+    m_context->images[texture_handle].destroy(m_context);
+    m_context->images.erase(texture_handle);
+}
+
 Handle VulkanRenderer::create_framebuffer(const FramebufferCreateConfig& config) {
     TK_ASSERT(config.render_targets.size() <= MAX_FRAMEBUFFER_ATTACHMENTS, "Max {} render attachments supported, including depth and/or stencil", MAX_FRAMEBUFFER_ATTACHMENTS);
 
@@ -147,6 +178,11 @@ void VulkanRenderer::destroy_framebuffer(Handle framebuffer_handle) {
 void VulkanRenderer::set_buffer_data(Handle buffer_handle, u32 size, void* data) {
     TK_ASSERT(m_context->buffers.contains(buffer_handle), "Buffer with provided handle does not exist");
     m_context->buffers[buffer_handle].set_data(m_context, size, data);
+}
+
+void VulkanRenderer::set_texture_data(Handle texture_handle, u32 size, void* data) {
+    TK_ASSERT(m_context->images.contains(texture_handle), "Texture with provided handle does not exist");
+    m_context->images.at(texture_handle).set_data(m_context, size, data);
 }
 
 b8 VulkanRenderer::begin_frame() {
@@ -293,6 +329,7 @@ void VulkanRenderer::create_device(Ref<Window> window) {
 
     VkPhysicalDeviceFeatures features{};
     features.fillModeNonSolid = VK_TRUE;
+    features.samplerAnisotropy = VK_TRUE;
 
     VkDeviceCreateInfo device_create_info{};
     device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -328,6 +365,31 @@ void VulkanRenderer::create_command_pools() {
 void VulkanRenderer::create_descriptor_pools() {
     std::vector<VkDescriptorPoolSize> pool_sizes = { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 100 } };
     m_context->descriptor_pool_manager.create(m_context, 256, pool_sizes);
+}
+
+void VulkanRenderer::create_default_resources() {
+    VkSamplerCreateInfo sampler_create_info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
+    sampler_create_info.magFilter = VK_FILTER_NEAREST;
+    sampler_create_info.minFilter = VK_FILTER_NEAREST;
+    sampler_create_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_create_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_create_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_create_info.anisotropyEnable = VK_FALSE;
+    sampler_create_info.maxAnisotropy = 1.0f;
+    sampler_create_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    sampler_create_info.unnormalizedCoordinates = VK_FALSE ;
+    sampler_create_info.compareEnable = VK_FALSE;
+    sampler_create_info.compareOp = VK_COMPARE_OP_ALWAYS;
+    sampler_create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+    sampler_create_info.mipLodBias = 0.0f;
+    sampler_create_info.minLod = 0.0f;
+    sampler_create_info.maxLod = VK_LOD_CLAMP_NONE;
+
+    VK_CHECK(vkCreateSampler(m_context->device, &sampler_create_info, m_context->allocation_callbacks, &m_context->default_sampler), "Could not create default sampler");
+}
+
+void VulkanRenderer::cleanup_default_resources() {
+    vkDestroySampler(m_context->device, m_context->default_sampler, m_context->allocation_callbacks);
 }
 
 }  // namespace toki

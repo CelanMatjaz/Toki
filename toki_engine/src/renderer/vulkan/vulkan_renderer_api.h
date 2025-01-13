@@ -26,6 +26,7 @@ public:
     virtual void bind_descriptor_sets(Handle shader_handle) override;
     virtual void reset_descriptor_sets(Handle shader_handle) override;
     virtual void write_buffer(Handle shader_handle, Handle buffer_handle, u32 set, u32 binding) override;
+    virtual void write_texture(Handle shader_handle, Handle texture_handle, u32 set, u32 binding) override;
 
     virtual void reset_viewport() override;
     virtual void reset_scissor() override;

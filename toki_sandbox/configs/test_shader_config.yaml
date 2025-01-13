@@ -16,7 +16,7 @@ options:
 bindings:
   - binding: 0
     input_rate: vertex
-    stride: 12
+    stride: 20
   - binding: 1
     input_rate: instance
     stride: 24
@@ -25,11 +25,15 @@ attributes:
     location: 0
     binding: 0
     offset: 0
-  - type: float3 # instance position
+  - type: float2 # model uv
     location: 1
+    binding: 0
+    offset: 12
+  - type: float3 # instance position
+    location: 2
     binding: 1
     offset: 0
   - type: float3 # instance color
-    location: 2
+    location: 3
     binding: 1
     offset: 12

@@ -7,10 +7,9 @@
 namespace toki {
 
 #define CHECK_SHADER(shader_handle) TK_ASSERT(m_context->shaders.contains(shader_handle), "Shader with provided handle does not exist");
-
 #define CHECK_FRAMEBUFFER(framebuffer_handle) TK_ASSERT(m_context->framebuffers.contains(framebuffer_handle), "Framebuffer with provided handle does not exist");
-
 #define CHECK_BUFFER(buffer_handle) TK_ASSERT(m_context->buffers.contains(buffer_handle), "Buffer with provided handle does not exist");
+#define CHECK_TEXTURE(texture_handle) TK_ASSERT(m_context->images.contains(texture_handle), "Texture with provided handle does not exist");
 
 VulkanRendererApi::VulkanRendererApi(Ref<RendererContext> context): m_context(context) {}
 
@@ -169,7 +168,28 @@ void VulkanRendererApi::write_buffer(Handle shader_handle, Handle buffer_handle,
     VulkanBuffer& buffer = m_context->buffers.at(buffer_handle);
     Frame& frame = m_context->swapchain.get_current_frame();
     pipeline.allocate_descriptor_sets(m_context, frame.descriptor_pool_manager);
-    frame.descriptor_writer.write_buffer(binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { .buffer = buffer.get_handle(), .size = buffer.get_size(), .offset = 0 });
+
+    DescriptorWriter::WriteBufferConfig config{};
+    config.buffer = buffer.get_handle();
+    config.size = buffer.get_size();
+    config.offset = 0;
+    frame.descriptor_writer.write_buffer(binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, config);
+}
+
+void VulkanRendererApi::write_texture(Handle shader_handle, Handle texture_handle, u32 set, u32 binding) {
+    CHECK_SHADER(shader_handle);
+    CHECK_TEXTURE(texture_handle);
+
+    VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
+    VulkanImage& image = m_context->images.at(texture_handle);
+    Frame& frame = m_context->swapchain.get_current_frame();
+    pipeline.allocate_descriptor_sets(m_context, frame.descriptor_pool_manager);
+
+    DescriptorWriter::WriteImageConfig config{};
+    config.image_view = image.get_image_view();
+    config.image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    config.sampler = m_context->default_sampler;
+    frame.descriptor_writer.write_image(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, config);
 }
 
 void VulkanRendererApi::reset_viewport() {

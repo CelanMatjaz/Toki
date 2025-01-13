@@ -24,10 +24,14 @@ public:
     virtual Handle create_buffer(const BufferCreateConfig& config) override;
     virtual void destroy_buffer(Handle buffer_handle) override;
 
+    virtual Handle create_texture(const TextureCreateConfig& config) override;
+    virtual void destroy_texture(Handle texture_handle) override;
+
     virtual Handle create_framebuffer(const FramebufferCreateConfig& config) override;
     virtual void destroy_framebuffer(Handle framebuffer_handle) override;
 
     virtual void set_buffer_data(Handle buffer_handle, u32 size, void* data) override;
+    virtual void set_texture_data(Handle texture_handle, u32 size, void* data) override;
 
 private:
     void add_window(Ref<Window> window);
@@ -43,6 +47,9 @@ private:
     void create_device(Ref<Window> window);
     void create_command_pools();
     void create_descriptor_pools();
+    void create_default_resources();
+
+    void cleanup_default_resources();
 };
 
 }  // namespace toki

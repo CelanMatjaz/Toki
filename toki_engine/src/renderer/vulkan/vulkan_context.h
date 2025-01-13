@@ -28,9 +28,12 @@ struct RendererContext {
 
     std::unordered_map<Handle, VulkanGraphicsPipeline> shaders;
     std::unordered_map<Handle, VulkanBuffer> buffers;
+    std::unordered_map<Handle, VulkanImage> images;
     std::unordered_map<Handle, VulkanFramebuffer> framebuffers;
 
     DescriptorPoolManager descriptor_pool_manager;
+
+    VkSampler default_sampler;
 };
 
 }  // namespace toki

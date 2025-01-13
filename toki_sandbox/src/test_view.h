@@ -19,4 +19,5 @@ private:
     toki::Handle m_instanceBufferHandle;
     toki::Handle m_indexBufferHandle;
     toki::Handle m_uniformBufferHandle;
+    toki::Handle m_textureHandle;
 };

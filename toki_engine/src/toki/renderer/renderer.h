@@ -36,10 +36,14 @@ public:
     virtual Handle create_buffer(const BufferCreateConfig& config) = 0;
     virtual void destroy_buffer(Handle buffer_handle) = 0;
 
+    virtual Handle create_texture(const TextureCreateConfig& config) = 0;
+    virtual void destroy_texture(Handle texture_handle) = 0;
+
     virtual Handle create_framebuffer(const FramebufferCreateConfig& config) = 0;
     virtual void destroy_framebuffer(Handle framebuffer_handle) = 0;
 
     virtual void set_buffer_data(Handle buffer_handle, u32 size, void* data) = 0;
+    virtual void set_texture_data(Handle texture_handle, u32 size, void* data) = 0;
 
 protected:
     virtual b8 begin_frame() = 0;
