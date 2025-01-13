@@ -67,14 +67,20 @@ end
 function link_vulkan()
     filter { "platforms:windows", "configurations:debug" }
         links {
+            "spirv-cross-cored",
             "spirv-cross-cppd",
-            "shadercd",
+            "spirv-cross-glsld",
+            "spirv-cross-reflectd",
+            "shaderc_combinedd"
         }
 
     filter { "platforms:windows", "configurations:not debug" }
         links {
+            "spirv-cross-core",
             "spirv-cross-cpp",
-            "shaderc",
+            "spirv-cross-glsl",
+            "spirv-cross-reflect",
+            "shaderc_combined"
         }
 
     filter { "platforms:linux_wayland or platforms:linux_x11" }
