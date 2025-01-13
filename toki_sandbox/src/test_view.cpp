@@ -99,9 +99,14 @@ void TestView::on_add(const toki::Ref<toki::Renderer> renderer) {
         };
 
         toki::TextureCreateConfig texture_config{};
+        texture_config.format = toki::ColorFormat::RGBA8;
         texture_config.size = { 2, 2 };
         m_textureHandle = renderer->create_texture(texture_config);
         renderer->set_texture_data(m_textureHandle, sizeof(pixels), pixels);
+    }
+
+    {
+        m_textureHandle2 = renderer->create_texture_from_file("assets/images/test.png");
     }
 
     m_camera.set_position({ 0.0f, 0.0f, -5.0f });
@@ -115,6 +120,7 @@ void TestView::on_destroy(const toki::Ref<toki::Renderer> renderer) {
     renderer->destroy_buffer(m_vertexBufferHandle);
     renderer->destroy_buffer(m_uniformBufferHandle);
     renderer->destroy_texture(m_textureHandle);
+    renderer->destroy_texture(m_textureHandle2);
 }
 
 glm::mat4 model;
@@ -138,7 +144,7 @@ void TestView::on_render(toki::Ref<toki::RendererApi> api) {
 
     api->reset_descriptor_sets(m_shaderHandle);
     api->write_buffer(m_shaderHandle, m_uniformBufferHandle, 0, 0);
-    api->write_texture(m_shaderHandle, m_textureHandle, 0, 1);
+    api->write_texture(m_shaderHandle, m_textureHandle2, 0, 1);
     api->update_sets(m_shaderHandle);
     api->bind_descriptor_sets(m_shaderHandle);
 

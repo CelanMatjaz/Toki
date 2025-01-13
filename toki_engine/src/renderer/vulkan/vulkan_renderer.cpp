@@ -1,5 +1,7 @@
 #include "vulkan_renderer.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 #include <vulkan/vulkan.h>
 
 #include <print>
@@ -57,6 +59,11 @@ VulkanRenderer::~VulkanRenderer() {
 
     for (auto& [_, buffer] : m_context->buffers) {
         buffer.destroy(m_context);
+    }
+    m_context->buffers.clear();
+
+    for (auto& [_, image] : m_context->images) {
+        image.destroy(m_context);
     }
     m_context->buffers.clear();
 
@@ -135,11 +142,11 @@ Handle VulkanRenderer::create_texture(const TextureCreateConfig& config) {
     TK_ASSERT(config.size.x > 0, "Cannot create an image with width 0");
     TK_ASSERT(config.size.y > 0, "Cannot create an image with height 0");
 
-    Handle new_image_handle = m_context->buffers.size() + 1;
+    Handle new_image_handle = m_context->images.size() + 1;
 
     VulkanImage::Config create_image_config{};
     create_image_config.extent = { config.size.x, config.size.y, 1 };
-    create_image_config.format = VK_FORMAT_R8G8B8A8_SRGB;
+    create_image_config.format = map_format(config.format);
     create_image_config.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     create_image_config.memory_properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     VulkanImage image{};
@@ -149,6 +156,26 @@ Handle VulkanRenderer::create_texture(const TextureCreateConfig& config) {
     m_context->images.emplace(new_image_handle, image);
 
     return new_image_handle;
+}
+
+Handle VulkanRenderer::create_texture_from_file(std::string_view path) {
+    int width, height, channels;
+    int desired_channels = STBI_rgb_alpha;
+
+    std::filesystem::path file_path(path);
+    u32* pixels = (uint32_t*) stbi_load(file_path.string().c_str(), &width, &height, &channels, desired_channels);
+    TK_ASSERT(pixels != nullptr, "Error loading image");
+    u64 image_size = width * height * 4;
+    TK_ASSERT(image_size > 0, "Image size is 0");
+
+    TextureCreateConfig config{};
+    config.format = ColorFormat::RGBA8;
+    config.size = { width, height };
+    Handle new_image = create_texture(config);
+    set_texture_data(new_image, image_size, pixels);
+    stbi_image_free(pixels);
+
+    return new_image;
 }
 
 void VulkanRenderer::destroy_texture(Handle texture_handle) {
@@ -368,19 +395,19 @@ void VulkanRenderer::create_descriptor_pools() {
 }
 
 void VulkanRenderer::create_default_resources() {
-    VkSamplerCreateInfo sampler_create_info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
-    sampler_create_info.magFilter = VK_FILTER_NEAREST;
-    sampler_create_info.minFilter = VK_FILTER_NEAREST;
+    VkSamplerCreateInfo sampler_create_info{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+    sampler_create_info.magFilter = VK_FILTER_LINEAR;
+    sampler_create_info.minFilter = VK_FILTER_LINEAR;
     sampler_create_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     sampler_create_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     sampler_create_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     sampler_create_info.anisotropyEnable = VK_FALSE;
     sampler_create_info.maxAnisotropy = 1.0f;
     sampler_create_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    sampler_create_info.unnormalizedCoordinates = VK_FALSE ;
+    sampler_create_info.unnormalizedCoordinates = VK_FALSE;
     sampler_create_info.compareEnable = VK_FALSE;
     sampler_create_info.compareOp = VK_COMPARE_OP_ALWAYS;
-    sampler_create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+    sampler_create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
     sampler_create_info.mipLodBias = 0.0f;
     sampler_create_info.minLod = 0.0f;
     sampler_create_info.maxLod = VK_LOD_CLAMP_NONE;

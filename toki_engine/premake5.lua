@@ -8,6 +8,7 @@ project "Engine"
         "%{wks.location}/vendor/glfw/include",
         "%{wks.location}/vendor/glm",
         "%{wks.location}/vendor/yaml-cpp/include",
+        "%{wks.location}/vendor/stb",
     }
 
     add_files()

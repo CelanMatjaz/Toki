@@ -37,6 +37,7 @@ public:
     virtual void destroy_buffer(Handle buffer_handle) = 0;
 
     virtual Handle create_texture(const TextureCreateConfig& config) = 0;
+    virtual Handle create_texture_from_file(std::string_view path) = 0;
     virtual void destroy_texture(Handle texture_handle) = 0;
 
     virtual Handle create_framebuffer(const FramebufferCreateConfig& config) = 0;

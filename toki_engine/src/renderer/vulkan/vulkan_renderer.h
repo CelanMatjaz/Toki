@@ -25,6 +25,7 @@ public:
     virtual void destroy_buffer(Handle buffer_handle) override;
 
     virtual Handle create_texture(const TextureCreateConfig& config) override;
+    virtual Handle create_texture_from_file(std::string_view path) override;
     virtual void destroy_texture(Handle texture_handle) override;
 
     virtual Handle create_framebuffer(const FramebufferCreateConfig& config) override;

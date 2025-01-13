@@ -15,5 +15,7 @@ layout(set = 0, binding = 1) uniform sampler2D tex;
 
 void main() {
     out_color2 = vec4(in_color, 1.0);
+    out_color2 = texture(tex, in_uv);
     out_color = texture(tex, in_uv) + (in_index) * 0.01;
+    out_color.a = 1.0;
 }

@@ -23,6 +23,7 @@ struct FramebufferCreateConfig {
 };
 
 struct TextureCreateConfig {
+    ColorFormat format;
     glm::u32vec2 size;
 };
 

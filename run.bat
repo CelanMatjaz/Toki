@@ -5,4 +5,4 @@ set compiler=clang
 premake5 export-compile-commands --cc=%compiler% --os=windows
 cp compile_commands/%config%.json compile_commands.json
 premake5 gmake2 --cc=%compiler% --os=windows
-make -j12 config=%config%
+make -j%NUMBER_OF_PROCESSORS% config=%config%
