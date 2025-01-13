@@ -313,6 +313,18 @@ VkPipelineLayout VulkanGraphicsPipeline::get_layout() const {
     return m_layout.handle;
 }
 
+VkShaderStageFlags VulkanGraphicsPipeline::get_push_constant_stage_bits() const {
+    return m_layout.push_constant_stage_bits;
+}
+
+const std::vector<VkDescriptorSet>& VulkanGraphicsPipeline::get_descriptor_sets() const {
+    return m_descriptorSets;
+}
+
+void VulkanGraphicsPipeline::allocate_descriptor_sets(Ref<RendererContext> ctx, DescriptorPoolManager& pool_manager) {
+    m_descriptorSets = pool_manager.allocate_multiple(ctx, m_layout.descriptor_set_layouts);
+}
+
 PipelineLayout VulkanGraphicsPipeline::create_pipeline_layout(Ref<RendererContext> ctx, const PipelineLayoutCreateConfig& config) {
     PipelineLayout layout;
     layout.descriptor_set_layouts.reserve(MAX_DESCRIPTOR_SETS);
@@ -338,7 +350,7 @@ PipelineLayout VulkanGraphicsPipeline::create_pipeline_layout(Ref<RendererContex
     pipeline_layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipeline_layout_create_info.setLayoutCount = layout.descriptor_set_layouts.size();
     pipeline_layout_create_info.pSetLayouts = layout.descriptor_set_layouts.data();
-    pipeline_layout_create_info.pushConstantRangeCount = std::min(config.push_constants.size(), 1ULL);
+    pipeline_layout_create_info.pushConstantRangeCount = std::min(config.push_constants.size(), (decltype(config.push_constants.size())) 1);
     pipeline_layout_create_info.pPushConstantRanges = config.push_constants.data();
 
     VK_CHECK(vkCreatePipelineLayout(ctx->device, &pipeline_layout_create_info, ctx->allocation_callbacks, &layout.handle), "Could not create pipeline layout");

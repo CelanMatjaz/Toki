@@ -3,10 +3,9 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 
-#include <array>
-
 #include "engine/window.h"
 #include "renderer/renderer_types.h"
+#include "renderer/vulkan/state/vulkan_descriptor.h"
 
 namespace toki {
 
@@ -52,6 +51,9 @@ struct Frame {
     VkFence render_fence;
     VulkanCommandBuffer command;
     Vec2 window_dimensions;
+
+    DescriptorPoolManager descriptor_pool_manager;
+    DescriptorWriter descriptor_writer;
 };
 
 struct DescriptorBindings {

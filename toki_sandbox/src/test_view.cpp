@@ -76,11 +76,18 @@ void TestView::on_add(const toki::Ref<toki::Renderer> renderer) {
     }
 
     {
+        struct UniformData {
+            glm::vec3 color;
+        };
+
+        UniformData uniform_data = { glm::vec3{ 0.3f } };
+
         toki::BufferCreateConfig uniform_buffer_config{};
         uniform_buffer_config.size = sizeof(glm::mat4);
         uniform_buffer_config.type = toki::BufferType::UNIFORM;
         uniform_buffer_config.usage = toki::BufferUsage::DYNAMIC;
         m_uniformBufferHandle = renderer->create_buffer(uniform_buffer_config);
+        renderer->set_buffer_data(m_uniformBufferHandle, sizeof(UniformData), &uniform_data);
     }
 
     m_camera.set_position({ 0.0f, 0.0f, -5.0f });
@@ -100,7 +107,6 @@ glm::mat4 model;
 void TestView::on_render(toki::Ref<toki::RendererApi> api) {
     toki::BeginPassConfig begin_pass_config{};
     begin_pass_config.framebufferHandle = m_framebufferHandle;
-    begin_pass_config.viewProjectionMatrix = m_camera.get_view_projection_matrix() * model;
     api->begin_pass(begin_pass_config);
 
     api->reset_viewport();
@@ -112,6 +118,13 @@ void TestView::on_render(toki::Ref<toki::RendererApi> api) {
     bind_vertex_buffers_config.handles = { m_vertexBufferHandle, m_instanceBufferHandle };
     api->bind_vertex_buffers(bind_vertex_buffers_config);
     api->bind_index_buffer(m_indexBufferHandle);
+    glm::mat4 mvp = m_camera.get_view_projection_matrix() * model;
+    api->push_constant(m_shaderHandle, sizeof(glm::mat4), &mvp);
+
+    api->reset_descriptor_sets(m_shaderHandle);
+    api->write_buffer(m_shaderHandle, m_uniformBufferHandle, 0, 0);
+    api->update_sets(m_shaderHandle);
+    api->bind_descriptor_sets(m_shaderHandle);
 
     api->draw_indexed(36, 2, 0, 0, 0);
 

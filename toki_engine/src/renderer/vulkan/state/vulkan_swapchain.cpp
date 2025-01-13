@@ -69,6 +69,9 @@ void VulkanSwapchain::create(Ref<RendererContext> ctx, const Config& config) {
             VK_CHECK(vkCreateFence(ctx->device, &fence_create_info, ctx->allocation_callbacks, &m_frames[i].render_fence), "Could not create render fence");
             VK_CHECK(vkCreateSemaphore(ctx->device, &semaphore_create_info, ctx->allocation_callbacks, &m_frames[i].image_available_semaphore), "Could not create render semaphore");
             VK_CHECK(vkCreateSemaphore(ctx->device, &semaphore_create_info, ctx->allocation_callbacks, &m_frames[i].present_semaphore), "Could not create present semaphore");
+
+            std::vector<VkDescriptorPoolSize> pool_sizes = { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 100 } };
+            m_frames[i].descriptor_pool_manager.create(ctx, 1024, pool_sizes);
         }
     }
 }
@@ -81,6 +84,8 @@ void VulkanSwapchain::destroy(Ref<RendererContext> ctx) {
         m_frames[i].image_available_semaphore = VK_NULL_HANDLE;
         vkDestroySemaphore(ctx->device, m_frames[i].present_semaphore, ctx->allocation_callbacks);
         m_frames[i].present_semaphore = VK_NULL_HANDLE;
+
+        m_frames[i].descriptor_pool_manager.destroy(ctx);
     }
 
     for (u32 i = 0; i < m_imageCount; i++) {
@@ -177,6 +182,8 @@ b8 VulkanSwapchain::start_recording(Ref<RendererContext> ctx) {
 
     VkResult waitFencesResult = vkWaitForFences(ctx->device, 1, &frame.render_fence, VK_TRUE, UINT64_MAX);
     TK_ASSERT(waitFencesResult == VK_SUCCESS || waitFencesResult == VK_TIMEOUT, "Failed waiting for fences");
+
+    frame.descriptor_pool_manager.clear(ctx);
 
     VkResult result = vkAcquireNextImageKHR(ctx->device, m_handle, UINT64_MAX, frame.image_available_semaphore, VK_NULL_HANDLE, &m_currentImageIndex);
 

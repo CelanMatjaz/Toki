@@ -20,6 +20,12 @@ public:
     virtual void bind_vertex_buffer(Handle handle, u32 binding) override;
     virtual void bind_vertex_buffers(const BindVertexBuffersConfig& config) override;
     virtual void bind_index_buffer(Handle handle) override;
+    virtual void push_constant(Handle shader_handle, u32 size, void* data) override;
+
+    virtual void update_sets(Handle shader_handle) override;
+    virtual void bind_descriptor_sets(Handle shader_handle) override;
+    virtual void reset_descriptor_sets(Handle shader_handle) override;
+    virtual void write_buffer(Handle shader_handle, Handle buffer_handle, u32 set, u32 binding) override;
 
     virtual void reset_viewport() override;
     virtual void reset_scissor() override;

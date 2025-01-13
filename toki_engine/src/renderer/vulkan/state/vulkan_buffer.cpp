@@ -8,6 +8,8 @@
 namespace toki {
 
 void VulkanBuffer::create(Ref<RendererContext> ctx, const Config& config) {
+    m_size = config.size;
+
     VkBufferCreateInfo buffer_create_info{};
     buffer_create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     buffer_create_info.size = config.size;
@@ -44,6 +46,10 @@ void VulkanBuffer::set_data(Ref<RendererContext> ctx, u32 size, void* data) {
 
 VkBuffer VulkanBuffer::get_handle() const {
     return m_handle;
+}
+
+u32 VulkanBuffer::get_size() const {
+    return m_size;
 }
 
 }  // namespace toki

@@ -6,6 +6,12 @@
 
 namespace toki {
 
+#define CHECK_SHADER(shader_handle) TK_ASSERT(m_context->shaders.contains(shader_handle), "Shader with provided handle does not exist");
+
+#define CHECK_FRAMEBUFFER(framebuffer_handle) TK_ASSERT(m_context->framebuffers.contains(framebuffer_handle), "Framebuffer with provided handle does not exist");
+
+#define CHECK_BUFFER(buffer_handle) TK_ASSERT(m_context->buffers.contains(buffer_handle), "Buffer with provided handle does not exist");
+
 VulkanRendererApi::VulkanRendererApi(Ref<RendererContext> context): m_context(context) {}
 
 VulkanRendererApi::~VulkanRendererApi() {
@@ -66,14 +72,6 @@ void VulkanRendererApi::begin_pass(const BeginPassConfig& config) {
 
     vkCmdBeginRendering(m_context->swapchain.get_current_command_buffer(), &rendering_info);
 
-    vkCmdPushConstants(
-        m_context->swapchain.get_current_command_buffer(),
-        m_context->shaders.begin()->second.get_layout(),
-        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-        0,
-        sizeof(glm::mat4),
-        &config.viewProjectionMatrix);
-
     m_isPassStarted = true;
 };
 
@@ -87,21 +85,21 @@ void VulkanRendererApi::end_pass() {
 void VulkanRendererApi::submit() {}
 
 void VulkanRendererApi::bind_shader(Handle shader_handle) {
-    TK_ASSERT(m_context->shaders.contains(shader_handle), "Shader with provided handle does not exist");
+    CHECK_SHADER(shader_handle);
     VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
     vkCmdBindPipeline(m_context->swapchain.get_current_command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.get_handle());
 }
 
-void VulkanRendererApi::bind_vertex_buffer(Handle handle) {
-    TK_ASSERT(m_context->buffers.contains(handle), "Buffer with provided handle does not exist");
-    VkBuffer buf = m_context->buffers[handle].get_handle();
+void VulkanRendererApi::bind_vertex_buffer(Handle buffer_handle) {
+    CHECK_BUFFER(buffer_handle)
+    VkBuffer buf = m_context->buffers[buffer_handle].get_handle();
     u64 offsets = 0;
     vkCmdBindVertexBuffers(m_context->swapchain.get_current_command_buffer(), 0, 1, &buf, &offsets);
 }
 
-void VulkanRendererApi::bind_vertex_buffer(Handle handle, u32 binding) {
-    TK_ASSERT(m_context->buffers.contains(handle), "Buffer with provided handle does not exist");
-    VkBuffer buf = m_context->buffers[handle].get_handle();
+void VulkanRendererApi::bind_vertex_buffer(Handle buffer_handle, u32 binding) {
+    CHECK_BUFFER(buffer_handle)
+    VkBuffer buf = m_context->buffers[buffer_handle].get_handle();
     u64 offsets = 0;
     vkCmdBindVertexBuffers(m_context->swapchain.get_current_command_buffer(), binding, 1, &buf, &offsets);
 }
@@ -111,16 +109,67 @@ void VulkanRendererApi::bind_vertex_buffers(const BindVertexBuffersConfig& confi
     std::vector<VkDeviceSize> offsets(config.handles.size(), 0);
     u64 offset = 0;
     for (u32 i = 0; i < buffers.size(); i++) {
-        TK_ASSERT(m_context->buffers.contains(config.handles[i]), "Buffer with provided handle does not exist");
+        CHECK_BUFFER(config.handles[i]);
         VkBuffer buffer = m_context->buffers.at(config.handles[i]).get_handle();
         vkCmdBindVertexBuffers(m_context->swapchain.get_current_command_buffer(), i, 1, &buffer, &offset);
     }
 }
 
-void VulkanRendererApi::bind_index_buffer(Handle handle) {
-    TK_ASSERT(m_context->buffers.contains(handle), "Buffer with provided handle does not exist");
-    VkBuffer buf = m_context->buffers[handle].get_handle();
+void VulkanRendererApi::bind_index_buffer(Handle buffer_handle) {
+    CHECK_BUFFER(buffer_handle)
+    VkBuffer buf = m_context->buffers[buffer_handle].get_handle();
     vkCmdBindIndexBuffer(m_context->swapchain.get_current_command_buffer(), buf, 0, VK_INDEX_TYPE_UINT32);
+}
+
+void VulkanRendererApi::push_constant(Handle shader_handle, u32 size, void* data) {
+    CHECK_SHADER(shader_handle);
+    VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
+    vkCmdPushConstants(m_context->swapchain.get_current_command_buffer(), pipeline.get_layout(), pipeline.get_push_constant_stage_bits(), 0, size, data);
+
+    // vkCmdBindDescriptorSets(
+    //     VkCommandBuffer commandBuffer,
+    //     VkPipelineBindPoint pipelineBindPoint,
+    //     VkPipelineLayout layout,
+    //     uint32_t firstSet,
+    //     uint32_t descriptorSetCount,
+    //     const VkDescriptorSet* pDescriptorSets,
+    //     uint32_t dynamicOffsetCount,
+    //     const uint32_t* pDynamicOffsets)
+}
+
+void VulkanRendererApi::update_sets(Handle shader_handle) {
+    CHECK_SHADER(shader_handle);
+    VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
+    Frame& frame = m_context->swapchain.get_current_frame();
+    for (const auto set : pipeline.get_descriptor_sets()) {
+        frame.descriptor_writer.update_set(m_context, set);
+    }
+    frame.descriptor_writer.clear();
+}
+
+void VulkanRendererApi::bind_descriptor_sets(Handle shader_handle) {
+    CHECK_SHADER(shader_handle);
+    VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
+    std::vector descriptor_sets = pipeline.get_descriptor_sets();
+    vkCmdBindDescriptorSets(m_context->swapchain.get_current_command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.get_layout(), 0, descriptor_sets.size(), descriptor_sets.data(), 0, nullptr);
+}
+
+void VulkanRendererApi::reset_descriptor_sets(Handle shader_handle) {
+    CHECK_SHADER(shader_handle);
+    VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
+    Frame& frame = m_context->swapchain.get_current_frame();
+    frame.descriptor_writer.clear();
+    pipeline.allocate_descriptor_sets(m_context, frame.descriptor_pool_manager);
+}
+
+void VulkanRendererApi::write_buffer(Handle shader_handle, Handle buffer_handle, u32 set, u32 binding) {
+    CHECK_SHADER(shader_handle);
+    CHECK_BUFFER(buffer_handle);
+    VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
+    VulkanBuffer& buffer = m_context->buffers.at(buffer_handle);
+    Frame& frame = m_context->swapchain.get_current_frame();
+    pipeline.allocate_descriptor_sets(m_context, frame.descriptor_pool_manager);
+    frame.descriptor_writer.write_buffer(binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, { .buffer = buffer.get_handle(), .size = buffer.get_size(), .offset = 0 });
 }
 
 void VulkanRendererApi::reset_viewport() {

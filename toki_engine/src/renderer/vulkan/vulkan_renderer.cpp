@@ -35,6 +35,8 @@ VulkanRenderer::~VulkanRenderer() {
 
     vkDeviceWaitIdle(m_context->device);
 
+    m_context->descriptor_pool_manager.destroy(m_context);
+
     for (auto& command_pool : m_context->command_pools) {
         vkDestroyCommandPool(m_context->device, command_pool, m_context->allocation_callbacks);
     }
@@ -321,6 +323,11 @@ void VulkanRenderer::create_command_pools() {
 
     VK_CHECK(vkCreateCommandPool(m_context->device, &command_pool_create_info, m_context->allocation_callbacks, &command_pool), "Could not create extra command pool");
     m_context->extra_command_pools.emplace_back(command_pool);
+}
+
+void VulkanRenderer::create_descriptor_pools() {
+    std::vector<VkDescriptorPoolSize> pool_sizes = { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 100 } };
+    m_context->descriptor_pool_manager.create(m_context, 256, pool_sizes);
 }
 
 }  // namespace toki

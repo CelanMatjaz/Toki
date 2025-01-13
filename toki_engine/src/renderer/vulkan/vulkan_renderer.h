@@ -42,6 +42,7 @@ private:
     void create_instance();
     void create_device(Ref<Window> window);
     void create_command_pools();
+    void create_descriptor_pools();
 };
 
 }  // namespace toki

@@ -22,10 +22,15 @@ public:
 
     VkPipeline get_handle() const;
     VkPipelineLayout get_layout() const;
+    VkShaderStageFlags get_push_constant_stage_bits() const;
+    const std::vector<VkDescriptorSet>& get_descriptor_sets() const;
+
+    void allocate_descriptor_sets(Ref<RendererContext> ctx, DescriptorPoolManager& pool_manager);
 
 private:
     VkPipeline m_handle;
     PipelineLayout m_layout;
+    std::vector<VkDescriptorSet> m_descriptorSets;
 
 private:
     struct PipelineLayoutCreateConfig {

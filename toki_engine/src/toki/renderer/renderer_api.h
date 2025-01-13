@@ -17,6 +17,12 @@ public:
     virtual void bind_vertex_buffer(Handle handle, u32 binding) = 0;
     virtual void bind_vertex_buffers(const BindVertexBuffersConfig& config) = 0;
     virtual void bind_index_buffer(Handle handle) = 0;
+    virtual void push_constant(Handle shader_handle, u32 size, void* data) = 0;
+
+    virtual void update_sets(Handle shader_handle) = 0;
+    virtual void reset_descriptor_sets(Handle shader_handle) = 0;
+    virtual void bind_descriptor_sets(Handle shader_handle) = 0;
+    virtual void write_buffer(Handle shader_handle, Handle buffer_handle, u32 set, u32 binding) = 0;
 
     virtual void reset_viewport() = 0;
     virtual void reset_scissor() = 0;

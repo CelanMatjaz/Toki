@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "renderer/vulkan/state/vulkan_buffer.h"
+#include "renderer/vulkan/state/vulkan_descriptor.h"
 #include "renderer/vulkan/state/vulkan_pipeline.h"
 #include "renderer/vulkan/state/vulkan_swapchain.h"
 #include "renderer/vulkan/vulkan_types.h"
@@ -28,6 +29,8 @@ struct RendererContext {
     std::unordered_map<Handle, VulkanGraphicsPipeline> shaders;
     std::unordered_map<Handle, VulkanBuffer> buffers;
     std::unordered_map<Handle, VulkanFramebuffer> framebuffers;
+
+    DescriptorPoolManager descriptor_pool_manager;
 };
 
 }  // namespace toki
