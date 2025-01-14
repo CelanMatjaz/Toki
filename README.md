@@ -1,7 +1,10 @@
 # Toki
 
-A rendering framework/engine, writen in C++ using the Vulkan rendering API.
+A rendering framework/engine, writen in C++ using the Vulkan rendering API. Project is a work in progress library that I later plan to use to make games and visualizations.
 
+<p align="center">
+  <img src="images/screenshot.jpg" alt="Sublime's custom image" width=400/>
+</p>
 
 ## Technologies
 
