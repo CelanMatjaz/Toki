@@ -2,9 +2,7 @@
 
 Game of life implementation.
 
-<video width="320" height="240" controls>
-  <source src="images/demo.webm" type="video/mp4">
-</video>
+[demo.webm](https://github.com/user-attachments/assets/a72d9b51-b225-47db-820b-72adb498c2f5)
 
 ## Controls
 
