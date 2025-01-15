@@ -2,7 +2,6 @@
 
 #include <array>
 
-#include "containers/array_map.h"
 #include "core/base.h"
 #include "events/event.h"
 
