@@ -27,6 +27,7 @@ GlfwWindow::GlfwWindow(const InternalConfig& config): Window(config) {
     ++window_count;
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_RESIZABLE, config.flags.resizable ? GLFW_TRUE : GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(config.width, config.height, config.title.c_str(), nullptr, nullptr);
     TK_ASSERT(window != nullptr, "Window was not created");
 

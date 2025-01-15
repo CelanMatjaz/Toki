@@ -17,6 +17,9 @@ public:
         i32 width = 0;
         i32 height = 0;
         std::string title;
+        struct {
+            b8 resizable : 1 = false;
+        } flags;
     };
 
 protected:
