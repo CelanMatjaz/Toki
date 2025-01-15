@@ -6,6 +6,10 @@ A rendering framework/engine, writen in C++ using the Vulkan rendering API. Proj
   <img src="images/screenshot.jpg" alt="Sublime's custom image" width=400/>
 </p>
 
+## Examples
+
+- [Game of life](examples/game_of_life/README.md)
+
 ## Technologies
 
 - C++23

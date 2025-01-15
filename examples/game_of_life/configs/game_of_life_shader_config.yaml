@@ -1,0 +1,35 @@
+name: game_of_life_shader
+type: graphics
+stages:
+  - type: vertex
+    path: game_of_life.vert.glsl
+  - type: fragment
+    path: game_of_life.frag.glsl
+options:
+  depth_test_enable: true
+  depth_write_enable: true
+  depth_compare_op: less
+  primitive_topology: triangle_list
+  cull_mode: back
+  polygon_mode: fill
+  front_face: counter_clockwise
+bindings:
+  - binding: 0
+    input_rate: vertex
+    stride: 8
+  - binding: 1
+    input_rate: instance
+    stride: 20
+attributes:
+  - type: float2 # model position
+    location: 0
+    binding: 0
+    offset: 0
+  - type: float2 # instance position
+    location: 1
+    binding: 1
+    offset: 0
+  - type: float3 # instance color
+    location: 2
+    binding: 1
+    offset: 8
