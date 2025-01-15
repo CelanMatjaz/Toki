@@ -22,17 +22,12 @@ function build_options()
     filter {}
 end
 
-function configuration_configs()
-    defines { "TK_WINDOW_SYSTEM_GLFW" }
-
+function configuration_configs_libs()
     filter "configurations:debug"
         defines { "TK_DEBUG" }
         symbols "On"
         runtime "Debug"
         optimize "Debug"
-
-    filter { "configurations:debug", "toolset:clang or toolset:gcc" }
-        linkoptions "-g"
 
     filter "configurations:release"
         defines { "TK_NDEBUG", "TK_RELEASE" }
@@ -45,6 +40,37 @@ function configuration_configs()
         symbols "Off"
         runtime "Release"
         optimize "Speed"
+
+    filter{}
+end
+
+
+function configuration_configs()
+    defines { "TK_WINDOW_SYSTEM_GLFW" }
+
+    filter "configurations:debug"
+        defines { "TK_DEBUG" }
+        symbols "On"
+        runtime "Debug"
+        optimize "Debug"
+        staticruntime "Off"
+
+    filter { "configurations:debug", "toolset:clang or toolset:gcc" }
+        linkoptions "-g"
+
+    filter "configurations:release"
+        defines { "TK_NDEBUG", "TK_RELEASE" }
+        symbols "Off"
+        runtime "Release"
+        optimize "On"
+        staticruntime "Off"
+
+    filter "configurations:dist"
+        defines { "TK_NDEBUG", "TK_DIST" }
+        symbols "Off"
+        runtime "Release"
+        optimize "Speed"
+        staticruntime "On"
 
     filter "platforms:windows"
         system "windows"
@@ -65,32 +91,44 @@ function configuration_configs()
 end
 
 function link_vulkan()
-    filter { "platforms:windows", "configurations:debug" }
+    filter { "action:vs*", "configurations:debug" }
         links {
             "spirv-cross-cored",
             "spirv-cross-cppd",
             "spirv-cross-glsld",
             "spirv-cross-reflectd",
+            "shadercd",
             "shaderc_combinedd"
         }
 
-    filter { "platforms:windows", "configurations:not debug" }
-        links {
-            "spirv-cross-core",
-            "spirv-cross-cpp",
-            "spirv-cross-glsl",
-            "spirv-cross-reflect",
-            "shaderc_combined"
-        }
+    filter { "action:vs*", "configurations:not debug" }
+    links {
+        "spirv-cross-core",
+        "spirv-cross-cpp",
+        "spirv-cross-glsl",
+        "spirv-cross-reflect",
+        "shaderc",
+        "shaderc_combined"
+    }
 
-    filter { "platforms:linux_wayland or platforms:linux_x11" }
-        links {
-            "spirv-cross-core",
-            "spirv-cross-cpp",
-            "spirv-cross-glsl",
-            "spirv-cross-reflect",
-            "shaderc_combined"
-        }
+    --
+    -- filter { "platforms:windows", "configurations:not debug" }
+    --     links {
+    --         "spirv-cross-core",
+    --         "spirv-cross-cpp",
+    --         "spirv-cross-glsl",
+    --         "spirv-cross-reflect",
+    --         "shaderc"
+    --     }
+    --
+    -- filter { "platforms:linux_wayland or platforms:linux_x11" }
+    --     links {
+    --         "spirv-cross-core",
+    --         "spirv-cross-cpp",
+    --         "spirv-cross-glsl",
+    --         "spirv-cross-reflect",
+    --         "shaderc_combined"
+    --     }
 
     filter "platforms:windows"
         includedirs { path.join(VULKAN_SDK, "Include") }

@@ -1,7 +1,6 @@
 project "Engine"
     kind "StaticLib"
 
-    links { "GLFW", "yaml-cpp" }
     includedirs {
         "src",
         "src/toki",

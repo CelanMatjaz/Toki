@@ -4,9 +4,6 @@ project "GLFW"
     files { "glfw/src/**.c", "glfw/src/**.h" }
     includedirs { "glfw/src" }
 
-    set_target_and_object_dirs()
-    configuration_configs()
-
     defines { "_GLFW_VULKAN_STATIC" }
 
     filter "platforms:windows"
@@ -17,6 +14,9 @@ project "GLFW"
         defines { "_GLFW_WAYLAND", "_GLFW_X11" }
         includedirs { "includes/glfw" }
 
+    set_target_and_object_dirs()
+    configuration_configs_libs()
+
 project "yaml-cpp"
     language "C++"
     kind "StaticLib"
@@ -26,4 +26,4 @@ project "yaml-cpp"
     defines { "YAML_CPP_STATIC_DEFINE", "YAML_CPP_API=" }
 
     set_target_and_object_dirs()
-    configuration_configs()
+    configuration_configs_libs()
