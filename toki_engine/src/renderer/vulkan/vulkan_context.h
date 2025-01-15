@@ -4,6 +4,7 @@
 
 #include <vector>
 
+#include "containers/handle_map.h"
 #include "renderer/vulkan/state/vulkan_buffer.h"
 #include "renderer/vulkan/state/vulkan_descriptor.h"
 #include "renderer/vulkan/state/vulkan_pipeline.h"
@@ -26,10 +27,10 @@ struct RendererContext {
     std::vector<VkCommandPool> command_pools;
     std::vector<VkCommandPool> extra_command_pools;
 
-    std::unordered_map<Handle, VulkanGraphicsPipeline> shaders;
-    std::unordered_map<Handle, VulkanBuffer> buffers;
-    std::unordered_map<Handle, VulkanImage> images;
-    std::unordered_map<Handle, VulkanFramebuffer> framebuffers;
+    containers::HandleMap<VulkanGraphicsPipeline> shaders;
+    containers::HandleMap<VulkanBuffer> buffers;
+    containers::HandleMap<VulkanImage> images;
+    containers::HandleMap<VulkanFramebuffer> framebuffers;
 
     DescriptorPoolManager descriptor_pool_manager;
 

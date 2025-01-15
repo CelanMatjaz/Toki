@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include <span>
+
 #include "core/base.h"
 
 namespace toki {

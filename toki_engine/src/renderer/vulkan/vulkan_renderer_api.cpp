@@ -91,14 +91,14 @@ void VulkanRendererApi::bind_shader(Handle shader_handle) {
 
 void VulkanRendererApi::bind_vertex_buffer(Handle buffer_handle) {
     CHECK_BUFFER(buffer_handle)
-    VkBuffer buf = m_context->buffers[buffer_handle].get_handle();
+    VkBuffer buf = m_context->buffers.at(buffer_handle).get_handle();
     u64 offsets = 0;
     vkCmdBindVertexBuffers(m_context->swapchain.get_current_command_buffer(), 0, 1, &buf, &offsets);
 }
 
 void VulkanRendererApi::bind_vertex_buffer(Handle buffer_handle, u32 binding) {
     CHECK_BUFFER(buffer_handle)
-    VkBuffer buf = m_context->buffers[buffer_handle].get_handle();
+    VkBuffer buf = m_context->buffers.at(buffer_handle).get_handle();
     u64 offsets = 0;
     vkCmdBindVertexBuffers(m_context->swapchain.get_current_command_buffer(), binding, 1, &buf, &offsets);
 }
@@ -109,14 +109,14 @@ void VulkanRendererApi::bind_vertex_buffers(const BindVertexBuffersConfig& confi
     u64 offset = 0;
     for (u32 i = 0; i < buffers.size(); i++) {
         CHECK_BUFFER(config.handles[i]);
-        VkBuffer buffer = m_context->buffers.at(config.handles[i]).get_handle();
-        vkCmdBindVertexBuffers(m_context->swapchain.get_current_command_buffer(), i, 1, &buffer, &offset);
+        VkBuffer buf = m_context->buffers.at(config.handles[i]).get_handle();
+        vkCmdBindVertexBuffers(m_context->swapchain.get_current_command_buffer(), i, 1, &buf, &offset);
     }
 }
 
 void VulkanRendererApi::bind_index_buffer(Handle buffer_handle) {
     CHECK_BUFFER(buffer_handle)
-    VkBuffer buf = m_context->buffers[buffer_handle].get_handle();
+    VkBuffer buf = m_context->buffers.at(buffer_handle).get_handle();
     vkCmdBindIndexBuffer(m_context->swapchain.get_current_command_buffer(), buf, 0, VK_INDEX_TYPE_UINT32);
 }
 
@@ -158,6 +158,7 @@ void VulkanRendererApi::reset_descriptor_sets(Handle shader_handle) {
     VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
     Frame& frame = m_context->swapchain.get_current_frame();
     frame.descriptor_writer.clear();
+
     pipeline.allocate_descriptor_sets(m_context, frame.descriptor_pool_manager);
 }
 

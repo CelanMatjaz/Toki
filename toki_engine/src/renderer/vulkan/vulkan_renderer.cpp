@@ -1,5 +1,7 @@
 #include "vulkan_renderer.h"
 
+#include "containers/handle_map.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <vulkan/vulkan.h>
@@ -35,6 +37,11 @@ VulkanRenderer::VulkanRenderer(const Config& config): Renderer(config) {
     create_default_resources();
 }
 
+#define DESTROY_AND_CLEAR(array)                                     \
+    for (auto& v : m_context->array) {                               \
+        v.destroy(m_context);                                        \
+    }
+
 VulkanRenderer::~VulkanRenderer() {
     TK_LOG_INFO("Shutting down renderer");
 
@@ -52,39 +59,30 @@ VulkanRenderer::~VulkanRenderer() {
         vkDestroyCommandPool(m_context->device, command_pool, m_context->allocation_callbacks);
     }
 
-    for (auto& [_, shader] : m_context->shaders) {
-        shader.destroy(m_context);
-    }
-    m_context->shaders.clear();
-
-    for (auto& [_, buffer] : m_context->buffers) {
-        buffer.destroy(m_context);
-    }
-    m_context->buffers.clear();
-
-    for (auto& [_, image] : m_context->images) {
-        image.destroy(m_context);
-    }
-    m_context->buffers.clear();
+    DESTROY_AND_CLEAR(buffers);
+    DESTROY_AND_CLEAR(images);
+    DESTROY_AND_CLEAR(shaders);
+    DESTROY_AND_CLEAR(framebuffers);
 
     m_context->swapchain.destroy(m_context);
 
     vkDestroyDevice(m_context->device, m_context->allocation_callbacks);
     vkDestroyInstance(m_context->instance, m_context->allocation_callbacks);
+
+    m_context.reset();
 }
+
+#undef DESTROY_AND_CLEAR
 
 Handle VulkanRenderer::create_shader(const ShaderCreateConfig& config) {
     TK_ASSERT(m_context->framebuffers.contains(config.framebuffer_handle), "Cannot create shader with a non existing framebuffer");
-
-    Handle new_shader_handle = m_context->shaders.size() + 1;
 
     auto framebuffer = m_context->framebuffers.at(config.framebuffer_handle);
     VulkanGraphicsPipeline::Config graphics_pipeline_config{ .framebuffer = m_context->framebuffers.at(config.framebuffer_handle) };
     graphics_pipeline_config.shader_config = config.config;
     VulkanGraphicsPipeline pipeline{};
     pipeline.create(m_context, graphics_pipeline_config);
-    m_context->shaders.emplace(new_shader_handle, pipeline);
-    return new_shader_handle;
+    return m_context->shaders.emplace(pipeline);
 }
 
 void VulkanRenderer::destroy_shader(Handle shader_handle) {
@@ -95,8 +93,6 @@ void VulkanRenderer::destroy_shader(Handle shader_handle) {
 
 Handle VulkanRenderer::create_buffer(const BufferCreateConfig& config) {
     TK_ASSERT(config.size > 0, "Cannot create a buffer of size 0");
-
-    Handle new_buffer_handle = m_context->buffers.size() + 1;
 
     VulkanBuffer::Config create_buffer_config{};
     create_buffer_config.size = config.size;
@@ -127,9 +123,7 @@ Handle VulkanRenderer::create_buffer(const BufferCreateConfig& config) {
 
     VulkanBuffer buffer{};
     buffer.create(m_context, create_buffer_config);
-    m_context->buffers.emplace(new_buffer_handle, buffer);
-
-    return new_buffer_handle;
+    return m_context->buffers.emplace(buffer);
 }
 
 void VulkanRenderer::destroy_buffer(Handle buffer_handle) {
@@ -142,8 +136,6 @@ Handle VulkanRenderer::create_texture(const TextureCreateConfig& config) {
     TK_ASSERT(config.size.x > 0, "Cannot create an image with width 0");
     TK_ASSERT(config.size.y > 0, "Cannot create an image with height 0");
 
-    Handle new_image_handle = m_context->images.size() + 1;
-
     VulkanImage::Config create_image_config{};
     create_image_config.extent = { config.size.x, config.size.y, 1 };
     create_image_config.format = map_format(config.format);
@@ -153,9 +145,7 @@ Handle VulkanRenderer::create_texture(const TextureCreateConfig& config) {
     image.create(m_context, create_image_config);
     vulkan_commands::submit_single_use_command_buffer(
         m_context, [image](VkCommandBuffer cmd) mutable { image.transition_layout(cmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL); });
-    m_context->images.emplace(new_image_handle, image);
-
-    return new_image_handle;
+    return m_context->images.emplace(image);
 }
 
 Handle VulkanRenderer::create_texture_from_file(std::string_view path) {
@@ -187,13 +177,9 @@ void VulkanRenderer::destroy_texture(Handle texture_handle) {
 Handle VulkanRenderer::create_framebuffer(const FramebufferCreateConfig& config) {
     TK_ASSERT(config.render_targets.size() <= MAX_FRAMEBUFFER_ATTACHMENTS, "Max {} render attachments supported, including depth and/or stencil", MAX_FRAMEBUFFER_ATTACHMENTS);
 
-    Handle handle = m_context->framebuffers.size() + 1;
-
     VulkanFramebuffer framebuffer{};
     framebuffer.create(m_context, config);
-    m_context->framebuffers.emplace(handle, framebuffer);
-
-    return handle;
+    return m_context->framebuffers.emplace(framebuffer);
 }
 
 void VulkanRenderer::destroy_framebuffer(Handle framebuffer_handle) {
@@ -395,6 +381,11 @@ void VulkanRenderer::create_descriptor_pools() {
 }
 
 void VulkanRenderer::create_default_resources() {
+    m_context->framebuffers = containers::HandleMap<VulkanFramebuffer>(8);
+    m_context->buffers = containers::HandleMap<VulkanBuffer>(256);
+    m_context->images = containers::HandleMap<VulkanImage>(256);
+    m_context->shaders = containers::HandleMap<VulkanGraphicsPipeline>(256);
+
     VkSamplerCreateInfo sampler_create_info{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
     sampler_create_info.magFilter = VK_FILTER_LINEAR;
     sampler_create_info.minFilter = VK_FILTER_LINEAR;

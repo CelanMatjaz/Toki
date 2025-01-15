@@ -18,7 +18,7 @@ namespace toki {
             #condition,                                       \
             c,                                                \
             std::format(message __VA_OPT__(, ) __VA_ARGS__)); \
-        debug_break();                                        \
+        platform::debug_break();                                        \
     }
 
 #define TK_ASSERT_ERROR(error)            \

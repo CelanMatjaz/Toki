@@ -322,6 +322,10 @@ const std::vector<VkDescriptorSet>& VulkanGraphicsPipeline::get_descriptor_sets(
 }
 
 void VulkanGraphicsPipeline::allocate_descriptor_sets(Ref<RendererContext> ctx, DescriptorPoolManager& pool_manager) {
+    if (m_layout.descriptor_set_layouts.size() == 0) {
+        return;
+    }
+
     m_descriptorSets = pool_manager.allocate_multiple(ctx, m_layout.descriptor_set_layouts);
 }
 
