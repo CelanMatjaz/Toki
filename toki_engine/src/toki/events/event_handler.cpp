@@ -12,7 +12,9 @@ void EventHandler::bind_event(EventType event_type, void* receiver, EventFunctio
 
 void EventHandler::unbind_event(EventType event_type, void* receiver) {
     u32 index = std::to_underlying(event_type);
-    auto listener = std::ranges::find_if(m_listeners[index].begin(), m_listeners[index].end(), [receiver](EventDispatch dispatch) { return dispatch.receiver == receiver; });
+    auto listener = std::ranges::find_if(m_listeners[index].begin(), m_listeners[index].end(), [receiver](EventDispatch dispatch) {
+        return dispatch.receiver == receiver;
+    });
     if (listener != m_listeners[index].end()) {
         m_listeners[index].erase(listener);
     }

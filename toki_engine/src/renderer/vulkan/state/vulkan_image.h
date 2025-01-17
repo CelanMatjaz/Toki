@@ -13,8 +13,8 @@ public:
     struct Config {
         VkFormat format;
         VkExtent3D extent;
-        u32 usage; // VkImageUsageFlagBits
-        u32 memory_properties; // VkMemoryPropertyFlags
+        u32 usage;              // VkImageUsageFlagBits
+        u32 memory_properties;  // VkMemoryPropertyFlags
     };
 
     void create(Ref<RendererContext> ctx, const Config& config);

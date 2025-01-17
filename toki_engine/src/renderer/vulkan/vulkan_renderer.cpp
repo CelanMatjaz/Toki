@@ -37,9 +37,9 @@ VulkanRenderer::VulkanRenderer(const Config& config): Renderer(config) {
     create_default_resources();
 }
 
-#define DESTROY_AND_CLEAR(array)                                     \
-    for (auto& v : m_context->array) {                               \
-        v.destroy(m_context);                                        \
+#define DESTROY_AND_CLEAR(array)       \
+    for (auto& v : m_context->array) { \
+        v.destroy(m_context);          \
     }
 
 VulkanRenderer::~VulkanRenderer() {
@@ -143,8 +143,9 @@ Handle VulkanRenderer::create_texture(const TextureCreateConfig& config) {
     create_image_config.memory_properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     VulkanImage image{};
     image.create(m_context, create_image_config);
-    vulkan_commands::submit_single_use_command_buffer(
-        m_context, [image](VkCommandBuffer cmd) mutable { image.transition_layout(cmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL); });
+    vulkan_commands::submit_single_use_command_buffer(m_context, [image](VkCommandBuffer cmd) mutable {
+        image.transition_layout(cmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    });
     return m_context->images.emplace(image);
 }
 
@@ -290,7 +291,9 @@ void VulkanRenderer::create_instance() {
 
 void VulkanRenderer::create_device(Ref<Window> window) {
     VkSurfaceKHR surface = create_surface(m_context, reinterpret_cast<GLFWwindow*>(window->get_handle()));
-    Defer defer([ctx = m_context, surface]() { vkDestroySurfaceKHR(ctx->instance, surface, ctx->allocation_callbacks); });
+    Defer defer([ctx = m_context, surface]() {
+        vkDestroySurfaceKHR(ctx->instance, surface, ctx->allocation_callbacks);
+    });
 
     u32 physical_device_count{};
     vkEnumeratePhysicalDevices(m_context->instance, &physical_device_count, nullptr);

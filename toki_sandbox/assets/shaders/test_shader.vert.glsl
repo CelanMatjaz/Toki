@@ -10,7 +10,7 @@ layout(location = 2) in vec3 in_position_instance;
 layout(location = 3) in vec3 in_position_color;
 
 layout(push_constant) uniform constants {
-	mat4 mvp;
+    mat4 mvp;
 } PushConstants;
 
 layout(set = 0, binding = 0) uniform color {

@@ -23,6 +23,10 @@ Engine::Engine(const Config& config) {
     m_renderer = Renderer::create(renderer_config);
 
     m_eventHandler = create_scope<EventHandler>();
+
+    initial_window->m_eventHandler.bind_event(EventType::WindowClose, this, [this](void* sender, void* receiver, const Event& event) {
+        m_isRunning = false;
+    });
 }
 
 Engine::~Engine() {
@@ -43,11 +47,11 @@ void Engine::run() {
 
     while (m_isRunning) {
         Window::poll_events();
-        for (const auto& window : m_windows) {
+        /* for (const auto& window : m_windows) {
             if (window->should_close() && m_windows.size() == 1) {
                 m_isRunning = false;
             }
-        }
+        }*/
 
         auto frame_start_time = std::chrono::high_resolution_clock::now();
         delta_time = std::chrono::duration<float>(frame_start_time - last_frame_time).count();

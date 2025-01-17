@@ -8,7 +8,7 @@ layout(location = 0) out vec4 out_color;
 layout(location = 1) out vec4 out_color2;
 
 layout(push_constant) uniform constants {
-	mat4 mvp;
+    mat4 mvp;
 } PushConstants;
 
 layout(set = 0, binding = 1) uniform sampler2D tex;

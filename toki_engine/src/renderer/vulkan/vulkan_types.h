@@ -9,7 +9,8 @@
 
 namespace toki {
 
-#define VK_CHECK(result, message, ...) { TK_ASSERT(result == VK_SUCCESS, message __VA_OPT__(, ) __VA_ARGS__) }
+#define VK_CHECK(result, message, ...) \
+    { TK_ASSERT(result == VK_SUCCESS, message __VA_OPT__(, ) __VA_ARGS__) }
 
 #define FRAME_COUNT 3
 #define MAX_FRAMEBUFFER_ATTACHMENTS 8

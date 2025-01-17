@@ -172,9 +172,9 @@ void VulkanSwapchain::recreate(Ref<RendererContext> ctx) {
         }
     }
 
-     for (VulkanFramebuffer& framebuffer : ctx->framebuffers) {
-         framebuffer.resize(ctx, VkExtent3D{ m_extent.width, m_extent.height, 1 });
-     }
+    for (VulkanFramebuffer& framebuffer : ctx->framebuffers) {
+        framebuffer.resize(ctx, VkExtent3D{ m_extent.width, m_extent.height, 1 });
+    }
 }
 
 b8 VulkanSwapchain::start_recording(Ref<RendererContext> ctx) {

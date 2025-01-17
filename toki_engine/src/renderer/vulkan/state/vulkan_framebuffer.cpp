@@ -46,7 +46,7 @@ void VulkanFramebuffer::create(Ref<RendererContext> ctx, const Config& config) {
                     m_depthImage = VulkanImage{};
                     m_depthImage->create(ctx, image_config);
                     break;
-                }   
+                }
                 case ColorFormat::NONE:
                 case ColorFormat::COLOR_FORMAT_COUNT:
                     std::unreachable();

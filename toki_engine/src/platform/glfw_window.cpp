@@ -80,7 +80,7 @@ void* GlfwWindow::get_handle() const {
 #define DISPATCH_WINDOW_EVENT(event)                                      \
     {                                                                     \
         GlfwWindow* win = (GlfwWindow*) glfwGetWindowUserPointer(window); \
-        win->m_eventDispatchFn(win->m_enginePtr, event);                  \
+        win->m_eventHandler.dispatch_event(event);                        \
     }
 
 void GlfwWindow::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {

@@ -8,7 +8,7 @@
 
 namespace toki {
 
-Window::Window(const InternalConfig& config): m_enginePtr(config.engine_ptr), m_eventDispatchFn(config.event_dispatch_fn) {}
+Window::Window(const InternalConfig& config) {};
 
 Ref<Window> Window::create(const InternalConfig& config) {
     TK_LOG_INFO("Creating new window");

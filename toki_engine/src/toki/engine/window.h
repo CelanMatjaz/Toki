@@ -5,6 +5,7 @@
 
 #include "core/math_types.h"
 #include "events/event.h"
+#include "events/event_handler.h"
 #include "input/input.h"
 
 namespace toki {
@@ -48,9 +49,8 @@ public:
     const Ref<Input> get_input() const;
 
 protected:
-    Engine* m_enginePtr;
-    WindowEventDispatchFn m_eventDispatchFn;
     Ref<Input> m_input;
+    EventHandler m_eventHandler;
 };
 
 }  // namespace toki
