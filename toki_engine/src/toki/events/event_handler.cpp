@@ -1,25 +1,27 @@
 #include "event_handler.h"
 
-#include "core/assert.h"
+#include <algorithm>
+#include <utility>
 
 namespace toki {
 
 void EventHandler::bind_event(EventType event_type, void* receiver, EventFunction fn) {
-    u32 index = (u32) event_type;
-    TK_ASSERT(!m_handlers[index].contains(receiver), "Event already bound for this reciever");
-    m_handlers[index].emplace(receiver, EventDispatch{ receiver, fn });
+    u32 index = std::to_underlying(event_type);
+    m_listeners[index].emplace_back(receiver, fn);
 }
 
 void EventHandler::unbind_event(EventType event_type, void* receiver) {
-    u32 index = (u32) event_type;
-    TK_ASSERT(m_handlers[index].contains(receiver), "Reciever not bound for event");
-    m_handlers[index].erase(receiver);
+    u32 index = std::to_underlying(event_type);
+    auto listener = std::ranges::find_if(m_listeners[index].begin(), m_listeners[index].end(), [receiver](EventDispatch dispatch) { return dispatch.receiver == receiver; });
+    if (listener != m_listeners[index].end()) {
+        m_listeners[index].erase(listener);
+    }
 }
 
 void EventHandler::dispatch_event(const Event& event, void* sender) {
-    u32 index = (u32) event.get_type();
-    for (auto& [_, handler] : m_handlers[index]) {
-        handler.fn(sender, handler.receiver, event);
+    u32 index = std::to_underlying(event.get_type());
+    for (auto& dispatch : m_listeners[index]) {
+        dispatch.fn(sender, dispatch.receiver, event);
     }
 }
 

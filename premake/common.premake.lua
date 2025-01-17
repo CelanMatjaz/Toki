@@ -17,7 +17,7 @@ function build_options()
         flags { "MultiProcessorCompile" }
 
     filter "toolset:clang or toolset:gcc"
-        buildoptions "-std=c++23"
+        buildoptions "--std=c++23"
 
     filter {}
 end
@@ -70,7 +70,7 @@ function configuration_configs()
         symbols "Off"
         runtime "Release"
         optimize "Speed"
-        staticruntime "On"
+        staticruntime "Off"
 
     filter "platforms:windows"
         system "windows"
@@ -91,7 +91,7 @@ function configuration_configs()
 end
 
 function link_vulkan()
-    filter { "action:vs*", "configurations:debug" }
+    filter { "platforms:windows", "configurations:debug" }
         links {
             "spirv-cross-cored",
             "spirv-cross-cppd",
@@ -101,7 +101,7 @@ function link_vulkan()
             "shaderc_combinedd"
         }
 
-    filter { "action:vs*", "configurations:not debug" }
+    filter { "platforms:windows", "configurations:not debug" }
     links {
         "spirv-cross-core",
         "spirv-cross-cpp",
@@ -111,24 +111,14 @@ function link_vulkan()
         "shaderc_combined"
     }
 
-    --
-    -- filter { "platforms:windows", "configurations:not debug" }
-    --     links {
-    --         "spirv-cross-core",
-    --         "spirv-cross-cpp",
-    --         "spirv-cross-glsl",
-    --         "spirv-cross-reflect",
-    --         "shaderc"
-    --     }
-    --
-    -- filter { "platforms:linux_wayland or platforms:linux_x11" }
-    --     links {
-    --         "spirv-cross-core",
-    --         "spirv-cross-cpp",
-    --         "spirv-cross-glsl",
-    --         "spirv-cross-reflect",
-    --         "shaderc_combined"
-    --     }
+    filter { "platforms:linux_wayland or platforms:linux_x11" }
+        links {
+            "spirv-cross-core",
+            "spirv-cross-cpp",
+            "spirv-cross-glsl",
+            "spirv-cross-reflect",
+            "shaderc"
+        }
 
     filter "platforms:windows"
         includedirs { path.join(VULKAN_SDK, "Include") }

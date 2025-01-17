@@ -1,8 +1,8 @@
 #pragma once
 
 #include <array>
+#include <utility>
 
-#include "core/base.h"
 #include "events/event.h"
 
 namespace toki {
@@ -19,7 +19,7 @@ public:
     void dispatch_event(const Event& event, void* sender);
 
 private:
-    std::array<std::unordered_map<void*, EventDispatch>, (u64) EventType::EVENT_COUNT> m_handlers;
+    std::array<std::vector<EventDispatch>, std::to_underlying(EventType::EVENT_COUNT)> m_listeners;
 };
 
 }  // namespace toki

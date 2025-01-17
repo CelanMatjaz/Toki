@@ -4,6 +4,11 @@
 #include "core/core.h"
 #include "engine/engine.h"
 
+// Events
+#include "events/keyboard_events.h"
+#include "events/mouse_events.h"
+#include "events/window_events.h"
+
 // Renderer
 #include "renderer/camera.h"
 #include "renderer/renderer.h"

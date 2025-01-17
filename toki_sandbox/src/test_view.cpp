@@ -2,6 +2,8 @@
 
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/glm.hpp>
+
+#include "events/event.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/euler_angles.hpp>
 
@@ -105,9 +107,7 @@ void TestView::on_add(const toki::Ref<toki::Renderer> renderer) {
         renderer->set_texture_data(m_textureHandle, sizeof(pixels), pixels);
     }
 
-    {
-        m_textureHandle2 = renderer->create_texture_from_file("assets/images/test.png");
-    }
+    { m_textureHandle2 = renderer->create_texture_from_file("assets/images/test.png"); }
 
     m_camera.set_position({ 0.0f, 0.0f, -5.0f });
     m_camera.set_perspective_projection(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
@@ -183,8 +183,8 @@ void TestView::on_event(toki::Event& event) {
     static int32_t prev_x = 0;
 
     switch (event.get_type()) {
-        case EventType::MouseClick: {
-            prev_x = data.i16[2];
+        case EventType::MousePress: {
+            prev_x = event.as<toki::MousePressEvent>().get_position().x;
             holding = true;
             break;
         }

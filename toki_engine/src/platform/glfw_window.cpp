@@ -1,6 +1,5 @@
+#include "input/input.h"
 #if defined(TK_WINDOW_SYSTEM_GLFW)
-
-#include "glfw_window.h"
 
 #include <GLFW/glfw3.h>
 
@@ -9,10 +8,13 @@
 #include "core/assert.h"
 #include "core/math_types.h"
 #include "events/event.h"
+#include "glfw_window.h"
 
 namespace toki {
 
 static u32 window_count = 0;
+
+static KeyboardMods map_glfw_mods(int mods);
 
 void Window::poll_events() {
     glfwPollEvents();
@@ -97,20 +99,17 @@ void GlfwWindow::key_callback(GLFWwindow* window, int key, int scancode, int act
             std::unreachable();
     }
 
-    DISPATCH_WINDOW_EVENT(create_key_event(type, key, scancode, action, mods));
+    DISPATCH_WINDOW_EVENT(create_key_event(type, key, scancode, map_glfw_mods(mods)));
 }
 
 void GlfwWindow::mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
     EventType type;
     switch (action) {
         case GLFW_PRESS:
-            type = EventType::MouseClick;
+            type = EventType::MousePress;
             break;
         case GLFW_RELEASE:
             type = EventType::MouseRelease;
-            break;
-        case GLFW_REPEAT:
-            type = EventType::MouseHold;
             break;
         default:
             std::unreachable();
@@ -119,7 +118,7 @@ void GlfwWindow::mouse_button_callback(GLFWwindow* window, int button, int actio
     double xpos, ypos;
     glfwGetCursorPos(window, &xpos, &ypos);
 
-    DISPATCH_WINDOW_EVENT(create_mouse_button_event(type, button, action, mods, xpos, ypos));
+    DISPATCH_WINDOW_EVENT(create_mouse_button_event(type, button, map_glfw_mods(mods), xpos, ypos));
 }
 
 void GlfwWindow::mouse_move_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -127,11 +126,7 @@ void GlfwWindow::mouse_move_callback(GLFWwindow* window, double xpos, double ypo
 }
 
 void GlfwWindow::mouse_enter_callback(GLFWwindow* window, int entered) {
-    if (entered) {
-        DISPATCH_WINDOW_EVENT(Event(EventType::MouseEnter));
-    } else {
-        DISPATCH_WINDOW_EVENT(Event(EventType::MouseLeave));
-    }
+    DISPATCH_WINDOW_EVENT(Event(entered ? EventType::WindowEnter : EventType::WindowLeave));
 }
 
 void GlfwWindow::scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
@@ -172,6 +167,36 @@ void GlfwWindow::window_focus_callback(GLFWwindow* window, int focused) {
     } else {
         DISPATCH_WINDOW_EVENT(Event(EventType::WindowBlur));
     }
+}
+
+static KeyboardMods map_glfw_mods(int glfw_mods) {
+    KeyboardMods mods;
+
+    if (glfw_mods & GLFW_MOD_NUM_LOCK) {
+        mods |= KeyboardMods::NumLock;
+    }
+
+    if (glfw_mods & GLFW_MOD_CAPS_LOCK) {
+        mods |= KeyboardMods::CapsLock;
+    }
+
+    if (glfw_mods & GLFW_MOD_SUPER) {
+        mods |= KeyboardMods::Super;
+    }
+
+    if (glfw_mods & GLFW_MOD_CONTROL) {
+        mods |= KeyboardMods::Control;
+    }
+
+    if (glfw_mods & GLFW_MOD_ALT) {
+        mods |= KeyboardMods::Alt;
+    }
+
+    if (glfw_mods & GLFW_MOD_SHIFT) {
+        mods |= KeyboardMods::Shift;
+    }
+
+    return mods;
 }
 
 }  // namespace toki

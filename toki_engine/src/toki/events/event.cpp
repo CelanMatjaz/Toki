@@ -1,5 +1,9 @@
 #include "event.h"
 
+#include <utility>
+
+#include "input/input.h"
+
 namespace toki {
 
 Event::Event(EventType event_type, EventData data): m_eventType(event_type), m_data(data), m_isHandled(false) {}
@@ -20,15 +24,18 @@ void Event::set_handled() {
     m_isHandled = true;
 }
 
-Event create_key_event(EventType type, int key, int scancode, int action, int mods) {
-    return Event(type, EventData{ .u16 = { (u16) key, (u16) scancode, (u16) action, (u16) mods } });
+Event create_key_event(EventType type, int key, int scancode, KeyboardMods mods) {
+    EventData data{};
+    data.u16[0] = key;
+    data.u16[1] = std::to_underlying(mods);
+    data.u32[1] = scancode;
+    return Event(type, data);
 }
 
-Event create_mouse_button_event(EventType type, int button, int action, int mods, double xpos, double ypos) {
+Event create_mouse_button_event(EventType type, int button, KeyboardMods mods, double xpos, double ypos) {
     EventData data{};
-    data.u8[0] = button;
-    data.u8[1] = action;
-    data.u8[2] = mods;
+    data.u16[0] = button;
+    data.u16[1] = (u16) mods;
     data.i16[2] = xpos;
     data.i16[3] = ypos;
     return Event(type, data);
@@ -39,11 +46,11 @@ Event create_mouse_move_event(double xpos, double ypos) {
 }
 
 Event create_mouse_scroll_event(double xoffset, double yoffset) {
-    return Event(EventType::MouseScroll, EventData{ .f32 = { (f32) xoffset, (f32) yoffset } });
+    return Event(EventType::MouseScroll, EventData{ .i32 = { (i32) xoffset, (i32) yoffset } });
 }
 
 Event create_window_move_event(double xpos, double ypos) {
-    return Event(EventType::WindowMove, EventData{ .f32 = { (f32) xpos, (f32) ypos } });
+    return Event(EventType::WindowMove, EventData{ .i32 = { (i32) xpos, (i32) ypos } });
 }
 
 Event create_window_resize_event(int width, int height) {

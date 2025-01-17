@@ -1,6 +1,9 @@
 #pragma once
 
+#include <type_traits>
+
 #include "core/base.h"
+#include "input/input.h"
 
 namespace toki {
 
@@ -9,13 +12,10 @@ enum class EventType {
     KeyRelease,
     KeyRepeat,
 
-    MouseClick,
+    MousePress,
     MouseRelease,
-    MouseHold,
     MouseMove,
     MouseScroll,
-    MouseEnter,
-    MouseLeave,
 
     WindowMove,
     WindowResize,
@@ -25,6 +25,8 @@ enum class EventType {
     WindowFocus,
     WindowBlur,
     WindowClose,
+    WindowEnter,
+    WindowLeave,
 
     EVENT_COUNT
 };
@@ -59,14 +61,28 @@ public:
     b8 is_handled() const;
     void set_handled();
 
-private:
+    template <typename T>
+        requires std::derived_from<T, Event>
+    T& as() const {
+        return (T&) *this;
+    }
+
+    bool operator==(const EventType& type) const {
+        return m_eventType == type;
+    }
+
+    operator EventType() {
+        return m_eventType;
+    }
+
+protected:
     EventType m_eventType;
     EventData m_data;
     b8 m_isHandled;
 };
 
-Event create_key_event(EventType type, int key, int scancode, int action, int mods);
-Event create_mouse_button_event(EventType type, int button, int action, int mods, double xpos, double ypos);
+Event create_key_event(EventType type, int key, int scancode, KeyboardMods mods);
+Event create_mouse_button_event(EventType type, int button, KeyboardMods mods, double xpos, double ypos);
 Event create_mouse_move_event(double xpos, double ypos);
 Event create_mouse_scroll_event(double xoffset, double yoffset);
 Event create_window_move_event(double xpos, double ypos);

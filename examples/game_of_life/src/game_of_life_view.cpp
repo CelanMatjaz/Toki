@@ -117,8 +117,8 @@ void GameOfLifeView::on_render(const toki::Ref<toki::RendererApi> api) {
     api->submit();
 }
 
-uint32_t get_index(uint32_t x, uint32_t y) {
-    return (x / CELL_SIZE) + (y / CELL_SIZE) * CELL_ROW_COUNT;
+uint32_t get_index(glm::ivec2 position) {
+    return (position.x / CELL_SIZE) + (position.y / CELL_SIZE) * CELL_ROW_COUNT;
 }
 
 void GameOfLifeView::on_event(toki::Event& event) {
@@ -126,13 +126,13 @@ void GameOfLifeView::on_event(toki::Event& event) {
 
     auto data = event.get_data();
     switch (event.get_type()) {
-        case EventType::MouseClick: {
+        case EventType::MousePress: {
             if (m_isAnimationRunning) {
                 break;
             }
 
             m_drawing = true;
-            uint32_t index = get_index(data.i16[2], data.i16[3]);
+            uint32_t index = get_index(event.as<toki::MousePressEvent>().get_position());
             m_drawingState = !m_cells[index];
             m_cells[index].flip();
 
@@ -149,7 +149,7 @@ void GameOfLifeView::on_event(toki::Event& event) {
                 break;
             }
 
-            uint32_t index = get_index(data.i32[0], data.i32[1]);
+            uint32_t index = get_index(event.as<toki::MouseMoveEvent>().get_position());
             if (index >= m_cells.size()) {
                 break;
             }

@@ -5,9 +5,9 @@
 
 #include "toki.h"
 
-#define CELL_ROW_COUNT 40
-#define CELL_COL_COUNT 40
-#define CELL_SIZE 20
+#define CELL_ROW_COUNT 80
+#define CELL_COL_COUNT 80
+#define CELL_SIZE 10
 
 struct Cell {
     glm::vec2 position;
