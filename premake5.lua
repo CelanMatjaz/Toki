@@ -1,17 +1,10 @@
 require "premake/export-compile-commands/export-compile-commands"
-require "premake/common.premake"
+require "premake/common_premake"
 
 workspace "Toki"
-    configurations { "debug", "release", "dist" }
+    configurations { "Debug", "Release", "Dist" }
     architecture "x64"
-
-if os.host() == "linux" then
-    platforms { "linux_wayland", "linux_x11" }
-end
-
-if os.host() == "windows" then
-    platforms { "windows" }
-end
+    platforms { "Windows", "Linux" }
 
 startproject "Sandbox"
 

@@ -2,8 +2,8 @@
 .cache
 compile_commands
 
-bin
-obj
+.bin
+.obj
 
 **.make
 **/Makefile

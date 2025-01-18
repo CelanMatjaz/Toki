@@ -13,3 +13,6 @@
 [submodule "vendor/stb"]
 	path = vendor/stb
 	url = https://github.com/nothings/stb.git
+[submodule "vendor/free_type"]
+	path = vendor/free_type
+	url = https://gitlab.freedesktop.org/freetype/freetype.git

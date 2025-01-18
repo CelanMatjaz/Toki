@@ -5,6 +5,7 @@
 #include "core/assert.h"
 #include "core/base.h"
 #include "core/logging.h"
+#include "systems/font_system.h"
 
 namespace toki {
 
@@ -27,6 +28,8 @@ Engine::Engine(const Config& config) {
     initial_window->m_eventHandler.bind_event(EventType::WindowClose, this, [this](void* sender, void* receiver, const Event& event) {
         m_isRunning = false;
     });
+
+    FontSystem s{ {} };
 }
 
 Engine::~Engine() {

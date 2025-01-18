@@ -170,7 +170,7 @@ void GlfwWindow::window_focus_callback(GLFWwindow* window, int focused) {
 }
 
 static KeyboardMods map_glfw_mods(int glfw_mods) {
-    KeyboardMods mods;
+    KeyboardMods mods = KeyboardMods::None;
 
     if (glfw_mods & GLFW_MOD_NUM_LOCK) {
         mods |= KeyboardMods::NumLock;

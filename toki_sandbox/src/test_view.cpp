@@ -119,6 +119,7 @@ void TestView::on_destroy(const toki::Ref<toki::Renderer> renderer) {
     renderer->destroy_buffer(m_indexBufferHandle);
     renderer->destroy_buffer(m_vertexBufferHandle);
     renderer->destroy_buffer(m_uniformBufferHandle);
+    renderer->destroy_buffer(m_instanceBufferHandle);
     renderer->destroy_texture(m_textureHandle);
     renderer->destroy_texture(m_textureHandle2);
 }
