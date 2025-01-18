@@ -47,11 +47,6 @@ void Engine::run() {
 
     while (m_isRunning) {
         Window::poll_events();
-        /* for (const auto& window : m_windows) {
-            if (window->should_close() && m_windows.size() == 1) {
-                m_isRunning = false;
-            }
-        }*/
 
         auto frame_start_time = std::chrono::high_resolution_clock::now();
         delta_time = std::chrono::duration<float>(frame_start_time - last_frame_time).count();
@@ -87,7 +82,9 @@ void Engine::handle_event(Engine* engine, Event event) {
 
     for (auto it = engine->m_views.rbegin(); it != engine->m_views.rend(); ++it) {
         (*it)->on_event(event);
-        if (event.is_handled()) break;
+        if (event.is_handled()) {
+            break;
+        }
     }
 }
 
