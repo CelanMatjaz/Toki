@@ -29,7 +29,13 @@ Engine::Engine(const Config& config) {
         m_isRunning = false;
     });
 
-    FontSystem s{ {} };
+    FontSystem font_system;
+    font_system.initialize({});
+
+    FontSystem::LoadFontConfig load_font_config{};
+    load_font_config.font_size = 60;
+    load_font_config.path = "assets/fonts/Roboto-Regular.ttf";
+    font_system.load_font(load_font_config);
 }
 
 Engine::~Engine() {
