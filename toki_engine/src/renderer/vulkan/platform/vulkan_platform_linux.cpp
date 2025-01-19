@@ -9,10 +9,8 @@
 
 #if defined(TK_PLATFORM_LINUX) && defined(TK_WAYLAND)
 #define GLFW_EXPOSE_NATIVE_WAYLAND
-#define VK_USE_PLATFORM_WAYLAND
 #elif defined(TK_PLATFORM_LINUX) && defined(TK_X11)
 #define GLFW_EXPOSE_NATIVE_X11
-#define VK_USE_PLATFORM_X11
 #endif
 
 #include <GLFW/glfw3.h>

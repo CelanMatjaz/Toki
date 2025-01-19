@@ -95,7 +95,7 @@ function link_vulkan()
             "shaderc_combinedd"
         }
 
-    filter { "platforms:windows", "configurations:not Debug" }
+    filter { "platforms:Windows", "configurations:not Debug" }
         links {
             "spirv-cross-core",
             "spirv-cross-cpp",
@@ -105,30 +105,26 @@ function link_vulkan()
             "shaderc_combined"
         }
 
-    filter { "platforms:linux_wayland or platforms:linux_x11" }
+    filter { "platforms:Linux" }
         links {
             "spirv-cross-core",
             "spirv-cross-cpp",
             "spirv-cross-glsl",
             "spirv-cross-reflect",
-            "shaderc"
+            "shaderc",
+            "shaderc_combined"
         }
 
-    filter "platforms:windows"
+    filter "platforms:Windows"
         includedirs { path.join(VULKAN_SDK, "Include") }
         libdirs { path.join(VULKAN_SDK, "Lib") }
         links { "vulkan-1" }
 
-    filter "platforms:linux_wayland or platforms:linux_x11"
+    filter "platforms:Linux"
         includedirs { path.join(VULKAN_SDK, "include") }
         libdirs { path.join(VULKAN_SDK, "lib") }
         links { "vulkan" }
-
-    filter "platforms:linux_wayland"
-        defines { "VK_USE_PLATFORM_WAYLAND_KHR" }
-
-    filter "platforms:linux_x11"
-        defines { "VK_USE_PLATFORM_X11_KHR" }
+        defines { "VK_USE_PLATFORM_WAYLAND_KHR", "TK_WAYLAND" }
 
     filter {}
 end

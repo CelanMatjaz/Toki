@@ -4,8 +4,6 @@
 
 #include "core/assert.h"
 #include "core/base.h"
-#include "core/logging.h"
-#include "systems/font_system.h"
 
 namespace toki {
 
@@ -14,8 +12,6 @@ Engine::Engine(const Config& config) {
     window_config.width = config.window_config.width;
     window_config.height = config.window_config.height;
     window_config.title = config.window_config.title;
-    window_config.engine_ptr = this;
-    window_config.event_dispatch_fn = Engine::handle_event;
     Ref<Window> initial_window = Window::create(window_config);
     m_windows.emplace_back(initial_window);
 
@@ -25,17 +21,9 @@ Engine::Engine(const Config& config) {
 
     m_eventHandler = create_scope<EventHandler>();
 
-    initial_window->m_eventHandler.bind_event(EventType::WindowClose, this, [this](void* sender, void* receiver, const Event& event) {
-        m_isRunning = false;
+    initial_window->m_eventHandler.bind_all(this, [this](void* sender, void* receiver, Event& event) {
+        this->handle_event(event);
     });
-
-    FontSystem font_system;
-    font_system.initialize({});
-
-    FontSystem::LoadFontConfig load_font_config{};
-    load_font_config.font_size = 60;
-    load_font_config.path = "assets/fonts/Roboto-Regular.ttf";
-    font_system.load_font(load_font_config);
 }
 
 Engine::~Engine() {
@@ -86,10 +74,15 @@ void Engine::add_view(Ref<View> view) {
     m_views.emplace_back(view);
 }
 
-void Engine::handle_event(Engine* engine, Event event) {
+void Engine::handle_event(Event& event) {
     TK_ASSERT(!event.is_handled(), "An already handled event cannot be handled by engine");
 
-    for (auto it = engine->m_views.rbegin(); it != engine->m_views.rend(); ++it) {
+    if (event == EventType::WindowClose) {
+        m_isRunning = false;
+        return;
+    }
+
+    for (auto it = m_views.rbegin(); it != m_views.rend(); ++it) {
         (*it)->on_event(event);
         if (event.is_handled()) {
             break;

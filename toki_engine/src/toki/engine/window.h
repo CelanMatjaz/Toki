@@ -28,10 +28,7 @@ protected:
 
     using WindowEventDispatchFn = std::function<void(Engine*, Event)>;
 
-    struct InternalConfig : Config {
-        Engine* engine_ptr;
-        WindowEventDispatchFn event_dispatch_fn;
-    };
+    struct InternalConfig : Config {};
 
 public:
     static Ref<Window> create(const InternalConfig& config);

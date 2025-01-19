@@ -28,7 +28,7 @@ public:
     void add_view(Ref<View> view);
 
 private:
-    static void handle_event(Engine* engine, Event event);
+    void handle_event(Event& event);
 
     b8 m_isRunning = false;
 

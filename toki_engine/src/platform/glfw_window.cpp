@@ -1,3 +1,5 @@
+#include <print>
+
 #include "input/input.h"
 #if defined(TK_WINDOW_SYSTEM_GLFW)
 
@@ -80,7 +82,8 @@ void* GlfwWindow::get_handle() const {
 #define DISPATCH_WINDOW_EVENT(event)                                      \
     {                                                                     \
         GlfwWindow* win = (GlfwWindow*) glfwGetWindowUserPointer(window); \
-        win->m_eventHandler.dispatch_event(event);                        \
+        Event e = event;                                                  \
+        win->m_eventHandler.dispatch_event(e);                            \
     }
 
 void GlfwWindow::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
