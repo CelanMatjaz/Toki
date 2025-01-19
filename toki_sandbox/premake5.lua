@@ -1,7 +1,7 @@
 project "Sandbox"
     kind "ConsoleApp"
 
-    links { "Engine", "glfw", "yaml-cpp", "freetype" }
+    links { "Engine", "GLFW", "yaml-cpp", "freetype" }
     includedirs {
         "%{wks.location}/toki_engine/src/toki",
         "%{wks.location}/vendor/glm",

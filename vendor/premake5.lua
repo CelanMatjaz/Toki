@@ -1,4 +1,4 @@
-project "glfw"
+project "GLFW"
     language "C++"
     kind "StaticLib"
     files { "glfw/src/**.c", "glfw/src/**.h" }
@@ -6,16 +6,16 @@ project "glfw"
 
     defines { "_GLFW_VULKAN_STATIC" }
 
-    filter "platforms:windows"
+    set_target_and_object_dirs()
+    configuration_configs_libs()
+
+    filter "platforms:Windows"
         defines { "_GLFW_WIN32" }
         links { "gdi32", "user32", "shell32" }
 
-    filter "platforms:linux_wayland or platforms:linux_x11"
-        defines { "_GLFW_WAYLAND", "_GLFW_X11" }
+    filter "platforms:Linux"
+        defines { "_GLFW_WAYLAND ", "_GLFW_X11" }
         includedirs { "includes/glfw" }
-
-    set_target_and_object_dirs()
-    configuration_configs_libs()
 
 project "yaml-cpp"
     language "C++"
@@ -91,5 +91,7 @@ project "freetype"
         files {
             "free_type/builds/unix/ftsystem.c",
         }
+        includedirs { "free_type/src/builds/unix/ftconfig.h.in" }
+        defines { "HAVE_FCNTL_H=", "HAVE_UNISTD_H=" }
 
     filter {}
