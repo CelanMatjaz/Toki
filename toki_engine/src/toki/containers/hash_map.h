@@ -9,7 +9,7 @@
 
 namespace toki {
 
-template <typename T, typename HashType = T>
+template <typename T, typename HashType>
 concept HasHashFunction = requires(const T& value) {
     { HashType::hash(value) } -> std::same_as<u64>;
 };
@@ -20,23 +20,17 @@ struct StringHash {
     }
 };
 
-struct IntHash {
-    static u64 hash(const int& value) {
-        return std::hash<int>{}(value);
+struct StringViewHash {
+    static u64 hash(const std::string_view& value) {
+        return std::hash<std::string_view>{}(value);
     }
 };
 
-template <
-    typename KeyType,
-    typename ValueType,
-    typename HashType = KeyType,
-    typename KeyEqual = std::equal_to<KeyType>,
-    ValueType InvalidValue = ValueType{}>
-    requires HasHashFunction<KeyType, HashType>
+template <typename ValueType>
 class HashMap {
 public:
     struct Pair {
-        KeyType key;
+        std::string key;
         ValueType value;
     };
 
@@ -56,16 +50,16 @@ public:
     }
 
     template <typename... Args>
-    void emplace(const KeyType& key, Args&&... args) {
+    void emplace(const std::string& key, Args&&... args) {
         TK_ASSERT(m_data.size < m_data.capacity, "HashMap capacity full ({})", m_data.capacity);
 
-        u64 hash = HashType::hash(key);
+        u64 hash = std::hash<std::string>{}(key);
         u32 index = hash % m_data.capacity;
 
-        check_for_clash(index);
+        check_for_clash(key, index);
 
         BucketEntry* ptr =
-            new (&m_data.ptr[index]) BucketEntry{ nullptr, { key, { ValueType(std::forward<Args>(args)...) } } };
+            new (&m_data.ptr[index]) BucketEntry{ nullptr, { key, ValueType(std::forward<Args>(args)...) } };
         ++m_data.size;
 
         if (ptr < m_data.first) {
@@ -86,19 +80,19 @@ public:
         }
     }
 
-    ValueType& at(const KeyType& key) const {
-        return m_data.ptr[get_index(key)];
+    Pair& at(const std::string& key) const {
+        return m_data.ptr[get_index(key)].pair;
     }
 
-    ValueType& operator[](const KeyType& key) const {
+    Pair& operator[](const std::string& key) const {
         return at(key);
     }
 
-    b8 contains(const KeyType& key) const {
-        u64 hash = HashType::hash(key);
+    b8 contains(const std::string& key) const {
+        u64 hash = std::hash<std::string>{}(key);
         u32 index = hash % m_data.capacity;
 
-        return m_data.ptr[index].pair.value != InvalidValue;
+        return m_data.ptr[index].pair.key == key;
     }
 
     class Iterator;
@@ -112,12 +106,12 @@ public:
     }
 
 private:
-    u64 get_index(const KeyType& key) {
-        return HashType::hash(key) % m_data.capacity;
+    u64 get_index(const std::string& key) {
+        return std::hash<std::string>{}(key) % m_data.capacity;
     }
 
-    b8 check_for_clash(u64 index) {
-        TK_ASSERT(m_data.ptr[index].pair.value == InvalidValue, "No key clash logic implemented");
+    b8 check_for_clash(const std::string& key, u64 index) {
+        TK_ASSERT(m_data.ptr[index].pair.key == "", "No key clash logic implemented");
         return false;
     }
 
