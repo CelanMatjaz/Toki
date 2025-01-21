@@ -8,7 +8,7 @@
 
 namespace toki {
 
-void VulkanFramebuffer::create(Ref<RendererContext> ctx, const Config& config) {
+void VulkanFramebuffer::create(RendererContext* ctx, const Config& config) {
     TK_ASSERT(
         config.render_targets.size() > 0 && config.render_targets.size() <= MAX_FRAMEBUFFER_ATTACHMENTS,
         "Provided framebuffer color attachment count is not in range ({} - {})",
@@ -83,7 +83,7 @@ void VulkanFramebuffer::create(Ref<RendererContext> ctx, const Config& config) {
     }
 }
 
-void VulkanFramebuffer::destroy(Ref<RendererContext> ctx) {
+void VulkanFramebuffer::destroy(RendererContext* ctx) {
     for (auto& image : m_images) {
         image.destroy(ctx);
     }
@@ -93,7 +93,7 @@ void VulkanFramebuffer::destroy(Ref<RendererContext> ctx) {
     }
 }
 
-void VulkanFramebuffer::resize(Ref<RendererContext> ctx, VkExtent3D extent) {
+void VulkanFramebuffer::resize(RendererContext* ctx, VkExtent3D extent) {
     for (u32 i = 0; i < m_images.size(); i++) {
         if (i == m_presentTargetIndex) {
             continue;

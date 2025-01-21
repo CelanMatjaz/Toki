@@ -100,7 +100,7 @@ u32 find_memory_type(VkPhysicalDevice physical_device, u32 type_filter, VkMemory
     std::unreachable();
 }
 
-VkShaderModule create_shader_module(Ref<RendererContext> ctx, std::vector<u32>& binary) {
+VkShaderModule create_shader_module(RendererContext* ctx, std::vector<u32>& binary) {
     VkShaderModuleCreateInfo shader_module_create_info{};
     shader_module_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     shader_module_create_info.codeSize = binary.size() * 4;

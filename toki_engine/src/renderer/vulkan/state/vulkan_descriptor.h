@@ -15,17 +15,17 @@ public:
     DescriptorPoolManager() = default;
     ~DescriptorPoolManager() = default;
 
-    void create(Ref<RendererContext> ctx, u32 max_set_count, std::span<VkDescriptorPoolSize> pool_sizes);
-    void destroy(Ref<RendererContext> ctx);
+    void create(RendererContext* ctx, u32 max_set_count, std::span<VkDescriptorPoolSize> pool_sizes);
+    void destroy(RendererContext* ctx);
 
-    void clear(Ref<RendererContext> ctx);
-    VkDescriptorSet allocate_single(Ref<RendererContext> ctx, VkDescriptorSetLayout layout);
-    std::vector<VkDescriptorSet> allocate_multiple(Ref<RendererContext> ctx, std::span<VkDescriptorSetLayout> layouts);
+    void clear(RendererContext* ctx);
+    VkDescriptorSet allocate_single(RendererContext* ctx, VkDescriptorSetLayout layout);
+    std::vector<VkDescriptorSet> allocate_multiple(RendererContext* ctx, std::span<VkDescriptorSetLayout> layouts);
 
 private:
     VkDescriptorPool m_pool;
 
-    static VkDescriptorPool create_pool(Ref<RendererContext> ctx, u32 max_set_count, std::span<VkDescriptorPoolSize> pool_sizes);
+    static VkDescriptorPool create_pool(RendererContext* ctx, u32 max_set_count, std::span<VkDescriptorPoolSize> pool_sizes);
 };
 
 class DescriptorWriter {
@@ -47,7 +47,7 @@ public:
     void write_image(u32 binding, VkDescriptorType type, const WriteImageConfig& config);
 
     void clear();
-    void update_set(Ref<RendererContext> ctx, VkDescriptorSet set);
+    void update_set(RendererContext* ctx, VkDescriptorSet set);
 
 private:
     std::vector<VkDescriptorBufferInfo> m_bufferInfos;

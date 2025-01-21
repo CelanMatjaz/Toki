@@ -6,11 +6,11 @@
 
 namespace toki {
 
-b8 Input::is_key_down(KeyCode key_code) {
+b8 Input::is_key_down(KeyCode key_code) const {
     return glfwGetKey(((GLFWwindow*) m_data), std::to_underlying(key_code)) == GLFW_PRESS;
 }
 
-b8 Input::is_mouse_button_pressed(MouseButton mouse_button) {
+b8 Input::is_mouse_button_pressed(MouseButton mouse_button) const {
     return glfwGetMouseButton((GLFWwindow*) m_data, std::to_underlying(mouse_button)) == GLFW_PRESS;
 }
 

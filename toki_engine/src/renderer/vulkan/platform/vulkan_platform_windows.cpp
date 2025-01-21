@@ -16,7 +16,7 @@
 
 namespace toki {
 
-VkSurfaceKHR create_surface(Ref<RendererContext> ctx, GLFWwindow* window) {
+VkSurfaceKHR create_surface(RendererContext* ctx, GLFWwindow* window) {
     VkWin32SurfaceCreateInfoKHR surface_create_info{};
     surface_create_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     surface_create_info.hwnd = glfwGetWin32Window(window);

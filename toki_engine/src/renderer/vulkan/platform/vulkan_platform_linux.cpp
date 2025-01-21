@@ -19,7 +19,7 @@
 
 namespace toki {
 
-VkSurfaceKHR create_surface(Ref<RendererContext> ctx, GLFWwindow* window) {
+VkSurfaceKHR create_surface(RendererContext* ctx, GLFWwindow* window) {
 #if defined(TK_PLATFORM_LINUX) && defined(TK_WAYLAND)
     VkWaylandSurfaceCreateInfoKHR surface_create_info{};
     surface_create_info.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;

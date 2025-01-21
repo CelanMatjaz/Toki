@@ -1,29 +1,24 @@
 #include "vulkan_renderer.h"
 
-#include "containers/handle_map.h"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
 #include <vulkan/vulkan.h>
 
 #include <print>
 #include <utility>
 
+#include "containers/handle_map.h"
 #include "core/assert.h"
 #include "core/defer.h"
 #include "core/logging.h"
 #include "renderer/renderer.h"
 #include "renderer/vulkan/platform/vulkan_platform.h"
 #include "renderer/vulkan/vulkan_commands.h"
-#include "renderer/vulkan/vulkan_renderer_api.h"
 #include "renderer/vulkan/vulkan_utils.h"
 
 namespace toki {
 
 VulkanRenderer::VulkanRenderer(const Config& config): Renderer(config) {
     TK_LOG_INFO("Initializing renderer");
-    m_context = create_ref<RendererContext>();
-    m_rendererApi = create_ref<VulkanRendererApi>(m_context);
+    m_context = new RendererContext();
 
     create_instance();
     create_device(config.initialWindow);
@@ -69,16 +64,19 @@ VulkanRenderer::~VulkanRenderer() {
     vkDestroyDevice(m_context->device, m_context->allocation_callbacks);
     vkDestroyInstance(m_context->instance, m_context->allocation_callbacks);
 
-    m_context.reset();
+    delete m_context;
 }
 
 #undef DESTROY_AND_CLEAR
 
 Handle VulkanRenderer::create_shader(const ShaderCreateConfig& config) {
-    TK_ASSERT(m_context->framebuffers.contains(config.framebuffer_handle), "Cannot create shader with a non existing framebuffer");
+    TK_ASSERT(
+        m_context->framebuffers.contains(config.framebuffer_handle),
+        "Cannot create shader with a non existing framebuffer");
 
     auto framebuffer = m_context->framebuffers.at(config.framebuffer_handle);
-    VulkanGraphicsPipeline::Config graphics_pipeline_config{ .framebuffer = m_context->framebuffers.at(config.framebuffer_handle) };
+    VulkanGraphicsPipeline::Config graphics_pipeline_config{ .framebuffer = m_context->framebuffers.at(
+                                                                 config.framebuffer_handle) };
     graphics_pipeline_config.shader_config = config.config;
     VulkanGraphicsPipeline pipeline{};
     pipeline.create(m_context, graphics_pipeline_config);
@@ -115,7 +113,8 @@ Handle VulkanRenderer::create_buffer(const BufferCreateConfig& config) {
         case BufferUsage::STATIC:
             std::unreachable();  // TODO: need to implement staging buffers
         case BufferUsage::DYNAMIC:
-            create_buffer_config.memory_properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+            create_buffer_config.memory_properties =
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
             break;
         default:
             std::unreachable();
@@ -149,26 +148,6 @@ Handle VulkanRenderer::create_texture(const TextureCreateConfig& config) {
     return m_context->images.emplace(image);
 }
 
-Handle VulkanRenderer::create_texture_from_file(std::string_view path) {
-    int width, height, channels;
-    int desired_channels = STBI_rgb_alpha;
-
-    std::filesystem::path file_path(path);
-    u32* pixels = (uint32_t*) stbi_load(file_path.string().c_str(), &width, &height, &channels, desired_channels);
-    TK_ASSERT(pixels != nullptr, "Error loading image");
-    u64 image_size = width * height * 4;
-    TK_ASSERT(image_size > 0, "Image size is 0");
-
-    TextureCreateConfig config{};
-    config.format = ColorFormat::RGBA8;
-    config.size = { width, height };
-    Handle new_image = create_texture(config);
-    set_texture_data(new_image, image_size, pixels);
-    stbi_image_free(pixels);
-
-    return new_image;
-}
-
 void VulkanRenderer::destroy_texture(Handle texture_handle) {
     TK_ASSERT(m_context->images.contains(texture_handle), "Texture with provided handle does not exist");
     m_context->images[texture_handle].destroy(m_context);
@@ -176,7 +155,10 @@ void VulkanRenderer::destroy_texture(Handle texture_handle) {
 }
 
 Handle VulkanRenderer::create_framebuffer(const FramebufferCreateConfig& config) {
-    TK_ASSERT(config.render_targets.size() <= MAX_FRAMEBUFFER_ATTACHMENTS, "Max {} render attachments supported, including depth and/or stencil", MAX_FRAMEBUFFER_ATTACHMENTS);
+    TK_ASSERT(
+        config.render_targets.size() <= MAX_FRAMEBUFFER_ATTACHMENTS,
+        "Max {} render attachments supported, including depth and/or stencil",
+        MAX_FRAMEBUFFER_ATTACHMENTS);
 
     VulkanFramebuffer framebuffer{};
     framebuffer.create(m_context, config);
@@ -233,7 +215,9 @@ void VulkanRenderer::present() {
     submit_info.pCommandBuffers = &frame.command.handle;
     submit_info.commandBufferCount = 1;
 
-    VK_CHECK(vkQueueSubmit(m_context->queues.graphics, 1, &submit_info, frame.render_fence), "Could not submit for rendering");
+    VK_CHECK(
+        vkQueueSubmit(m_context->queues.graphics, 1, &submit_info, frame.render_fence),
+        "Could not submit for rendering");
 
     VkSwapchainKHR swapchain_handles[] = { swapchain.get_handle() };
     u32 swapchain_indices[] = { swapchain.get_current_image_index() };
@@ -286,10 +270,12 @@ void VulkanRenderer::create_instance() {
     instance_create_info.ppEnabledExtensionNames = extensions.data();
 
     TK_LOG_INFO("Creating new Vulkan instance");
-    VK_CHECK(vkCreateInstance(&instance_create_info, m_context->allocation_callbacks, &m_context->instance), "Could not initialize renderer");
+    VK_CHECK(
+        vkCreateInstance(&instance_create_info, m_context->allocation_callbacks, &m_context->instance),
+        "Could not initialize renderer");
 }
 
-void VulkanRenderer::create_device(Ref<Window> window) {
+void VulkanRenderer::create_device(Window* window) {
     VkSurfaceKHR surface = create_surface(m_context, reinterpret_cast<GLFWwindow*>(window->get_handle()));
     Defer defer([ctx = m_context, surface]() {
         vkDestroySurfaceKHR(ctx->instance, surface, ctx->allocation_callbacks);
@@ -317,7 +303,8 @@ void VulkanRenderer::create_device(Ref<Window> window) {
     vkGetPhysicalDeviceProperties(physical_device, &properties);
     TK_LOG_INFO("GPU name: {}", properties.deviceName);
 
-    const auto [graphics, present, transfer] = m_context->queue_family_indices = find_queue_families(physical_device, surface);
+    const auto [graphics, present, transfer] = m_context->queue_family_indices =
+        find_queue_families(physical_device, surface);
     TK_ASSERT(graphics != -1, "Graphics family index not found");
     TK_ASSERT(present != -1, "Present family index not found");
     TK_ASSERT(transfer != -1, "Transfer family index not found");
@@ -357,7 +344,10 @@ void VulkanRenderer::create_device(Ref<Window> window) {
     device_create_info.pEnabledFeatures = &features;
 
     TK_LOG_INFO("Creating new Vulkan device");
-    VK_CHECK(vkCreateDevice(m_context->physical_device, &device_create_info, m_context->allocation_callbacks, &m_context->device), "Could not create device");
+    VK_CHECK(
+        vkCreateDevice(
+            m_context->physical_device, &device_create_info, m_context->allocation_callbacks, &m_context->device),
+        "Could not create device");
 
     vkGetDeviceQueue(m_context->device, graphics, 0, &m_context->queues.graphics);
     vkGetDeviceQueue(m_context->device, present, 0, &m_context->queues.present);
@@ -371,10 +361,16 @@ void VulkanRenderer::create_command_pools() {
     command_pool_create_info.queueFamilyIndex = m_context->queue_family_indices.graphics;
 
     VkCommandPool command_pool;
-    VK_CHECK(vkCreateCommandPool(m_context->device, &command_pool_create_info, m_context->allocation_callbacks, &command_pool), "Could not create command pool");
+    VK_CHECK(
+        vkCreateCommandPool(
+            m_context->device, &command_pool_create_info, m_context->allocation_callbacks, &command_pool),
+        "Could not create command pool");
     m_context->command_pools.emplace_back(command_pool);
 
-    VK_CHECK(vkCreateCommandPool(m_context->device, &command_pool_create_info, m_context->allocation_callbacks, &command_pool), "Could not create extra command pool");
+    VK_CHECK(
+        vkCreateCommandPool(
+            m_context->device, &command_pool_create_info, m_context->allocation_callbacks, &command_pool),
+        "Could not create extra command pool");
     m_context->extra_command_pools.emplace_back(command_pool);
 }
 
@@ -406,7 +402,10 @@ void VulkanRenderer::create_default_resources() {
     sampler_create_info.minLod = 0.0f;
     sampler_create_info.maxLod = VK_LOD_CLAMP_NONE;
 
-    VK_CHECK(vkCreateSampler(m_context->device, &sampler_create_info, m_context->allocation_callbacks, &m_context->default_sampler), "Could not create default sampler");
+    VK_CHECK(
+        vkCreateSampler(
+            m_context->device, &sampler_create_info, m_context->allocation_callbacks, &m_context->default_sampler),
+        "Could not create default sampler");
 }
 
 void VulkanRenderer::cleanup_default_resources() {

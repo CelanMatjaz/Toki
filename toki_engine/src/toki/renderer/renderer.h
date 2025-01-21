@@ -2,7 +2,6 @@
 
 #include "engine/window.h"
 #include "renderer/configs.h"
-#include "renderer/renderer_api.h"
 
 namespace toki {
 
@@ -14,20 +13,21 @@ class Renderer {
 
 public:
     struct Config {
-        std::shared_ptr<Window> initialWindow;
+        Window* initialWindow;
     };
 
 protected:
-    static std::shared_ptr<Renderer> create(const Config& config);
+    static Renderer* create(const Config& config);
 
     Renderer() = delete;
     Renderer(const Config& config);
-    ~Renderer() = default;
 
+public:
+    virtual ~Renderer() = default;
+
+private:
     DELETE_COPY(Renderer);
     DELETE_MOVE(Renderer);
-
-    std::shared_ptr<RendererApi> get_renderer_api() const;
 
 public:
     virtual Handle create_shader(const ShaderCreateConfig& config) = 0;
@@ -37,7 +37,6 @@ public:
     virtual void destroy_buffer(Handle buffer_handle) = 0;
 
     virtual Handle create_texture(const TextureCreateConfig& config) = 0;
-    virtual Handle create_texture_from_file(std::string_view path) = 0;
     virtual void destroy_texture(Handle texture_handle) = 0;
 
     virtual Handle create_framebuffer(const FramebufferCreateConfig& config) = 0;
@@ -46,6 +45,30 @@ public:
     virtual void set_buffer_data(Handle buffer_handle, u32 size, void* data) = 0;
     virtual void set_texture_data(Handle texture_handle, u32 size, void* data) = 0;
 
+public:
+    virtual void begin_pass(const BeginPassConfig& config) = 0;
+    virtual void end_pass() = 0;
+    virtual void submit() = 0;
+
+    virtual void bind_shader(Handle handle) = 0;
+    virtual void bind_vertex_buffer(Handle handle) = 0;
+    virtual void bind_vertex_buffer(Handle handle, u32 binding) = 0;
+    virtual void bind_vertex_buffers(const BindVertexBuffersConfig& config) = 0;
+    virtual void bind_index_buffer(Handle handle) = 0;
+    virtual void push_constant(Handle shader_handle, u32 size, void* data) = 0;
+
+    virtual void update_sets(Handle shader_handle) = 0;
+    virtual void reset_descriptor_sets(Handle shader_handle) = 0;
+    virtual void bind_descriptor_sets(Handle shader_handle) = 0;
+    virtual void write_buffer(Handle shader_handle, Handle buffer_handle, u32 set, u32 binding) = 0;
+    virtual void write_texture(Handle shader_handle, Handle texture_handle, u32 set, u32 binding) = 0;
+
+    virtual void reset_viewport() = 0;
+    virtual void reset_scissor() = 0;
+
+    virtual void draw(u32 vertex_count, u32 instance_count, u32 first_vertex, u32 first_instance) = 0;
+    virtual void draw_indexed(u32 index_count, u32 instance_count, u32 first_index, i32 vertex_offset, u32 first_instance) = 0;
+
 protected:
     virtual b8 begin_frame() = 0;
     virtual void end_frame() = 0;
@@ -53,9 +76,8 @@ protected:
 
     virtual void wait_for_resources() = 0;
 
-    void add_window(std::shared_ptr<Window> window);
-    std::shared_ptr<RendererContext> m_context;
-    std::shared_ptr<RendererApi> m_rendererApi;
+    void add_window(Window* window);
+    RendererContext* m_context;
 };
 
 }  // namespace toki

@@ -17,15 +17,15 @@ public:
         configs::ShaderConfig shader_config;
     };
 
-    void create(Ref<RendererContext> ctx, const Config& config);
-    void destroy(Ref<RendererContext> ctx);
+    void create(RendererContext* ctx, const Config& config);
+    void destroy(RendererContext* ctx);
 
     VkPipeline get_handle() const;
     VkPipelineLayout get_layout() const;
     VkShaderStageFlags get_push_constant_stage_bits() const;
     const std::vector<VkDescriptorSet>& get_descriptor_sets() const;
 
-    void allocate_descriptor_sets(Ref<RendererContext> ctx, DescriptorPoolManager& pool_manager);
+    void allocate_descriptor_sets(RendererContext* ctx, DescriptorPoolManager& pool_manager);
 
 private:
     VkPipeline m_handle;
@@ -38,14 +38,14 @@ private:
         const std::vector<VkPushConstantRange>& push_constants;
     };
 
-    static PipelineLayout create_pipeline_layout(Ref<RendererContext> ctx, const PipelineLayoutCreateConfig& config);
+    static PipelineLayout create_pipeline_layout(RendererContext* ctx, const PipelineLayoutCreateConfig& config);
 
     struct PipelineResources {
         PipelineLayout layout;
         std::unordered_map<ShaderStage, VkShaderModule> shader_modules;
     };
 
-    static PipelineResources create_pipeline_resources(Ref<RendererContext> ctx, const std::vector<configs::Shader>& stages);
+    static PipelineResources create_pipeline_resources(RendererContext* ctx, const std::vector<configs::Shader>& stages);
     static void reflect_shader(ShaderStage stage, std::vector<u32>& binary, DescriptorBindings& bindings, std::vector<VkPushConstantRange>& push_constants);
 };
 

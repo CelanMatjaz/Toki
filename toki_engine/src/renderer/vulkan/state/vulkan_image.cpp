@@ -9,7 +9,7 @@
 
 namespace toki {
 
-void VulkanImage::create(Ref<RendererContext> ctx, const Config& config) {
+void VulkanImage::create(RendererContext* ctx, const Config& config) {
     m_extent = config.extent;
     m_format = config.format;
     m_usage = config.usage;
@@ -64,7 +64,7 @@ void VulkanImage::create(Ref<RendererContext> ctx, const Config& config) {
     VK_CHECK(vkCreateImageView(ctx->device, &image_view_create_info, ctx->allocation_callbacks, &m_imageView), "Could not create image view");
 }
 
-void VulkanImage::destroy(Ref<RendererContext> ctx) {
+void VulkanImage::destroy(RendererContext* ctx) {
     vkFreeMemory(ctx->device, m_memory, ctx->allocation_callbacks);
     vkDestroyImageView(ctx->device, m_imageView, ctx->allocation_callbacks);
     m_imageView = VK_NULL_HANDLE;
@@ -72,7 +72,7 @@ void VulkanImage::destroy(Ref<RendererContext> ctx) {
     m_handle = VK_NULL_HANDLE;
 }
 
-void VulkanImage::resize(Ref<RendererContext> ctx, VkExtent3D extent) {
+void VulkanImage::resize(RendererContext* ctx, VkExtent3D extent) {
     destroy(ctx);
     Config config{};
     config.format = m_format;
@@ -156,7 +156,7 @@ void VulkanImage::transition_layout(VkCommandBuffer cmd, VkImageLayout old_layou
     transition_layout(cmd, old_layout, new_layout, image.m_handle, image.m_aspectFlags);
 }
 
-void VulkanImage::set_data(Ref<RendererContext> ctx, u32 size, void* data) {
+void VulkanImage::set_data(RendererContext* ctx, u32 size, void* data) {
     VulkanBuffer::Config buffer_config{};
     buffer_config.size = size;
     buffer_config.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;

@@ -1,8 +1,7 @@
-#include "vulkan_renderer_api.h"
-
 #include "core/assert.h"
 #include "renderer/vulkan/vulkan_utils.h"
 #include "vulkan/vulkan_core.h"
+#include "vulkan_renderer.h"
 
 namespace toki {
 
@@ -11,20 +10,15 @@ namespace toki {
 #define CHECK_BUFFER(buffer_handle) TK_ASSERT(m_context->buffers.contains(buffer_handle), "Buffer with provided handle does not exist");
 #define CHECK_TEXTURE(texture_handle) TK_ASSERT(m_context->images.contains(texture_handle), "Texture with provided handle does not exist");
 
-VulkanRendererApi::VulkanRendererApi(Ref<RendererContext> context): m_context(context) {}
+void fix_render_area(Rect2D& render_area, VkExtent2D extent);
 
-VulkanRendererApi::~VulkanRendererApi() {
-    m_context.reset();
-}
-
-void VulkanRendererApi::begin_pass(const BeginPassConfig& config) {
-    TK_ASSERT(!m_isPassStarted, "A render pass was already started");
+void VulkanRenderer::begin_pass(const BeginPassConfig& config) {
     TK_ASSERT(m_context->framebuffers.contains(config.framebufferHandle), "Cannot begin render pass without an existing framebuffer");
 
     VkCommandBuffer cmd = m_context->swapchain.get_current_command_buffer();
 
     Rect2D render_area = config.renderArea;
-    fix_render_area(render_area);
+    fix_render_area(render_area, m_context->swapchain.get_extent());
 
     static std::vector<VkRenderingAttachmentInfo> color_attachment_infos(MAX_FRAMEBUFFER_ATTACHMENTS);
     VulkanFramebuffer& framebuffer = m_context->framebuffers.at(config.framebufferHandle);
@@ -70,40 +64,35 @@ void VulkanRendererApi::begin_pass(const BeginPassConfig& config) {
     framebuffer.transition_images(cmd);
 
     vkCmdBeginRendering(m_context->swapchain.get_current_command_buffer(), &rendering_info);
-
-    m_isPassStarted = true;
 };
 
-void VulkanRendererApi::end_pass() {
-    TK_ASSERT(m_isPassStarted, "No render pass was started");
+void VulkanRenderer::end_pass() {
     vkCmdEndRendering(m_context->swapchain.get_current_command_buffer());
-
-    m_isPassStarted = false;
 }
 
-void VulkanRendererApi::submit() {}
+void VulkanRenderer::submit() {}
 
-void VulkanRendererApi::bind_shader(Handle shader_handle) {
+void VulkanRenderer::bind_shader(Handle shader_handle) {
     CHECK_SHADER(shader_handle);
     VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
     vkCmdBindPipeline(m_context->swapchain.get_current_command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.get_handle());
 }
 
-void VulkanRendererApi::bind_vertex_buffer(Handle buffer_handle) {
+void VulkanRenderer::bind_vertex_buffer(Handle buffer_handle) {
     CHECK_BUFFER(buffer_handle)
     VkBuffer buf = m_context->buffers.at(buffer_handle).get_handle();
     u64 offsets = 0;
     vkCmdBindVertexBuffers(m_context->swapchain.get_current_command_buffer(), 0, 1, &buf, &offsets);
 }
 
-void VulkanRendererApi::bind_vertex_buffer(Handle buffer_handle, u32 binding) {
+void VulkanRenderer::bind_vertex_buffer(Handle buffer_handle, u32 binding) {
     CHECK_BUFFER(buffer_handle)
     VkBuffer buf = m_context->buffers.at(buffer_handle).get_handle();
     u64 offsets = 0;
     vkCmdBindVertexBuffers(m_context->swapchain.get_current_command_buffer(), binding, 1, &buf, &offsets);
 }
 
-void VulkanRendererApi::bind_vertex_buffers(const BindVertexBuffersConfig& config) {
+void VulkanRenderer::bind_vertex_buffers(const BindVertexBuffersConfig& config) {
     std::vector<VkBuffer> buffers(config.handles.size());
     std::vector<VkDeviceSize> offsets(config.handles.size(), 0);
     u64 offset = 0;
@@ -114,13 +103,13 @@ void VulkanRendererApi::bind_vertex_buffers(const BindVertexBuffersConfig& confi
     }
 }
 
-void VulkanRendererApi::bind_index_buffer(Handle buffer_handle) {
+void VulkanRenderer::bind_index_buffer(Handle buffer_handle) {
     CHECK_BUFFER(buffer_handle)
     VkBuffer buf = m_context->buffers.at(buffer_handle).get_handle();
     vkCmdBindIndexBuffer(m_context->swapchain.get_current_command_buffer(), buf, 0, VK_INDEX_TYPE_UINT32);
 }
 
-void VulkanRendererApi::push_constant(Handle shader_handle, u32 size, void* data) {
+void VulkanRenderer::push_constant(Handle shader_handle, u32 size, void* data) {
     CHECK_SHADER(shader_handle);
     VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
     vkCmdPushConstants(m_context->swapchain.get_current_command_buffer(), pipeline.get_layout(), pipeline.get_push_constant_stage_bits(), 0, size, data);
@@ -136,7 +125,7 @@ void VulkanRendererApi::push_constant(Handle shader_handle, u32 size, void* data
     //     const uint32_t* pDynamicOffsets)
 }
 
-void VulkanRendererApi::update_sets(Handle shader_handle) {
+void VulkanRenderer::update_sets(Handle shader_handle) {
     CHECK_SHADER(shader_handle);
     VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
     Frame& frame = m_context->swapchain.get_current_frame();
@@ -146,14 +135,14 @@ void VulkanRendererApi::update_sets(Handle shader_handle) {
     frame.descriptor_writer.clear();
 }
 
-void VulkanRendererApi::bind_descriptor_sets(Handle shader_handle) {
+void VulkanRenderer::bind_descriptor_sets(Handle shader_handle) {
     CHECK_SHADER(shader_handle);
     VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
     std::vector descriptor_sets = pipeline.get_descriptor_sets();
     vkCmdBindDescriptorSets(m_context->swapchain.get_current_command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.get_layout(), 0, descriptor_sets.size(), descriptor_sets.data(), 0, nullptr);
 }
 
-void VulkanRendererApi::reset_descriptor_sets(Handle shader_handle) {
+void VulkanRenderer::reset_descriptor_sets(Handle shader_handle) {
     CHECK_SHADER(shader_handle);
     VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
     Frame& frame = m_context->swapchain.get_current_frame();
@@ -162,7 +151,7 @@ void VulkanRendererApi::reset_descriptor_sets(Handle shader_handle) {
     pipeline.allocate_descriptor_sets(m_context, frame.descriptor_pool_manager);
 }
 
-void VulkanRendererApi::write_buffer(Handle shader_handle, Handle buffer_handle, u32 set, u32 binding) {
+void VulkanRenderer::write_buffer(Handle shader_handle, Handle buffer_handle, u32 set, u32 binding) {
     CHECK_SHADER(shader_handle);
     CHECK_BUFFER(buffer_handle);
     VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
@@ -177,7 +166,7 @@ void VulkanRendererApi::write_buffer(Handle shader_handle, Handle buffer_handle,
     frame.descriptor_writer.write_buffer(binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, config);
 }
 
-void VulkanRendererApi::write_texture(Handle shader_handle, Handle texture_handle, u32 set, u32 binding) {
+void VulkanRenderer::write_texture(Handle shader_handle, Handle texture_handle, u32 set, u32 binding) {
     CHECK_SHADER(shader_handle);
     CHECK_TEXTURE(texture_handle);
 
@@ -193,7 +182,7 @@ void VulkanRendererApi::write_texture(Handle shader_handle, Handle texture_handl
     frame.descriptor_writer.write_image(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, config);
 }
 
-void VulkanRendererApi::reset_viewport() {
+void VulkanRenderer::reset_viewport() {
     Vec2 window_dimensions{ m_context->swapchain.get_extent().width, m_context->swapchain.get_extent().height };
 
     VkViewport viewport{};
@@ -207,7 +196,7 @@ void VulkanRendererApi::reset_viewport() {
     vkCmdSetViewport(m_context->swapchain.get_current_command_buffer(), 0, 1, &viewport);
 }
 
-void VulkanRendererApi::reset_scissor() {
+void VulkanRenderer::reset_scissor() {
     Vec2 window_dimensions{ m_context->swapchain.get_extent().width, m_context->swapchain.get_extent().height };
 
     VkRect2D scissor{};
@@ -219,17 +208,17 @@ void VulkanRendererApi::reset_scissor() {
     vkCmdSetScissor(m_context->swapchain.get_current_command_buffer(), 0, 1, &scissor);
 }
 
-void VulkanRendererApi::draw(u32 vertex_count, u32 instance_count, u32 first_vertex, u32 first_instance) {
+void VulkanRenderer::draw(u32 vertex_count, u32 instance_count, u32 first_vertex, u32 first_instance) {
     vkCmdDraw(m_context->swapchain.get_current_command_buffer(), vertex_count, instance_count, first_vertex, first_instance);
 }
 
-void VulkanRendererApi::draw_indexed(u32 index_count, u32 instance_count, u32 first_index, i32 vertex_offset, u32 first_instance) {
+void VulkanRenderer::draw_indexed(u32 index_count, u32 instance_count, u32 first_index, i32 vertex_offset, u32 first_instance) {
     vkCmdDrawIndexed(m_context->swapchain.get_current_command_buffer(), index_count, instance_count, first_index, vertex_offset, first_instance);
 }
 
-void VulkanRendererApi::fix_render_area(Rect2D& render_area) {
+void fix_render_area(Rect2D& render_area, VkExtent2D extent) {
     if (render_area.size.x == 0 || render_area.size.y == 0) {
-        Vec2 window_dimensions{ m_context->swapchain.get_extent().width, m_context->swapchain.get_extent().height };
+        Vec2 window_dimensions{ extent.width, extent.height };
         render_area.size.x = window_dimensions.x;
         render_area.size.y = window_dimensions.y;
     }

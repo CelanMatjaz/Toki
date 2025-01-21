@@ -25,7 +25,6 @@ public:
     virtual void destroy_buffer(Handle buffer_handle) override;
 
     virtual Handle create_texture(const TextureCreateConfig& config) override;
-    virtual Handle create_texture_from_file(std::string_view path) override;
     virtual void destroy_texture(Handle texture_handle) override;
 
     virtual Handle create_framebuffer(const FramebufferCreateConfig& config) override;
@@ -34,8 +33,32 @@ public:
     virtual void set_buffer_data(Handle buffer_handle, u32 size, void* data) override;
     virtual void set_texture_data(Handle texture_handle, u32 size, void* data) override;
 
+public:
+    virtual void begin_pass(const BeginPassConfig& config) override;
+    virtual void end_pass() override;
+    virtual void submit() override;
+
+    virtual void bind_shader(Handle handle) override;
+    virtual void bind_vertex_buffer(Handle handle) override;
+    virtual void bind_vertex_buffer(Handle handle, u32 binding) override;
+    virtual void bind_vertex_buffers(const BindVertexBuffersConfig& config) override;
+    virtual void bind_index_buffer(Handle handle) override;
+    virtual void push_constant(Handle shader_handle, u32 size, void* data) override;
+
+    virtual void update_sets(Handle shader_handle) override;
+    virtual void bind_descriptor_sets(Handle shader_handle) override;
+    virtual void reset_descriptor_sets(Handle shader_handle) override;
+    virtual void write_buffer(Handle shader_handle, Handle buffer_handle, u32 set, u32 binding) override;
+    virtual void write_texture(Handle shader_handle, Handle texture_handle, u32 set, u32 binding) override;
+
+    virtual void reset_viewport() override;
+    virtual void reset_scissor() override;
+
+    virtual void draw(u32 vertex_count, u32 instance_count, u32 first_vertex, u32 first_instance) override;
+    virtual void draw_indexed(u32 index_count, u32 instance_count, u32 first_index, i32 vertex_offset, u32 first_instance) override;
+
 private:
-    void add_window(Ref<Window> window);
+    void add_window(Window* window);
 
     virtual b8 begin_frame() override;
     virtual void end_frame() override;
@@ -45,7 +68,7 @@ private:
 
 private:
     void create_instance();
-    void create_device(Ref<Window> window);
+    void create_device(Window* window);
     void create_command_pools();
     void create_descriptor_pools();
     void create_default_resources();

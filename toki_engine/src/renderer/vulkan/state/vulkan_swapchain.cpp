@@ -12,7 +12,7 @@ static VkSurfaceFormatKHR get_surface_format(const std::vector<VkSurfaceFormatKH
 static VkPresentModeKHR get_present_mode(const std::vector<VkPresentModeKHR>& present_modes);
 static VkExtent2D get_surface_extent(GLFWwindow* window, const VkSurfaceCapabilitiesKHR& capabilities);
 
-void VulkanSwapchain::create(Ref<RendererContext> ctx, const Config& config) {
+void VulkanSwapchain::create(RendererContext* ctx, const Config& config) {
     m_window = reinterpret_cast<GLFWwindow*>(config.window->get_handle());
     m_surface = create_surface(ctx, m_window);
 
@@ -76,7 +76,7 @@ void VulkanSwapchain::create(Ref<RendererContext> ctx, const Config& config) {
     }
 }
 
-void VulkanSwapchain::destroy(Ref<RendererContext> ctx) {
+void VulkanSwapchain::destroy(RendererContext* ctx) {
     for (uint32_t i = 0; i < m_imageCount; ++i) {
         vkDestroyFence(ctx->device, m_frames[i].render_fence, ctx->allocation_callbacks);
         m_frames[i].render_fence = VK_NULL_HANDLE;
@@ -99,7 +99,7 @@ void VulkanSwapchain::destroy(Ref<RendererContext> ctx) {
     m_surface = VK_NULL_HANDLE;
 }
 
-void VulkanSwapchain::recreate(Ref<RendererContext> ctx) {
+void VulkanSwapchain::recreate(RendererContext* ctx) {
     TK_LOG_INFO("(Re)creating swapchain");
 
     vkDeviceWaitIdle(ctx->device);
@@ -177,7 +177,7 @@ void VulkanSwapchain::recreate(Ref<RendererContext> ctx) {
     }
 }
 
-b8 VulkanSwapchain::start_recording(Ref<RendererContext> ctx) {
+b8 VulkanSwapchain::start_recording(RendererContext* ctx) {
     Frame& frame = get_current_frame();
 
     VkResult waitFencesResult = vkWaitForFences(ctx->device, 1, &frame.render_fence, VK_TRUE, UINT64_MAX);
@@ -207,14 +207,14 @@ b8 VulkanSwapchain::start_recording(Ref<RendererContext> ctx) {
     return true;
 }
 
-void VulkanSwapchain::stop_recording(Ref<RendererContext> ctx) {
+void VulkanSwapchain::stop_recording(RendererContext* ctx) {
     Frame& frame = get_current_frame();
     TK_ASSERT(frame.command.state == CommandBufferState::RECORDING_STARTED, "Command buffer has not started recording");
     VK_CHECK(vkEndCommandBuffer(frame.command.handle), "Could not end command buffer");
     frame.command.state = CommandBufferState::RECORDING_STOPPED;
 }
 
-void VulkanSwapchain::end_frame(Ref<RendererContext> ctx) {
+void VulkanSwapchain::end_frame(RendererContext* ctx) {
     // VkResult wait_for_fences_result = vkWaitForFences(ctx->device, 1, &get_current_frame().render_fence, VK_TRUE, UINT64_MAX);
     // TK_ASSERT(wait_for_fences_result == VK_SUCCESS || wait_for_fences_result == VK_TIMEOUT, "Failed waiting for fences");
     Frame& frame = get_current_frame();

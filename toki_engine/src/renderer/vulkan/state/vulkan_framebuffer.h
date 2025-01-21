@@ -11,10 +11,10 @@ class VulkanFramebuffer {
 public:
     using Config = FramebufferCreateConfig;
 
-    void create(Ref<RendererContext> ctx, const Config& config);
-    void destroy(Ref<RendererContext> ctx);
+    void create(RendererContext* ctx, const Config& config);
+    void destroy(RendererContext* ctx);
 
-    void resize(Ref<RendererContext> ctx, VkExtent3D extent);
+    void resize(RendererContext* ctx, VkExtent3D extent);
 
     const std::vector<RenderTarget>& get_render_target_configs() const;
     const std::vector<VkFormat>& get_color_formats() const;

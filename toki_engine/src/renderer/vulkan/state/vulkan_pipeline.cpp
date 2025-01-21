@@ -11,7 +11,7 @@
 
 namespace toki {
 
-void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& config) {
+void VulkanGraphicsPipeline::create(RendererContext* ctx, const Config& config) {
     std::vector<VkShaderModule> shader_modules(config.shader_config.stages.size());
     std::vector<VkPipelineShaderStageCreateInfo> shader_stage_create_infos(shader_modules.size());
 
@@ -293,7 +293,7 @@ void VulkanGraphicsPipeline::create(Ref<RendererContext> ctx, const Config& conf
     VK_CHECK(vkCreateGraphicsPipelines(ctx->device, VK_NULL_HANDLE, 1, &graphics_pipeline_create_info, ctx->allocation_callbacks, &m_handle), "Could not create graphics pipeline");
 }
 
-void VulkanGraphicsPipeline::destroy(Ref<RendererContext> ctx) {
+void VulkanGraphicsPipeline::destroy(RendererContext* ctx) {
     vkDestroyPipeline(ctx->device, m_handle, ctx->allocation_callbacks);
     m_handle = VK_NULL_HANDLE;
 
@@ -321,7 +321,7 @@ const std::vector<VkDescriptorSet>& VulkanGraphicsPipeline::get_descriptor_sets(
     return m_descriptorSets;
 }
 
-void VulkanGraphicsPipeline::allocate_descriptor_sets(Ref<RendererContext> ctx, DescriptorPoolManager& pool_manager) {
+void VulkanGraphicsPipeline::allocate_descriptor_sets(RendererContext* ctx, DescriptorPoolManager& pool_manager) {
     if (m_layout.descriptor_set_layouts.size() == 0) {
         return;
     }
@@ -329,7 +329,7 @@ void VulkanGraphicsPipeline::allocate_descriptor_sets(Ref<RendererContext> ctx, 
     m_descriptorSets = pool_manager.allocate_multiple(ctx, m_layout.descriptor_set_layouts);
 }
 
-PipelineLayout VulkanGraphicsPipeline::create_pipeline_layout(Ref<RendererContext> ctx, const PipelineLayoutCreateConfig& config) {
+PipelineLayout VulkanGraphicsPipeline::create_pipeline_layout(RendererContext* ctx, const PipelineLayoutCreateConfig& config) {
     PipelineLayout layout;
     layout.descriptor_set_layouts.reserve(MAX_DESCRIPTOR_SETS);
 
@@ -417,7 +417,7 @@ void VulkanGraphicsPipeline::reflect_shader(ShaderStage stage, std::vector<u32>&
     }
 }
 
-VulkanGraphicsPipeline::PipelineResources VulkanGraphicsPipeline::create_pipeline_resources(Ref<RendererContext> ctx, const std::vector<configs::Shader>& stages) {
+VulkanGraphicsPipeline::PipelineResources VulkanGraphicsPipeline::create_pipeline_resources(RendererContext* ctx, const std::vector<configs::Shader>& stages) {
     PipelineResources resources;
 
     DescriptorBindings bindings;

@@ -27,20 +27,6 @@ static_assert(sizeof(byte) == 1, "Type byte does not contain 8 bits");
 using word = u16;
 static_assert(sizeof(word) == 2, "Type word does not contain 16 bits");
 
-template <typename T>
-using Scope = std::unique_ptr<T>;
-template <typename T, typename... Args>
-constexpr Scope<T> create_scope(Args&&... args) {
-    return std::make_unique<T>(std::forward<Args>(args)...);
-}
-
-template <typename T>
-using Ref = std::shared_ptr<T>;
-template <typename T, typename... Args>
-constexpr Ref<T> create_ref(Args&&... args) {
-    return std::make_shared<T>(std::forward<Args>(args)...);
-}
-
 using Handle = u64;
 
 }  // namespace toki

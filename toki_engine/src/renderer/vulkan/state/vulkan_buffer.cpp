@@ -7,7 +7,7 @@
 
 namespace toki {
 
-void VulkanBuffer::create(Ref<RendererContext> ctx, const Config& config) {
+void VulkanBuffer::create(RendererContext* ctx, const Config& config) {
     m_size = config.size;
 
     VkBufferCreateInfo buffer_create_info{};
@@ -30,14 +30,14 @@ void VulkanBuffer::create(Ref<RendererContext> ctx, const Config& config) {
     VK_CHECK(vkBindBufferMemory(ctx->device, m_handle, m_memory, 0), "Could not bind image memory");
 }
 
-void VulkanBuffer::destroy(Ref<RendererContext> ctx) {
+void VulkanBuffer::destroy(RendererContext* ctx) {
     vkFreeMemory(ctx->device, m_memory, ctx->allocation_callbacks);
     m_memory = VK_NULL_HANDLE;
     vkDestroyBuffer(ctx->device, m_handle, ctx->allocation_callbacks);
     m_handle = VK_NULL_HANDLE;
 }
 
-void VulkanBuffer::set_data(Ref<RendererContext> ctx, u32 size, void* data) {
+void VulkanBuffer::set_data(RendererContext* ctx, u32 size, void* data) {
     void* mapped_data;
     vkMapMemory(ctx->device, m_memory, 0, size, 0, &mapped_data);
     std::memcpy(mapped_data, data, size);

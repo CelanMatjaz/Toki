@@ -14,10 +14,10 @@ public:
         VkMemoryPropertyFlags memory_properties;
     };
 
-    void create(Ref<RendererContext> ctx, const Config& config);
-    void destroy(Ref<RendererContext> ctx);
+    void create(RendererContext* ctx, const Config& config);
+    void destroy(RendererContext* ctx);
 
-    void set_data(Ref<RendererContext> ctx, u32 size, void* data);
+    void set_data(RendererContext* ctx, u32 size, void* data);
 
     VkBuffer get_handle() const;
     u32 get_size() const;

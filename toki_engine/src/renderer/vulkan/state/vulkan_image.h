@@ -17,13 +17,13 @@ public:
         u32 memory_properties;  // VkMemoryPropertyFlags
     };
 
-    void create(Ref<RendererContext> ctx, const Config& config);
-    void destroy(Ref<RendererContext> ctx);
+    void create(RendererContext* ctx, const Config& config);
+    void destroy(RendererContext* ctx);
 
-    void resize(Ref<RendererContext> ctx, VkExtent3D extent);
+    void resize(RendererContext* ctx, VkExtent3D extent);
     void transition_layout(VkCommandBuffer cmd, VkImageLayout old_layout, VkImageLayout new_layout);
 
-    void set_data(Ref<RendererContext> ctx, u32 size, void* data);
+    void set_data(RendererContext* ctx, u32 size, void* data);
 
     static void transition_layout(VkCommandBuffer cmd, VkImageLayout old_layout, VkImageLayout new_layout, VkImage image, VkImageAspectFlags aspect_flags);
     static void transition_layout(VkCommandBuffer cmd, VkImageLayout old_layout, VkImageLayout new_layout, VulkanImage& image);

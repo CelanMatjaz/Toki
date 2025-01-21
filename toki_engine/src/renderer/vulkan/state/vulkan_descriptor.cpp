@@ -5,24 +5,24 @@
 
 namespace toki {
 
-void DescriptorPoolManager::create(Ref<RendererContext> ctx, u32 max_set_count, std::span<VkDescriptorPoolSize> pool_sizes) {
+void DescriptorPoolManager::create(RendererContext* ctx, u32 max_set_count, std::span<VkDescriptorPoolSize> pool_sizes) {
     m_pool = create_pool(ctx, max_set_count, pool_sizes);
 }
 
-void DescriptorPoolManager::destroy(Ref<RendererContext> ctx) {
+void DescriptorPoolManager::destroy(RendererContext* ctx) {
     vkDestroyDescriptorPool(ctx->device, m_pool, ctx->allocation_callbacks);
 }
 
-void DescriptorPoolManager::clear(Ref<RendererContext> ctx) {
+void DescriptorPoolManager::clear(RendererContext* ctx) {
     vkResetDescriptorPool(ctx->device, m_pool, 0);
 }
 
-VkDescriptorSet DescriptorPoolManager::allocate_single(Ref<RendererContext> ctx, VkDescriptorSetLayout layout) {
+VkDescriptorSet DescriptorPoolManager::allocate_single(RendererContext* ctx, VkDescriptorSetLayout layout) {
     std::vector<VkDescriptorSetLayout> layouts{ layout };
     return allocate_multiple(ctx, layouts).front();
 }
 
-std::vector<VkDescriptorSet> DescriptorPoolManager::allocate_multiple(Ref<RendererContext> ctx, std::span<VkDescriptorSetLayout> layouts) {
+std::vector<VkDescriptorSet> DescriptorPoolManager::allocate_multiple(RendererContext* ctx, std::span<VkDescriptorSetLayout> layouts) {
     VkDescriptorSetAllocateInfo descriptor_set_allocate_info{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
     descriptor_set_allocate_info.descriptorPool = m_pool;
     descriptor_set_allocate_info.descriptorSetCount = layouts.size();
@@ -34,7 +34,7 @@ std::vector<VkDescriptorSet> DescriptorPoolManager::allocate_multiple(Ref<Render
     return descriptor_sets;
 }
 
-VkDescriptorPool DescriptorPoolManager::create_pool(Ref<RendererContext> ctx, u32 max_set_count, std::span<VkDescriptorPoolSize> pool_sizes) {
+VkDescriptorPool DescriptorPoolManager::create_pool(RendererContext* ctx, u32 max_set_count, std::span<VkDescriptorPoolSize> pool_sizes) {
     VkDescriptorPoolCreateInfo descriptor_pool_create_info{};
     descriptor_pool_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     descriptor_pool_create_info.poolSizeCount = pool_sizes.size();
@@ -75,7 +75,7 @@ void DescriptorWriter::clear() {
     m_bufferInfos.clear();
 }
 
-void DescriptorWriter::update_set(Ref<RendererContext> ctx, VkDescriptorSet set) {
+void DescriptorWriter::update_set(RendererContext* ctx, VkDescriptorSet set) {
     if (m_writes.size() == 0) {
         return;
     }

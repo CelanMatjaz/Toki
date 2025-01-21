@@ -9,17 +9,17 @@ struct RendererContext;
 class VulkanSwapchain {
 public:
     struct Config {
-        Ref<Window> window;
+        Window* window;
         VkCommandPool command_pool;
     };
 
-    void create(Ref<RendererContext> ctx, const Config& config);
-    void destroy(Ref<RendererContext> ctx);
-    void recreate(Ref<RendererContext> ctx);
+    void create(RendererContext* ctx, const Config& config);
+    void destroy(RendererContext* ctx);
+    void recreate(RendererContext* ctx);
 
-    b8 start_recording(Ref<RendererContext> ctx);
-    void stop_recording(Ref<RendererContext> ctx);
-    void end_frame(Ref<RendererContext> ctx);
+    b8 start_recording(RendererContext* ctx);
+    void stop_recording(RendererContext* ctx);
+    void end_frame(RendererContext* ctx);
 
     void prepare_current_frame_image();
     void transition_current_frame_image();

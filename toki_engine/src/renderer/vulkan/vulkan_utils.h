@@ -22,7 +22,7 @@ QueueFamilyIndices find_queue_families(VkPhysicalDevice physical_device, VkSurfa
 u32 find_memory_type(VkPhysicalDevice physical_device, u32 type_filter, VkMemoryPropertyFlags properties);
 
 // Shaders
-VkShaderModule create_shader_module(Ref<RendererContext> ctx, std::vector<u32>& binary);
+VkShaderModule create_shader_module(RendererContext* ctx, std::vector<u32>& binary);
 std::vector<u32> compile_shader(ShaderStage stage, std::string& source);
 
 VkFormat map_format(ColorFormat format);

@@ -36,7 +36,7 @@ GlfwWindow::GlfwWindow(const InternalConfig& config): Window(config) {
     TK_ASSERT(window != nullptr, "Window was not created");
 
     m_handle = window;
-    m_input = create_ref<Input>(m_handle);
+    m_input = new Input(m_handle);
 
     glfwShowWindow(m_handle);
 

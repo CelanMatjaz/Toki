@@ -4,7 +4,7 @@ namespace toki {
 
 namespace vulkan_commands {
 
-void submit_single_use_command_buffer(Ref<RendererContext> ctx, std::function<void(VkCommandBuffer cmd)> fn) {
+void submit_single_use_command_buffer(RendererContext* ctx, std::function<void(VkCommandBuffer cmd)> fn) {
     VkCommandBufferAllocateInfo command_buffer_allocate_info{};
     command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     command_buffer_allocate_info.commandPool = ctx->extra_command_pools.front();
