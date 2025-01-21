@@ -1,25 +1,29 @@
 #include "engine.h"
 
+#include <iostream>
 #include <memory>
+#include <string>
 
+#include "containers/hash_map.h"
 #include "core/assert.h"
 #include "core/base.h"
+#include "memory/allocators/stack_allocator.h"
 
 namespace toki {
 
-Engine::Engine(const Config& config) {
+Engine::Engine(const Config& config): m_systemAllocator(20'000'000) {
     Window::InternalConfig window_config;
     window_config.width = config.window_config.width;
     window_config.height = config.window_config.height;
     window_config.title = config.window_config.title;
-    Ref<Window> initial_window = Window::create(window_config);
+    Window* initial_window = Window::create(window_config);
     m_windows.emplace_back(initial_window);
 
     Renderer::Config renderer_config{};
     renderer_config.initialWindow = initial_window;
     m_renderer = Renderer::create(renderer_config);
 
-    m_eventHandler = create_scope<EventHandler>();
+    m_systemManager = m_systemAllocator.emplace<SystemManager>(&m_systemAllocator, m_renderer);
 
     initial_window->m_eventHandler.bind_all(this, [this](void* sender, void* receiver, Event& event) {
         this->handle_event(event);
@@ -28,11 +32,16 @@ Engine::Engine(const Config& config) {
 
 Engine::~Engine() {
     for (auto it = m_views.rbegin(); it != m_views.rend(); it++) {
-        (*it)->on_destroy(m_renderer);
+        (*it)->on_destroy();
+        delete *it;
     }
     m_views.clear();
 
-    m_renderer.reset();
+    delete m_renderer;
+
+    for (auto& window : m_windows) {
+        delete window;
+    }
     m_windows.clear();
 }
 
@@ -49,17 +58,13 @@ void Engine::run() {
         delta_time = std::chrono::duration<float>(frame_start_time - last_frame_time).count();
         last_frame_time = frame_start_time;
 
-        UpdateData update_data{};
-        update_data.renderer = m_renderer;
-        update_data.input = m_windows[0]->get_input();
-        update_data.delta_time = delta_time;
         for (auto it = m_views.rbegin(); it != m_views.rend(); it++) {
-            (*it)->on_update(update_data);
+            (*it)->on_update(delta_time);
         }
 
         if (m_renderer->begin_frame()) {
             for (auto it = m_views.rbegin(); it != m_views.rend(); it++) {
-                (*it)->on_render(m_renderer->get_renderer_api());
+                (*it)->on_render();
             }
             m_renderer->end_frame();
             m_renderer->present();
@@ -69,8 +74,9 @@ void Engine::run() {
     m_renderer->wait_for_resources();
 }
 
-void Engine::add_view(Ref<View> view) {
-    view->on_add(m_renderer);
+void Engine::add_view(View* view) {
+    view->m_engine = this;
+    view->on_add();
     m_views.emplace_back(view);
 }
 

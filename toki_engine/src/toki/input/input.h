@@ -36,8 +36,8 @@ public:
     Input(void* data): m_data(data){};
     ~Input() = default;
 
-    b8 is_key_down(KeyCode key_code);
-    b8 is_mouse_button_pressed(MouseButton mouse_button);
+    b8 is_key_down(KeyCode key_code) const;
+    b8 is_mouse_button_pressed(MouseButton mouse_button) const;
 
 private:
     void* m_data;

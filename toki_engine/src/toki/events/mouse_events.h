@@ -41,11 +41,11 @@ public:
     }
 };
 
-class MouseScrollEvent : public MouseButtonEvent {
+class MouseScrollEvent : public Event {
 public:
-    MouseScrollEvent(): MouseButtonEvent(EventType::MouseMove) {}
+    MouseScrollEvent(): Event(EventType::MouseScroll) {}
 
-    glm::fvec2 get_dimensions() {
+    glm::fvec2 get_offset() {
         return { m_data.f32[0], m_data.f32[1] };
     }
 };

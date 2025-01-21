@@ -31,7 +31,7 @@ protected:
     struct InternalConfig : Config {};
 
 public:
-    static Ref<Window> create(const InternalConfig& config);
+    static Window* create(const InternalConfig& config);
 
     Window() = delete;
     Window(const InternalConfig& config);
@@ -43,10 +43,10 @@ public:
     virtual void* get_handle() const = 0;
     static void poll_events();
 
-    const Ref<Input> get_input() const;
+    const Input& get_input() const;
 
 protected:
-    Ref<Input> m_input;
+    Input* m_input;
     EventHandler m_eventHandler;
 };
 

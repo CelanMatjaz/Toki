@@ -18,3 +18,6 @@
 
 // Resources
 #include "resources/configs/shader_config_loader.h"
+
+// Systems
+#include "systems/font_system.h"

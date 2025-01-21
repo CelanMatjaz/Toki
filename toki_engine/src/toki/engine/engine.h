@@ -1,10 +1,8 @@
 #pragma once
 
-#include <memory>
-
+#include "engine/system_manager.h"
 #include "engine/view.h"
 #include "engine/window.h"
-#include "events/event_handler.h"
 #include "renderer/renderer.h"
 
 namespace toki {
@@ -24,18 +22,31 @@ public:
     DELETE_MOVE(Engine);
 
     void run();
+    void add_view(View* view);
 
-    void add_view(Ref<View> view);
+    Renderer& get_renderer() const {
+        return *m_renderer;
+    }
+
+    SystemManager& get_system_manager() const {
+        return *m_systemManager;
+    }
+
+    const Input& get_input() const {
+        return m_windows.front()->get_input();
+    }
 
 private:
     void handle_event(Event& event);
 
     b8 m_isRunning = false;
 
-    std::vector<Ref<Window>> m_windows;
-    std::vector<Ref<View>> m_views;
-    Ref<Renderer> m_renderer;
-    Scope<EventHandler> m_eventHandler;
+    std::vector<Window*> m_windows;
+    std::vector<View*> m_views;
+    Renderer* m_renderer;
+    SystemManager* m_systemManager;
+    StackAllocator m_systemAllocator;
+
 };
 
 }  // namespace toki

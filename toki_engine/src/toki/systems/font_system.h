@@ -1,55 +1,41 @@
 #pragma once
 
-#include <freetype/freetype.h>
-
-#include <string>
-#include <unordered_map>
-#include <vector>
-
+#include "containers/hash_map.h"
 #include "core/base.h"
+#include "memory/allocators/stack_allocator.h"
 
 namespace toki {
 
 struct Glyph {
-    glm::ivec2 atlas_coords;
-    glm::ivec2 size;
-    glm::ivec2 bearing;
-    glm::ivec2 advance;
-    glm::ivec2 offset;
-};
-
-struct FontVariant {
-    u32 size;
-    std::vector<Glyph> glyphs;
+    u16 x, y;
+    u8 codepoint;
+    u8 width, height;
+    u8 bearing_x, bearing_y;
+    u8 advance_x, advance_y;
+    u8 offset_x, offset_y;
 };
 
 struct Font {
-    std::string_view path;
-    std::unordered_map<u32, FontVariant> variants;
+    u32 font_size;
+    Handle atlas_handle;
+    Glyph glyphs[128];
 };
 
 class FontSystem {
-public:
-    struct Config {
-        u16 default_size;
-    };
-
-    struct LoadFontConfig {
-        std::string path;
-        u32 font_size;
-    };
+    friend class SystemManager;
 
 public:
-    FontSystem() = default;
-    ~FontSystem() = default;
+    FontSystem(SystemManager* system_manager, StackAllocator* allocator);
+    ~FontSystem();
 
-    void initialize(const Config& config);
-    void shutdown();
+public:
+    const Font* get_font(std::string_view name) const;
 
-    void load_font(const LoadFontConfig& config);
+    void load_font(std::string_view name, std::string_view path, u32 font_size);
 
 private:
-    FT_Library m_ft{};
+    SystemManager* m_systemManager;
+    containers::HashMap<Font> m_fontMap;
 };
 
 }  // namespace toki

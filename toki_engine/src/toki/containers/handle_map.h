@@ -80,6 +80,25 @@ public:
         TK_ASSERT(false, "Need to implement");
     }
 
+    Handle emplace(std::initializer_list<ValueType> value) {
+        HandlePtr* free_block = get_next_free();
+        ValueType* ptr = free_block->ptr;
+        *ptr = value;
+
+        m_data.ptr[free_block.handle] = ptr;
+        ++m_data.size;
+
+        if (free_block.handle > m_data.next_free_index) {
+            m_data.next_free_index = free_block.handle;
+        }
+
+        if (free_block.handle > m_data.last_allocated_index) {
+            m_data.last_allocated_index = free_block.handle;
+        }
+
+        return free_block.handle;
+    }
+
     template <typename... Args>
     Handle emplace(Args&&... args) {
         HandlePtr free_block = get_next_free();
