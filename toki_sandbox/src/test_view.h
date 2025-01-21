@@ -4,10 +4,10 @@
 
 class TestView : public toki::View {
 public:
-    virtual void on_add(const toki::Ref<toki::Renderer> renderer) override;
-    virtual void on_destroy(const toki::Ref<toki::Renderer> renderer) override;
-    virtual void on_render(const toki::Ref<toki::RendererApi> api) override;
-    virtual void on_update(toki::UpdateData& update_data) override;
+    virtual void on_add() override;
+    virtual void on_destroy() override;
+    virtual void on_render() override;
+    virtual void on_update(float delta_time) override;
     virtual void on_event(toki::Event& event) override;
 
 private:
@@ -21,4 +21,9 @@ private:
     toki::Handle m_uniformBufferHandle;
     toki::Handle m_textureHandle;
     toki::Handle m_textureHandle2;
+
+    toki::Handle m_textShaderHandle;
+    toki::Handle m_textVertexBufferHandle;
+    toki::Handle m_textIndexBufferHandle;
+    toki::Handle m_textInstanceBufferHandle;
 };

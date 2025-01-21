@@ -1,4 +1,3 @@
-#include <cstdlib>
 #include <filesystem>
 
 #include "core/logging.h"
@@ -22,7 +21,7 @@ int main(int argc, char* argv[]) {
     Engine::Config engine_config{};
     engine_config.window_config = window_config;
     Engine engine(engine_config);
-    engine.add_view(create_ref<TestView>());
+    engine.add_view(new TestView());
     engine.run();
 
     return 0;
