@@ -15,10 +15,10 @@ function build_options()
         cppdialect "C++latest"
         buildoptions { "/Zc:preprocessor", "/std:c++latest" }
         flags { "MultiProcessorCompile" }
-        defines { "_CRT_SECURE_NO_WARNINGS " }
+        defines { "_CRT_SECURE_NO_WARNINGS", "_CRT_NONSTDC_NO_WARNINGS" }
 
     filter "toolset:clang or toolset:gcc"
-        buildoptions "--std=c++23"
+        buildoptions "--std=c++23 -ftrivial-auto-var-init=pattern"
 
     filter {}
 end
