@@ -5,15 +5,21 @@
 
 namespace toki {
 
-#define CHECK_SHADER(shader_handle) TK_ASSERT(m_context->shaders.contains(shader_handle), "Shader with provided handle does not exist");
-#define CHECK_FRAMEBUFFER(framebuffer_handle) TK_ASSERT(m_context->framebuffers.contains(framebuffer_handle), "Framebuffer with provided handle does not exist");
-#define CHECK_BUFFER(buffer_handle) TK_ASSERT(m_context->buffers.contains(buffer_handle), "Buffer with provided handle does not exist");
-#define CHECK_TEXTURE(texture_handle) TK_ASSERT(m_context->images.contains(texture_handle), "Texture with provided handle does not exist");
+#define CHECK_SHADER(shader_handle) \
+    TK_ASSERT(m_context->shaders.contains(shader_handle), "Shader with provided handle does not exist");
+#define CHECK_FRAMEBUFFER(framebuffer_handle) \
+    TK_ASSERT(m_context->framebuffers.contains(framebuffer_handle), "Framebuffer with provided handle does not exist");
+#define CHECK_BUFFER(buffer_handle) \
+    TK_ASSERT(m_context->buffers.contains(buffer_handle), "Buffer with provided handle does not exist");
+#define CHECK_TEXTURE(texture_handle) \
+    TK_ASSERT(m_context->images.contains(texture_handle), "Texture with provided handle does not exist");
 
 void fix_render_area(Rect2D& render_area, VkExtent2D extent);
 
 void VulkanRenderer::begin_pass(const BeginPassConfig& config) {
-    TK_ASSERT(m_context->framebuffers.contains(config.framebufferHandle), "Cannot begin render pass without an existing framebuffer");
+    TK_ASSERT(
+        m_context->framebuffers.contains(config.framebufferHandle),
+        "Cannot begin render pass without an existing framebuffer");
 
     VkCommandBuffer cmd = m_context->swapchain.get_current_command_buffer();
 
@@ -33,6 +39,9 @@ void VulkanRenderer::begin_pass(const BeginPassConfig& config) {
         color_attachment_infos[i].storeOp = map_attachment_store_op(render_targets[i].storeOp);
         color_attachment_infos[i].loadOp = map_attachment_load_op(render_targets[i].loadOp);
         color_attachment_infos[i].imageLayout = get_image_layout(render_targets[i].colorFormat);
+        color_attachment_infos[i].clearValue.color.float32[0] = 0.01f;
+        color_attachment_infos[i].clearValue.color.float32[1] = 0.01f;
+        color_attachment_infos[i].clearValue.color.float32[2] = 0.01f;
 
         if (i == present_index) {
             m_context->swapchain.prepare_current_frame_image();
@@ -75,7 +84,8 @@ void VulkanRenderer::submit() {}
 void VulkanRenderer::bind_shader(Handle shader_handle) {
     CHECK_SHADER(shader_handle);
     VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
-    vkCmdBindPipeline(m_context->swapchain.get_current_command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.get_handle());
+    vkCmdBindPipeline(
+        m_context->swapchain.get_current_command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.get_handle());
 }
 
 void VulkanRenderer::bind_vertex_buffer(Handle buffer_handle) {
@@ -112,7 +122,13 @@ void VulkanRenderer::bind_index_buffer(Handle buffer_handle) {
 void VulkanRenderer::push_constant(Handle shader_handle, u32 size, void* data) {
     CHECK_SHADER(shader_handle);
     VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
-    vkCmdPushConstants(m_context->swapchain.get_current_command_buffer(), pipeline.get_layout(), pipeline.get_push_constant_stage_bits(), 0, size, data);
+    vkCmdPushConstants(
+        m_context->swapchain.get_current_command_buffer(),
+        pipeline.get_layout(),
+        pipeline.get_push_constant_stage_bits(),
+        0,
+        size,
+        data);
 
     // vkCmdBindDescriptorSets(
     //     VkCommandBuffer commandBuffer,
@@ -139,7 +155,15 @@ void VulkanRenderer::bind_descriptor_sets(Handle shader_handle) {
     CHECK_SHADER(shader_handle);
     VulkanGraphicsPipeline& pipeline = m_context->shaders.at(shader_handle);
     std::vector descriptor_sets = pipeline.get_descriptor_sets();
-    vkCmdBindDescriptorSets(m_context->swapchain.get_current_command_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.get_layout(), 0, descriptor_sets.size(), descriptor_sets.data(), 0, nullptr);
+    vkCmdBindDescriptorSets(
+        m_context->swapchain.get_current_command_buffer(),
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        pipeline.get_layout(),
+        0,
+        descriptor_sets.size(),
+        descriptor_sets.data(),
+        0,
+        nullptr);
 }
 
 void VulkanRenderer::reset_descriptor_sets(Handle shader_handle) {
@@ -209,11 +233,19 @@ void VulkanRenderer::reset_scissor() {
 }
 
 void VulkanRenderer::draw(u32 vertex_count, u32 instance_count, u32 first_vertex, u32 first_instance) {
-    vkCmdDraw(m_context->swapchain.get_current_command_buffer(), vertex_count, instance_count, first_vertex, first_instance);
+    vkCmdDraw(
+        m_context->swapchain.get_current_command_buffer(), vertex_count, instance_count, first_vertex, first_instance);
 }
 
-void VulkanRenderer::draw_indexed(u32 index_count, u32 instance_count, u32 first_index, i32 vertex_offset, u32 first_instance) {
-    vkCmdDrawIndexed(m_context->swapchain.get_current_command_buffer(), index_count, instance_count, first_index, vertex_offset, first_instance);
+void VulkanRenderer::draw_indexed(
+    u32 index_count, u32 instance_count, u32 first_index, i32 vertex_offset, u32 first_instance) {
+    vkCmdDrawIndexed(
+        m_context->swapchain.get_current_command_buffer(),
+        index_count,
+        instance_count,
+        first_index,
+        vertex_offset,
+        first_instance);
 }
 
 void fix_render_area(Rect2D& render_area, VkExtent2D extent) {

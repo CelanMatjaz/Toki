@@ -1,7 +1,5 @@
 #pragma once
 
-#include <xfilesystem_abi.h>
-
 #include <functional>
 #include <string>
 
