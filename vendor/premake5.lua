@@ -38,6 +38,7 @@ project "freetype"
         "free_type/src/base/ftbdf.c",
         "free_type/src/base/ftbitmap.c",
         "free_type/src/base/ftcid.c",
+        "free_type/src/base/ftdebug.c",
         "free_type/src/base/ftfstype.c",
         "free_type/src/base/ftgasp.c",
         "free_type/src/base/ftglyph.c",
