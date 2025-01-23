@@ -16,13 +16,15 @@ struct Glyph {
 };
 
 struct Font {
-    u32 font_size;
+    u32 line_height;
     Handle atlas_handle;
     Glyph glyphs[128];
 };
 
+class SystemManager;
+
 class FontSystem {
-    friend class SystemManager;
+    friend SystemManager;
 
 public:
     FontSystem(SystemManager* system_manager, StackAllocator* allocator);

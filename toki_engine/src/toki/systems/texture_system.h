@@ -14,8 +14,10 @@ struct Texture {
     Handle handle;
 };
 
+class SystemManager;
+
 class TextureSystem {
-    friend class SystemManager;
+    friend SystemManager;
 
 public:
     TextureSystem(SystemManager* system_manager, StackAllocator* allocator);

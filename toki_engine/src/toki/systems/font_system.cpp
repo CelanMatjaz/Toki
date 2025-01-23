@@ -3,6 +3,8 @@
 #include <freetype/freetype.h>
 #include <freetype/ftmodapi.h>
 
+#include <algorithm>
+
 #include "core/assert.h"
 #include "core/logging.h"
 #include "engine/system_manager.h"
@@ -39,13 +41,12 @@ void FontSystem::load_font(std::string_view name, std::string_view path, u32 fon
 
     FT_Face face{};
     TK_ASSERT(FT_New_Face(library, std::string(path).c_str(), 0, &face) == 0, "Could not load font file");
-    TK_LOG_INFO("Loaded font file {}", path);
-    TK_LOG_INFO("Glyph count: {}", face->num_glyphs);
+    TK_LOG_INFO("Loaded font file '{}'", path);
 
     FT_Set_Pixel_Sizes(face, 0, font_size);
 
     Font font{};
-    font.font_size = font_size;
+    font.line_height = std::max((u32) ((face->size->metrics.ascender - face->size->metrics.descender) >> 6), font_size);
 
     std::vector<u8> atlas(ATLAS_WIDTH * ATLAS_HEIGHT);
     u32 col = 0;
@@ -54,7 +55,6 @@ void FontSystem::load_font(std::string_view name, std::string_view path, u32 fon
     Glyph* glyphs = font.glyphs;
 
     for (u32 i = 0; i < END_GLYPH - START_GLYPH; i++) {
-        TK_ASSERT(FT_Load_Glyph(face, i + START_GLYPH, FT_LOAD_RENDER) == 0, "Could not load char");
         TK_ASSERT(FT_Load_Char(face, i + START_GLYPH, FT_LOAD_RENDER) == 0, "Could not load char");
 
         FT_Bitmap& bitmap = face->glyph->bitmap;
@@ -64,7 +64,6 @@ void FontSystem::load_font(std::string_view name, std::string_view path, u32 fon
             row += font_size;
         }
 
-        // Copy glyph to atlas
         for (u32 glyph_y = 0; glyph_y < bitmap.rows; glyph_y++) {
             for (u32 glyph_x = 0; glyph_x < bitmap.width; glyph_x++) {
                 atlas[((row + glyph_y) * ATLAS_WIDTH) + col + glyph_x] =
@@ -74,10 +73,14 @@ void FontSystem::load_font(std::string_view name, std::string_view path, u32 fon
 
         Glyph& glyph = glyphs[i];
 
-        glyph.atlas_coords = { col, row };
-        glyph.size = { (float) bitmap.width, (float) bitmap.rows };
-        glyph.advance = { face->glyph->advance.x >> 6, face->glyph->advance.y >> 6 };
-        glyph.offset = { face->glyph->bitmap_left, face->glyph->bitmap_top };
+        glyph.x = col;
+        glyph.y = row;
+        glyph.width = (u8) bitmap.width;
+        glyph.height = (u8) bitmap.rows;
+        glyph.advance_x = (u8) face->glyph->advance.x;
+        glyph.advance_y = (u8) face->glyph->advance.y;
+        glyph.offset_x = (u8) face->glyph->bitmap_left;
+        glyph.offset_y = (u8) face->glyph->bitmap_top;
 
         col += bitmap.width;
     }
@@ -95,6 +98,8 @@ void FontSystem::load_font(std::string_view name, std::string_view path, u32 fon
     FT_Done_Library(library);
 
     m_fontMap.emplace(name, font);
+
+    TK_LOG_INFO("Loaded font '{}'", name);
 }
 
 }  // namespace toki
