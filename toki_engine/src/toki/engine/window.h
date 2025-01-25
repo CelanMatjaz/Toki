@@ -44,6 +44,7 @@ public:
     static void poll_events();
 
     const Input& get_input() const;
+    EventHandler& get_event_handler();
 
 protected:
     Input* m_input;

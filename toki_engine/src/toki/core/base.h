@@ -2,8 +2,6 @@
 
 #include <cstdint>
 #include <glm/glm.hpp>
-#include <memory>
-#include <utility>
 
 namespace toki {
 

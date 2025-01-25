@@ -44,6 +44,8 @@ private:
     std::vector<Window*> m_windows;
     std::vector<View*> m_views;
     Renderer* m_renderer;
+
+    // Systems
     SystemManager* m_systemManager;
     StackAllocator m_systemAllocator;
 

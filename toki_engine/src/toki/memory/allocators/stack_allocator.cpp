@@ -34,6 +34,11 @@ void* StackAllocator::allocate_aligned(u32 size, u32 alignment) {
     return (void*) aligned;
 }
 
+template <typename T>
+T* StackAllocator::allocate_aligned(u32 count) {
+    return reinterpret_cast<T>(allocate_aligned(count * sizeof(T), alignof(T)));
+}
+
 void StackAllocator::free_to_offset(u32 offset) {
     m_offset = offset;
 }

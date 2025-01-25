@@ -21,4 +21,8 @@ const Input& Window::get_input() const {
     return *m_input;
 }
 
+EventHandler& Window::get_event_handler() {
+    return m_eventHandler;
+}
+
 }  // namespace toki

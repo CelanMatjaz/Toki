@@ -8,9 +8,9 @@
 
 namespace toki {
 
-GenericAllocator::GenericAllocator() {}
+BasicAllocator::BasicAllocator() {}
 
-GenericAllocator::GenericAllocator(u32 max_allocations, u32 size): m_maxAllocations(max_allocations), m_size(size) {
+BasicAllocator::BasicAllocator(u32 max_allocations, u32 size): m_maxAllocations(max_allocations), m_size(size) {
     u32 allocation_array_size = max_allocations * sizeof(Allocation);
     u32 total_size = allocation_array_size + size;
     m_buffer = platform::allocate(total_size);
@@ -19,11 +19,11 @@ GenericAllocator::GenericAllocator(u32 max_allocations, u32 size): m_maxAllocati
     m_nextFreeBufferPtr = static_cast<void*>(buffer_start);
 }
 
-GenericAllocator::~GenericAllocator() {
+BasicAllocator::~BasicAllocator() {
     platform::deallocate(m_buffer);
 }
 
-void* GenericAllocator::get(const void* ptr) {
+void* BasicAllocator::get(const void* ptr) {
     if (ptr == nullptr) {
         return nullptr;
     }
@@ -31,7 +31,12 @@ void* GenericAllocator::get(const void* ptr) {
     return allocation->buffer_ptr;
 }
 
-void* GenericAllocator::allocate(u32 size) {
+template <typename T>
+T* BasicAllocator::get(const void* ptr) {
+    return reinterpret_cast<T>(get(ptr));
+}
+
+void* BasicAllocator::allocate(u32 size) {
     TK_ASSERT(
         reinterpret_cast<byte*>(m_nextFreeBufferPtr) + size < reinterpret_cast<byte*>(m_buffer) + m_size,
         "Generic allocator new allocation size ({}) exceeds total buffer size",
@@ -54,7 +59,7 @@ void* GenericAllocator::allocate(u32 size) {
     return allocation;
 }
 
-void* GenericAllocator::allocate_aligned(u32 size, u32 alignment) {
+void* BasicAllocator::allocate_aligned(u32 size, u32 alignment) {
     TK_ASSERT(alignment >= 1 && alignment <= 128, "Alignment out of bounds");
     TK_ASSERT((alignment & (alignment - 1)) == 0, "Alignment isn't a power of 2");
 
@@ -76,7 +81,7 @@ void* GenericAllocator::allocate_aligned(u32 size, u32 alignment) {
     return new_allocation;
 }
 
-void GenericAllocator::free(void* ptr) {
+void BasicAllocator::free(void* ptr) {
     Allocation* allocation = reinterpret_cast<Allocation*>(ptr);
     allocation->in_use = false;
 
@@ -86,7 +91,7 @@ void GenericAllocator::free(void* ptr) {
     }
 }
 
-void GenericAllocator::defragment(u32 block_count, u32 max_size) {
+void BasicAllocator::defragment(u32 block_count, u32 max_size) {
     TK_LOG_INFO("Generic allocator - defragmenting {} block(s)", block_count);
 
     Allocation* current_free_allocation = m_nextFreeAllocation;

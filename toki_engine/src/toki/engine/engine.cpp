@@ -1,12 +1,8 @@
 #include "engine.h"
 
-#include <iostream>
-#include <memory>
 #include <string>
 
-#include "containers/hash_map.h"
 #include "core/assert.h"
-#include "core/base.h"
 #include "memory/allocators/stack_allocator.h"
 
 namespace toki {
@@ -20,7 +16,7 @@ Engine::Engine(const Config& config): m_systemAllocator(20'000'000) {
     m_windows.emplace_back(initial_window);
 
     Renderer::Config renderer_config{};
-    renderer_config.initialWindow = initial_window;
+    renderer_config.initial_window = initial_window;
     m_renderer = Renderer::create(renderer_config);
 
     m_systemManager = m_systemAllocator.emplace<SystemManager>(&m_systemAllocator, m_renderer);
