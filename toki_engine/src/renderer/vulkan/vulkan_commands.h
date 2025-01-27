@@ -1,12 +1,23 @@
 #pragma once
 
-#include "renderer/vulkan/vulkan_context.h"
+#include "renderer/vulkan/vulkan_backend.h"
 
 namespace toki {
 
-namespace vulkan_commands {
+namespace vulkan_renderer {
 
-void submit_single_use_command_buffer(RendererContext* ctx, std::function<void(VkCommandBuffer cmd)> fn);
-}
+class VulkanCommands {
+    VulkanCommands() = delete;
+    VulkanCommands(VulkanBackend* backend): m_backend(backend) {}
+
+public:
+    void draw(u32 count);
+    void draw_indexed(u32 count);
+
+private:
+    VulkanBackend* m_backend;
+};
+
+}  // namespace vulkan_renderer
 
 }  // namespace toki

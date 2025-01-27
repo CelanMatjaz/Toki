@@ -22,7 +22,7 @@ void Window::poll_events() {
     glfwPollEvents();
 }
 
-GlfwWindow::GlfwWindow(const InternalConfig& config): Window(config) {
+GlfwWindow::GlfwWindow(const Config& config): Window(config) {
     TK_ASSERT(config.width > 0 && config.height > 0, "Invalid window dimensions");
 
     if (window_count == 0) {

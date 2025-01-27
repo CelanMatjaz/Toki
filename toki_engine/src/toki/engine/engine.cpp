@@ -3,23 +3,21 @@
 #include <string>
 
 #include "core/assert.h"
+#include "core/base.h"
+#include "core/logging.h"
 #include "memory/allocators/stack_allocator.h"
 
 namespace toki {
 
-Engine::Engine(const Config& config): m_systemAllocator(20'000'000) {
-    Window::InternalConfig window_config;
-    window_config.width = config.window_config.width;
-    window_config.height = config.window_config.height;
-    window_config.title = config.window_config.title;
-    Window* initial_window = Window::create(window_config);
+Engine::Engine(const Config& config): m_engineAllocator(Kilobytes(16)), m_systemAllocator(Megabytes(20)) {
+    Window* initial_window = Window::create(config.window_config);
     m_windows.emplace_back(initial_window);
 
     Renderer::Config renderer_config{};
     renderer_config.initial_window = initial_window;
-    m_renderer = Renderer::create(renderer_config);
+    m_renderer = m_engineAllocator.emplace<Renderer>(renderer_config);
 
-    m_systemManager = m_systemAllocator.emplace<SystemManager>(&m_systemAllocator, m_renderer);
+    // m_systemManager = m_systemAllocator.emplace<SystemManager>(&m_systemAllocator, m_renderer);
 
     initial_window->m_eventHandler.bind_all(this, [this](void* sender, void* receiver, Event& event) {
         this->handle_event(event);
@@ -33,7 +31,7 @@ Engine::~Engine() {
     }
     m_views.clear();
 
-    delete m_renderer;
+    m_renderer->~Renderer();
 
     for (auto& window : m_windows) {
         delete window;
@@ -58,13 +56,12 @@ void Engine::run() {
             (*it)->on_update(delta_time);
         }
 
-        if (m_renderer->begin_frame()) {
-            for (auto it = m_views.rbegin(); it != m_views.rend(); it++) {
-                (*it)->on_render();
-            }
-            m_renderer->end_frame();
-            m_renderer->present();
+        m_renderer->begin_frame();
+        for (auto it = m_views.rbegin(); it != m_views.rend(); it++) {
+            (*it)->on_render();
         }
+        m_renderer->end_frame();
+        m_renderer->present();
     }
 
     m_renderer->wait_for_resources();

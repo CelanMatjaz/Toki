@@ -8,9 +8,9 @@
 
 namespace toki {
 
-Window::Window(const InternalConfig& config) {};
+Window::Window(const Config& config) {};
 
-Window* Window::create(const InternalConfig& config) {
+Window* Window::create(const Config& config) {
     TK_LOG_INFO("Creating new window");
 #ifdef TK_WINDOW_SYSTEM_GLFW
     return new GlfwWindow(config);

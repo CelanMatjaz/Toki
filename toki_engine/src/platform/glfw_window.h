@@ -12,7 +12,7 @@ namespace toki {
 class GlfwWindow : public Window {
 public:
     GlfwWindow() = delete;
-    GlfwWindow(const InternalConfig& config);
+    GlfwWindow(const Config& config);
     virtual ~GlfwWindow();
 
     virtual Vec2 get_dimensions() const override;

@@ -19,6 +19,7 @@ namespace toki {
             c,                                                \
             std::format(message __VA_OPT__(, ) __VA_ARGS__)); \
         platform::debug_break();                              \
+        std::unreachable();                                   \
     }
 
 #define TK_ASSERT_ERROR(error)            \

@@ -16,7 +16,9 @@ public:
     void* allocate_aligned(u32 size, u32 alignment);
 
     template <typename T>
-    T* allocate_aligned(u32 count = 1);
+    T* allocate_aligned(u32 count) {
+        return reinterpret_cast<T*>(allocate_aligned(count * sizeof(T), alignof(T)));
+    }
 
     template <typename T, typename... Args>
     constexpr T* emplace(Args&&... args) {

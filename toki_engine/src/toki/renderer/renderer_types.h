@@ -4,33 +4,15 @@
 
 namespace toki {
 
-enum class ColorFormat : u8 {
-    NONE,
+enum class ColorFormat : u16 {
+    None,
     R8,
     RGBA8,
-    DEPTH,
-    STENCIL,
-    DEPTH_STENCIL,
+    Depth,
+    Stencil,
+    DepthStencil,
 
-    COLOR_FORMAT_COUNT
-};
-
-enum class RenderTargetLoadOp : u8 {
-    LOAD,
-    CLEAR,
-    DONT_CARE,
-};
-
-enum class RenderTargetStoreOp : u8 {
-    STORE,
-    DONT_CARE,
-};
-
-struct RenderTarget {
-    ColorFormat colorFormat = ColorFormat::NONE;
-    RenderTargetLoadOp loadOp : 2 = RenderTargetLoadOp::CLEAR;
-    RenderTargetStoreOp storeOp : 2 = RenderTargetStoreOp::STORE;
-    b8 presentable : 2 = false;
+    COLOR_FORMAT_COUNT = DepthStencil
 };
 
 enum class ShaderType : u8 {
@@ -38,8 +20,9 @@ enum class ShaderType : u8 {
 };
 
 enum class ShaderStage : u8 {
-    VERTEX,
-    FRAGMENT
+    Vertex,
+    Fragment,
+    SHADER_STAGE_COUNT
 };
 
 enum class VertexInputRate : u8 {
@@ -68,10 +51,11 @@ struct VertexBindingDescription {
 };
 
 enum class BufferType : u8 {
-    NONE,
-    VERTEX,
-    INDEX,
-    UNIFORM
+    None,
+    Vertex,
+    Index,
+    Uniform,
+    BUFFER_TYPE_COUNT = Uniform,
 };
 
 enum class BufferUsage : u8 {
@@ -106,16 +90,16 @@ enum class PrimitiveTopology : u8 {
 };
 
 enum class CullMode : u8 {
-    NONE,
-    FRONT,
-    BACK,
-    BOTH
+    None,
+    Front,
+    Back,
+    Both
 };
 
 enum class PolygonMode : u8 {
-    FILL,
-    LINE,
-    POINT,
+    Fill,
+    Line,
+    Point,
 };
 
 enum class FrontFace : u8 {
@@ -125,7 +109,7 @@ enum class FrontFace : u8 {
 
 struct BeginPassConfig {
     Rect2D renderArea{};
-    Handle framebufferHandle{};
+    Handle framebufferHandle;
     Vec4 clearValue;
 };
 

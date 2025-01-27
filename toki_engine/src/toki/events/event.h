@@ -32,19 +32,19 @@ enum class EventType {
 };
 
 union EventData {
-    u64 u64;
-    i64 i64;
+    uint64_t u64;
+    int64_t i64;
 
-    u32 u32[2];
-    i32 i32[2];
+    uint32_t u32[2];
+    int32_t i32[2];
 
-    u16 u16[4];
-    i16 i16[4];
+    uint16_t u16[4];
+    int16_t i16[4];
 
-    u8 u8[8];
-    i8 i8[8];
+    uint8_t u8[8];
+    int8_t i8[8];
 
-    f32 f32[2];
+    float f32[2];
 };
 
 class Event;

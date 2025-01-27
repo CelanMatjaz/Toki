@@ -1,11 +1,6 @@
 #include "vulkan_platform.h"
 
-#if defined(TK_PLATFORM_LINUX) && defined(TK_WAYLAND)
-
-#include "renderer/vulkan/vulkan_context.h"
-#include "renderer/vulkan/vulkan_types.h"
-
-#define GLFW_INCLUDE_VULKAN
+#if defined(TK_PLATFORM_LINUX)
 
 #if defined(TK_PLATFORM_LINUX) && defined(TK_WAYLAND)
 #define GLFW_EXPOSE_NATIVE_WAYLAND
@@ -17,17 +12,22 @@
 #include <GLFW/glfw3native.h>
 #include <vulkan/vulkan.h>
 
+#include "platform/glfw_window.h"
+#include "renderer/vulkan/vulkan_backend.h"
+
 namespace toki {
 
-VkSurfaceKHR create_surface(RendererContext* ctx, GLFWwindow* window) {
+VkSurfaceKHR create_surface(VkInstance instance, VkAllocationCallbacks* allocation_callbacks, Window* window) {
+    GlfwWindow* w = reinterpret_cast<GlfwWindow*>(window);
+
 #if defined(TK_PLATFORM_LINUX) && defined(TK_WAYLAND)
     VkWaylandSurfaceCreateInfoKHR surface_create_info{};
     surface_create_info.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
     surface_create_info.display = glfwGetWaylandDisplay();
-    surface_create_info.surface = glfwGetWaylandWindow(window);
+    surface_create_info.surface = glfwGetWaylandWindow(reinterpret_cast<GLFWwindow*>(w->get_handle()));
 
     VkSurfaceKHR surface{};
-    VkResult result = vkCreateWaylandSurfaceKHR(ctx->instance, &surface_create_info, ctx->allocation_callbacks, &surface);
+    VkResult result = vkCreateWaylandSurfaceKHR(instance, &surface_create_info, allocation_callbacks, &surface);
 #elif defined(TK_PLATFORM_LINUX) && defined(TK_X11)
     // TODO: add X11 surface creation
 #endif

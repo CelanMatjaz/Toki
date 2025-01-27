@@ -11,8 +11,6 @@ namespace toki {
 
 namespace containers {
 
-static_assert(std::is_same_v<Handle, uint64_t>, "Handle type must be uin64_t");
-
 struct HandlePtr {
     Handle handle;
     void* ptr;
@@ -48,15 +46,15 @@ public:
             return;
         }
 
-        m_data.ptr[handle] = nullptr;
+        m_data.ptr[handle.index] = nullptr;
         --m_data.size;
 
-        if (handle < m_data.next_free_index) {
-            m_data.next_free_index = handle;
+        if (handle.index < m_data.next_free_index) {
+            m_data.next_free_index = handle.index;
         }
 
-        if (handle > m_data.last_allocated_index) {
-            m_data.last_allocated_index = handle;
+        if (handle.index > m_data.last_allocated_index) {
+            m_data.last_allocated_index = handle.index;
         }
     }
 
@@ -68,8 +66,7 @@ public:
     }
 
     b8 contains(const Handle handle) const {
-        auto* p = (ValueType**) m_data.ptr;
-        return (p)[handle] != nullptr;
+        return m_data.ptr[handle.index] != nullptr;
     }
 
     u32 size() const {
@@ -119,7 +116,7 @@ public:
 
     ValueType& at(const Handle handle) const {
         TK_ASSERT(contains(handle), "No value exists for provided handle");
-        return ((ValueType*) m_data.values_ptr)[handle];
+        return ((ValueType*) m_data.values_ptr)[handle.index];
     }
 
     ValueType& operator[](const Handle handle) const {
@@ -148,7 +145,7 @@ private:
     }
 
     b8 is_handle_in_range(const Handle handle) const {
-        return handle < m_data.buffer_capacity;
+        return handle.index < m_data.buffer_capacity;
     }
 
     HandlePtr get_next_free() {

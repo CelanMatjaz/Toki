@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <ctime>
 #include <glm/glm.hpp>
 
 namespace toki {
@@ -25,6 +26,31 @@ static_assert(sizeof(byte) == 1, "Type byte does not contain 8 bits");
 using word = u16;
 static_assert(sizeof(word) == 2, "Type word does not contain 16 bits");
 
-using Handle = u64;
+constexpr u64 INVALID_HANDLE_ID = 0;
+
+struct Handle {
+    Handle(): unique_id(INVALID_HANDLE_ID), index(0), data(0) {}
+    Handle(u64 index, u32 data = 0): unique_id(time(0)), index(index), data(0) {}
+
+    operator bool() {
+        return unique_id != INVALID_HANDLE_ID;
+    }
+
+    u64 unique_id;
+    u32 index;
+    u32 data;
+};
+
+constexpr u64 Kilobytes(auto value) {
+    return 1024 * value;
+}
+
+constexpr u64 Megabytes(auto value) {
+    return 1024 * Kilobytes(value);
+}
+
+constexpr u64 Gigabytes(auto value) {
+    return 1024 * Megabytes(value);
+}
 
 }  // namespace toki

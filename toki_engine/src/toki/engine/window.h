@@ -28,13 +28,11 @@ protected:
 
     using WindowEventDispatchFn = std::function<void(Engine*, Event)>;
 
-    struct InternalConfig : Config {};
-
 public:
-    static Window* create(const InternalConfig& config);
+    static Window* create(const Config& config);
 
     Window() = delete;
-    Window(const InternalConfig& config);
+    Window(const Config& config);
     virtual ~Window() = default;
 
     virtual Vec2 get_dimensions() const = 0;

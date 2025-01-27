@@ -18,10 +18,6 @@ struct BufferCreateConfig {
     BufferUsage usage{};
 };
 
-struct FramebufferCreateConfig {
-    std::vector<RenderTarget> render_targets;
-};
-
 struct TextureCreateConfig {
     ColorFormat format;
     glm::u32vec2 size;

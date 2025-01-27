@@ -2,7 +2,7 @@
 
 #if defined(TK_PLATFORM_WINDOWS)
 
-#include "renderer/vulkan/vulkan_context.h"
+#include "platform/glfw_window.h"
 #include "renderer/vulkan/vulkan_types.h"
 
 #define GLFW_INCLUDE_VULKAN
@@ -16,14 +16,18 @@
 
 namespace toki {
 
-VkSurfaceKHR create_surface(RendererContext* ctx, GLFWwindow* window) {
-    VkWin32SurfaceCreateInfoKHR surface_create_info{};
+VkSurfaceKHR create_surface(VkInstance instance, VkAllocationCallbacks* allocation_callbacks, Window* window) {
+    GlfwWindow* w = reinterpret_cast<GlfwWindow*>(window);
+
+VkWin32SurfaceCreateInfoKHR surface_create_info{};
     surface_create_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-    surface_create_info.hwnd = glfwGetWin32Window(window);
+surface_create_info.hwnd = glfwGetWin32Window(reinterpret_cast<GLFWwindow*>(w->get_handle()));
     surface_create_info.hinstance = GetModuleHandle(nullptr);
 
     VkSurfaceKHR surface{};
-    VK_CHECK(vkCreateWin32SurfaceKHR(ctx->instance, &surface_create_info, ctx->allocation_callbacks, &surface), "Could not create window surface");
+    VK_CHECK(
+        vkCreateWin32SurfaceKHR(instance, &surface_create_info, allocation_callbacks, &surface),
+        "Could not create window surface");
 
     return surface;
 }

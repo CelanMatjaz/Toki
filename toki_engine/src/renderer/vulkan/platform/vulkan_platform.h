@@ -3,10 +3,10 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#include "core/error.h"
-#include "renderer/vulkan/vulkan_context.h"
+#include "engine/window.h"
 
 namespace toki {
 
-VkSurfaceKHR create_surface(RendererContext* ctx, GLFWwindow* window);
+VkSurfaceKHR create_surface(VkInstance instance, VkAllocationCallbacks* allocation_callbacks, Window* window);
+
 }

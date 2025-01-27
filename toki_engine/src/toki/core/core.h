@@ -2,7 +2,6 @@
 
 #include "assert.h"
 #include "base.h"
-#include "defer.h"
 #include "error.h"
 #include "formatters.h"
 #include "logging.h"

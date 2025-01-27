@@ -45,10 +45,11 @@ private:
     std::vector<View*> m_views;
     Renderer* m_renderer;
 
+    StackAllocator m_engineAllocator;
+
     // Systems
     SystemManager* m_systemManager;
     StackAllocator m_systemAllocator;
-
 };
 
 }  // namespace toki
