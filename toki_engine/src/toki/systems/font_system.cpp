@@ -89,11 +89,8 @@ void FontSystem::load_font(std::string_view name, std::string_view path, u32 fon
 
     Renderer& renderer = m_systemManager->get_renderer();
 
-    TextureCreateConfig atlas_config{};
-    atlas_config.size = { ATLAS_WIDTH, ATLAS_HEIGHT };
-    atlas_config.format = ColorFormat::R8;
-    font.atlas_handle = renderer.create_texture(atlas_config);
-    renderer.set_texture_data(font.atlas_handle, ATLAS_WIDTH * ATLAS_HEIGHT, atlas.data());
+    // font.atlas_handle = renderer.create_texture(ColorFormat::R8, ATLAS_WIDTH, ATLAS_HEIGHT);
+    // renderer.set_texture_data(font.atlas_handle, ATLAS_WIDTH * ATLAS_HEIGHT, atlas.data());
 
     FT_Done_Library(library);
 

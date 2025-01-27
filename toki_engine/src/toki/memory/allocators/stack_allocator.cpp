@@ -16,7 +16,9 @@ StackAllocator::~StackAllocator() {
 
 void* StackAllocator::allocate(u32 size) {
     TK_ASSERT(m_offset + size <= m_capacity, "Not enough allocated memory in allocator");
-    return (void*) (((byte*) m_ptr) + (m_offset += size));
+    void* ptr = (((byte*) m_ptr) + (m_offset));
+    m_offset += size;
+    return ptr;
 }
 
 void* StackAllocator::allocate_aligned(u32 size, u32 alignment) {

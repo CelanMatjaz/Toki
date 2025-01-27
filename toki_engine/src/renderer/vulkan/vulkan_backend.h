@@ -8,9 +8,12 @@
 #include "core/base.h"
 #include "engine/window.h"
 #include "memory/allocators/basic_allocator.h"
+#include "memory/allocators/double_buffer_allocator.h"
 #include "memory/allocators/stack_allocator.h"
+#include "renderer/renderer_commands.h"
 #include "renderer/renderer_structs.h"
 #include "renderer/renderer_types.h"
+#include "renderer/vulkan/vulkan_commands.h"
 #include "renderer/vulkan/vulkan_types.h"
 #include "resources/configs/shader_config_loader.h"
 
@@ -36,6 +39,9 @@ struct VulkanContext {
 
     BasicRef<VkCommandPool> command_pools;
     BasicRef<VkCommandPool> extra_command_pools;
+    u32 in_flight_index{};
+    u32 in_flight_command_buffer_counts[MAX_FRAMES_IN_FLIGHT];
+    BasicRef<VkCommandBuffer> in_flight_command_buffers[MAX_FRAMES_IN_FLIGHT];
 
     InternalBuffer staging_buffer{};
     InternalBuffer uploaded_buffers[std::to_underlying(BufferType::BUFFER_TYPE_COUNT)]{};
@@ -70,7 +76,7 @@ public:
     void destroy_render_pass(Handle render_pass_handle);
     void recreate_framebuffers(RenderPass* render_pass, Swapchain* swapchain, b8 destroy = true);
 
-    Handle create_pipeline(Handle render_pass_handle, const configs::ShaderConfig& config);
+    Shader create_pipeline(Handle render_pass_handle, const configs::ShaderConfig& config);
     void destroy_pipeline(Handle pipeline_handle);
 
     void initialize_resources();
@@ -82,6 +88,9 @@ public:
     void cleanup_frame_resources();
     void submit_commands();
     void present();
+
+    VkCommandBuffer get_command_buffer();
+    RendererCommands* get_commands();
 
     void set_color_clear(const glm::vec4& color);
     void set_depth_clear(f32 depth_clear);
@@ -123,8 +132,9 @@ private:
         std::vector<VkPushConstantRange>& push_constants);
 
 private:
-    BasicAllocator m_allocator{ 1024, Megabytes(64) };  // Allocate 64 megabytes for long lived allocations
-    StackAllocator m_tempAllocator{ Megabytes(1) };     // Allocate 1 megabyte for temporary allocations
+    BasicAllocator m_allocator{ 1024, Megabytes(64) };        // Allocate 64 megabytes for long lived allocations
+    StackAllocator m_tempAllocator{ Megabytes(10) };          // Allocate 10 megabytess for temporary allocations
+    DoubleBufferAllocator m_frameAllocator{ Megabytes(20) };  // Allocate 2 * 20 megabytes for frame allocations
     VulkanContext m_context{};
 };
 

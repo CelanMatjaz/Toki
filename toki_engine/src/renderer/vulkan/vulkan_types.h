@@ -27,6 +27,8 @@ constexpr u32 MAX_FRAMES_IN_FLIGHT = 2;
 constexpr u32 MAX_DESCRIPTOR_BINDING_COUNT = 8;
 constexpr u32 MAX_DESCRIPTOR_SET_COUNT = 2;
 
+constexpr u32 MAX_IN_FLIGHT_COMMAND_BUFFERS = 8;
+
 // Arbitrary sizes
 constexpr u64 DEFAULT_STAGING_BUFFER_SIZE = Gigabytes(1);
 constexpr u64 DEFAULT_VERTEX_BUFFER_SIZE = Megabytes(500);

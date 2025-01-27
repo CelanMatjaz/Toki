@@ -1,10 +1,10 @@
-name: test_shader
+name: text_shader
 type: graphics
 stages:
   - type: vertex
-    path: assets/shaders/test_shader.vert.glsl
+    path: text_shader.vert.glsl
   - type: fragment
-    path: assets/shaders/test_shader.frag.glsl
+    path: text_shader.frag.glsl
 options:
   depth_test_enable: true
   depth_write_enable: true
@@ -17,9 +17,9 @@ bindings:
   - binding: 0
     input_rate: vertex
     stride: 20
-  # - binding: 1
-  #   input_rate: instance
-  #   stride: 24
+  - binding: 1
+    input_rate: instance
+    stride: 24
 attributes:
   - type: float3 # model position
     location: 0
@@ -29,11 +29,11 @@ attributes:
     location: 1
     binding: 0
     offset: 12
-  # - type: float3 # instance position
-  #   location: 2
-  #   binding: 1
-  #   offset: 0
-  # - type: float3 # instance color
-  #   location: 3
-  #   binding: 1
-  #   offset: 12
+  - type: float3 # instance position
+    location: 2
+    binding: 1
+    offset: 0
+  - type: float3 # instance color
+    location: 3
+    binding: 1
+    offset: 12

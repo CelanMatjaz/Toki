@@ -10,7 +10,7 @@ namespace configs {
 
 struct Shader {
     ShaderStage stage;
-    std::filesystem::path path;
+    std::string path;
 };
 
 struct ShaderOptions {

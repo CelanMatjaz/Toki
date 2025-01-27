@@ -9,6 +9,8 @@
 #include "core/logging.h"
 #include "engine/system_manager.h"
 
+#if 0
+
 namespace toki {
 
 TextureSystem::TextureSystem(SystemManager* system_manager, StackAllocator* allocator):
@@ -109,4 +111,7 @@ void TextureSystem::cleanup_default_textures() {
     renderer.destroy_texture(m_defaultTextures[std::to_underlying(DefaultTextures::Default)].handle);
 }
 
+
 }  // namespace toki
+
+#endif

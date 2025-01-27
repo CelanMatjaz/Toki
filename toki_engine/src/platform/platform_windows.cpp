@@ -23,7 +23,7 @@ void* allocate(u32 size) {
 
 void deallocate(void* ptr) {
     bool result = HeapFree(GetProcessHeap(), 0, ptr);
-    TK_ASSERT(result != 0, "Error deallocating head memory");
+    TK_ASSERT(result != 0, "Error deallocating memory");
 }
 
 }  // namespace platform

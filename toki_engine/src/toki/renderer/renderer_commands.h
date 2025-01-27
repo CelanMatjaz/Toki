@@ -9,23 +9,20 @@ namespace toki {
 
 class RendererCommands {
 public:
-    void begin_pass();
-    void end_pass();
+    virtual void begin_pass(const Rect2D& render_area) = 0;
+    virtual void end_pass() = 0;
 
-    void set_viewport(const Rect2D& rect);
-    void reset_viewport();
-    void set_scissor(const Rect2D& rect);
-    void reset_scissor();
+    virtual void set_viewport(const Rect2D& rect) = 0;
+    virtual void reset_viewport() = 0;
+    virtual void set_scissor(const Rect2D& rect) = 0;
+    virtual void reset_scissor() = 0;
 
-    void bind_shader(Shader const& shader);
-    void bind_buffer(Buffer const& buffer);
+    virtual void bind_shader(Shader const& shader) = 0;
+    virtual void bind_buffer(Buffer const& buffer) = 0;
 
-    void draw(u32 count);
-    void draw_indexed(u32 count);
-    void draw_instanced(u32 index_count, u32 instance_count = 1);
-
-private:
-    void* m_backend;
+    virtual void draw(u32 count) = 0;
+    virtual void draw_indexed(u32 count) = 0;
+    virtual void draw_instanced(u32 index_count, u32 instance_count = 1) = 0;
 };
 
 using SubmitFn = std::function<void(RendererCommands&)>;

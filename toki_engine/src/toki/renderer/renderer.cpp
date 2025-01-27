@@ -9,6 +9,8 @@ namespace toki {
 Renderer::Renderer(const Config& config): m_backend(new vulkan_renderer::VulkanBackend()) {
     backend->create_device(config.initial_window);
     backend->create_swapchain(config.initial_window);
+    backend->create_render_pass();
+    backend->initialize_resources();
 }
 
 void Renderer::begin_frame() {
@@ -24,7 +26,10 @@ void Renderer::present() {
     backend->present();
 }
 
-void Renderer::submit(SubmitFn submit_fn) {}
+void Renderer::submit(SubmitFn submit_fn) {
+    RendererCommands* commands = backend->get_commands();
+    submit_fn(*commands);
+}
 
 void Renderer::set_color_clear(const glm::vec4& color) {
     backend->set_color_clear(color);
@@ -57,7 +62,7 @@ void Renderer::destroy_texture(Handle texture_handle) {
 }
 
 Shader Renderer::create_shader(RenderPass& render_pass, configs::ShaderConfig shader_config) {
-    return {};
+    return backend->create_pipeline(render_pass.handle, shader_config);
 }
 
 void Renderer::destroy_shader(Shader& shader) {}

@@ -1,10 +1,8 @@
-#include "text.h"
+#include "text_loader.h"
 
 #include <fstream>
 
 #include "core/assert.h"
-#include "core/core.h"
-#include "core/logging.h"
 
 namespace toki {
 

@@ -100,7 +100,7 @@ public:
     Handle emplace(Args&&... args) {
         HandlePtr free_block = get_next_free();
         ValueType* ptr = new (free_block.ptr) ValueType(std::forward<Args>(args)...);
-        m_data.ptr[free_block.handle] = ptr;
+        m_data.ptr[free_block.handle.index] = ptr;
         ++m_data.size;
 
         if (free_block.handle > m_data.next_free_index) {

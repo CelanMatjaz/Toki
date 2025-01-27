@@ -49,9 +49,6 @@ public:
     DELETE_COPY(Renderer);
     DELETE_MOVE(Renderer);
 
-    void create_shader();
-    void destroy_shader();
-
 protected:
     void* m_backend;
 };

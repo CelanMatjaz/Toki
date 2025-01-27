@@ -10,7 +10,7 @@
 #include "events/window_events.h"
 
 // Renderer
-#include "renderer/camera.h"
+#include "renderer/camera/camera.h"
 #include "renderer/renderer.h"
 
 // Platform

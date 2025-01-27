@@ -64,13 +64,13 @@ struct YAML::convert<toki::configs::ShaderOptions> {
         {
             auto val = node["cull_mode"].as<std::string>();
             if (val == "none") {
-                rhs.cull_mode = CullMode::NONE;
+                rhs.cull_mode = CullMode::None;
             } else if (val == "front") {
-                rhs.cull_mode = CullMode::FRONT;
+                rhs.cull_mode = CullMode::Front;
             } else if (val == "back") {
-                rhs.cull_mode = CullMode::BACK;
+                rhs.cull_mode = CullMode::Back;
             } else if (val == "both" || val == "front_and_back") {
-                rhs.cull_mode = CullMode::BOTH;
+                rhs.cull_mode = CullMode::Both;
             } else {
                 return false;
             }
@@ -79,11 +79,11 @@ struct YAML::convert<toki::configs::ShaderOptions> {
         {
             auto val = node["polygon_mode"].as<std::string>();
             if (val == "fill") {
-                rhs.polygon_mode = PolygonMode::FILL;
+                rhs.polygon_mode = PolygonMode::Fill;
             } else if (val == "line") {
-                rhs.polygon_mode = PolygonMode::LINE;
+                rhs.polygon_mode = PolygonMode::Line;
             } else if (val == "point") {
-                rhs.polygon_mode = PolygonMode::POINT;
+                rhs.polygon_mode = PolygonMode::Point;
             } else {
                 return false;
             }
@@ -172,9 +172,9 @@ struct YAML::convert<toki::configs::Shader> {
         {
             auto val = node["type"].as<std::string>();
             if (val == "vertex") {
-                rhs.stage = ShaderStage::VERTEX;
+                rhs.stage = ShaderStage::Vertex;
             } else if (val == "fragment") {
-                rhs.stage = ShaderStage::FRAGMENT;
+                rhs.stage = ShaderStage::Fragment;
             } else {
                 return false;
             }
