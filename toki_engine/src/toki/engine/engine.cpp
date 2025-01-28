@@ -60,8 +60,8 @@ void Engine::run() {
         for (auto it = m_views.rbegin(); it != m_views.rend(); it++) {
             (*it)->on_render();
         }
-        m_renderer->end_frame();
         m_renderer->present();
+        m_renderer->end_frame();
     }
 
     m_renderer->wait_for_resources();

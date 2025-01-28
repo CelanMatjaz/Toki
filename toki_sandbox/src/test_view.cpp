@@ -6,11 +6,13 @@
 void TestView::on_add() {
     toki::Renderer& renderer = get_renderer();
 
-    vertex_buffer = renderer.create_buffer(toki::BufferType::Vertex, std::size(cube_vertices));
-    index_buffer = renderer.create_buffer(toki::BufferType::Index, std::size(cube_indices));
+    vertex_buffer = renderer.create_buffer(toki::BufferType::Vertex, sizeof(cube_vertices));
+    renderer.set_bufffer_data(&vertex_buffer, sizeof(cube_vertices), cube_vertices);
+    index_buffer = renderer.create_buffer(toki::BufferType::Index, sizeof(cube_indices));
+    renderer.set_bufffer_data(&index_buffer, sizeof(cube_indices), cube_indices);
+
     toki::RenderPass render_pass;
-    shader = renderer.create_shader(
-        render_pass, toki::configs::load_shader_config("configs/test_shader_config.yaml"));
+    shader = renderer.create_shader(render_pass, toki::configs::load_shader_config("configs/test_shader_config.yaml"));
 }
 
 void TestView::on_destroy() {}

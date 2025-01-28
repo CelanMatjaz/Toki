@@ -31,6 +31,7 @@ struct VulkanContext {
     Swapchain swapchains[MAX_SWAPCHAIN_COUNT];
     containers::HandleMap<RenderPass> render_passes;
     containers::HandleMap<Pipeline> pipelines;
+    containers::HandleMap<VulkanBuffer> buffers;
 
     VkAllocationCallbacks* allocation_callbacks;
 
@@ -39,12 +40,10 @@ struct VulkanContext {
 
     BasicRef<VkCommandPool> command_pools;
     BasicRef<VkCommandPool> extra_command_pools;
-    u32 in_flight_index{};
-    u32 in_flight_command_buffer_counts[MAX_FRAMES_IN_FLIGHT];
-    BasicRef<VkCommandBuffer> in_flight_command_buffers[MAX_FRAMES_IN_FLIGHT];
+
+    CommandBuffers command_buffers[MAX_FRAMES_IN_FLIGHT];
 
     InternalBuffer staging_buffer{};
-    InternalBuffer uploaded_buffers[std::to_underlying(BufferType::BUFFER_TYPE_COUNT)]{};
 
     containers::HandleMap<VulkanImage> images;
 
@@ -65,9 +64,11 @@ public:
 
     Buffer create_buffer(BufferType type, u32 size);
     void destroy_buffer(Buffer* buffer);
-    void* map_buffer_memory(Buffer* buffer);
-    void unmap_buffer_memory(Buffer* buffer);
+    void* map_buffer_memory(VkDeviceMemory memory, u32 offset, u32 size);
+    void unmap_buffer_memory(VkDeviceMemory memory);
     void flush_buffer(Buffer* buffer);
+    void set_bufffer_data(Buffer* buffer, u32 size, void* data);
+    void copy_buffer_data(VkBuffer dst, VkBuffer src, u32 size, u32 dst_offset = 0, u32 src_offset = 0);
 
     Handle create_image(ColorFormat format, u32 width, u32 height);
     void destroy_image(Handle image_handle);
@@ -118,10 +119,15 @@ private:
 
     void prepare_swapchain_frame(Swapchain* swapchain);
     void reset_swapchain_frame(Swapchain* swapchain);
-    b8 submit_swapchain_commands(Swapchain* swapchain);
+
+    b8 submit_frame_command_buffers();
+    VkCommandBuffer start_single_use_command_buffer();
+    void submit_single_use_command_buffer(VkCommandBuffer cmd);
+
+    FrameData* get_current_frame();
+    CommandBuffers* get_current_command_buffers();
 
     u32 find_memory_type_index(u32 type_filter, VkMemoryPropertyFlags properties);
-
     PipelineResources create_pipeline_resources(const std::vector<configs::Shader>& stages);
     static std::vector<u32> create_shader_binary(configs::Shader shader);
 
@@ -136,6 +142,8 @@ private:
     StackAllocator m_tempAllocator{ Megabytes(10) };          // Allocate 10 megabytess for temporary allocations
     DoubleBufferAllocator m_frameAllocator{ Megabytes(20) };  // Allocate 2 * 20 megabytes for frame allocations
     VulkanContext m_context{};
+    Frames m_frames{};
+    u32 m_inFlightFrameIndex{};
 };
 
 }  // namespace vulkan_renderer

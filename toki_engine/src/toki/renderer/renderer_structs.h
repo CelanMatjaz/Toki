@@ -10,8 +10,8 @@ struct RenderPass {
 
 struct Buffer {
     BufferType type;
-    u32 offset;
     u32 size;
+    Handle handle;
 };
 
 struct Texture {

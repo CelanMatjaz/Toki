@@ -18,11 +18,11 @@ void Renderer::begin_frame() {
 }
 
 void Renderer::end_frame() {
-    backend->submit_commands();
     backend->cleanup_frame_resources();
 }
 
 void Renderer::present() {
+    backend->submit_commands();
     backend->present();
 }
 
@@ -49,6 +49,10 @@ Buffer Renderer::create_buffer(BufferType type, u32 size) {
 
 void Renderer::destroy_buffer(Buffer& buffer) {
     backend->destroy_buffer(&buffer);
+}
+
+void Renderer::set_bufffer_data(Buffer* buffer, u32 size, void* data) {
+    backend->set_bufffer_data(buffer, size, data);
 }
 
 Texture Renderer::create_texture(ColorFormat format, u32 width, u32 height) {

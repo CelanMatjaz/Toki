@@ -72,6 +72,10 @@ public:
         return reinterpret_cast<T*>(reinterpret_cast<u64*>(m_allocator->get<u64>(m_handle)) + 1);
     }
 
+    operator T*() const {
+        return get();
+    }
+
     u64 size() const {
         return m_size / sizeof(T);
     }

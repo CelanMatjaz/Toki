@@ -10,7 +10,7 @@ options:
   depth_write_enable: true
   depth_compare_op: less
   primitive_topology: triangle_list
-  cull_mode: back
+  cull_mode: none
   polygon_mode: fill
   front_face: counter_clockwise
 bindings:

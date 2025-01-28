@@ -35,6 +35,7 @@ public:
 
     Buffer create_buffer(BufferType type, u32 size);
     void destroy_buffer(Buffer& buffer);
+    void set_bufffer_data(Buffer* buffer, u32 size, void* data);
 
     Texture create_texture(ColorFormat format, u32 width, u32 height);
     void destroy_texture(Handle texture_handle);

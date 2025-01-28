@@ -19,6 +19,7 @@ constexpr u32 MAX_ALLOCATED_IMAGES = 256;
 constexpr u32 MAX_SWAPCHAIN_COUNT = 1;
 constexpr u32 MAX_RENDER_PASS_COUNT = 1;
 constexpr u32 MAX_PIPELINE_COUNT = 256;
+constexpr u32 MAX_BUFFER_COUNT = 512;
 
 constexpr u32 MAX_RENDER_PASS_ATTACHMENT_COUNT = 8;
 
@@ -31,20 +32,6 @@ constexpr u32 MAX_IN_FLIGHT_COMMAND_BUFFERS = 8;
 
 // Arbitrary sizes
 constexpr u64 DEFAULT_STAGING_BUFFER_SIZE = Gigabytes(1);
-constexpr u64 DEFAULT_VERTEX_BUFFER_SIZE = Megabytes(500);
-constexpr u64 DEFAULT_INDEX_BUFFER_SIZE = Megabytes(200);
-constexpr u64 DEFAULT_UNIFORM_BUFFER_SIZE = Megabytes(300);
-
-struct DefaultBufferSize {
-    VkBufferUsageFlags usage;
-    u64 size;
-};
-
-constexpr DefaultBufferSize DEFAULT_BUFFER_SIZES[] = {
-    { VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, DEFAULT_VERTEX_BUFFER_SIZE },
-    { VK_BUFFER_USAGE_INDEX_BUFFER_BIT, DEFAULT_INDEX_BUFFER_SIZE },
-    { VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, DEFAULT_UNIFORM_BUFFER_SIZE },
-};
 
 constexpr const char* vulkan_extensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
@@ -85,11 +72,19 @@ struct VulkanImage {
 
 struct FrameData {
     VkSemaphore present_semaphore;
-    VkSemaphore image_available_semaphore;
     VkFence render_fence;
 
     VkCommandBuffer command_buffer;
     u32 recorded_command_buffer_count;
+};
+
+struct Frames {
+    FrameData data[MAX_FRAMES_IN_FLIGHT];
+};
+
+struct CommandBuffers {
+    u32 count;
+    BasicRef<VkCommandBuffer> command_buffers;
 };
 
 struct Swapchain {
@@ -99,17 +94,17 @@ struct Swapchain {
     VkExtent2D extent;
 
     VkSurfaceFormatKHR surface_format;
+    VkSemaphore image_available_semaphores[MAX_FRAMES_IN_FLIGHT];
 
-    u32 current_frame_index = 0;
+    u32 image_index = 0;
     u32 image_count;
 
     BasicRef<VkImageView> image_views;
-    BasicRef<FrameData> frames;
 
     b8 can_render : 1;
     b8 is_recording_commands : 1;
     b8 waiting_to_present : 1;
-    u8 submit_count;
+    u8 submit_count : 4;
     VkPresentModeKHR vsync_disabled_present_mode;
 };
 
