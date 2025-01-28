@@ -1,12 +1,13 @@
 # One of: debug/release/dist 
-OPTIMIZE=debug
-# One of linux_wayland/linux_x11/windows
-PLATFORM=linux_wayland
+OPTIMIZE=Debug
+# One of linux/linux/windows
+PLATFORM=Linux
 
 CONFIG="${OPTIMIZE}_${PLATFORM}"
+CONFIG_LOWER_CASE=$(echo "$CONFIG" | awk '{print tolower($0)}')
 COMPILER=clang
 
 premake5 export-compile-commands --cc="$COMPILER" --os=linux > /dev/null
-cp "compile_commands/$CONFIG.json" compile_commands.json > /dev/null
+cp "compile_commands/$CONFIG_LOWER_CASE.json" compile_commands.json > /dev/null
 premake5 gmake2 "--cc=$COMPILER" --os=linux
-make -j$(nproc) "config=$CONFIG" && ./bin/${PLATFORM}-x86_64/${OPTIMIZE}/Sandbox ./toki_sandbox
+make Sandbox -j$(($(nproc) - 1)) "config=$CONFIG_LOWER_CASE"
