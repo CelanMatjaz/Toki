@@ -91,7 +91,7 @@ public:
 
     void reset() {
         m_allocator->free(m_handle);
-        m_handle = nullptr;
+        m_handle = {};
         m_size = 0;
     }
 

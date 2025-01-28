@@ -17,7 +17,7 @@ namespace vulkan_renderer {
 constexpr u32 MAX_ALLOCATED_BUFFERS = 256;
 constexpr u32 MAX_ALLOCATED_IMAGES = 256;
 constexpr u32 MAX_SWAPCHAIN_COUNT = 1;
-constexpr u32 MAX_RENDER_PASS_COUNT = 1;
+constexpr u32 MAX_RENDER_PASS_COUNT = 10;
 constexpr u32 MAX_PIPELINE_COUNT = 256;
 constexpr u32 MAX_BUFFER_COUNT = 512;
 

@@ -1,7 +1,5 @@
 #include "vulkan_commands.h"
 
-#include <xutility>
-
 #include "renderer/vulkan/vulkan_backend.h"
 #include "vulkan/vulkan_core.h"
 

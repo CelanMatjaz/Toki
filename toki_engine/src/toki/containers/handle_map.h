@@ -82,7 +82,7 @@ public:
         ValueType* ptr = free_block->ptr;
         *ptr = value;
 
-        m_data.ptr[free_block->handle] = ptr;
+        m_data.ptr[free_block->handle.index] = ptr;
         ++m_data.size;
 
         if (free_block->handle > m_data.next_free_index) {
@@ -149,7 +149,7 @@ private:
     }
 
     HandlePtr get_next_free() {
-        for (u32 i = m_data.next_free_index; i < m_data.buffer_capacity; i++) {
+        for (u32 i = m_data.next_free_index; i < m_data.element_capacity; i++) {
             if (m_data.ptr[i] == nullptr) {
                 ++m_data.next_free_index;
                 return { .handle = i, .ptr = &(m_data.values_ptr)[i] };

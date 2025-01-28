@@ -67,7 +67,7 @@ public:
     }
 
     void defragment(u32 block_count, u32 max_size) {
-        TK_ASSERT(false, "TODO: Rewrite");
+        TK_ASSERT(false, "TODO: reimplement");
     }
 
     void* get(u64 handle) {
