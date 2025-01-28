@@ -9,17 +9,17 @@
         {
             "label": "Generate Makefiles",
             "command": "premake5",
-            "args": ["gmake2"]
+            "args": ["gmake2"],
+            "dependsOn": ["Generate compile_commands.json files"]
         },
         {
             "label": "Build Sandbox - Debug",
-            "command": "make",
-            "args": ["Sandbox", "-j1"],
+            "args": ["-j15", "Sandbox"],
             "windows": {
-                "args": ["config=debug_windows"]
+                "command": "run.bat"
             },
             "linux": {
-                "args": ["config=debug_linux"]
+                "command": "run.sh"
             },
             "dependsOn": ["Generate Makefiles"]
         }
