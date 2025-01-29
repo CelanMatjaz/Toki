@@ -23,7 +23,7 @@ A rendering framework/engine, writen in C++ using the Vulkan rendering API. Proj
 Building and running tested on:
 
 - **Linux - Wayland** (built on Arch Linux with Clang 18.1.8 and GCC 14.2.1)
-- **Windows** (built with Clang 18.1.1 and MSVC 19.40 with Visual Studio 2022)
+- **Windows** (built with 19.40 with Visual Studio 2022)
 - ~~**Linux - X11**~~ - Not yet supported
 
 ## Project setup
