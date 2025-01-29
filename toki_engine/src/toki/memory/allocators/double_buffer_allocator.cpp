@@ -2,7 +2,7 @@
 
 namespace toki {
 
-DoubleBufferAllocator::DoubleBufferAllocator(u32 size): m_allocators{ StackAllocator(size), StackAllocator(size) } {}
+DoubleBufferAllocator::DoubleBufferAllocator(u64 size): m_allocators{ StackAllocator(size), StackAllocator(size) } {}
 
 void DoubleBufferAllocator::swap() {
     m_index = (m_index + 1) % 2;

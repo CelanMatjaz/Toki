@@ -2,10 +2,9 @@
 
 #if defined(TK_PLATFORM_WINDOWS)
 
-#include "core/assert.h"
-
-#define NOMINMAX
 #include <Windows.h>
+
+#include "core/assert.h"
 
 namespace toki {
 
@@ -15,7 +14,7 @@ void debug_break() {
     DebugBreak();
 }
 
-void* allocate(u32 size) {
+void* allocate(u64 size) {
     void* ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
     TK_ASSERT(ptr != nullptr, "Could not allocate memory");
     return ptr;

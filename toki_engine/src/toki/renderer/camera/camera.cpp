@@ -11,8 +11,6 @@
 
 namespace toki {
 
-static glm::vec3 s_up = glm::vec3(0.0f, 1.0f, 0.0f);
-
 Camera::Camera(float left, float right, float bottom, float top) {
     set_ortho_projection(left, right, bottom, top);
 }
@@ -46,7 +44,6 @@ void Camera::set_perspective_projection(float fovy, float aspect, float near_, f
 
 const glm::mat4& Camera::get_view_projection_matrix() {
     if (m_dirty) {
-        glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), m_rotation, glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 translation = glm::translate(glm::mat4(1.0f), m_position);
         m_view = translation;
         m_viewProjection = m_projection * m_view;

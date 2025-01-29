@@ -12,7 +12,7 @@ class View {
 
 public:
     View() = default;
-    ~View() = default;
+    virtual ~View() = default;
 
     DELETE_COPY(View)
     DELETE_MOVE(View)
@@ -20,8 +20,8 @@ public:
     virtual void on_add() {};
     virtual void on_destroy() {};
     virtual void on_render() {};
-    virtual void on_update(float delta_time) {};
-    virtual void on_event(Event& event) {};
+    virtual void on_update([[maybe_unused]] float delta_time) {};
+    virtual void on_event([[maybe_unused]] Event& event) {};
 
 protected:
     Systems& get_systems() const;

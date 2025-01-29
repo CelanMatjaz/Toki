@@ -17,7 +17,6 @@ enum class ResourceType : u8 {
 
 struct Resource {
     ResourceType type;
-    // BasicRef<byte> data;
 };
 
 }  // namespace toki

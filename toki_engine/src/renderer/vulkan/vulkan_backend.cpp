@@ -101,16 +101,17 @@ void VulkanBackend::find_physical_device(VkSurfaceKHR surface) {
     VkPhysicalDevice* physical_devices = m_frameAllocator->allocate_aligned<VkPhysicalDevice>(physical_device_count);
     vkEnumeratePhysicalDevices(m_context.instance, &physical_device_count, physical_devices);
 
-    auto rate_physical_device_suitability =
-        [](VkPhysicalDevice physical_device, VkPhysicalDeviceProperties properties, VkPhysicalDeviceFeatures features) {
-            u32 score = 0;
+    auto rate_physical_device_suitability = []([[maybe_unused]] VkPhysicalDevice physical_device,
+                                               [[maybe_unused]] VkPhysicalDeviceProperties properties,
+                                               [[maybe_unused]] VkPhysicalDeviceFeatures features) {
+        u32 score = 0;
 
-            if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
-                score += 1000;
-            }
+        if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+            score += 1000;
+        }
 
-            return score;
-        };
+        return score;
+    };
 
     u32 best_score = 0;
     for (u32 i = 0; i < physical_device_count; i++) {
@@ -135,8 +136,6 @@ void VulkanBackend::find_physical_device(VkSurfaceKHR surface) {
     vkGetPhysicalDeviceQueueFamilyProperties(m_context.physical_device, &queue_family_count, queue_families);
 
     for (u32 i = 0; i < queue_family_count; i++) {
-        VkQueueFamilyProperties& properties = queue_families[i];
-
         VkBool32 supports_present = false;
         vkGetPhysicalDeviceSurfaceSupportKHR(m_context.physical_device, i, surface, &supports_present);
         if (supports_present && m_context.present_queue.family_index == -1) {
@@ -172,7 +171,8 @@ void VulkanBackend::create_device(Window* window) {
     features.fillModeNonSolid = VK_TRUE;
     features.samplerAnisotropy = VK_TRUE;
 
-    VkDeviceCreateInfo device_create_info{ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
+    VkDeviceCreateInfo device_create_info{};
+    device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     device_create_info.pQueueCreateInfos = queue_create_infos;
     device_create_info.queueCreateInfoCount = 1;
     device_create_info.enabledExtensionCount = sizeof(vulkan_extensions) / sizeof(vulkan_extensions[0]);
@@ -284,7 +284,8 @@ Handle VulkanBackend::create_swapchain(Window* window) {
 
     // Create mage available semaphore
     {
-        VkSemaphoreCreateInfo semaphore_create_info{ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+        VkSemaphoreCreateInfo semaphore_create_info{};
+        semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
         for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             VK_CHECK(
@@ -301,26 +302,23 @@ Handle VulkanBackend::create_swapchain(Window* window) {
 
     recreate_swapchain(&swapchain);
 
-    window->get_event_handler().bind_event(
-        EventType::WindowResize, this, [this, &swapchain](void* sender, void* receiver, Event& e) {
-            if (!swapchain.can_render) {
-                return;
-            }
+    window->get_event_handler().bind_event(EventType::WindowResize, this, [this, &swapchain](void*, void*, Event&) {
+        if (!swapchain.can_render) {
+            return;
+        }
 
-            this->wait_for_resources();
-            TK_LOG_INFO("Recreating swapchain");
-            this->recreate_swapchain(&swapchain);
-        });
+        this->wait_for_resources();
+        TK_LOG_INFO("Recreating swapchain");
+        this->recreate_swapchain(&swapchain);
+    });
 
-    window->get_event_handler().bind_event(
-        EventType::WindowRestore, this, [this, &swapchain](void* sender, void* receiver, Event& e) {
-            swapchain.can_render = true;
-        });
+    window->get_event_handler().bind_event(EventType::WindowRestore, this, [&swapchain](void*, void*, Event&) {
+        swapchain.can_render = true;
+    });
 
-    window->get_event_handler().bind_event(
-        EventType::WindowMinimize, this, [this, &swapchain](void* sender, void* receiver, Event& e) {
-            swapchain.can_render = false;
-        });
+    window->get_event_handler().bind_event(EventType::WindowMinimize, this, [&swapchain](void*, void*, Event&) {
+        swapchain.can_render = false;
+    });
 
     m_context.swapchains[0] = swapchain;
 
@@ -385,7 +383,8 @@ void VulkanBackend::recreate_swapchain(Swapchain* swapchain) {
         vkGetSwapchainImagesKHR(m_context.device, swapchain->swapchain, &swapchain->image_count, swapchain_images);
         TK_ASSERT(swapchain->image_count > 0, "No images found for swapchain");
 
-        VkImageViewCreateInfo image_view_create_info{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+        VkImageViewCreateInfo image_view_create_info{};
+        image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
         image_view_create_info.format = swapchain->surface_format.format;
         image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -410,7 +409,7 @@ void VulkanBackend::recreate_swapchain(Swapchain* swapchain) {
     }
 }
 
-void VulkanBackend::destroy_swapchain(Handle swapchain_handle) {
+void VulkanBackend::destroy_swapchain([[maybe_unused]] Handle swapchain_handle) {
     Swapchain& swapchain = m_context.swapchains[0];
     swapchain.window->get_event_handler().unbind_event(EventType::WindowResize, this);
 
@@ -479,7 +478,8 @@ Handle VulkanBackend::create_render_pass() {
     subpass_dependency.dstAccessMask =
         VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-    VkRenderPassCreateInfo render_pass_create_info{ VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
+    VkRenderPassCreateInfo render_pass_create_info{};
+    render_pass_create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     render_pass_create_info.attachmentCount = 1;
     render_pass_create_info.pAttachments = attachment_descriptions;
     render_pass_create_info.subpassCount = 1;
@@ -564,7 +564,7 @@ PipelineResources VulkanBackend::create_pipeline_resources(const std::vector<con
     return resources;
 }
 
-Shader VulkanBackend::create_pipeline(Handle render_pass_handle, const configs::ShaderConfig& config) {
+Shader VulkanBackend::create_pipeline([[maybe_unused]] Handle render_pass_handle, const configs::ShaderConfig& config) {
     TK_ASSERT(
         m_context.pipelines.size() <= MAX_PIPELINE_COUNT,
         "Creating a new pipeline will exceed the maximum pipeline count ({})",
@@ -1162,7 +1162,8 @@ b8 VulkanBackend::submit_frame_command_buffers() {
 
     CommandBuffers* command_buffers = get_current_command_buffers();
 
-    VkSubmitInfo submit_info{ VK_STRUCTURE_TYPE_SUBMIT_INFO };
+    VkSubmitInfo submit_info{};
+    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submit_info.pWaitDstStageMask = wait_stages;
     // TODO: make this dynamic when more than 1 swapchain is supported
     submit_info.waitSemaphoreCount = MAX_SWAPCHAIN_COUNT;
@@ -1198,7 +1199,7 @@ RendererCommands* VulkanBackend::get_commands() {
 }
 
 void VulkanBackend::set_color_clear(const glm::vec4& c) {
-    m_context.color_clear = { c.r, c.g, c.b, c.a };
+    m_context.color_clear = { { c.r, c.g, c.b, c.a } };
 }
 
 void VulkanBackend::set_depth_clear(f32 depth_clear) {
@@ -1223,7 +1224,8 @@ void VulkanBackend::begin_render_pass(VkCommandBuffer cmd, const Rect2D& render_
         value >>= 2;
     }
 
-    VkRenderPassBeginInfo render_pass_begin_info{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+    VkRenderPassBeginInfo render_pass_begin_info{};
+    render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     render_pass_begin_info.renderPass = render_pass.render_pass;
     render_pass_begin_info.renderArea = *reinterpret_cast<const VkRect2D*>(&render_area);  // <-- very bad
     render_pass_begin_info.framebuffer = render_pass.framebuffers[m_context.swapchains[0].image_index];
@@ -1287,7 +1289,8 @@ void VulkanBackend::initialize_resources() {
 
     // Command pool creation
     {
-        VkCommandPoolCreateInfo command_pool_create_info{ VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
+        VkCommandPoolCreateInfo command_pool_create_info{};
+        command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         command_pool_create_info.queueFamilyIndex = m_context.graphics_queue.family_index;
 
@@ -1333,10 +1336,12 @@ void VulkanBackend::initialize_resources() {
 
     // Frame data creation
     {
-        VkFenceCreateInfo fence_create_info{ VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+        VkFenceCreateInfo fence_create_info{};
+        fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-        VkSemaphoreCreateInfo semaphore_create_info{ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+        VkSemaphoreCreateInfo semaphore_create_info{};
+        semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
         for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
             VK_CHECK(
@@ -1427,7 +1432,8 @@ void VulkanBackend::flush_buffer(Buffer* buffer) {
     VulkanBuffer& internal_buffer = m_context.buffers[buffer->handle];
 
     if ((internal_buffer.memory_property_flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0) {
-        VkMappedMemoryRange mapped_memory_range{ VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
+        VkMappedMemoryRange mapped_memory_range{};
+        mapped_memory_range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
         mapped_memory_range.memory = internal_buffer.memory;
         mapped_memory_range.offset = 0;
         mapped_memory_range.size = buffer->size;
@@ -1570,7 +1576,8 @@ VulkanImage VulkanBackend::create_image_internal(
         "Could not allocate image memory");
     VK_CHECK(vkBindImageMemory(m_context.device, image.image, image.memory, 0), "Could not bind image memory");
 
-    VkImageViewCreateInfo image_view_create_info{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+    VkImageViewCreateInfo image_view_create_info{};
+    image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
     image_view_create_info.format = format;
     image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;

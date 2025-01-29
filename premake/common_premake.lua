@@ -18,7 +18,7 @@ function build_options()
         defines { "_CRT_SECURE_NO_WARNINGS", "_CRT_NONSTDC_NO_WARNINGS" }
 
     filter "toolset:clang or toolset:gcc"
-        buildoptions "--std=c++23 -ftrivial-auto-var-init=pattern"
+        buildoptions "--std=c++23 -ftrivial-auto-var-init=pattern -Wall -Werror -Wextra -Wpedantic -Wunused"
 
     filter {}
 end
@@ -74,12 +74,15 @@ function configuration_configs()
 
     filter "platforms:Windows"
         system "windows"
-        defines { "TK_PLATFORM_WINDOWS" }
+        defines { "TK_PLATFORM_WINDOWS", "NOMINMAX" }
         links { "user32", "gdi32", "shell32" }
 
     filter "platforms:Linux"
         system "linux"
-        defines { "TK_PLATFORM_LINUX" }
+        defines { "TK_PLATFORM_LINUX" }        
+
+    enablewarnings { "All" }
+    fatalwarnings { "All" }
 
     filter {}
 end
@@ -92,7 +95,7 @@ function link_vulkan()
             "spirv-cross-glsld",
             "spirv-cross-reflectd",
             "shadercd",
-            "shaderc_combinedd"
+            "shaderc_sharedd"
         }
 
     filter { "platforms:Windows", "configurations:not Debug" }
@@ -102,7 +105,7 @@ function link_vulkan()
             "spirv-cross-glsl",
             "spirv-cross-reflect",
             "shaderc",
-            "shaderc_combined"
+            "shaderc_shared"
         }
 
     filter { "platforms:Linux" }
@@ -124,7 +127,7 @@ function link_vulkan()
         includedirs { path.join(VULKAN_SDK, "include") }
         libdirs { path.join(VULKAN_SDK, "lib") }
         links { "vulkan" }
-        defines { "VK_USE_PLATFORM_WAYLAND_KHR", "TK_WAYLAND" }
+        defines { "TK_X11" }
 
     filter {}
 end

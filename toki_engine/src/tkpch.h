@@ -3,7 +3,6 @@
 #include "toki/core/core.h"
 
 #if defined(TK_PLATFORM_WINDOWS)
-#define NOMINMAX
 #include <windows.h>
 #endif
 

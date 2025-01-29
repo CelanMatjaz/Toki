@@ -35,13 +35,17 @@ void Renderer::set_color_clear(const glm::vec4& color) {
     backend->set_color_clear(color);
 }
 
-void Renderer::set_depth_clear(f32 depth) {}
+void Renderer::set_depth_clear(f32 depth) {
+    backend->set_depth_clear(depth);
+}
 
 RenderPass Renderer::create_render_pass() {
     return {};
 }
 
-void Renderer::destroy_render_pass(RenderPass& render_pass) {}
+void Renderer::destroy_render_pass(RenderPass& render_pass) {
+    backend->destroy_render_pass(render_pass.handle);
+}
 
 Buffer Renderer::create_buffer(BufferType type, u32 size) {
     return backend->create_buffer(type, size);
@@ -69,7 +73,9 @@ Shader Renderer::create_shader(RenderPass& render_pass, configs::ShaderConfig sh
     return backend->create_pipeline(render_pass.handle, shader_config);
 }
 
-void Renderer::destroy_shader(Shader& shader) {}
+void Renderer::destroy_shader(Shader& shader) {
+    backend->destroy_pipeline(shader.handle);
+}
 
 void Renderer::wait_for_resources() {
     backend->wait_for_resources();

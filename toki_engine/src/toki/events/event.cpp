@@ -36,8 +36,8 @@ Event create_mouse_button_event(EventType type, int button, KeyboardMods mods, d
     EventData data{};
     data.u16[0] = button;
     data.u16[1] = (u16) mods;
-    data.i16[2] = xpos;
-    data.i16[3] = ypos;
+    data.i16[2] = (u16) xpos;
+    data.i16[3] = (u16) ypos;
     return Event(type, data);
 }
 

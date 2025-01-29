@@ -73,7 +73,7 @@ public:
         return m_data.size;
     }
 
-    void defragment(u32 block_count) {
+    void defragment([[maybe_unused]] u32 block_count) {
         TK_ASSERT(false, "Need to implement");
     }
 
@@ -103,11 +103,11 @@ public:
         m_data.ptr[free_block.handle.index] = ptr;
         ++m_data.size;
 
-        if (free_block.handle > m_data.next_free_index) {
+        if (free_block.handle.index > m_data.next_free_index) {
             m_data.next_free_index = free_block.handle;
         }
 
-        if (free_block.handle > m_data.last_allocated_index) {
+        if (free_block.handle.index > m_data.last_allocated_index) {
             m_data.last_allocated_index = free_block.handle;
         }
 

@@ -8,7 +8,7 @@
 
 namespace toki {
 
-StackAllocator::StackAllocator(u32 size): m_ptr(platform::allocate(size)), m_offset(0), m_capacity(size) {}
+StackAllocator::StackAllocator(u64 size): m_ptr(platform::allocate(size)), m_offset(0), m_capacity(size) {}
 
 StackAllocator::~StackAllocator() {
     platform::deallocate(m_ptr);

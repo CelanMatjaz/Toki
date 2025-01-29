@@ -7,7 +7,7 @@ namespace toki {
 class DoubleBufferAllocator {
 public:
     DoubleBufferAllocator() = delete;
-    explicit DoubleBufferAllocator(u32 size);
+    explicit DoubleBufferAllocator(u64 size);
 
     void swap();
 

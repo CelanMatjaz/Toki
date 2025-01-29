@@ -28,10 +28,6 @@ private:
     glm::vec3 m_position;
     f32 m_rotation;
 
-    glm::vec3 m_direction{};
-    glm::vec3 m_up{};
-    glm::vec3 m_right{};
-
     b8 m_dirty;
 };
 

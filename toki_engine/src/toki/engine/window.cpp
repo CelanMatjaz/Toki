@@ -8,7 +8,7 @@
 
 namespace toki {
 
-Window::Window(const Config& config) {};
+Window::Window([[maybe_unused]] const Config& config) {};
 
 Window* Window::create(const Config& config) {
     TK_LOG_INFO("Creating new window");

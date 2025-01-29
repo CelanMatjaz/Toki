@@ -11,7 +11,7 @@ public:
     virtual void on_event(toki::Event& event) override;
 
 private:
-    toki::Camera m_camera;
+    [[maybe_unused]] toki::Camera m_camera;
 
     toki::Buffer vertex_buffer;
     toki::Buffer index_buffer;

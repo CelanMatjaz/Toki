@@ -23,10 +23,10 @@ void VulkanCommands::set_viewport(const Rect2D& rect) {
     VkViewport viewport{};
     viewport.x = 0;
     viewport.y = 0;
-    viewport.width = rect.size.x;
-    viewport.height = rect.size.y;
-    viewport.minDepth = 0.0;
-    viewport.maxDepth = 0.0f;
+    viewport.width = (f32) rect.size.x;
+    viewport.height = (f32) rect.size.y;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
     vkCmdSetViewport(m_commandBuffer, 0, 1, &viewport);
 }
 
@@ -34,13 +34,15 @@ void VulkanCommands::reset_viewport() {
     set_viewport({ { 0, 0 }, { 600.0f, 600.0f } });
 }
 
-void VulkanCommands::set_scissor(const Rect2D& rect) {}
+void VulkanCommands::set_scissor(const Rect2D& rect) {
+    VkRect2D scissor{};
+    scissor.offset = { rect.pos.x, rect.pos.y };
+    scissor.extent = { rect.size.x, rect.size.y };
+    vkCmdSetScissor(m_commandBuffer, 0, 1, &scissor);
+}
 
 void VulkanCommands::reset_scissor() {
-    VkRect2D scissor{};
-    scissor.offset = { 0, 0 };
-    scissor.extent = { 600, 600 };
-    vkCmdSetScissor(m_commandBuffer, 0, 1, &scissor);
+    set_scissor(Rect2D{ { 0, 0 }, { 600, 600 } });
 }
 
 void VulkanCommands::bind_shader(Shader const& shader) {

@@ -31,6 +31,6 @@ void TestView::on_render() {
     });
 }
 
-void TestView::on_update(float delta_time) {}
+void TestView::on_update([[maybe_unused]] float delta_time) {}
 
-void TestView::on_event(toki::Event& event) {}
+void TestView::on_event([[maybe_unused]] toki::Event& event) {}

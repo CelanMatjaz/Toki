@@ -64,7 +64,7 @@ public:
         u64 hash = std::hash<std::string>{}(key);
         u32 index = hash % m_data.capacity;
 
-        check_for_clash(key, index);
+        check_for_clash(index);
 
         BucketEntry* ptr =
             new (&m_data.ptr[index]) BucketEntry{ nullptr, { key, ValueType(std::forward<Args>(args)...) } };
@@ -83,7 +83,7 @@ public:
             p->next = ptr;
         }
 
-        if (index < m_data.first_index || m_data.first_index == -1) {
+        if (index < m_data.first_index) {
             m_data.first_index = index;
         }
     }
@@ -144,7 +144,7 @@ private:
         return std::hash<std::string>{}(key) % m_data.capacity;
     }
 
-    b8 check_for_clash(const std::string& key, u64 index) const {
+    b8 check_for_clash(u64 index) const {
         TK_ASSERT(m_data.ptr[index].pair.key == "", "No key clash logic implemented");
         return false;
     }
@@ -152,7 +152,7 @@ private:
     struct InternalData {
         u32 capacity;
         u32 size;
-        i32 first_index = -1;
+        u32 first_index{};
         BucketEntry* ptr = nullptr;
         BucketEntry* first = nullptr;
     } m_data;

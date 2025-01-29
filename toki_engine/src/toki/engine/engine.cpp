@@ -9,7 +9,10 @@
 
 namespace toki {
 
-Engine::Engine(const Config& config): m_engineAllocator(Kilobytes(16)), m_systemAllocator(Megabytes(20)) {
+Engine::Engine(const Config& config):
+    m_engineAllocator(Kilobytes(16)),
+    m_systemManager(nullptr),
+    m_systemAllocator(Megabytes(20)) {
     Window* initial_window = Window::create(config.window_config);
     m_windows.emplace_back(initial_window);
 
@@ -19,7 +22,7 @@ Engine::Engine(const Config& config): m_engineAllocator(Kilobytes(16)), m_system
 
     // m_systemManager = m_systemAllocator.emplace<SystemManager>(&m_systemAllocator, m_renderer);
 
-    initial_window->m_eventHandler.bind_all(this, [this](void* sender, void* receiver, Event& event) {
+    initial_window->m_eventHandler.bind_all(this, [this](void*, void*, Event& event) {
         this->handle_event(event);
     });
 }

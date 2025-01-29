@@ -66,9 +66,6 @@ public:
     }
 
     T* get() const {
-        u64* a = m_allocator->get<u64>(m_handle);
-        T* b = m_allocator->get<T>(m_handle);
-
         return reinterpret_cast<T*>(reinterpret_cast<u64*>(m_allocator->get<u64>(m_handle)) + 1);
     }
 

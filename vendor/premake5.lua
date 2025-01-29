@@ -86,7 +86,7 @@ project "freetype"
             "free_type/builds/windows/ftsystem.c",
             "free_type/builds/windows/ftdebug.c",
         }
-        defines { "WIN32", "WIN32_LEAN_AND_MEAN" }
+        defines { "WIN32" }
 
     filter "platforms:Linux"
         files {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/macros.h"
 #include "engine/system_manager.h"
 #include "engine/view.h"
 #include "engine/window.h"
@@ -48,7 +49,7 @@ private:
     StackAllocator m_engineAllocator;
 
     // Systems
-    SystemManager* m_systemManager;
+    SystemManager* m_systemManager{};
     StackAllocator m_systemAllocator;
 };
 

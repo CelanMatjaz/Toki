@@ -13,7 +13,6 @@
 
 namespace toki {
 
-constexpr auto MINIMUM_FONT_SIZE = 8U;
 constexpr auto ATLAS_WIDTH = 512U;
 constexpr auto ATLAS_HEIGHT = 512U;
 constexpr auto START_GLYPH = 32U;
@@ -87,8 +86,7 @@ void FontSystem::load_font(std::string_view name, std::string_view path, u32 fon
 
     FT_Done_Face(face);
 
-    Renderer& renderer = m_systemManager->get_renderer();
-
+    // Renderer& renderer = m_systemManager->get_renderer();
     // font.atlas_handle = renderer.create_texture(ColorFormat::R8, ATLAS_WIDTH, ATLAS_HEIGHT);
     // renderer.set_texture_data(font.atlas_handle, ATLAS_WIDTH * ATLAS_HEIGHT, atlas.data());
 

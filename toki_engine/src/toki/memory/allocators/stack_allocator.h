@@ -7,7 +7,7 @@ namespace toki {
 class StackAllocator {
 public:
     StackAllocator() = delete;
-    explicit StackAllocator(u32 size);
+    explicit StackAllocator(u64 size);
     ~StackAllocator();
 
 public:
@@ -29,14 +29,14 @@ public:
     void free_to_offset(u32 offset);
     void clear();
 
-    u32 get_offset() {
+    u64 get_offset() {
         return m_offset;
     }
 
 private:
     void* m_ptr;
-    u32 m_offset;
-    u32 m_capacity;
+    u64 m_offset;
+    u64 m_capacity;
 };
 
 }  // namespace toki

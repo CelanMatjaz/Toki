@@ -8,7 +8,7 @@ namespace platform {
 
 void debug_break();
 
-void* allocate(u32 size);
+void* allocate(u64 size);
 void deallocate(void* ptr);
 
 }  // namespace platform

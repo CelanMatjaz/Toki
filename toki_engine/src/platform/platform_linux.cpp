@@ -17,7 +17,7 @@ void debug_break() {
     raise(SIGTRAP);
 }
 
-void* allocate(u32 size) {
+void* allocate(u64 size) {
     void* ptr = mmap(0, size + sizeof(u64), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     *reinterpret_cast<u64*>(ptr) = size;
     TK_ASSERT(ptr != nullptr, "Could not allocate memory");

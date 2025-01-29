@@ -30,7 +30,7 @@ constexpr u64 INVALID_HANDLE_ID = 0;
 
 struct Handle {
     Handle(): unique_id(INVALID_HANDLE_ID), index(0), data(0) {}
-    Handle(u64 index, u32 data = 0): unique_id(time(0)), index(index), data(0) {}
+    Handle(u32 index, u32 data = 0): unique_id(time(0)), index(index), data(data) {}
 
     operator bool() {
         return unique_id != INVALID_HANDLE_ID;
