@@ -1348,6 +1348,8 @@ void VulkanBackend::begin_rendering(VkCommandBuffer cmd, Handle framebuffer_hand
 
         *depth_stencil_attachment = rendering_attachment_info;
         depth_stencil_attachment->imageView = framebuffer.depth_stencil_image->image_view;
+        depth_stencil_attachment->clearValue = {};
+        depth_stencil_attachment->clearValue.depthStencil = { 1.0f, 0 };
 
         rendering_info.pDepthAttachment = depth_stencil_attachment;
         if (framebuffer.has_stencil) {

@@ -48,7 +48,7 @@ struct VulkanContext {
     u64 staging_buffer_offset{};
 
     VkClearColorValue color_clear{};
-    VkClearDepthStencilValue depth_stencil_clear{};
+    VkClearDepthStencilValue depth_stencil_clear{ 1.0f, 0 };
 
     VkAllocationCallbacks* allocation_callbacks;
 };

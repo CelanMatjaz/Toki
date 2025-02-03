@@ -6,7 +6,7 @@ stages:
   - type: fragment
     path: assets/shaders/test_shader.frag.glsl
 options:
-  depth_test_enable: false
+  depth_test_enable: true
   depth_write_enable: true
   depth_compare_op: less
   primitive_topology: triangle_list
