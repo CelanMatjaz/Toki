@@ -16,12 +16,14 @@
 
 namespace toki {
 
+namespace renderer {
+
 VkSurfaceKHR create_surface(VkInstance instance, VkAllocationCallbacks* allocation_callbacks, Window* window) {
     GlfwWindow* w = reinterpret_cast<GlfwWindow*>(window);
 
-VkWin32SurfaceCreateInfoKHR surface_create_info{};
+    VkWin32SurfaceCreateInfoKHR surface_create_info{};
     surface_create_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-surface_create_info.hwnd = glfwGetWin32Window(reinterpret_cast<GLFWwindow*>(w->get_handle()));
+    surface_create_info.hwnd = glfwGetWin32Window(reinterpret_cast<GLFWwindow*>(w->get_handle()));
     surface_create_info.hinstance = GetModuleHandle(nullptr);
 
     VkSurfaceKHR surface{};
@@ -31,6 +33,8 @@ surface_create_info.hwnd = glfwGetWin32Window(reinterpret_cast<GLFWwindow*>(w->g
 
     return surface;
 }
+
+}  // namespace renderer
 
 }  // namespace toki
 

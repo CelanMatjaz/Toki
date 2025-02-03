@@ -26,8 +26,8 @@ enum class ShaderStage : u8 {
 };
 
 enum class VertexInputRate : u8 {
-    VERTEX,
-    INSTANCE,
+    Vertex,
+    Instance,
 };
 
 enum class VertexFormat : u8 {
@@ -58,35 +58,29 @@ enum class BufferType : u8 {
     BUFFER_TYPE_COUNT = Uniform,
 };
 
-enum class BufferUsage : u8 {
-    NONE,
-    STATIC,
-    DYNAMIC,
-};
-
 enum class CompareOp : u8 {
-    NEVER,
-    LESS,
-    EQUAL,
-    LESS_OR_EQUAL,
-    GREATER,
-    NOT_EQUAL,
-    GREATER_OR_EQUAL,
-    ALWAYS,
+    Never,
+    Less,
+    Equal,
+    LessOrEqual,
+    Greater,
+    NotEqual,
+    GreaterOrEqual,
+    Always,
 };
 
 enum class PrimitiveTopology : u8 {
-    POINT_LIST,
-    LINE_LIST,
-    LINE_STRIP,
-    TRIANGLE_LIST,
-    TRIANGLE_STRIP,
-    TRIANGLE_FAN,
-    LINE_LIST_WITH_ADJACENCY,
-    LINE_STRIP_WITH_ADJACENCY,
-    TRIANGLE_LIST_WITH_ADJACENCY,
-    TRIANGLE_STRIP_WITH_ADJACENCY,
-    PATCH_LIST,
+    PointList,
+    LineList,
+    LineStrip,
+    TriangleList,
+    TriangleStrip,
+    TriangleFan,
+    LineListWithAdjacency,
+    LineStripWithAdjacency,
+    TriangleListWithAdjacency,
+    TriangleStripWithAdjacency,
+    PatchList,
 };
 
 enum class CullMode : u8 {
@@ -107,10 +101,46 @@ enum class FrontFace : u8 {
     Clockwise,
 };
 
-struct BeginPassConfig {
-    Rect2D renderArea{};
-    Handle framebufferHandle;
-    Vec4 clearValue;
+struct Framebuffer {
+    Handle handle;
+};
+
+struct Buffer {
+    BufferType type;
+    u32 size;
+    Handle handle;
+};
+
+struct Texture {
+    Handle handle;
+    u32 width, height;
+};
+
+struct Shader {
+    Handle handle;
+};
+
+struct FramebufferConfig {
+    std::vector<ColorFormat> color_formats;
+    Vec2 attachment_dimensions;
+    b8 has_present_attachment : 1;
+    b8 has_depth_attachment : 1;
+    b8 has_stencil_attachment : 1;
+};
+
+struct BufferConfig {
+    BufferType type;
+    u32 size;
+};
+
+struct TextureConfig {
+    ColorFormat format;
+    u32 width;
+    u32 height;
+};
+
+struct ShaderConfig {
+    std::string_view config_path;
 };
 
 }  // namespace toki

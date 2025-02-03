@@ -2,7 +2,7 @@
 
 #include <vulkan/vulkan.h>
 
-#include <utility>
+#include <span>
 
 #include "containers/handle_map.h"
 #include "core/base.h"
@@ -11,15 +11,15 @@
 #include "memory/allocators/double_buffer_allocator.h"
 #include "memory/allocators/stack_allocator.h"
 #include "renderer/renderer_commands.h"
-#include "renderer/renderer_structs.h"
 #include "renderer/renderer_types.h"
 #include "renderer/vulkan/vulkan_commands.h"
+#include "renderer/vulkan/vulkan_internal_types.h"
 #include "renderer/vulkan/vulkan_types.h"
 #include "resources/configs/shader_config_loader.h"
 
 namespace toki {
 
-namespace vulkan_renderer {
+namespace renderer {
 
 struct VulkanContext {
     VkInstance instance;
@@ -27,28 +27,30 @@ struct VulkanContext {
     VkPhysicalDeviceProperties physical_device_properties;
     VkDevice device;
     Queue graphics_queue, present_queue;
+    Limits limits;
+    DeviceProperties properties;
+
+    containers::HandleMap<InternalBuffer> internal_buffers;
+    containers::HandleMap<InternalImage> internal_images;
+    containers::HandleMap<InternalShader> internal_shaders;
+    containers::HandleMap<InternalFramebuffer> internal_framebuffers;
 
     Swapchain swapchains[MAX_SWAPCHAIN_COUNT];
-    containers::HandleMap<RenderPass> render_passes;
-    containers::HandleMap<Pipeline> pipelines;
-    containers::HandleMap<VulkanBuffer> buffers;
 
-    VkAllocationCallbacks* allocation_callbacks;
-
-    b8 vsync_enabled;
-    u8 submit_count;
+    u8 swapchain_count : 4;
+    b8 vsync_enabled : 1;
 
     BasicRef<VkCommandPool> command_pools;
     BasicRef<VkCommandPool> extra_command_pools;
-
     CommandBuffers command_buffers[MAX_FRAMES_IN_FLIGHT];
 
     InternalBuffer staging_buffer{};
-
-    containers::HandleMap<VulkanImage> images;
+    u64 staging_buffer_offset{};
 
     VkClearColorValue color_clear{};
     VkClearDepthStencilValue depth_stencil_clear{};
+
+    VkAllocationCallbacks* allocation_callbacks;
 };
 
 class VulkanBackend {
@@ -58,27 +60,31 @@ public:
 
     void create_device(Window* window);
 
-    Handle create_swapchain(Window* window);
-    void destroy_swapchain(Handle swapchain_handle);
+    void create_swapchain(Window* window);
+    void destroy_swapchain(Handle& window_data_handle);
     void recreate_swapchain(Swapchain* swapchain);
 
-    Buffer create_buffer(BufferType type, u32 size);
+    Handle create_framebuffer(
+        std::vector<ColorFormat> const& formats,
+        Vec2 image_dimensions,
+        b8 has_present_attachment,
+        b8 has_depth,
+        b8 has_stencil);
+    void destroy_framebuffer(Handle framebuffer_handle);
+
+    Handle create_buffer(BufferType type, u32 size);
     void destroy_buffer(Buffer* buffer);
     void* map_buffer_memory(VkDeviceMemory memory, u32 offset, u32 size);
     void unmap_buffer_memory(VkDeviceMemory memory);
     void flush_buffer(Buffer* buffer);
-    void set_bufffer_data(Buffer* buffer, u32 size, void* data);
+    void set_buffer_data(Buffer* buffer, u32 size, void* data);
     void copy_buffer_data(VkBuffer dst, VkBuffer src, u32 size, u32 dst_offset = 0, u32 src_offset = 0);
 
     Handle create_image(ColorFormat format, u32 width, u32 height);
     void destroy_image(Handle image_handle);
 
-    Handle create_render_pass();
-    void destroy_render_pass(Handle render_pass_handle);
-    void recreate_framebuffers(RenderPass* render_pass, Swapchain* swapchain, b8 destroy = true);
-
-    Shader create_pipeline(Handle render_pass_handle, const configs::ShaderConfig& config);
-    void destroy_pipeline(Handle pipeline_handle);
+    Handle create_shader_internal(const Framebuffer* framebuffer, const ShaderConfig& config);
+    void destroy_shader_internal(Handle shader_handle);
 
     void initialize_resources();
     void cleanup_resources();
@@ -98,8 +104,8 @@ public:
     void set_stencil_clear(u32 stencil_clear);
 
     // Draw commands
-    void begin_render_pass(VkCommandBuffer cmd, const Rect2D& render_area);
-    void end_render_pass(VkCommandBuffer cmd);
+    void begin_rendering(VkCommandBuffer cmd, Handle framebuffer_handle, const Rect2D& render_area);
+    void end_rendering(VkCommandBuffer cmd, Handle framebuffer_handle);
 
     void bind_shader(VkCommandBuffer cmd, Shader const& shader);
     void bind_buffer(VkCommandBuffer cmd, Buffer const& buffer);
@@ -111,11 +117,16 @@ private:
     void create_instance();
     void find_physical_device(VkSurfaceKHR surface);
 
-    VulkanBuffer create_buffer_internal(u32 size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memory_properties);
-    void destroy_buffer_internal(VulkanBuffer* buffer);
-    VulkanImage create_image_internal(
-        VkExtent3D extent, VkFormat format, VkImageUsageFlags usage, VkMemoryPropertyFlags memory_properties);
-    void destroy_image_internal(VulkanImage* image);
+    InternalBuffer create_buffer_internal(u32 size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memory_properties);
+    void destroy_buffer_internal(InternalBuffer* buffer);
+
+    InternalImage create_image_internal(
+        VkExtent3D extent,
+        VkFormat format,
+        VkImageUsageFlags usage,
+        VkMemoryPropertyFlags memory_properties,
+        VkImageAspectFlags aspect_flags);
+    void destroy_image_internal(InternalImage* image);
 
     void prepare_swapchain_frame(Swapchain* swapchain);
     void reset_swapchain_frame(Swapchain* swapchain);
@@ -127,9 +138,26 @@ private:
     FrameData* get_current_frame();
     CommandBuffers* get_current_command_buffers();
 
-    u32 find_memory_type_index(u32 type_filter, VkMemoryPropertyFlags properties);
+    void transition_image_layout(const TransitionLayoutConfig& config, InternalImage* image);
+    void transition_image_layout(
+        VkCommandBuffer cmd, const TransitionLayoutConfig& config, VkImageAspectFlags aspect_flags, VkImage image);
+    void transition_image_layout(VkCommandBuffer cmd, const TransitionLayoutConfig& config, InternalImage* image);
+    void transition_image_layouts(
+        VkCommandBuffer cmd,
+        const TransitionLayoutConfig& config,
+        VkImageAspectFlags aspect_flags,
+        VkImage* images,
+        u32 image_count);
+
+    Pipeline create_pipeline_internal(
+        std::string_view config_path,
+        VkFormat* attachment_formats,
+        u64 attachment_count,
+        VkFormat depth_format = VK_FORMAT_UNDEFINED,
+        VkFormat stencil_format = VK_FORMAT_UNDEFINED);
+    void destroy_pipeline_internal(Pipeline* pipeline);
     PipelineResources create_pipeline_resources(const std::vector<configs::Shader>& stages);
-    static std::vector<u32> create_shader_binary(configs::Shader shader);
+    ShaderModule create_shader_module(ShaderStage stage, std::string_view path);
 
     static void reflect_shader(
         ShaderStage stage,
@@ -137,15 +165,24 @@ private:
         DescriptorBindings& bindings,
         std::vector<VkPushConstantRange>& push_constants);
 
+    u32 find_memory_type_index(u32 type_filter, VkMemoryPropertyFlags properties);
+    VkImageMemoryBarrier create_image_memory_barrier(
+        VkImageLayout old_layout, VkImageLayout new_layout, VkImageAspectFlags aspect_flags);
+
+    const Limits& limits() const;
+    const DeviceProperties& device_properties() const;
+    VkImage get_swapchain_image(u32 swapchain_index);
+    VkImageView get_swapchain_image_view(u32 swapchain_index);
+
 private:
     BasicAllocator m_allocator{ 1024, Megabytes(64) };        // Allocate 64 megabytes for long lived allocations
     StackAllocator m_tempAllocator{ Megabytes(10) };          // Allocate 10 megabytess for temporary allocations
     DoubleBufferAllocator m_frameAllocator{ Megabytes(20) };  // Allocate 2 * 20 megabytes for frame allocations
-    VulkanContext m_context{};
+    BasicRef<VulkanContext> m_context;
     Frames m_frames{};
     u32 m_inFlightFrameIndex{};
 };
 
-}  // namespace vulkan_renderer
+}  // namespace renderer
 
 }  // namespace toki

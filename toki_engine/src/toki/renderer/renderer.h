@@ -1,9 +1,9 @@
 #pragma once
 
+#include "core/macros.h"
 #include "engine/window.h"
 #include "renderer/renderer_commands.h"
-#include "renderer/renderer_structs.h"
-#include "resources/configs/shader_config_loader.h"
+#include "renderer/renderer_types.h"
 
 namespace toki {
 
@@ -30,18 +30,18 @@ public:
     void set_color_clear(const glm::vec4& color);
     void set_depth_clear(f32 depth);
 
-    RenderPass create_render_pass();
-    void destroy_render_pass(RenderPass& render_pass);
+    Framebuffer create_framebuffer(const FramebufferConfig& config);
+    void destroy_framebuffer(Framebuffer* framebuffer);
 
-    Buffer create_buffer(BufferType type, u32 size);
-    void destroy_buffer(Buffer& buffer);
+    Buffer create_buffer(const BufferConfig& config);
+    void destroy_buffer(Buffer* buffer);
     void set_bufffer_data(Buffer* buffer, u32 size, void* data);
 
-    Texture create_texture(ColorFormat format, u32 width, u32 height);
-    void destroy_texture(Handle texture_handle);
+    Texture create_texture(const TextureConfig& config);
+    void destroy_texture(Texture* texture);
 
-    Shader create_shader(RenderPass& render_pass, configs::ShaderConfig shader_config);
-    void destroy_shader(Shader& shader);
+    Shader create_shader(const Framebuffer* framebuffer, const ShaderConfig& config);
+    void destroy_shader(Shader* shader);
 
     void wait_for_resources();
 

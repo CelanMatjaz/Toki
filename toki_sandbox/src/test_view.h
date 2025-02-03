@@ -13,7 +13,8 @@ public:
 private:
     [[maybe_unused]] toki::Camera m_camera;
 
-    toki::Buffer vertex_buffer;
-    toki::Buffer index_buffer;
-    toki::Shader shader;
+    toki::Framebuffer m_framebuffer;
+    toki::Buffer m_vertexBuffer;
+    toki::Buffer m_indexBuffer;
+    toki::Shader m_shader;
 };

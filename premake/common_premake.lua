@@ -95,7 +95,7 @@ function link_vulkan()
             "spirv-cross-glsld",
             "spirv-cross-reflectd",
             "shadercd",
-            "shaderc_sharedd"
+            "shaderc_combinedd"
         }
 
     filter { "platforms:Windows", "configurations:not Debug" }
@@ -105,7 +105,7 @@ function link_vulkan()
             "spirv-cross-glsl",
             "spirv-cross-reflect",
             "shaderc",
-            "shaderc_shared"
+            "shaderc_combined"
         }
 
     filter { "platforms:Linux" }

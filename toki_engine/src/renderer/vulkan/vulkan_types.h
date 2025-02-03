@@ -6,27 +6,29 @@
 #include "core/macros.h"
 #include "engine/window.h"
 #include "memory/allocators/basic_allocator.h"
+#include "memory/allocators/basic_ref.h"
 #include "renderer/renderer_types.h"
+#include "renderer/shader_uniforms.h"
 
 namespace toki {
 
-namespace vulkan_renderer {
+namespace renderer {
 
 #define VK_CHECK(result, message, ...) { TK_ASSERT(result == VK_SUCCESS, message __VA_OPT__(, ) __VA_ARGS__) }
 
-constexpr u32 MAX_ALLOCATED_BUFFERS = 256;
-constexpr u32 MAX_ALLOCATED_IMAGES = 256;
-constexpr u32 MAX_SWAPCHAIN_COUNT = 1;
+constexpr u32 MAX_ALLOCATED_IMAGE_COUNT = 256;
+constexpr u32 MAX_ALLOCATED_BUFFER_COUNT = 256;
 constexpr u32 MAX_RENDER_PASS_COUNT = 10;
-constexpr u32 MAX_PIPELINE_COUNT = 256;
-constexpr u32 MAX_BUFFER_COUNT = 512;
+constexpr u32 MAX_SHADER_COUNT = 64;
+constexpr u32 MAX_PIPELINE_PER_SHADER_COUNT = 16;
+constexpr u32 MAX_SWAPCHAIN_COUNT = 8;
 
 constexpr u32 MAX_RENDER_PASS_ATTACHMENT_COUNT = 8;
 
 constexpr u32 MAX_FRAMES_IN_FLIGHT = 2;
 
 constexpr u32 MAX_DESCRIPTOR_BINDING_COUNT = 8;
-constexpr u32 MAX_DESCRIPTOR_SET_COUNT = 2;
+constexpr u32 MAX_DESCRIPTOR_SET_COUNT = 1;
 
 constexpr u32 MAX_IN_FLIGHT_COMMAND_BUFFERS = 8;
 
@@ -42,6 +44,11 @@ struct ShaderBinary {
     std::vector<u32> binary;
 };
 
+struct ShaderModule {
+    VkShaderModule shader_module;
+    VkPipelineShaderStageCreateInfo shader_stage_create_info;
+};
+
 struct DescriptorBindings {
     u32 binding_counts[MAX_DESCRIPTOR_SET_COUNT]{};
     VkDescriptorSetLayoutBinding bindings[MAX_DESCRIPTOR_BINDING_COUNT][MAX_DESCRIPTOR_SET_COUNT]{};
@@ -52,22 +59,6 @@ struct PipelineResources {
     std::vector<ShaderBinary> binaries;
     DescriptorBindings descriptor_bindings;
     std::vector<VkPushConstantRange> push_constants;
-};
-
-struct VulkanBuffer {
-    VkBuffer buffer;
-    VkDeviceMemory memory;
-    VkBufferUsageFlags usage;
-    VkMemoryRequirements memory_requirements;
-    u32 memory_property_flags;
-};
-
-struct VulkanImage {
-    VkImage image;
-    VkImageView image_view;
-    VkDeviceMemory memory;
-    VkImageLayout layout;
-    VkFormat format;
 };
 
 struct FrameData {
@@ -90,8 +81,8 @@ struct CommandBuffers {
 struct Swapchain {
     VkSwapchainKHR swapchain;
     VkSurfaceKHR surface;
-    Window* window;
     VkExtent2D extent;
+    Window* window;
 
     VkSurfaceFormatKHR surface_format;
     VkSemaphore image_available_semaphores[MAX_FRAMES_IN_FLIGHT];
@@ -99,6 +90,7 @@ struct Swapchain {
     u32 image_index = 0;
     u32 image_count;
 
+    BasicRef<VkImage> images;
     BasicRef<VkImageView> image_views;
 
     b8 can_render : 1;
@@ -133,13 +125,6 @@ union PackedAttachments {
     u16 combined;
 };
 
-struct RenderPass {
-    VkRenderPass render_pass;
-    BasicRef<VkFramebuffer> framebuffers;
-    PackedAttachments attachments;
-    u16 attachment_count;
-};
-
 struct Pipeline {
     VkPipeline pipeline;
     VkPipelineLayout pipeline_layout;
@@ -151,18 +136,26 @@ struct Queue {
     i32 family_index = -1;
 };
 
-struct FreeSection {
-    u32 offset;
-    u32 size;
+struct Limits {
+    u32 max_framebuffer_width;
+    u32 max_framebuffer_height;
+
+    u16 max_push_constant_size;
+    u8 max_color_attachments;
 };
 
-struct InternalBuffer {
-    VulkanBuffer internal_buffer_data;
-    BasicRef<FreeSection> free_sections;
-    u32 free_section_count;
-    u32 offset;
+struct DeviceProperties {
+    VkFormat depth_format;
+    VkFormat depth_stencil_format;
 };
 
-}  // namespace vulkan_renderer
+struct TransitionLayoutConfig {
+    VkImageLayout old_layout;
+    VkImageLayout new_layout;
+    VkPipelineStageFlags src_stage;
+    VkPipelineStageFlags dst_stage;
+};
+
+}  // namespace renderer
 
 }  // namespace toki

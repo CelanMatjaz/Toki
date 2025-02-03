@@ -11,12 +11,12 @@ public:
     ~StackAllocator();
 
 public:
-    void* allocate(u32 size);
+    void* allocate(u64 size);
 
-    void* allocate_aligned(u32 size, u32 alignment);
+    void* allocate_aligned(u64 size, u64 alignment);
 
     template <typename T>
-    T* allocate_aligned(u32 count) {
+    T* allocate_aligned(u64 count) {
         return reinterpret_cast<T*>(allocate_aligned(count * sizeof(T), alignof(T)));
     }
 
@@ -26,10 +26,10 @@ public:
         return new (ptr) T(std::forward<Args>(args)...);
     }
 
-    void free_to_offset(u32 offset);
+    void free_to_offset(u64 offset);
     void clear();
 
-    u64 get_offset() {
+    u64 get_offset() const {
         return m_offset;
     }
 

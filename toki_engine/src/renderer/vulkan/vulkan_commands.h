@@ -7,7 +7,7 @@
 
 namespace toki {
 
-namespace vulkan_renderer {
+namespace renderer {
 
 class VulkanBackend;
 
@@ -16,8 +16,8 @@ public:
     VulkanCommands() = delete;
     VulkanCommands(VulkanBackend* backend);
 
-    virtual void begin_pass(const Rect2D& render_area) override;
-    virtual void end_pass() override;
+    virtual void begin_rendering(const Framebuffer* framebuffer, const Rect2D& render_area) override;
+    virtual void end_rendering() override;
 
     virtual void set_viewport(const Rect2D& rect) override;
     virtual void reset_viewport() override;
@@ -34,8 +34,9 @@ public:
 private:
     VulkanBackend* m_backend;
     VkCommandBuffer m_commandBuffer;
+    Handle m_framebufferHandle;
 };
 
-}  // namespace vulkan_renderer
+}  // namespace renderer
 
 }  // namespace toki

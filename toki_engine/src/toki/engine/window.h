@@ -47,6 +47,7 @@ public:
 protected:
     Input* m_input;
     EventHandler m_eventHandler;
+    Handle m_rendererDataHandle;
 };
 
 }  // namespace toki

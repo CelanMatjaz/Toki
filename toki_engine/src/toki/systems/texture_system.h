@@ -4,7 +4,6 @@
 
 #include "containers/hash_map.h"
 #include "memory/allocators/stack_allocator.h"
-#include "renderer/renderer_structs.h"
 #include "renderer/renderer_types.h"
 
 namespace toki {

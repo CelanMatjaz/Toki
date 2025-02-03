@@ -61,6 +61,11 @@ public:
         return index + 1;
     }
 
+    template <typename T>
+    u64 allocate_aligned() {
+        allocate_aligned(sizeof(T), alignof(T));
+    }
+
     void free(u64 index) {
         Allocation* allocation = &m_allocations[index];
         // Set most significant bit to 1 to indicate if allocation is free

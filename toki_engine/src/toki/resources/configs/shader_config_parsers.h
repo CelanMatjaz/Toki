@@ -16,17 +16,17 @@ struct YAML::convert<toki::configs::ShaderOptions> {
         {
             auto val = node["depth_compare_op"].as<std::string>();
             if (val == "less") {
-                rhs.depth_compare_op = CompareOp::LESS;
+                rhs.depth_compare_op = CompareOp::Less;
             } else if (val == "equal") {
-                rhs.depth_compare_op = CompareOp::EQUAL;
+                rhs.depth_compare_op = CompareOp::Equal;
             } else if (val == "less_or_equal") {
-                rhs.depth_compare_op = CompareOp::LESS_OR_EQUAL;
+                rhs.depth_compare_op = CompareOp::LessOrEqual;
             } else if (val == "greater") {
-                rhs.depth_compare_op = CompareOp::GREATER;
+                rhs.depth_compare_op = CompareOp::Greater;
             } else if (val == "greater_or_equal") {
-                rhs.depth_compare_op = CompareOp::GREATER_OR_EQUAL;
-            } else if (val == "equal") {
-                rhs.depth_compare_op = CompareOp::ALWAYS;
+                rhs.depth_compare_op = CompareOp::GreaterOrEqual;
+            } else if (val == "always") {
+                rhs.depth_compare_op = CompareOp::Always;
             } else {
                 return false;
             }
@@ -35,27 +35,27 @@ struct YAML::convert<toki::configs::ShaderOptions> {
         {
             auto val = node["primitive_topology"].as<std::string>();
             if (val == "point_list") {
-                rhs.primitive_topology = PrimitiveTopology::POINT_LIST;
+                rhs.primitive_topology = PrimitiveTopology::PointList;
             } else if (val == "line_list") {
-                rhs.primitive_topology = PrimitiveTopology::LINE_LIST;
+                rhs.primitive_topology = PrimitiveTopology::LineList;
             } else if (val == "line_strip") {
-                rhs.primitive_topology = PrimitiveTopology::LINE_STRIP;
+                rhs.primitive_topology = PrimitiveTopology::LineStrip;
             } else if (val == "triangle_list") {
-                rhs.primitive_topology = PrimitiveTopology::TRIANGLE_LIST;
+                rhs.primitive_topology = PrimitiveTopology::TriangleList;
             } else if (val == "triangle_strip") {
-                rhs.primitive_topology = PrimitiveTopology::TRIANGLE_STRIP;
+                rhs.primitive_topology = PrimitiveTopology::TriangleStrip;
             } else if (val == "triangle_fan") {
-                rhs.primitive_topology = PrimitiveTopology::TRIANGLE_FAN;
+                rhs.primitive_topology = PrimitiveTopology::TriangleFan;
             } else if (val == "line_list_with_adjacency") {
-                rhs.primitive_topology = PrimitiveTopology::LINE_LIST_WITH_ADJACENCY;
+                rhs.primitive_topology = PrimitiveTopology::LineListWithAdjacency;
             } else if (val == "line_strip_with_adjacency") {
-                rhs.primitive_topology = PrimitiveTopology::LINE_STRIP_WITH_ADJACENCY;
+                rhs.primitive_topology = PrimitiveTopology::LineStripWithAdjacency;
             } else if (val == "triangle_list_with_adjacency") {
-                rhs.primitive_topology = PrimitiveTopology::TRIANGLE_LIST_WITH_ADJACENCY;
+                rhs.primitive_topology = PrimitiveTopology::TriangleListWithAdjacency;
             } else if (val == "triangle_strip_with_adjacency") {
-                rhs.primitive_topology = PrimitiveTopology::TRIANGLE_STRIP_WITH_ADJACENCY;
+                rhs.primitive_topology = PrimitiveTopology::TriangleStripWithAdjacency;
             } else if (val == "patch_list") {
-                rhs.primitive_topology = PrimitiveTopology::PATCH_LIST;
+                rhs.primitive_topology = PrimitiveTopology::PatchList;
             } else {
                 return false;
             }
@@ -117,9 +117,9 @@ struct YAML::convert<toki::VertexBindingDescription> {
             auto val = node["input_rate"].as<std::string>();
 
             if (val == "vertex") {
-                rhs.inputRate = VertexInputRate::VERTEX;
+                rhs.inputRate = VertexInputRate::Vertex;
             } else if (val == "instance") {
-                rhs.inputRate = VertexInputRate::INSTANCE;
+                rhs.inputRate = VertexInputRate::Instance;
             } else {
                 return false;
             }

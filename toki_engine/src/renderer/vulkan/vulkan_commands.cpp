@@ -5,18 +5,19 @@
 
 namespace toki {
 
-namespace vulkan_renderer {
+namespace renderer {
 
 #define backend m_backend
 
 VulkanCommands::VulkanCommands(VulkanBackend* b): m_backend(b), m_commandBuffer(b->get_command_buffer()) {}
 
-void VulkanCommands::begin_pass(const Rect2D& render_area) {
-    backend->begin_render_pass(m_commandBuffer, render_area);
+void VulkanCommands::begin_rendering(const Framebuffer* framebuffer, const Rect2D& render_area) {
+    m_framebufferHandle = framebuffer->handle;
+    backend->begin_rendering(m_commandBuffer, framebuffer->handle, render_area);
 }
 
-void VulkanCommands::end_pass() {
-    backend->end_render_pass(m_commandBuffer);
+void VulkanCommands::end_rendering() {
+    backend->end_rendering(m_commandBuffer, m_framebufferHandle);
 }
 
 void VulkanCommands::set_viewport(const Rect2D& rect) {
@@ -65,6 +66,6 @@ void VulkanCommands::draw_instanced(u32 index_count, u32 instance_count) {
     m_backend->draw_instanced(m_commandBuffer, index_count, instance_count);
 }
 
-}  // namespace vulkan_renderer
+}  // namespace renderer
 
 }  // namespace toki

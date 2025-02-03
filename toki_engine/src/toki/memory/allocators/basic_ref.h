@@ -74,7 +74,7 @@ public:
     }
 
     u64 size() const {
-        return m_size / sizeof(T);
+        return (m_size - sizeof(u64)) / sizeof(T);
     }
 
     u64 buffer_size() const {
@@ -88,7 +88,7 @@ public:
 
     void reset() {
         m_allocator->free(m_handle);
-        m_handle = {};
+        m_handle = INVALID_ALLOCATOR_HANDLE;
         m_size = 0;
     }
 

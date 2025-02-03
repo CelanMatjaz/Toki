@@ -14,18 +14,18 @@ StackAllocator::~StackAllocator() {
     platform::deallocate(m_ptr);
 }
 
-void* StackAllocator::allocate(u32 size) {
+void* StackAllocator::allocate(u64 size) {
     TK_ASSERT(m_offset + size <= m_capacity, "Not enough allocated memory in allocator");
     void* ptr = (((byte*) m_ptr) + (m_offset));
     m_offset += size;
     return ptr;
 }
 
-void* StackAllocator::allocate_aligned(u32 size, u32 alignment) {
+void* StackAllocator::allocate_aligned(u64 size, u64 alignment) {
     TK_ASSERT(alignment >= 1 && alignment <= 128, "Alignment out of bounds");
     TK_ASSERT((alignment & (alignment - 1)) == 0, "Alignment isn't a power of 2");
 
-    u32 total_allocation_size = size + alignment;
+    u64 total_allocation_size = size + alignment;
 
     uintptr_t ptr = (uintptr_t) allocate(total_allocation_size);
     uintptr_t mask = (alignment - 1);
@@ -36,7 +36,7 @@ void* StackAllocator::allocate_aligned(u32 size, u32 alignment) {
     return (void*) aligned;
 }
 
-void StackAllocator::free_to_offset(u32 offset) {
+void StackAllocator::free_to_offset(u64 offset) {
     m_offset = offset;
 }
 

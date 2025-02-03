@@ -7,6 +7,10 @@
 
 namespace toki {
 
+namespace renderer {
+
 VkSurfaceKHR create_surface(VkInstance instance, VkAllocationCallbacks* allocation_callbacks, Window* window);
 
 }
+
+}  // namespace toki
