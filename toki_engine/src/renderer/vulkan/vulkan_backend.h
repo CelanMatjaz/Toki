@@ -2,13 +2,11 @@
 
 #include <vulkan/vulkan.h>
 
-#include <span>
-
 #include "containers/handle_map.h"
 #include "core/base.h"
 #include "engine/window.h"
-#include "memory/allocators/basic_allocator.h"
 #include "memory/allocators/double_buffer_allocator.h"
+#include "memory/allocators/dynamic_allocator.h"
 #include "memory/allocators/stack_allocator.h"
 #include "renderer/renderer_commands.h"
 #include "renderer/renderer_types.h"
@@ -65,11 +63,7 @@ public:
     void recreate_swapchain(Swapchain* swapchain);
 
     Handle create_framebuffer(
-        std::vector<ColorFormat> const& formats,
-        Vec2 image_dimensions,
-        b8 has_present_attachment,
-        b8 has_depth,
-        b8 has_stencil);
+        u32 width, u32 height, u32 color_attachment_count, ColorFormat format, b8 has_depth, b8 has_stencil);
     void destroy_framebuffer(Handle framebuffer_handle);
 
     Handle create_buffer(BufferType type, u32 size);
@@ -103,6 +97,8 @@ public:
     void set_depth_clear(f32 depth_clear);
     void set_stencil_clear(u32 stencil_clear);
 
+    InternalShader* get_shader(Handle handle);
+
     // Draw commands
     void begin_rendering(VkCommandBuffer cmd, Handle framebuffer_handle, const Rect2D& render_area);
     void end_rendering(VkCommandBuffer cmd, Handle framebuffer_handle);
@@ -113,6 +109,14 @@ public:
     void draw_indexed(VkCommandBuffer cmd, u32 count);
     void draw_instanced(VkCommandBuffer cmd, u32 index_count, u32 instance_count = 1);
 
+    void push_constants(
+        VkCommandBuffer cmd,
+        VkPipelineLayout layout,
+        VkShaderStageFlags stage_flags,
+        u32 offset,
+        u32 size,
+        const void* data);
+
 private:
     void create_instance();
     void find_physical_device(VkSurfaceKHR surface);
@@ -121,7 +125,9 @@ private:
     void destroy_buffer_internal(InternalBuffer* buffer);
 
     InternalImage create_image_internal(
-        VkExtent3D extent,
+        u32 width,
+        u32 height,
+        u32 layer_count,
         VkFormat format,
         VkImageUsageFlags usage,
         VkMemoryPropertyFlags memory_properties,
@@ -138,6 +144,9 @@ private:
     FrameData* get_current_frame();
     CommandBuffers* get_current_command_buffers();
 
+    void transition_framebuffer_images(VkCommandBuffer cmd, InternalFramebuffer* framebuffer);
+    void transition_swapchain_image(VkCommandBuffer cmd, Swapchain* swapchain);
+
     void transition_image_layout(const TransitionLayoutConfig& config, InternalImage* image);
     void transition_image_layout(
         VkCommandBuffer cmd, const TransitionLayoutConfig& config, VkImageAspectFlags aspect_flags, VkImage image);
@@ -151,19 +160,13 @@ private:
 
     Pipeline create_pipeline_internal(
         std::string_view config_path,
-        VkFormat* attachment_formats,
+        VkFormat format,
         u64 attachment_count,
-        VkFormat depth_format = VK_FORMAT_UNDEFINED,
-        VkFormat stencil_format = VK_FORMAT_UNDEFINED);
+        VkFormat depth_format,
+        VkFormat stencil_format);
     void destroy_pipeline_internal(Pipeline* pipeline);
     PipelineResources create_pipeline_resources(const std::vector<configs::Shader>& stages);
     ShaderModule create_shader_module(ShaderStage stage, std::string_view path);
-
-    static void reflect_shader(
-        ShaderStage stage,
-        std::vector<u32>& binary,
-        DescriptorBindings& bindings,
-        std::vector<VkPushConstantRange>& push_constants);
 
     u32 find_memory_type_index(u32 type_filter, VkMemoryPropertyFlags properties);
     VkImageMemoryBarrier create_image_memory_barrier(
@@ -175,11 +178,11 @@ private:
     VkImageView get_swapchain_image_view(u32 swapchain_index);
 
 private:
-    BasicAllocator m_allocator{ 1024, Megabytes(64) };        // Allocate 64 megabytes for long lived allocations
+    DynamicAllocator m_allocator{ Megabytes(64) };            // Allocate 64 megabytes for long lived allocations
     StackAllocator m_tempAllocator{ Megabytes(10) };          // Allocate 10 megabytess for temporary allocations
     DoubleBufferAllocator m_frameAllocator{ Megabytes(20) };  // Allocate 2 * 20 megabytes for frame allocations
     BasicRef<VulkanContext> m_context;
-    Frames m_frames{};
+    FrameData m_frames[MAX_FRAMES_IN_FLIGHT];
     u32 m_inFlightFrameIndex{};
 };
 

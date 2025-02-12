@@ -47,11 +47,19 @@ void VulkanCommands::reset_scissor() {
 }
 
 void VulkanCommands::bind_shader(Shader const& shader) {
+    m_shaderHandle = shader.handle;
     backend->bind_shader(m_commandBuffer, shader);
 }
 
 void VulkanCommands::bind_buffer(Buffer const& buffer) {
     backend->bind_buffer(m_commandBuffer, buffer);
+}
+
+void VulkanCommands::push_constants(u32 offset, u32 size, const void* data) {
+    InternalShader* shader = backend->get_shader(m_shaderHandle);
+    VkPipelineLayout pipeline_layout = shader->pipelines[m_shaderHandle.data].pipeline_layout;
+    VkShaderStageFlags shader_stage_flags = shader->push_constant_stage_flags;
+    backend->push_constants(m_commandBuffer, pipeline_layout, shader_stage_flags, offset, size, data);
 }
 
 void VulkanCommands::draw(u32 vertex_count) {

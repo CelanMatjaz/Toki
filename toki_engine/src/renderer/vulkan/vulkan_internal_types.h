@@ -26,15 +26,16 @@ struct InternalBuffer {
 
 struct InternalImage {
     VkImage image;
-    VkImageView image_view;
+    BasicRef<VkImageView> image_views;
     VkDeviceMemory memory;
-    // VkImageLayout layout;
     VkFormat format;
+    VkExtent3D extent;
     VkImageAspectFlags aspect_flags;
 };
 
 struct InternalShader {
     Pipeline pipelines[1];
+    VkShaderStageFlags push_constant_stage_flags;
     u8 pipeline_count;
     u8 layout_counts[MAX_DESCRIPTOR_SET_COUNT];
     VkDescriptorSetLayout descriptor_set_layouts[MAX_DESCRIPTOR_BINDING_COUNT][MAX_DESCRIPTOR_SET_COUNT]
@@ -47,13 +48,10 @@ struct InternalWindowData {
 };
 
 struct InternalFramebuffer {
-    BasicRef<InternalImage> images;
+    BasicRef<InternalImage> color_image;
     BasicRef<InternalImage> depth_stencil_image;
-    BasicRef<VkFormat> formats;
-    b8 has_present_attachment : 1;
     b8 has_depth : 1;
     b8 has_stencil : 1;
-    b8 swapchain_index : 4;
 };
 
 }  // namespace renderer

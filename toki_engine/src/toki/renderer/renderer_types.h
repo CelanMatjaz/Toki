@@ -121,9 +121,10 @@ struct Shader {
 };
 
 struct FramebufferConfig {
-    std::vector<ColorFormat> color_formats;
-    Vec2 attachment_dimensions;
-    b8 has_present_attachment : 1;
+    ColorFormat color_format;
+    u32 color_attachment_count;
+    u32 image_width;
+    u32 image_height;
     b8 has_depth_attachment : 1;
     b8 has_stencil_attachment : 1;
 };

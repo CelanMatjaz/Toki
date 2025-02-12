@@ -24,6 +24,7 @@ namespace toki {
 namespace renderer {
 
 #define ctx m_context
+#define swapchain_image(swapchain) swapchain->images[swapchain->image_index]
 
 VulkanBackend::VulkanBackend(): m_context(&m_allocator) {
     ctx->internal_buffers = { MAX_ALLOCATED_BUFFER_COUNT };
@@ -157,6 +158,8 @@ void VulkanBackend::find_physical_device(VkSurfaceKHR surface) {
             device_features = features;
         }
     }
+
+    VkPhysicalDevice asd = ctx->physical_device;
 
     ctx->limits.max_framebuffer_width = device_properties.limits.maxFramebufferWidth;
     ctx->limits.max_framebuffer_height = device_properties.limits.maxFramebufferHeight;
@@ -337,8 +340,6 @@ void VulkanBackend::create_swapchain(Window* window) {
         }
     }
 
-    swapchain.image_views = BasicRef<VkImageView>(&m_allocator, swapchain.image_count);
-
     recreate_swapchain(&swapchain);
 
     window->get_event_handler().bind_event(EventType::WindowResize, this, [this, &swapchain](void*, void*, Event&) {
@@ -363,7 +364,7 @@ void VulkanBackend::create_swapchain(Window* window) {
 }
 
 void VulkanBackend::recreate_swapchain(Swapchain* swapchain) {
-    if (swapchain->image_views && swapchain->image_views.size() > 0) {
+    if (swapchain->image_views && swapchain->image_views.count() > 0) {
         VkImageView* image_views = swapchain->image_views.get();
         for (u32 i = 0; i < swapchain->image_count; i++) {
             vkDestroyImageView(ctx->device, image_views[i], ctx->allocation_callbacks);
@@ -419,6 +420,10 @@ void VulkanBackend::recreate_swapchain(Swapchain* swapchain) {
         vkGetSwapchainImagesKHR(ctx->device, swapchain->swapchain, &swapchain->image_count, swapchain_images);
         TK_ASSERT(swapchain->image_count > 0, "No images found for swapchain");
 
+        if (!swapchain->image_views) {
+            swapchain->image_views = BasicRef<VkImageView>(&m_allocator, swapchain->image_count);
+        }
+
         VkImageViewCreateInfo image_view_create_info{};
         image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -433,51 +438,37 @@ void VulkanBackend::recreate_swapchain(Swapchain* swapchain) {
         image_view_create_info.subresourceRange.baseArrayLayer = 0;
         image_view_create_info.subresourceRange.layerCount = 1;
 
-        VkImageView* image_views = swapchain->image_views.get();
-
         for (u32 i = 0; i < swapchain->image_count; i++) {
             image_view_create_info.image = swapchain_images[i];
             VK_CHECK(
-                vkCreateImageView(ctx->device, &image_view_create_info, ctx->allocation_callbacks, &image_views[i]),
+                vkCreateImageView(
+                    ctx->device, &image_view_create_info, ctx->allocation_callbacks, &swapchain->image_views[i]),
                 "Could not create image view");
         }
     }
 }
 
 Handle VulkanBackend::create_framebuffer(
-    std::vector<ColorFormat> const& formats,
-    Vec2 image_dimensions,
-    b8 has_present_attachment,
-    b8 has_depth,
-    b8 has_stencil) {
+    u32 width, u32 height, u32 color_attachment_count, ColorFormat format, b8 has_depth, b8 has_stencil) {
     InternalFramebuffer framebuffer{};
-    framebuffer.has_present_attachment = has_present_attachment;
     framebuffer.has_depth = has_depth;
     framebuffer.has_stencil = has_stencil;
 
     TK_ASSERT(
-        (formats.size() + ((u8) has_present_attachment)) <= limits().max_color_attachments,
-        "Maximum {} color attachments supported, including present attachment",
+        color_attachment_count <= limits().max_color_attachments,
+        "Maximum {} color attachments supported",
         limits().max_color_attachments);
 
-    framebuffer.images = BasicRef<InternalImage>(&m_allocator, formats.size());
-    framebuffer.formats = BasicRef<VkFormat>(&m_allocator, formats.size() + ((u8) has_present_attachment));
+    framebuffer.color_image = BasicRef<InternalImage>(&m_allocator);
 
-    if (has_present_attachment) {
-        framebuffer.formats[0] = ctx->swapchains[0].surface_format.format;
-    }
-
-    VkExtent3D extent = { image_dimensions.x, image_dimensions.y, 1 };
-
-    for (u32 i = 0; i < formats.size(); i++) {
-        framebuffer.formats[i + (u8) has_present_attachment] = get_format(formats[i]);
-        framebuffer.images[i] = create_image_internal(
-            extent,
-            framebuffer.formats[i],
-            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            VK_IMAGE_ASPECT_COLOR_BIT);
-    }
+    *framebuffer.color_image = create_image_internal(
+        width,
+        height,
+        color_attachment_count,
+        get_format(format),
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        VK_IMAGE_ASPECT_COLOR_BIT);
 
     VkImageAspectFlags depthStenctilAspectFlags = 0;
 
@@ -492,7 +483,9 @@ Handle VulkanBackend::create_framebuffer(
     if (depthStenctilAspectFlags) {
         framebuffer.depth_stencil_image = BasicRef<InternalImage>(&m_allocator);
         *framebuffer.depth_stencil_image.get() = create_image_internal(
-            extent,
+            width,
+            height,
+            1,
             get_depth_format(
                 ctx->physical_device,
                 (depthStenctilAspectFlags & VK_IMAGE_ASPECT_STENCIL_BIT) == VK_IMAGE_ASPECT_STENCIL_BIT),
@@ -508,11 +501,12 @@ void VulkanBackend::destroy_framebuffer(Handle framebuffer_handle) {
     TK_ASSERT(ctx->internal_framebuffers.contains(framebuffer_handle), "Framebuffer does not exist");
 
     InternalFramebuffer& framebuffer = ctx->internal_framebuffers[framebuffer_handle];
-    for (u32 i = 0; i < framebuffer.images.size(); i++) {
-        destroy_image_internal(&framebuffer.images[i]);
+    destroy_image_internal(framebuffer.color_image);
+    framebuffer.color_image.reset();
+    if (framebuffer.depth_stencil_image) {
+        destroy_image_internal(framebuffer.depth_stencil_image);
+        framebuffer.depth_stencil_image.reset();
     }
-
-    framebuffer.images.reset();
 }
 
 void VulkanBackend::destroy_swapchain(Handle& window_data_handle) {
@@ -531,22 +525,20 @@ void VulkanBackend::destroy_swapchain(Handle& window_data_handle) {
     window_data_handle.unique_id = INVALID_HANDLE_ID;
 }
 
-PipelineResources VulkanBackend::create_pipeline_resources(const std::vector<configs::Shader>& stages) {
+PipelineResources VulkanBackend::create_pipeline_resources(const std::vector<configs::Shader>& _) {
     PipelineResources resources{};
 
-    std::vector<VkPushConstantRange> push_constants;
-
-    // for (const auto& stage : stages) {
-    //     resources.binaries.emplace_back(stage.stage, create_shader_modules(stage));
-    //     reflect_shader(stage.stage, resources.binaries.back().binary, resources.descriptor_bindings, push_constants);
-    // }
+    u32 push_constant_count = 0;
+    VkPushConstantRange* push_constants = m_frameAllocator->allocate_aligned<VkPushConstantRange>(16);
+    u32 descriptor_set_layout_count = 0;
+    VkDescriptorSetLayout* descriptor_set_layouts = m_frameAllocator->allocate_aligned<VkDescriptorSetLayout>(16);
 
     VkPipelineLayoutCreateInfo pipeline_layout_create_info{};
     pipeline_layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipeline_layout_create_info.setLayoutCount = 0;
-    pipeline_layout_create_info.pSetLayouts = nullptr;
-    pipeline_layout_create_info.pushConstantRangeCount = 0;
-    pipeline_layout_create_info.pPushConstantRanges = nullptr;
+    pipeline_layout_create_info.setLayoutCount = descriptor_set_layout_count;
+    pipeline_layout_create_info.pSetLayouts = descriptor_set_layouts;
+    pipeline_layout_create_info.pushConstantRangeCount = push_constant_count;
+    pipeline_layout_create_info.pPushConstantRanges = push_constants;
 
     VK_CHECK(
         vkCreatePipelineLayout(
@@ -558,7 +550,7 @@ PipelineResources VulkanBackend::create_pipeline_resources(const std::vector<con
 
 Pipeline VulkanBackend::create_pipeline_internal(
     std::string_view config_path,
-    VkFormat* attachment_formats,
+    VkFormat format,
     u64 attachment_count,
     VkFormat depth_format,
     VkFormat stencil_format) {
@@ -804,10 +796,15 @@ Pipeline VulkanBackend::create_pipeline_internal(
     viewport_state_create_info.scissorCount = 1;
     viewport_state_create_info.pScissors = &scissor;
 
+    VkFormat* formats = m_frameAllocator->allocate_aligned<VkFormat>(attachment_count);
+    for (u32 i = 0; i < attachment_count; i++) {
+        formats[i] = format;
+    }
+
     VkPipelineRenderingCreateInfoKHR pipeline_rendering_create_info{};
     pipeline_rendering_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
     pipeline_rendering_create_info.colorAttachmentCount = attachment_count;
-    pipeline_rendering_create_info.pColorAttachmentFormats = attachment_formats;
+    pipeline_rendering_create_info.pColorAttachmentFormats = formats;
     pipeline_rendering_create_info.depthAttachmentFormat = depth_format;
     pipeline_rendering_create_info.stencilAttachmentFormat = stencil_format;
 
@@ -839,7 +836,7 @@ Pipeline VulkanBackend::create_pipeline_internal(
             &pipeline.pipeline),
         "Could not create graphics pipeline");
 
-    for (u32 i = 0; i < resources.binaries.size(); i++) {
+    for (u32 i = 0; i < config.stages.size(); i++) {
         vkDestroyShaderModule(ctx->device, shader_modules[i], ctx->allocation_callbacks);
     }
 
@@ -858,9 +855,10 @@ Handle VulkanBackend::create_shader_internal(const Framebuffer* fb, const Shader
     InternalShader internal_shader{};
     internal_shader.pipelines[internal_shader.pipeline_count] = create_pipeline_internal(
         config.config_path,
-        framebuffer.formats,
-        framebuffer.formats.size(),
-        framebuffer.has_depth ? ctx->properties.depth_format : VK_FORMAT_UNDEFINED);
+        framebuffer.color_image->format,
+        framebuffer.color_image->image_views.count(),
+        framebuffer.has_depth ? ctx->properties.depth_format : VK_FORMAT_UNDEFINED,
+        framebuffer.has_stencil ? ctx->properties.depth_stencil_format : VK_FORMAT_UNDEFINED);
     Handle handle = ctx->internal_shaders.emplace(internal_shader);
     handle.data = internal_shader.pipeline_count++;
     return handle;
@@ -909,11 +907,12 @@ ShaderModule VulkanBackend::create_shader_module(ShaderStage stage, std::string_
             shader_kind = shaderc_shader_kind::shaderc_glsl_fragment_shader;
             break;
         default:
-            TK_ASSERT(false, "No other shader stage supported");
+            TK_ASSERT(false, "Shader stage not supported");
+            std::unreachable();
     }
 
     shaderc::SpvCompilationResult spirv_module =
-        compiler.CompileGlslToSpv(shader_source.data(), shader_kind, ".", options);
+        compiler.CompileGlslToSpv(shader_source.data(), shader_kind, path.data(), options);
     if (spirv_module.GetCompilationStatus() != shaderc_compilation_status::shaderc_compilation_status_success) {
         TK_LOG_ERROR(
             "ERROR MESSAGE:\n{}\n\nCOMPILATION STATUS: {}",
@@ -954,6 +953,7 @@ ShaderModule VulkanBackend::create_shader_module(ShaderStage stage, std::string_
     return shader_module;
 }
 
+/*
 void VulkanBackend::reflect_shader(
     ShaderStage stage,
     std::vector<u32>& binary,
@@ -1031,7 +1031,7 @@ void VulkanBackend::reflect_shader(
             bindings.binding_counts[set_index]++;
         }
     }
-}
+}*/
 
 void VulkanBackend::prepare_swapchain_frame(Swapchain* swapchain) {
     VkResult result = vkAcquireNextImageKHR(
@@ -1088,11 +1088,87 @@ void VulkanBackend::submit_single_use_command_buffer(VkCommandBuffer cmd) {
 }
 
 FrameData* VulkanBackend::get_current_frame() {
-    return &m_frames.data[m_inFlightFrameIndex];
+    return &m_frames[m_inFlightFrameIndex];
 }
 
 CommandBuffers* VulkanBackend::get_current_command_buffers() {
     return &ctx->command_buffers[m_inFlightFrameIndex];
+}
+
+void VulkanBackend::transition_framebuffer_images(VkCommandBuffer cmd, InternalFramebuffer* framebuffer) {
+    VkImageMemoryBarrier* image_memory_barriers = m_frameAllocator->allocate_aligned<VkImageMemoryBarrier>(2);
+    u32 memory_barrier_count = 1;
+
+    VkImageMemoryBarrier& color_image_memory_barrier = image_memory_barriers[0];
+    color_image_memory_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    color_image_memory_barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    color_image_memory_barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    color_image_memory_barrier.srcQueueFamilyIndex = ctx->graphics_queue.family_index;
+    color_image_memory_barrier.dstQueueFamilyIndex = ctx->graphics_queue.family_index;
+    color_image_memory_barrier.subresourceRange.aspectMask = framebuffer->color_image->aspect_flags;
+    color_image_memory_barrier.subresourceRange.baseMipLevel = 0;
+    color_image_memory_barrier.subresourceRange.levelCount = 1;
+    color_image_memory_barrier.subresourceRange.baseArrayLayer = 0;
+    color_image_memory_barrier.subresourceRange.layerCount = framebuffer->color_image->image_views.count();
+
+    if (framebuffer->depth_stencil_image) {
+        memory_barrier_count++;
+
+        VkImageMemoryBarrier& depth_stencil_image_memory_barrier = image_memory_barriers[1];
+        depth_stencil_image_memory_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        depth_stencil_image_memory_barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        depth_stencil_image_memory_barrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+        depth_stencil_image_memory_barrier.srcQueueFamilyIndex = ctx->graphics_queue.family_index;
+        depth_stencil_image_memory_barrier.dstQueueFamilyIndex = ctx->graphics_queue.family_index;
+        depth_stencil_image_memory_barrier.subresourceRange.aspectMask = framebuffer->depth_stencil_image->aspect_flags;
+        depth_stencil_image_memory_barrier.subresourceRange.baseMipLevel = 0;
+        depth_stencil_image_memory_barrier.subresourceRange.levelCount = 1;
+        depth_stencil_image_memory_barrier.subresourceRange.baseArrayLayer = 0;
+        depth_stencil_image_memory_barrier.subresourceRange.layerCount = 1;
+
+        if (framebuffer->has_stencil) {
+            depth_stencil_image_memory_barrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        }
+    }
+
+    vkCmdPipelineBarrier(
+        cmd,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        0,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        memory_barrier_count,
+        image_memory_barriers);
+}
+
+void VulkanBackend::transition_swapchain_image(VkCommandBuffer cmd, Swapchain* swapchain) {
+    VkImageMemoryBarrier image_memory_barrier{};
+    image_memory_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    image_memory_barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    image_memory_barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    image_memory_barrier.srcQueueFamilyIndex = ctx->graphics_queue.family_index;
+    image_memory_barrier.dstQueueFamilyIndex = ctx->graphics_queue.family_index;
+    image_memory_barrier.image = swapchain_image(swapchain);
+    image_memory_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    image_memory_barrier.subresourceRange.baseMipLevel = 0;
+    image_memory_barrier.subresourceRange.levelCount = 1;
+    image_memory_barrier.subresourceRange.baseArrayLayer = 0;
+    image_memory_barrier.subresourceRange.layerCount = 1;
+
+    vkCmdPipelineBarrier(
+        cmd,
+        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+        0,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        1,
+        &image_memory_barrier);
 }
 
 void VulkanBackend::transition_image_layout(const TransitionLayoutConfig& config, InternalImage* image) {
@@ -1286,12 +1362,17 @@ void VulkanBackend::set_stencil_clear(u32 stencil_clear) {
     ctx->depth_stencil_clear.stencil = stencil_clear;
 }
 
+InternalShader* VulkanBackend::get_shader(Handle handle) {
+    TK_ASSERT(ctx->internal_shaders.contains(handle), "No shader associated with provided handle");
+    return &ctx->internal_shaders[handle];
+}
+
 void VulkanBackend::begin_rendering(VkCommandBuffer cmd, Handle framebuffer_handle, const Rect2D& a) {
     TK_ASSERT(
         ctx->internal_framebuffers.contains(framebuffer_handle), "No framebuffer associated with provided handle");
 
     InternalFramebuffer& framebuffer = ctx->internal_framebuffers[framebuffer_handle];
-    u64 total_attachment_count = framebuffer.images.size() + ((u8) framebuffer.has_present_attachment);
+    u64 total_attachment_count = framebuffer.color_image->image_views.count();
 
     VkRenderingAttachmentInfo rendering_attachment_info{};
     rendering_attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
@@ -1302,20 +1383,10 @@ void VulkanBackend::begin_rendering(VkCommandBuffer cmd, Handle framebuffer_hand
 
     VkRenderingAttachmentInfo* rendering_attachment_infos =
         m_frameAllocator->allocate_aligned<VkRenderingAttachmentInfo>(total_attachment_count);
-    VkImage* images = m_frameAllocator->allocate_aligned<VkImage>(total_attachment_count);
 
-    u32 start_index = 0;
-    if (framebuffer.has_present_attachment) {
-        images[0] = get_swapchain_image(framebuffer.swapchain_index);
-        rendering_attachment_infos[0] = rendering_attachment_info;
-        rendering_attachment_infos[0].imageView = get_swapchain_image_view(framebuffer.swapchain_index);
-        start_index = 1;
-    }
-
-    for (u32 i = start_index; i < total_attachment_count; i++) {
-        u32 index = i - start_index;
-        rendering_attachment_infos[index] = rendering_attachment_info;
-        rendering_attachment_infos[index].imageView = framebuffer.images[index].image_view;
+    for (u32 i = 0; i < total_attachment_count; i++) {
+        rendering_attachment_infos[i] = rendering_attachment_info;
+        rendering_attachment_infos[i].imageView = framebuffer.color_image->image_views[i];
     }
 
     VkCommandBuffer transition_layout_cmd = start_single_use_command_buffer();
@@ -1325,13 +1396,13 @@ void VulkanBackend::begin_rendering(VkCommandBuffer cmd, Handle framebuffer_hand
     transition_layout_config.src_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
     transition_layout_config.dst_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
     transition_image_layouts(
-        transition_layout_cmd, transition_layout_config, VK_IMAGE_ASPECT_COLOR_BIT, images, total_attachment_count);
+        transition_layout_cmd, transition_layout_config, VK_IMAGE_ASPECT_COLOR_BIT, &framebuffer.color_image->image, 1);
 
     VkRenderingInfo rendering_info{};
     rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
     rendering_info.layerCount = 1;
     rendering_info.renderArea = VkRect2D{ { a.pos.x, a.pos.y }, { a.size.x, a.size.y } };
-    rendering_info.colorAttachmentCount = framebuffer.formats.size();
+    rendering_info.colorAttachmentCount = framebuffer.color_image->image_views.count();
     rendering_info.pColorAttachments = rendering_attachment_infos;
 
     if (framebuffer.depth_stencil_image) {
@@ -1347,9 +1418,8 @@ void VulkanBackend::begin_rendering(VkCommandBuffer cmd, Handle framebuffer_hand
         transition_image_layout(transition_layout_cmd, transition_layout_config, framebuffer.depth_stencil_image.get());
 
         *depth_stencil_attachment = rendering_attachment_info;
-        depth_stencil_attachment->imageView = framebuffer.depth_stencil_image->image_view;
-        depth_stencil_attachment->clearValue = {};
-        depth_stencil_attachment->clearValue.depthStencil = { 1.0f, 0 };
+        depth_stencil_attachment->imageView = framebuffer.depth_stencil_image->image_views[0];
+        depth_stencil_attachment->clearValue.depthStencil = ctx->depth_stencil_clear;
 
         rendering_info.pDepthAttachment = depth_stencil_attachment;
         if (framebuffer.has_stencil) {
@@ -1372,21 +1442,37 @@ void VulkanBackend::end_rendering(VkCommandBuffer cmd, Handle framebuffer_handle
     vkCmdEndRendering(cmd);
 
     InternalFramebuffer& framebuffer = ctx->internal_framebuffers[framebuffer_handle];
-    if (framebuffer.has_present_attachment) {
-        TransitionLayoutConfig transition_layout_config{};
-        transition_layout_config.old_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        transition_layout_config.new_layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-        transition_layout_config.src_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        transition_layout_config.dst_stage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    Swapchain* swapchain = &ctx->swapchains[0];
 
-        VkCommandBuffer transition_layout_cmd = start_single_use_command_buffer();
-        transition_image_layout(
-            transition_layout_cmd,
-            transition_layout_config,
-            VK_IMAGE_ASPECT_COLOR_BIT,
-            get_swapchain_image(framebuffer.swapchain_index));
-        submit_single_use_command_buffer(transition_layout_cmd);
-    }
+    // TODO: make layer index be dynamic
+    VkImageCopy image_copy{};
+    image_copy.extent = framebuffer.color_image->extent;
+
+    // Framebuffer color image subresoruce range
+    image_copy.srcSubresource.baseArrayLayer = 0;
+    image_copy.srcSubresource.mipLevel = 1;
+    image_copy.srcSubresource.layerCount = 1;
+    image_copy.srcSubresource.aspectMask = framebuffer.color_image->aspect_flags;
+
+    // Swapchain image subresoruce range
+    image_copy.dstSubresource.baseArrayLayer = 0;
+    image_copy.dstSubresource.mipLevel = 1;
+    image_copy.dstSubresource.layerCount = 1;
+    image_copy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
+    image_copy.dstOffset = {};
+    image_copy.srcOffset = {};
+
+    vkCmdCopyImage(
+        cmd,
+        framebuffer.color_image->image,
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        swapchain_image(swapchain),
+        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        1,
+        &image_copy);
+
+    transition_swapchain_image(cmd, &ctx->swapchains[0]);
 }
 
 void VulkanBackend::bind_shader(VkCommandBuffer cmd, Shader const& shader) {
@@ -1426,6 +1512,16 @@ void VulkanBackend::draw_indexed(VkCommandBuffer cmd, u32 count) {
 
 void VulkanBackend::draw_instanced(VkCommandBuffer cmd, u32 index_count, u32 instance_count) {
     vkCmdDrawIndexed(cmd, index_count, instance_count, 0, 0, 0);
+}
+
+void VulkanBackend::push_constants(
+    VkCommandBuffer cmd,
+    VkPipelineLayout layout,
+    VkShaderStageFlags stage_flags,
+    u32 offset,
+    u32 size,
+    const void* data) {
+    vkCmdPushConstants(cmd, layout, stage_flags, offset, size, data);
 }
 
 void VulkanBackend::initialize_resources() {
@@ -1491,15 +1587,11 @@ void VulkanBackend::initialize_resources() {
 
         for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
             VK_CHECK(
-                vkCreateFence(
-                    ctx->device, &fence_create_info, ctx->allocation_callbacks, &m_frames.data[i].render_fence),
+                vkCreateFence(ctx->device, &fence_create_info, ctx->allocation_callbacks, &m_frames[i].render_fence),
                 "Could not create render fence");
             VK_CHECK(
                 vkCreateSemaphore(
-                    ctx->device,
-                    &semaphore_create_info,
-                    ctx->allocation_callbacks,
-                    &m_frames.data[i].present_semaphore),
+                    ctx->device, &semaphore_create_info, ctx->allocation_callbacks, &m_frames[i].present_semaphore),
                 "Could not create present semaphore");
         }
     }
@@ -1511,18 +1603,18 @@ void VulkanBackend::cleanup_resources() {
     // Cleanup frames
     {
         for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-            vkDestroyFence(ctx->device, m_frames.data[i].render_fence, ctx->allocation_callbacks);
-            vkDestroySemaphore(ctx->device, m_frames.data[i].present_semaphore, ctx->allocation_callbacks);
+            vkDestroyFence(ctx->device, m_frames[i].render_fence, ctx->allocation_callbacks);
+            vkDestroySemaphore(ctx->device, m_frames[i].present_semaphore, ctx->allocation_callbacks);
         }
     }
 
     // Cleanup command pools
     {
-        for (u32 i = 0; i < ctx->command_pools.size(); i++) {
+        for (u32 i = 0; i < ctx->command_pools.count(); i++) {
             vkDestroyCommandPool(ctx->device, ctx->command_pools[i], ctx->allocation_callbacks);
         }
 
-        for (u32 i = 0; i < ctx->extra_command_pools.size(); i++) {
+        for (u32 i = 0; i < ctx->extra_command_pools.count(); i++) {
             vkDestroyCommandPool(ctx->device, ctx->extra_command_pools[i], ctx->allocation_callbacks);
         }
     }
@@ -1612,10 +1704,10 @@ void VulkanBackend::copy_buffer_data(VkBuffer dst, VkBuffer src, u32 size, u32 d
 }
 
 Handle VulkanBackend::create_image(ColorFormat format, u32 width, u32 height) {
-    VkExtent3D extent = { width, height, 1 };
-
     InternalImage new_image = create_image_internal(
-        extent,
+        width,
+        height,
+        1,
         get_format(format),
         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -1671,22 +1763,27 @@ void VulkanBackend::destroy_buffer_internal(InternalBuffer* buffer) {
 }
 
 InternalImage VulkanBackend::create_image_internal(
-    VkExtent3D extent,
+    u32 width,
+    u32 height,
+    u32 layer_count,
     VkFormat format,
     VkImageUsageFlags usage,
     VkMemoryPropertyFlags memory_properties,
     VkImageAspectFlags aspect_flags) {
     InternalImage image{};
+
+    image.extent = VkExtent3D{ width, height, 1 };
     image.format = format;
     image.aspect_flags = aspect_flags;
+    image.image_views = BasicRef<VkImageView>(&m_allocator, layer_count);
 
     VkImageCreateInfo image_create_info{};
     image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     image_create_info.imageType = VK_IMAGE_TYPE_2D;
     image_create_info.format = format;
-    image_create_info.extent = extent;
+    image_create_info.extent = image.extent;
     image_create_info.mipLevels = 1;
-    image_create_info.arrayLayers = 1;
+    image_create_info.arrayLayers = layer_count;
     image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
     image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
     image_create_info.usage = usage;
@@ -1724,22 +1821,28 @@ InternalImage VulkanBackend::create_image_internal(
     image_view_create_info.subresourceRange.baseArrayLayer = 0;
     image_view_create_info.subresourceRange.layerCount = 1;
 
-    VK_CHECK(
-        vkCreateImageView(ctx->device, &image_view_create_info, ctx->allocation_callbacks, &image.image_view),
-        "Could not create image view");
+    for (u32 i = 0; i < layer_count; i++) {
+        image_view_create_info.subresourceRange.baseArrayLayer = i;
+        VK_CHECK(
+            vkCreateImageView(ctx->device, &image_view_create_info, ctx->allocation_callbacks, &image.image_views[i]),
+            "Could not create image view");
+    }
 
     return image;
 }
 
 void VulkanBackend::destroy_image_internal(InternalImage* image) {
     vkFreeMemory(ctx->device, image->memory, ctx->allocation_callbacks);
-    vkDestroyImageView(ctx->device, image->image_view, ctx->allocation_callbacks);
+    for (u32 i = 0; i < image->image_views.count(); i++) {
+        vkDestroyImageView(ctx->device, image->image_views[i], ctx->allocation_callbacks);
+    }
     vkDestroyImage(ctx->device, image->image, ctx->allocation_callbacks);
     *image = {};
 }
 
 u32 VulkanBackend::find_memory_type_index(u32 type_filter, VkMemoryPropertyFlags properties) {
     VkPhysicalDeviceMemoryProperties memory_properties;
+    VulkanContext* c = ctx;
     vkGetPhysicalDeviceMemoryProperties(ctx->physical_device, &memory_properties);
     for (u32 i = 0; i < memory_properties.memoryTypeCount; i++) {
         if ((type_filter & (1 << i)) && (memory_properties.memoryTypes[i].propertyFlags & properties) == properties) {
@@ -1760,6 +1863,8 @@ static VkFormat get_format(ColorFormat format_in) {
         default:
             TK_ASSERT(false, "TODO: add other formats");
     }
+
+    std::unreachable();
 };
 
 static VkFormat get_depth_format(VkPhysicalDevice device, b8 has_stencil) {

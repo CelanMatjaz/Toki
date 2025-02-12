@@ -4,6 +4,7 @@
 
 #include "core/base.h"
 #include "renderer/renderer_commands.h"
+#include "renderer/vulkan/vulkan_types.h"
 
 namespace toki {
 
@@ -27,6 +28,8 @@ public:
     virtual void bind_shader(Shader const& shader) override;
     virtual void bind_buffer(Buffer const& buffer) override;
 
+    virtual void push_constants(u32 offset, u32 size, const void* data) override;
+
     virtual void draw(u32 count) override;
     virtual void draw_indexed(u32 count) override;
     virtual void draw_instanced(u32 index_count, u32 instance_count) override;
@@ -35,6 +38,7 @@ private:
     VulkanBackend* m_backend;
     VkCommandBuffer m_commandBuffer;
     Handle m_framebufferHandle;
+    Handle m_shaderHandle;
 };
 
 }  // namespace renderer

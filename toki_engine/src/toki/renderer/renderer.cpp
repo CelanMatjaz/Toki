@@ -42,9 +42,10 @@ void Renderer::set_depth_clear(f32 depth) {
 Framebuffer Renderer::create_framebuffer(const FramebufferConfig& config) {
     Framebuffer new_framebuffer{};
     new_framebuffer.handle = backend->create_framebuffer(
-        config.color_formats,
-        config.attachment_dimensions,
-        config.has_present_attachment,
+        config.image_width,
+        config.image_height,
+        config.color_attachment_count,
+        config.color_format,
         config.has_depth_attachment,
         config.has_stencil_attachment);
     return new_framebuffer;

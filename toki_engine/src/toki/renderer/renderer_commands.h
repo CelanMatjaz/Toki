@@ -21,6 +21,8 @@ public:
     virtual void bind_shader(Shader const& shader) = 0;
     virtual void bind_buffer(Buffer const& buffer) = 0;
 
+    virtual void push_constants(u32 offset, u32 size, const void* data) = 0;
+
     virtual void draw(u32 count) = 0;
     virtual void draw_indexed(u32 count) = 0;
     virtual void draw_instanced(u32 index_count, u32 instance_count = 1) = 0;

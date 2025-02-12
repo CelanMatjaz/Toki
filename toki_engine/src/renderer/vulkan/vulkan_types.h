@@ -3,12 +3,9 @@
 #include <vulkan/vulkan.h>
 
 #include "core/base.h"
-#include "core/macros.h"
 #include "engine/window.h"
-#include "memory/allocators/basic_allocator.h"
 #include "memory/allocators/basic_ref.h"
 #include "renderer/renderer_types.h"
-#include "renderer/shader_uniforms.h"
 
 namespace toki {
 
@@ -49,28 +46,19 @@ struct ShaderModule {
     VkPipelineShaderStageCreateInfo shader_stage_create_info;
 };
 
-struct DescriptorBindings {
-    u32 binding_counts[MAX_DESCRIPTOR_SET_COUNT]{};
-    VkDescriptorSetLayoutBinding bindings[MAX_DESCRIPTOR_BINDING_COUNT][MAX_DESCRIPTOR_SET_COUNT]{};
-};
-
 struct PipelineResources {
     VkPipelineLayout pipeline_layout;
-    std::vector<ShaderBinary> binaries;
-    DescriptorBindings descriptor_bindings;
-    std::vector<VkPushConstantRange> push_constants;
+    VkPushConstantRange* push_constants;
+    VkDescriptorSetLayout* descriptor_set_layouts;
+    u32 push_constant_count;
+    u32 descriptor_layout_count;
 };
 
 struct FrameData {
     VkSemaphore present_semaphore;
     VkFence render_fence;
-
     VkCommandBuffer command_buffer;
     u32 recorded_command_buffer_count;
-};
-
-struct Frames {
-    FrameData data[MAX_FRAMES_IN_FLIGHT];
 };
 
 struct CommandBuffers {
