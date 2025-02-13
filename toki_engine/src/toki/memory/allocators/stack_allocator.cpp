@@ -4,7 +4,7 @@
 
 #include "core/assert.h"
 #include "core/base.h"
-#include "platform.h"
+#include "platform/platform.h"
 
 namespace toki {
 

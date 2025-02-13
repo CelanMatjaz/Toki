@@ -14,7 +14,8 @@
 #include "renderer/renderer.h"
 
 // Platform
-#include "platform.h"
+#include "platform/platform.h"
+#include "platform/platform_io.h"
 
 // Resources
 #include "resources/configs/shader_config_loader.h"

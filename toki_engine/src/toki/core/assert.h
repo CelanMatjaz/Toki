@@ -3,7 +3,7 @@
 #include <format>
 
 #include "core/core.h"
-#include "platform.h"
+#include "platform/platform.h"
 
 namespace toki {
 
@@ -20,11 +20,6 @@ namespace toki {
             std::format(message __VA_OPT__(, ) __VA_ARGS__)); \
         platform::debug_break();                              \
         std::unreachable();                                   \
-    }
-
-#define TK_ASSERT_ERROR(error)            \
-    if (toki::TkError r = error; error) { \
-        TK_ASSERT(false, "Error")         \
     }
 
 }  // namespace toki

@@ -4,7 +4,7 @@
 
 #include "core/assert.h"
 #include "core/base.h"
-#include "platform.h"
+#include "platform/platform.h"
 
 namespace toki {
 
@@ -100,10 +100,9 @@ private:
         // Return latest buffer pointer
         else {
             u64 allocation_size = size + sizeof(u64);
-            TK_ASSERT(
-                m_allocatedSize + allocation_size <= m_size, "New allocation would overflow allocated buffer");
+            TK_ASSERT(m_allocatedSize + allocation_size <= m_size, "New allocation would overflow allocated buffer");
             *reinterpret_cast<u64*>(m_nextFreeBufferPtr) = allocation_size;
-            m_allocatedSize += allocation_size;            
+            m_allocatedSize += allocation_size;
             void* return_ptr = reinterpret_cast<u64*>(m_nextFreeBufferPtr) + 1;
             m_nextFreeBufferPtr = reinterpret_cast<byte*>(m_nextFreeBufferPtr) + allocation_size;
             return return_ptr;

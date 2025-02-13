@@ -16,6 +16,7 @@ group "Toki"
 
 group "Misc"
     include "./toki_sandbox"
+    include "./sandbox"
 
 -- group "Examples"
 --     include "./examples"

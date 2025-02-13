@@ -159,8 +159,6 @@ void VulkanBackend::find_physical_device(VkSurfaceKHR surface) {
         }
     }
 
-    VkPhysicalDevice asd = ctx->physical_device;
-
     ctx->limits.max_framebuffer_width = device_properties.limits.maxFramebufferWidth;
     ctx->limits.max_framebuffer_height = device_properties.limits.maxFramebufferHeight;
     ctx->limits.max_push_constant_size = device_properties.limits.maxPushConstantsSize;
@@ -1842,7 +1840,6 @@ void VulkanBackend::destroy_image_internal(InternalImage* image) {
 
 u32 VulkanBackend::find_memory_type_index(u32 type_filter, VkMemoryPropertyFlags properties) {
     VkPhysicalDeviceMemoryProperties memory_properties;
-    VulkanContext* c = ctx;
     vkGetPhysicalDeviceMemoryProperties(ctx->physical_device, &memory_properties);
     for (u32 i = 0; i < memory_properties.memoryTypeCount; i++) {
         if ((type_filter & (1 << i)) && (memory_properties.memoryTypes[i].propertyFlags & properties) == properties) {

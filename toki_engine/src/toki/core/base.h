@@ -53,4 +53,8 @@ constexpr u64 Gigabytes(auto value) {
     return 1024 * Megabytes(value);
 }
 
+consteval u64 BIT(auto value) {
+    return 1 << value;
+}
+
 }  // namespace toki
