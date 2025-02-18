@@ -18,7 +18,7 @@ namespace toki {
             #condition,                                       \
             c,                                                \
             std::format(message __VA_OPT__(, ) __VA_ARGS__)); \
-        platform::debug_break();                              \
+        toki::platform::debug_break();                        \
         std::unreachable();                                   \
     }
 

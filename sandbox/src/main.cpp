@@ -1,14 +1,34 @@
+#include <ostream>
 #include <print>
 
-#include "platform/platform_io.h"
-#include "toki.h"
+#include "containers/dynamic_array.h"
+#include "core/base.h"
+#include "platform/platform_window.h"
 
-int main() {
-    using namespace toki::platform;
-    file_delete("test.txt");
-    std::println("exists {}", file_exists("test.txt"));
-    File _ = file_open("test.txt", (FileOpen_CreateNew | FileOpen_ReadWrite));
-    std::println("exists {}", file_exists("test.txt"));
+int tk_entry_point(int, char**) {
+    toki::platform::Window window = toki::platform::create_window("Test");
 
-    directory_create("test_dir/test_recursive");
+    {
+        toki::containers::DynamicArray<toki::u64> vec;
+        vec.resize(20);
+
+        for (toki::u32 i = 0; i < vec.get_capacity(); i++) {
+            std::print("{} ", vec[i]);
+        }
+    }
+
+    std::println();
+
+    {
+        toki::containers::DynamicArray<char> vec(20, 'A');
+        for (toki::u32 i = 0; i < vec.get_capacity(); i++) {
+            std::print("{} ", vec[i]);
+        }
+    }
+
+    while (true) {
+        toki::platform::poll_events();
+    }
+
+    return 0;
 }

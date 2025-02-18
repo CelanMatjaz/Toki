@@ -11,7 +11,15 @@ project "Engine"
         "%{wks.location}/vendor/free_type/include",
     }
 
-    add_files()
+    -- add_files()
+
+    files {
+        "src/toki/core/**.h",
+        "src/toki/platform/**.cpp",
+        "src/platform/**.cpp",
+        "src/tkpch.h",
+        "src/tkpch.cpp",
+    }
 
     set_target_and_object_dirs()
     configuration_configs()

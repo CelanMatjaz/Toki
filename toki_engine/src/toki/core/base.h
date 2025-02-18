@@ -41,20 +41,20 @@ struct Handle {
     u32 data;
 };
 
-constexpr u64 Kilobytes(auto value) {
+constexpr u64 Kilobytes(u64 value) {
     return 1024 * value;
 }
 
-constexpr u64 Megabytes(auto value) {
+constexpr u64 Megabytes(u64 value) {
     return 1024 * Kilobytes(value);
 }
 
-constexpr u64 Gigabytes(auto value) {
+constexpr u64 Gigabytes(u64 value) {
     return 1024 * Megabytes(value);
 }
 
-consteval u64 BIT(auto value) {
-    return 1 << value;
+consteval u64 BIT(u64 value) {
+    return static_cast<u64>(1) << value;
 }
 
 }  // namespace toki

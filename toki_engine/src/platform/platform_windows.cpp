@@ -20,7 +20,7 @@ void* allocate(u64 size) {
     return ptr;
 }
 
-void deallocate(void* ptr) {
+void free(void* ptr) {
     bool result = HeapFree(GetProcessHeap(), 0, ptr);
     TK_ASSERT(result != 0, "Error deallocating memory");
 }

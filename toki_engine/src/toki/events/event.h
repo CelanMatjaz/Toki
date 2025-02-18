@@ -48,7 +48,7 @@ union EventData {
 };
 
 class Event;
-using EventFunction = std::function<void(void* sender, void* receiver, Event&)>;
+using EventFunction = void (*)(void* sender, void* receiver, Event&);
 
 class Event {
 public:

@@ -3,26 +3,12 @@
 #include "toki/core/core.h"
 
 #if defined(TK_PLATFORM_WINDOWS)
-#include <windows.h>
+#include <Windows.h>
 #endif
 
 // std
 
-#include <array>
-#include <bitset>
-#include <chrono>
-#include <cstring>
-#include <filesystem>
-#include <format>
-#include <iostream>
 #include <print>
-#include <queue>
-#include <set>
-#include <span>
-#include <string_view>
-#include <unordered_map>
-#include <utility>
-#include <vector>
 
 // Libraries
 

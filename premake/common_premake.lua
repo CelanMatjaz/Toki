@@ -12,13 +12,13 @@ function build_options()
     architecture "x64"
 
     filter "action:vs*"
-    cppdialect "C++latest"
-    buildoptions { "/Zc:preprocessor", "/std:c++latest" }
-    flags { "MultiProcessorCompile" }
-    defines { "_CRT_SECURE_NO_WARNINGS", "_CRT_NONSTDC_NO_WARNINGS" }
+        cppdialect "C++latest"
+        buildoptions { "/Zc:preprocessor", "/std:c++latest" }
+        flags { "MultiProcessorCompile" }
+        defines { "_CRT_SECURE_NO_WARNINGS", "_CRT_NONSTDC_NO_WARNINGS" }
 
     filter "toolset:clang or toolset:gcc"
-    buildoptions "--std=c++23 -ftrivial-auto-var-init=pattern -Wall -Werror -Wextra -Wpedantic -Wunused"
+        buildoptions "--std=c++23 -ftrivial-auto-var-init=pattern -Wall -Werror -Wextra -Wpedantic -Wunused"
 
     filter {}
 end

@@ -19,7 +19,7 @@ enum LogLevel {
     Debug
 };
 
-constexpr std::string level_to_string(LogLevel level) {
+constexpr const char* level_to_string(LogLevel level) {
     switch (level) {
         case LogLevel::Info:
             return "INFO";
@@ -42,7 +42,8 @@ constexpr void log(LogLevel level, std::string_view fmt, Args&&... args) {
     auto now = std::chrono::system_clock::now();
     auto time = std::chrono::zoned_time{ currentZone, std::chrono::time_point_cast<std::chrono::microseconds>(now) };
     auto ymd = std::chrono::year_month_day(std::chrono::floor<std::chrono::days>(now));
-    std::cout << std::format("[{:%Y-%m-%d} {:%T}] [{}]: ", ymd, time, level_to_string(level)) << std::vformat(fmt, std::make_format_args(args...)) << '\n';
+    std::cout << std::format("[{:%Y-%m-%d} {:%T}] [{}]: ", ymd, time, level_to_string(level))
+              << std::vformat(fmt, std::make_format_args(args...)) << '\n';
 }
 
 #if defined(LOG_INFO_OFF) || defined(LOGGING_OFF)
