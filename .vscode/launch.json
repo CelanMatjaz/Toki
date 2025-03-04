@@ -10,6 +10,15 @@
             "args": ["${workspaceFolder}/toki_sandbox"],
             "program": "${workspaceFolder}/.bin/Linux-x86_64/Debug/Sandbox",
             "preLaunchTask": "Build Sandbox - Debug"
+        },
+        {
+            "name": "Launch Sandbox - De1",
+            "type": "lldb",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "args": ["${workspaceFolder}/toki_sandbox"],
+            "program": "${workspaceFolder}/.bin/Linux-x86_64/Debug/Sandbox",
+            "preLaunchTask": "Build Sandbox - Debug"
         }
     ]
 }

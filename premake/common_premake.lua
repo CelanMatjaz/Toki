@@ -25,22 +25,22 @@ end
 
 function configuration_configs_libs()
     filter "configurations:Debug"
-    defines { "TK_DEBUG" }
-    symbols "On"
-    runtime "Debug"
-    optimize "Debug"
+        defines { "TK_DEBUG" }
+        symbols "On"
+        runtime "Debug"
+        optimize "Debug"
 
     filter "configurations:Release"
-    defines { "TK_NDEBUG", "TK_RELEASE" }
-    symbols "Off"
-    runtime "Release"
-    optimize "On"
+        defines { "TK_NDEBUG", "TK_RELEASE" }
+        symbols "Off"
+        runtime "Release"
+        optimize "On"
 
     filter "configurations:Dist"
-    defines { "TK_NDEBUG", "TK_DIST" }
-    symbols "Off"
-    runtime "Release"
-    optimize "Speed"
+        defines { "TK_NDEBUG", "TK_DIST" }
+        symbols "Off"
+        runtime "Release"
+        optimize "Speed"
 
     filter {}
 end
@@ -49,37 +49,37 @@ function configuration_configs()
     defines { "TK_WINDOW_SYSTEM_GLFW" }
 
     filter "configurations:Debug"
-    defines { "TK_DEBUG" }
-    symbols "On"
-    runtime "Debug"
-    optimize "Debug"
-    staticruntime "Off"
+        defines { "TK_DEBUG" }
+        symbols "On"
+        runtime "Debug"
+        optimize "Debug"
+        staticruntime "On"
 
     filter { "configurations:Debug", "toolset:clang or toolset:gcc" }
-    linkoptions "-g"
+        linkoptions "-g"
 
     filter "configurations:Release"
-    defines { "TK_NDEBUG", "TK_RELEASE" }
-    symbols "Off"
-    runtime "Release"
-    optimize "On"
-    staticruntime "Off"
+        defines { "TK_NDEBUG", "TK_RELEASE" }
+        symbols "Off"
+        runtime "Release"
+        optimize "On"
+        staticruntime "Off"
 
     filter "configurations:Dist"
-    defines { "TK_NDEBUG", "TK_DIST" }
-    symbols "Off"
-    runtime "Release"
-    optimize "Speed"
-    staticruntime "Off"
+        defines { "TK_NDEBUG", "TK_DIST" }
+        symbols "Off"
+        runtime "Release"
+        optimize "Speed"
+        staticruntime "On"
 
     filter "platforms:Windows"
-    system "windows"
-    defines { "TK_PLATFORM_WINDOWS", "NOMINMAX" }
-    links { "user32", "gdi32", "shell32" }
+        system "windows"
+        defines { "TK_PLATFORM_WINDOWS", "NOMINMAX" }
+        links { "user32", "gdi32", "shell32" }
 
     filter "platforms:Linux"
-    system "linux"
-    defines { "TK_PLATFORM_LINUX" }
+        system "linux"
+        defines { "TK_PLATFORM_LINUX" }
 
     enablewarnings { "all" }
     fatalwarnings { "all" }
@@ -88,50 +88,82 @@ function configuration_configs()
 end
 
 function link_vulkan()
-    filter { "platforms:Windows", "configurations:Debug" }
-    links {
-        "spirv-cross-cored",
-        "spirv-cross-cppd",
-        "spirv-cross-glsld",
-        "spirv-cross-reflectd",
-        "shadercd",
-        "shaderc_combinedd"
-    }
+    --[[ filter { "platforms:Windows", "configurations:Debug" }
+        links {
+            "spirv-cross-cored",
+            "spirv-cross-cppd",
+            "spirv-cross-glsld",
+            "spirv-cross-reflectd",
+            "shadercd",
+            "shaderc_combinedd"
+        }
 
     filter { "platforms:Windows", "configurations:not Debug" }
-    links {
-        "spirv-cross-core",
-        "spirv-cross-cpp",
-        "spirv-cross-glsl",
-        "spirv-cross-reflect",
-        "shaderc",
-        "shaderc_combined"
-    }
+        links {
+            "spirv-cross-core",
+            "spirv-cross-cpp",
+            "spirv-cross-glsl",
+            "spirv-cross-reflect",
+            "shaderc",
+            "shaderc_combined"
+        }
 
     filter { "platforms:Linux" }
-    links {
-        "spirv-cross-core",
-        "spirv-cross-cpp",
-        "spirv-cross-glsl",
-        "spirv-cross-reflect",
-        "shaderc",
-        "shaderc_combined"
-    }
+        links {
+            "spirv-cross-core",
+            "spirv-cross-cpp",
+            "spirv-cross-glsl",
+            "spirv-cross-reflect",
+            "shaderc",
+            "shaderc_combined"
+        } ]]
 
     filter "platforms:Windows"
-    includedirs { path.join(VULKAN_SDK, "Include") }
-    libdirs { path.join(VULKAN_SDK, "Lib") }
-    links { "vulkan-1" }
+        includedirs { path.join(VULKAN_SDK, "Include") }
+        libdirs { path.join(VULKAN_SDK, "Lib") }
+        links { "vulkan-1" }
 
     filter "platforms:Linux"
-    includedirs { path.join(VULKAN_SDK, "include") }
-    libdirs { path.join(VULKAN_SDK, "lib") }
-    links { "vulkan" }
-    defines { "TK_X11" }
+        includedirs { path.join(VULKAN_SDK, "include") }
+        libdirs { path.join(VULKAN_SDK, "lib") }
+        links { "vulkan" }
+        defines { "TK_X11" }
 
     filter {}
 end
 
 function add_files()
     files { "src/**.h", "src/**.cpp" }
+end
+
+function toki_executable(name)
+    project(name)
+        kind "ConsoleApp"
+
+        filter { "configurations:Dist" }
+            kind "WindowedApp"
+
+        filter {}
+
+        links { "Core"--[[ , "Renderer" ]], "Engine" }
+        includedirs {
+            "%{wks.location}/toki_libs/core/include",
+            "%{wks.location}/toki_libs/engine/include",
+        }
+
+        add_files()
+
+        set_target_and_object_dirs()
+        configuration_configs()
+        build_options()
+        link_vulkan()
+
+        filter "system:windows"
+            links { "gdi32", "user32", "shell32", "kernel32", "pathcch", "Shlwapi.lib" }
+
+        filter "action:vs*"
+            debugargs "."
+
+
+        filter {}
 end

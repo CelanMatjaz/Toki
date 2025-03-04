@@ -9,14 +9,13 @@ workspace "Toki"
 startproject "Sandbox"
 
 group "Dependencies"
-    include "./vendor"
+    -- include "./vendor"
 
 group "Toki"
-    include "./toki_engine"
+    include "./toki_libs"
 
 group "Misc"
-    include "./toki_sandbox"
-    include "./sandbox"
+    include "./toki_executables"
 
 -- group "Examples"
---     include "./examples"
+--     include "./toki_examples"
