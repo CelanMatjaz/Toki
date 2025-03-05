@@ -12,4 +12,4 @@ premake5 export-compile-commands --cc="$COMPILER" --os=linux > /dev/null
 cp "compile_commands/$CONFIG_LOWER_CASE.json" compile_commands.json > /dev/null
 premake5 gmake2 "--cc=$COMPILER" "--os=$PLATFORM_LOWER_CASE"
 # make Sandbox -j$(($(nproc) - 1)) "config=$CONFIG_LOWER_CASE"
-make Sandbox "config=$CONFIG_LOWER_CASE"
+make Sandbox2 "config=$CONFIG_LOWER_CASE"

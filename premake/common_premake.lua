@@ -161,6 +161,9 @@ function toki_executable(name)
         filter "system:windows"
             links { "gdi32", "user32", "shell32", "kernel32", "pathcch", "Shlwapi.lib" }
 
+        filter "system:linux"
+            links { "wayland-client" }
+
         filter "action:vs*"
             debugargs "."
 

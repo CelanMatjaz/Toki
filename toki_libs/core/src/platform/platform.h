@@ -4,9 +4,13 @@
 #include "../core/core.h"
 
 #if defined(TK_PLATFORM_WINDOWS)
-#include "Windows.h"
 
+#include <Windows.h>
 #define TK_WIN32_WINDOW_CLASS_NAME "TokiEngineWindowClass"
+
+#elif defined(TK_PLATFORM_LINUX)
+
+#include <wayland-client.h>
 
 #endif
 
@@ -20,7 +24,7 @@ using PATH_TYPE = const char*;
 
 union NATIVE_HANDLE_TYPE {
     void* ptr;
-    u64 u64;
+    i64 i64;
 
 #if defined(TK_PLATFORM_WINDOWS)
     operator HWND() {
@@ -32,6 +36,10 @@ union NATIVE_HANDLE_TYPE {
 #if defined(TK_PLATFORM_WINDOWS)
 void init_win32(HINSTANCE instance, LRESULT (*window_proc)(HWND handle, u32 msg, WPARAM w_param, LPARAM l_param));
 inline HINSTANCE win32_instance;
+#elif defined(TK_PLATFORM_LINUX)
+void initialize_wayland();
+void shutdown_wayland();
+inline wl_display* wayland_display{};
 #endif
 
 u64 get_time_microseconds();
@@ -56,7 +64,7 @@ public:
     };
 
     Stream() = delete;
-    Stream(const char* path, u32 flags);
+    Stream(PATH_TYPE path, u32 flags);
     ~Stream();
 
     DELETE_COPY(Stream);
@@ -73,18 +81,18 @@ public:
     }
 
     void seek(STREAM_OFFSET_TYPE offset);
-    STREAM_OFFSET_TYPE tell() const;
+    STREAM_OFFSET_TYPE tell();
     void close();
 
     void swap(Stream&& other) {
-        _offset = other._offset;
-        _native_handle = other._native_handle;
-        other._native_handle.u64 = 0;
+        m_Offset = other.m_Offset;
+        m_NativeHandle = other.m_NativeHandle;
+        other.m_NativeHandle.i64 = 0;
     }
 
 private:
-    STREAM_OFFSET_TYPE _offset{0};
-    NATIVE_HANDLE_TYPE _native_handle{};
+    STREAM_OFFSET_TYPE m_Offset{ 0 };
+    NATIVE_HANDLE_TYPE m_NativeHandle{};
 };
 
 NATIVE_HANDLE_TYPE window_create(const char* title, u32 width, u32 height);
