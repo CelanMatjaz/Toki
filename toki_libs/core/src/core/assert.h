@@ -16,11 +16,13 @@ namespace toki {
         toki::platform::debug_break();                        \
     }
 
-#if defined(TK_PLATFORM_WINDOWS)
 inline void print_error_code() {
+#if defined(TK_PLATFORM_WINDOWS)
     printf("Platform specific error code: %lu", GetLastError());
-}
+#else
+
 #endif
+}
 
 // Used to print platform specific error code
 #define TK_PLATFORM_ASSERT(condition, message, ...)           \

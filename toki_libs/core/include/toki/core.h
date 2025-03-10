@@ -16,6 +16,8 @@
 
 // Platform
 #include "../../src/platform/platform.h"
+#include "../../src/platform/platform_filesystem.h"
+#include "../../src/platform/platform_window.h"
 
 // Math
 #include "../../src/math/math.h"

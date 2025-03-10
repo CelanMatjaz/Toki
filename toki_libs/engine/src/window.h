@@ -9,7 +9,7 @@ namespace toki {
 constexpr u32 MAX_ENGINE_WINDOW_COUNT = 1;
 
 #if defined(TK_PLATFORM_WINDOWS)
-LRESULT toki_window_proc(HWND handle, u32 msg, WPARAM w_param, LPARAM l_param);
+LRESULT window_proc(HWND handle, u32 msg, WPARAM w_param, LPARAM l_param);
 #endif
 
 struct EventHandler {

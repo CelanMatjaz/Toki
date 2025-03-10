@@ -4,9 +4,8 @@
 
 #include "window.h"
 
-#if defined(TK_PLATFORM_WINDOWS)
 
-#if defined(TK_DIST)
+#if defined(TK_DIST) && defined(TK_PLATFORM_WINDOWS)
 int APIENTRY WinMain(
     HINSTANCE instance,
     [[maybe_unused]] HINSTANCE prev_instance,
@@ -19,8 +18,17 @@ int main(int argc, char** argv) {
     HINSTANCE instance{};
 #endif
 
-    toki::platform::init_win32(instance, toki::toki_window_proc);
+#if defined(TK_PLATFORM_WINDOWS)
+    toki::platform::window_system_init window_init{};
+    window_init.instance = instance;
+    window_init.window_proc = toki::window_proc;
+
+    toki::platform::window_system_initialize(window_init);
+#else
+    toki::platform::window_system_initialize();    
 #endif
 
-    return tk_entry_point(argc, argv);
+    auto result = tk_entry_point(argc, argv);
+    toki::platform::window_system_shutdown();
+    return result;
 }

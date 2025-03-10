@@ -5,13 +5,13 @@
 namespace toki {
 
 template <typename T1, typename T2>
-constexpr bool isSameValue = false;
+constexpr bool IsSameValue = false;
 
 template <typename T>
-constexpr bool isSameValue<T, T> = true;
+constexpr bool IsSameValue<T, T> = true;
 
 template <typename T1, typename T2>
-concept SameAsConcept = isSameValue<T1, T2>;
+concept SameAsConcept = IsSameValue<T1, T2>;
 
 template <typename T>
 concept AllocatorConcept = requires(T a, u64 size, void* free_ptr) {

@@ -79,7 +79,7 @@ function configuration_configs()
 
     filter "platforms:Linux"
         system "linux"
-        defines { "TK_PLATFORM_LINUX" }
+        defines { "TK_PLATFORM_LINUX", "TK_WINDOW_SYSTEM_WAYLAND" }
 
     enablewarnings { "all" }
     fatalwarnings { "all" }

@@ -101,24 +101,13 @@ enum class FrontFace : u8 {
     Clockwise,
 };
 
-struct Framebuffer {
-    Handle handle;
-};
+struct Framebuffer {};
 
-struct Buffer {
-    BufferType type;
-    u32 size;
-    Handle handle;
-};
+struct Buffer {};
 
-struct Texture {
-    Handle handle;
-    u32 width, height;
-};
+struct Texture {};
 
-struct Shader {
-    Handle handle;
-};
+struct Shader {};
 
 struct FramebufferConfig {
     ColorFormat color_format;

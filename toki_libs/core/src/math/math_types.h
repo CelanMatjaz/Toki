@@ -4,6 +4,11 @@
 
 namespace toki {
 
+template <typename T, int N>
+struct Data {
+    T data[N]{};
+};
+
 struct Vec2 {
     f32 x, y;
 
@@ -21,12 +26,17 @@ struct Vec3 {
 };
 
 struct Vec4 {
-    f32 x, y, z, w;
+    union {
+        f32 x, y, z, w;
+    };
+    union {
+        f32 r, g, b, a;
+    };
 };
 
-struct Rect2d {
+struct Rect2D {
     Vec2 pos;
     Vec2 size;
-}
+};
 
 }  // namespace toki

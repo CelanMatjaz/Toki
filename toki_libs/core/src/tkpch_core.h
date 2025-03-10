@@ -1,6 +1,8 @@
 #pragma once
 
+#include <concepts>
 #include <cstdio>
+#include <type_traits>
 
 #if defined(TK_PLATFORM_WINDOWS)
 #include "Windows.h"
@@ -21,3 +23,5 @@
 
 // Platform
 #include "platform/platform.h"
+#include "platform/platform_filesystem.h"
+#include "platform/platform_window.h"

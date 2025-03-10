@@ -27,7 +27,7 @@ void Window::handle_events(EventHandler& handler) {
     }
 }
 
-LRESULT toki_window_proc(HWND handle, u32 msg, WPARAM w_param, LPARAM l_param) {
+LRESULT window_proc(HWND handle, u32 msg, WPARAM w_param, LPARAM l_param) {
     switch (msg) {
         case WM_CLOSE: {
             PostQuitMessage(0);

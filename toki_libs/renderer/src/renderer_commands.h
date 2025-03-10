@@ -6,7 +6,7 @@ namespace toki {
 
 class RendererCommands {
 public:
-    virtual void begin_rendering(const Framebuffer* framebuffer, const Rect2d& render_area) = 0;
+    virtual void begin_rendering(const Framebuffer* framebuffer, const Rect2D& render_area) = 0;
     virtual void end_rendering() = 0;
 
     virtual void set_viewport(const Rect2D& rect) = 0;

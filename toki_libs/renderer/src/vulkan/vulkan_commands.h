@@ -3,7 +3,7 @@
 #include <toki/core.h>
 #include <vulkan/vulkan.h>
 
-#include "renderer/renderer_commands.h"
+#include "../renderer_commands.h"
 #include "vulkan_types.h"
 
 namespace toki {
