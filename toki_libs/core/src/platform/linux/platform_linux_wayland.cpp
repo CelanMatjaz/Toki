@@ -1,4 +1,4 @@
-#include "platform_linux_wayland.h"
+#include "../platform_window.h"
 
 #if defined(TK_PLATFORM_LINUX) && defined(TK_WINDOW_SYSTEM_WAYLAND)
 
@@ -11,7 +11,16 @@ namespace toki {
 
 namespace platform {
 
-void window_system_initialize() {
+struct wayland_data {
+    wl_display* display{};
+    wl_registry* registry{};
+    wl_compositor* compositor{};
+    wl_surface* surface{};
+};
+
+static wayland_data wayland_data{};
+
+void window_system_initialize(const window_system_init&) {
     wayland_data.display = wl_display_connect(0);
     TK_ASSERT(wayland_data.display != nullptr, "Wayland display was not initialized");
 
@@ -20,17 +29,17 @@ void window_system_initialize() {
 }
 
 void window_system_shutdown() {
-    TK_ASSERT(wayland_data.display != nullptr, "Cannot shutdown uninitialized wayland display");
-    wl_display_disconnect(wayland_data.display);
-
     wayland_data = {};
 }
 
-NATIVE_HANDLE_TYPE window_create(const char* title, u32 width, u32 height) {
+NATIVE_HANDLE_TYPE window_create(
+    [[maybe_unused]] const char* title, [[maybe_unused]] u32 width, [[maybe_unused]] u32 height) {
     return NATIVE_HANDLE_TYPE{ .ptr = nullptr };
 }
 
-void window_destroy(NATIVE_HANDLE_TYPE handle) {}
+void window_destroy(NATIVE_HANDLE_TYPE handle) {
+    auto _ = handle;
+}
 
 }  // namespace platform
 

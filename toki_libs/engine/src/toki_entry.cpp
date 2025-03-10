@@ -4,7 +4,6 @@
 
 #include "window.h"
 
-
 #if defined(TK_DIST) && defined(TK_PLATFORM_WINDOWS)
 int APIENTRY WinMain(
     HINSTANCE instance,
@@ -15,10 +14,10 @@ int APIENTRY WinMain(
     char** argv = __argv;
 #else
 int main(int argc, char** argv) {
-    HINSTANCE instance{};
 #endif
 
 #if defined(TK_PLATFORM_WINDOWS)
+    HINSTANCE instance{};
     toki::platform::window_system_init window_init{};
     window_init.instance = instance;
     window_init.window_proc = toki::window_proc;

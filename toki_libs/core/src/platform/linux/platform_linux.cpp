@@ -54,13 +54,13 @@ template <typename... Args>
 constexpr void print(const char* fmt, Args&&... args) {
     u32 total_length = strlen(fmt);
 
-    ([&](auto&& arg) {
-        if constexpr (isSameValue<decltype(arg), int>) {
-        }
-
-        else {
-        }
-    }(args)...);
+    // ([&](auto&& arg) {
+    //     if constexpr (isSameValue<decltype(arg), int>) {
+    //     }
+    //
+    //     else {
+    //     }
+    // }(args)...);
 }
 
 }  // namespace platform

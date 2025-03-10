@@ -1,13 +1,27 @@
 #pragma once
 
-#include <utility>
-
-#include "core/assert.h"
-#include "core/base.h"
-#include "core/macros.h"
-#include "platform/platform.h"
+#include "../core/types.h"
+#include "../platform/platform.h"
 
 namespace toki {
+
+constexpr u32 INVALID_HANDLE_ID = 0;
+
+struct Handle {
+    Handle();
+    Handle(u32 index): index(index), id(platform::get_time_milliseconds()) {}
+
+    inline operator bool() {
+        return id != INVALID_HANDLE_ID;
+    }
+
+    inline bool valid() {
+        return this->operator bool();
+    }
+
+    u32 index{ 0 };
+    u32 id{ INVALID_HANDLE_ID };
+};
 
 struct HandlePtr {
     Handle handle;
@@ -24,7 +38,7 @@ public:
 
     ~HandleMap() {
         if (m_data.ptr != nullptr) {
-deallocate(m_data.ptr);
+            deallocate(m_data.ptr);
         }
     }
 

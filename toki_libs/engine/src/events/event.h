@@ -29,7 +29,7 @@ enum class EventType {
 };
 
 union EventData {
-    u64 u64;
+    u64 value;
 
     struct {
         u8 key_code;
