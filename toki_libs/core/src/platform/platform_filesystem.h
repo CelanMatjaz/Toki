@@ -52,7 +52,7 @@ public:
 
 private:
     STREAM_OFFSET_TYPE m_Offset{ 0 };
-    NATIVE_HANDLE_TYPE m_NativeHandle{};
+    NativeWindowHandle m_NativeHandle{};
 };
 
 }  // namespace platform

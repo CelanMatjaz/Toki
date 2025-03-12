@@ -1,9 +1,6 @@
 #pragma once
 
-#include <cmath>
-
-#include "memory/allocators/basic_ref.h"
-#include "renderer/vulkan/vulkan_types.h"
+#include "vulkan_types.h"
 
 namespace toki {
 
@@ -43,7 +40,6 @@ struct InternalShader {
 };
 
 struct InternalWindowData {
-    Window* window;
     Swapchain swapchain;
 };
 

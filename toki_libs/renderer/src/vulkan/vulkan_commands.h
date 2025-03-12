@@ -4,7 +4,6 @@
 #include <vulkan/vulkan.h>
 
 #include "../renderer_commands.h"
-#include "vulkan_types.h"
 
 namespace toki {
 
@@ -12,12 +11,12 @@ namespace renderer {
 
 class VulkanBackend;
 
-class VulkanCommands : public RendererCommands {
+class VulkanCommands : public Commands {
 public:
     VulkanCommands() = delete;
     VulkanCommands(VulkanBackend* backend);
 
-    virtual void begin_rendering(const Framebuffer* framebuffer, const Rect2D& render_area) override;
+    virtual void begin_rendering(const Framebuffer& framebuffer, const Rect2D& render_area) override;
     virtual void end_rendering() override;
 
     virtual void set_viewport(const Rect2D& rect) override;
@@ -25,8 +24,9 @@ public:
     virtual void set_scissor(const Rect2D& rect) override;
     virtual void reset_scissor() override;
 
-    virtual void bind_shader(Shader const& shader) override;
-    virtual void bind_buffer(Buffer const& buffer) override;
+    virtual void bind_shader(const Shader& shader) override;
+    virtual void bind_buffer(const Buffer& buffer) override;
+    virtual void bind_texture(const Texture& buffer) override;
 
     virtual void push_constants(u32 offset, u32 size, const void* data) override;
 

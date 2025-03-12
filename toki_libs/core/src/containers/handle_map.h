@@ -2,9 +2,9 @@
 
 #include "../core/assert.h"
 #include "../core/common.h"
+#include "../core/logging.h"
 #include "../core/types.h"
 #include "../platform/platform.h"
-#include "../core/logging.h"
 
 namespace toki {
 
@@ -31,11 +31,6 @@ struct Handle {
     u32 id{ INVALID_HANDLE_ID };
 };
 
-struct HandlePtr {
-    Handle handle;
-    void* ptr;
-};
-
 template <typename ValueType>
 class HandleMap {
 public:
@@ -44,20 +39,23 @@ public:
         mElementCapacity(element_count) {
         u32 free_list_size = free_list_element_count * sizeof(u32);
         u32 version_list_size = element_count * sizeof(u32);
+        u32 skip_field_size = element_count * sizeof(u32);
         u32 element_list_size = (element_count + 1) * sizeof(ValueType);
 
-        u32 total_size = free_list_size + version_list_size + element_list_size;
+        u32 total_size = free_list_size + skip_field_size + version_list_size + element_list_size;
 
         void* ptr = allocator.allocate(total_size);
         mFreeList = reinterpret_cast<u32*>(ptr);
         mVersionList = reinterpret_cast<u32*>(mFreeList + free_list_element_count);
-        mData = reinterpret_cast<ValueType*>(mVersionList + element_count) + 1;
+        mSkipField = reinterpret_cast<u32*>(mVersionList + free_list_element_count);
+        mData = reinterpret_cast<ValueType*>(mSkipField + element_count) + 1;
     }
 
     ~HandleMap() {}
 
     u32* mFreeList{};
     u32* mVersionList{};
+    u32* mSkipField{};
     ValueType* mData{};
     u32 mFreeListSize{};
     u32 mElementCapacity{};

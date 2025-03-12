@@ -5,13 +5,32 @@
 namespace toki {
 
 template <typename T1, typename T2>
-constexpr bool IsSameValue = false;
+constexpr b8 IsSameValue = false;
 
 template <typename T>
-constexpr bool IsSameValue<T, T> = true;
+constexpr b8 IsSameValue<T, T> = true;
 
 template <typename T1, typename T2>
 concept SameAsConcept = IsSameValue<T1, T2>;
+
+template <typename>
+constexpr b8 IsIntegral = false;
+
+#define IS_INTEGRAL(type) \
+    template <>           \
+    constexpr b8 IsIntegral<type> = true;
+
+IS_INTEGRAL(b8)
+IS_INTEGRAL(i8)
+IS_INTEGRAL(u8)
+IS_INTEGRAL(i16)
+IS_INTEGRAL(u16)
+IS_INTEGRAL(i32)
+IS_INTEGRAL(u32)
+IS_INTEGRAL(i64)
+IS_INTEGRAL(u64)
+
+#undef IS_INTEGRAL
 
 template <typename T>
 concept AllocatorConcept = requires(T a, u64 size, void* free_ptr) {

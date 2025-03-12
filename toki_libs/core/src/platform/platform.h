@@ -12,7 +12,7 @@ namespace platform {
 
 using PATH_TYPE = const char*;
 
-union NATIVE_HANDLE_TYPE {
+union NativeWindowHandle {
     void* ptr;
     toki::i64 i64;
 

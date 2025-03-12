@@ -1,7 +1,8 @@
 #include "vulkan_commands.h"
 
-#include "renderer/vulkan/vulkan_backend.h"
-#include "vulkan/vulkan_core.h"
+#include <vulkan/vulkan.h>
+
+#include "vulkan_backend.h"
 
 namespace toki {
 

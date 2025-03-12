@@ -26,7 +26,7 @@ void window_system_initialize(const window_system_init& init) {
 
 void window_system_shutdown() {}
 
-NATIVE_HANDLE_TYPE window_create(const char* title, u32 width, u32 height) {
+NativeWindowHandle window_create(const char* title, u32 width, u32 height) {
     HWND handle = CreateWindowA(
         TK_WIN32_WINDOW_CLASS_NAME,
         title,
@@ -42,10 +42,10 @@ NATIVE_HANDLE_TYPE window_create(const char* title, u32 width, u32 height) {
 
     TK_PLATFORM_ASSERT(handle != 0, "Window was not created");
 
-    return NATIVE_HANDLE_TYPE{ .ptr = handle };
+    return NativeWindowHandle{ .ptr = handle };
 }
 
-void window_destroy(NATIVE_HANDLE_TYPE handle) {
+void window_destroy(NativeWindowHandle handle) {
     DestroyWindow(handle);
 }
 

@@ -4,6 +4,15 @@
 
 namespace toki {
 
+struct RendererObject {
+    Handle handle;
+};
+
+struct Framebuffer : RendererObject {};
+struct Buffer : RendererObject {};
+struct Texture : RendererObject {};
+struct Shader : RendererObject {};
+
 enum class ColorFormat : u16 {
     None,
     R8,
@@ -100,14 +109,6 @@ enum class FrontFace : u8 {
     CounterClockwise,
     Clockwise,
 };
-
-struct Framebuffer {};
-
-struct Buffer {};
-
-struct Texture {};
-
-struct Shader {};
 
 struct FramebufferConfig {
     ColorFormat color_format;

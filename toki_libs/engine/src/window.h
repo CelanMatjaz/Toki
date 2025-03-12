@@ -33,7 +33,7 @@ public:
     }
 
 private:
-    platform::NATIVE_HANDLE_TYPE m_native_handle;
+    platform::NativeWindowHandle m_native_handle;
     b32 m_should_close{ false };
 };
 

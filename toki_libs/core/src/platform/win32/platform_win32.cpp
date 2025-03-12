@@ -43,8 +43,6 @@ u64 get_time_milliseconds() {
     return get_time() / 10000ULL;
 }
 
-extern HINSTANCE win32_instance;
-
 }  // namespace platform
 
 }  // namespace toki

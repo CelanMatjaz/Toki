@@ -21,9 +21,9 @@ void window_system_initialize(const window_system_init& = {});
 
 void window_system_shutdown();
 
-NATIVE_HANDLE_TYPE window_create(const char* title, u32 width, u32 height);
+NativeWindowHandle window_create(const char* title, u32 width, u32 height);
 
-void window_destroy(NATIVE_HANDLE_TYPE handle);
+void window_destroy(NativeWindowHandle handle);
 
 }  // namespace platform
 

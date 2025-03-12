@@ -1,11 +1,9 @@
 #pragma once
 
+#include <toki/core.h>
 #include <vulkan/vulkan.h>
 
-#include "core/base.h"
-#include "engine/window.h"
-#include "memory/allocators/basic_ref.h"
-#include "renderer/renderer_types.h"
+#include "renderer_types.h"
 
 namespace toki {
 
@@ -70,7 +68,6 @@ struct Swapchain {
     VkSwapchainKHR swapchain;
     VkSurfaceKHR surface;
     VkExtent2D extent;
-    Window* window;
 
     VkSurfaceFormatKHR surface_format;
     VkSemaphore image_available_semaphores[MAX_FRAMES_IN_FLIGHT];

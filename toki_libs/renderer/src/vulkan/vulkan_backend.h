@@ -1,14 +1,11 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
 #include <toki/core.h>
+#include <vulkan/vulkan.h>
 
 #include "vulkan_commands.h"
+#include "vulkan_internal_types.h"
 #include "vulkan_types.h"
-#include "renderer/vulkan/vulkan_commands.h"
-#include "renderer/vulkan/vulkan_internal_types.h"
-#include "renderer/vulkan/vulkan_types.h"
-#include "resources/configs/shader_config_loader.h"
 
 namespace toki {
 
@@ -23,10 +20,10 @@ struct VulkanContext {
     Limits limits;
     DeviceProperties properties;
 
-    containers::HandleMap<InternalBuffer> internal_buffers;
-    containers::HandleMap<InternalImage> internal_images;
-    containers::HandleMap<InternalShader> internal_shaders;
-    containers::HandleMap<InternalFramebuffer> internal_framebuffers;
+    HandleMap<InternalBuffer> internal_buffers;
+    HandleMap<InternalImage> internal_images;
+    HandleMap<InternalShader> internal_shaders;
+    HandleMap<InternalFramebuffer> internal_framebuffers;
 
     Swapchain swapchains[MAX_SWAPCHAIN_COUNT];
 
@@ -51,7 +48,7 @@ public:
     VulkanBackend();
     ~VulkanBackend();
 
-    void create_device(Window* window);
+    void create_device();
 
     void create_swapchain(Window* window);
     void destroy_swapchain(Handle& window_data_handle);
@@ -176,7 +173,7 @@ private:
     DynamicAllocator m_allocator{ Megabytes(64) };            // Allocate 64 megabytes for long lived allocations
     StackAllocator m_tempAllocator{ Megabytes(10) };          // Allocate 10 megabytess for temporary allocations
     DoubleBufferAllocator m_frameAllocator{ Megabytes(20) };  // Allocate 2 * 20 megabytes for frame allocations
-    BasicRef<VulkanContext> m_context;
+    BasicRef<VulkanContext> mContext;
     FrameData m_frames[MAX_FRAMES_IN_FLIGHT];
     u32 m_inFlightFrameIndex{};
 };

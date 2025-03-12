@@ -9,10 +9,11 @@
 #include "../../src/memory/allocators/double_bump_allocator.h"
 
 // Containers
+#include "../../src/containers/basic_ref.h"
 #include "../../src/containers/dynamic_array.h"
+#include "../../src/containers/handle_map.h"
 #include "../../src/containers/static_array.h"
 // #include "../../src/containers/hash_map.h"
-// #include "../../src/containers/handle_map.h"
 
 // Platform
 #include "../../src/platform/platform.h"

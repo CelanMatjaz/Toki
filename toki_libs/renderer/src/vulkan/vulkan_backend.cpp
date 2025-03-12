@@ -1,18 +1,11 @@
 #include "vulkan_backend.h"
 
-#include <GLFW/glfw3.h>
+#include <toki/core.h>
 #include <vulkan/vulkan.h>
 
-#include <algorithm>
-#include <cstring>
 #include <shaderc/shaderc.hpp>
 #include <spirv_cross/spirv_cross.hpp>
-#include <utility>
 
-#include "core/assert.h"
-#include "core/base.h"
-#include "core/logging.h"
-#include "memory/allocators/basic_ref.h"
 #include "renderer/vulkan/platform/vulkan_platform.h"
 #include "renderer/vulkan/vulkan_types.h"
 #include "resources/configs/shader_config_loader.h"
@@ -23,14 +16,14 @@ namespace toki {
 
 namespace renderer {
 
-#define ctx m_context
+#define ctx mContext
 #define swapchain_image(swapchain) swapchain->images[swapchain->image_index]
 
-VulkanBackend::VulkanBackend(): m_context(&m_allocator) {
-    ctx->internal_buffers = { MAX_ALLOCATED_BUFFER_COUNT };
-    ctx->internal_images = { MAX_ALLOCATED_IMAGE_COUNT };
-    ctx->internal_shaders = { MAX_SHADER_COUNT };
-    ctx->internal_framebuffers = { MAX_RENDER_PASS_COUNT };
+VulkanBackend::VulkanBackend(): ctx(&m_allocator) {
+    ctx->internal_buffers = BasicRef{ m_allocator, MAX_ALLOCATED_BUFFER_COUNT };
+    ctx->internal_images = BasicRef{ m_allocator, MAX_ALLOCATED_IMAGE_COUNT };
+    ctx->internal_shaders = BasicRef{ m_allocator, MAX_SHADER_COUNT };
+    ctx->internal_framebuffers = BasicRef{ m_allocator, MAX_RENDER_PASS_COUNT };
     create_instance();
 }
 
@@ -189,7 +182,7 @@ void VulkanBackend::find_physical_device(VkSurfaceKHR surface) {
     TK_ASSERT(ctx->graphics_queue.family_index != 1, "No queue family that supports graphics found");
 }
 
-void VulkanBackend::create_device(Window* window) {
+void VulkanBackend::create_device() {
     VkSurfaceKHR surface = renderer::create_surface(ctx->instance, ctx->allocation_callbacks, window);
 
     find_physical_device(surface);

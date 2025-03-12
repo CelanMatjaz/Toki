@@ -1,8 +1,10 @@
-#include "renderer.h"
+#include "renderer_frontend.h"
 
-#include "renderer/vulkan/vulkan_backend.h"
+#include "vulkan/vulkan_backend.h"
 
 namespace toki {
+
+namespace renderer {
 
 // QoL macro
 #define backend reinterpret_cast<renderer::VulkanBackend*>(m_backend)
@@ -98,5 +100,7 @@ void RendererFrontend::wait_for_resources() {
 }
 
 #undef backend
+
+}  // namespace renderer
 
 }  // namespace toki
