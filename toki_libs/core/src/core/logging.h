@@ -16,7 +16,8 @@ enum LogLevel {
     Warn,
     Error,
     Fatal,
-    Debug
+    Debug,
+    Trace
 };
 
 constexpr const char* level_to_string(LogLevel level) {
@@ -31,6 +32,8 @@ constexpr const char* level_to_string(LogLevel level) {
             return "FATAL";
         case LogLevel::Debug:
             return "DEBUG";
+        case LogLevel::Trace:
+            return "TRACE";
     }
 
     std::unreachable();
@@ -74,6 +77,12 @@ constexpr void log(LogLevel level, std::string_view fmt, Args&&... args) {
 #define TK_LOG_DEBUG(message, ...)
 #else
 #define TK_LOG_DEBUG(message, ...) toki::log(toki::LogLevel::Debug, message __VA_OPT__(, ) __VA_ARGS__)
+#endif
+
+#if defined(LOG_TRACE_OFF) || defined(LOGGING_OFF)
+#define TK_LOG_TRACE(message, ...)
+#else
+#define TK_LOG_TRACE(message, ...) toki::log(toki::LogLevel::Trace, message __VA_OPT__(, ) __VA_ARGS__)
 #endif
 
 }  // namespace toki

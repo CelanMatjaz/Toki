@@ -1,25 +1,33 @@
 #pragma once
 
+#include "../core/assert.h"
+#include "../core/common.h"
 #include "../core/types.h"
 #include "../platform/platform.h"
+#include "../core/logging.h"
 
 namespace toki {
 
 constexpr u32 INVALID_HANDLE_ID = 0;
 
 struct Handle {
-    Handle();
-    Handle(u32 index): index(index), id(platform::get_time_milliseconds()) {}
+    Handle() = delete;
+    Handle(u32 index, u32 version = 1): index(index), version(version), id(platform::get_time_milliseconds()) {}
 
-    inline operator bool() {
+    inline operator b8() const {
         return id != INVALID_HANDLE_ID;
     }
 
-    inline bool valid() {
+    inline b8 valid() const {
         return this->operator bool();
     }
 
+    inline void invalidate() {
+        id = INVALID_HANDLE_ID;
+    }
+
     u32 index{ 0 };
+    u32 version{ 0 };
     u32 id{ INVALID_HANDLE_ID };
 };
 
@@ -32,159 +40,109 @@ template <typename ValueType>
 class HandleMap {
 public:
     HandleMap() {}
-    HandleMap(u32 element_count): m_data{ .element_capacity = element_count } {
-        allocate();
+    HandleMap(AllocatorConcept auto& allocator, u32 element_count, u32 free_list_element_count):
+        mElementCapacity(element_count) {
+        u32 free_list_size = free_list_element_count * sizeof(u32);
+        u32 version_list_size = element_count * sizeof(u32);
+        u32 element_list_size = (element_count + 1) * sizeof(ValueType);
+
+        u32 total_size = free_list_size + version_list_size + element_list_size;
+
+        void* ptr = allocator.allocate(total_size);
+        mFreeList = reinterpret_cast<u32*>(ptr);
+        mVersionList = reinterpret_cast<u32*>(mFreeList + free_list_element_count);
+        mData = reinterpret_cast<ValueType*>(mVersionList + element_count) + 1;
     }
 
-    ~HandleMap() {
-        if (m_data.ptr != nullptr) {
-            deallocate(m_data.ptr);
-        }
-    }
+    ~HandleMap() {}
+
+    u32* mFreeList{};
+    u32* mVersionList{};
+    ValueType* mData{};
+    u32 mFreeListSize{};
+    u32 mElementCapacity{};
+    u32 mNextFreeBlockIndex{};
 
     DELETE_COPY(HandleMap)
+    DELETE_MOVE(HandleMap)
 
-    HandleMap(HandleMap&& other) {
-        std::swap(m_data, other.m_data);
-    };
-
-    HandleMap& operator=(HandleMap&& other) {
-        std::swap(m_data, other.m_data);
-        return *this;
-    };
-
-    void erase(const Handle handle) {
-        if (!is_handle_in_range(handle)) {
-            return;
-        }
-
-        m_data.ptr[handle.index] = nullptr;
-        --m_data.size;
-
-        if (handle.index < m_data.next_free_index) {
-            m_data.next_free_index = handle.index;
-        }
-
-        if (handle.index > m_data.last_allocated_index) {
-            m_data.last_allocated_index = handle.index;
-        }
+    inline void invalidate(Handle& handle) {
+        TK_ASSERT(is_handle_valid(handle), "Cannot invalidate an invalid handle");
+        ++mVersionList[handle.index];
+        handle.invalidate();
     }
 
-    void clear() {
-        for (u32 i = 0; i < m_data.buffer_capacity; ++i) {
-            m_data.ptr[i] = nullptr;
-        }
-        m_data.size = 0;
+    inline b8 is_handle_valid(const Handle& handle) const {
+        return handle.valid() && handle.version == is_version_valid(handle);
     }
 
-    b8 contains(const Handle handle) const {
-        return m_data.ptr[handle.index] != nullptr;
+    inline b8 is_version_valid(const Handle& handle) const {
+        TK_ASSERT(handle.index <= mElementCapacity, "Handle index invalid");
+        return mVersionList[handle.index] == handle.version;
     }
 
-    u32 size() const {
-        return m_data.size;
+    inline b8 contains(const Handle handle) const {
+        return is_handle_valid(handle);
     }
 
-    void defragment([[maybe_unused]] u32 block_count) {
-        TK_ASSERT(false, "Need to implement");
-    }
-
-    Handle emplace(std::initializer_list<ValueType> value) {
-        HandlePtr* free_block = get_next_free();
-        ValueType* ptr = free_block->ptr;
-        *ptr = value;
-
-        m_data.ptr[free_block->handle.index] = ptr;
-        ++m_data.size;
-
-        if (free_block->handle > m_data.next_free_index) {
-            m_data.next_free_index = free_block->handle;
-        }
-
-        if (free_block->handle > m_data.last_allocated_index) {
-            m_data.last_allocated_index = free_block->handle;
-        }
-
-        return free_block->handle;
+    inline u32 capacity() const {
+        return mElementCapacity;
     }
 
     template <typename... Args>
     Handle emplace(Args&&... args) {
-        HandlePtr free_block = get_next_free();
-        ValueType* ptr = new (free_block.ptr) ValueType(std::forward<Args>(args)...);
-        m_data.ptr[free_block.handle.index] = ptr;
-        ++m_data.size;
-
-        if (free_block.handle.index > m_data.next_free_index) {
-            m_data.next_free_index = free_block.handle;
-        }
-
-        if (free_block.handle.index > m_data.last_allocated_index) {
-            m_data.last_allocated_index = free_block.handle;
-        }
-
-        return free_block.handle;
+        i32 free_block_index = get_next_free_block_index();
+        new (&mData[free_block_index]) ValueType(args...);
+        u32 version = mVersionList[free_block_index]++;
+        return Handle{ static_cast<u32>(free_block_index), version };
     }
 
-    ValueType& at(const Handle handle) const {
-        TK_ASSERT(contains(handle), "No value exists for provided handle");
-        return ((ValueType*) m_data.values_ptr)[handle.index];
+    Handle insert(ValueType&& value) {
+        i32 free_block_index = get_next_free_block_index();
+        memcpy(&value, &mData[free_block_index], sizeof(ValueType));
     }
 
-    ValueType& operator[](const Handle handle) const {
+    inline ValueType& at(const Handle handle) const {
+        TK_ASSERT(is_handle_valid(handle), "Invalid handle provided");
+        return mData[handle.index];
+    }
+
+    inline ValueType& operator[](const Handle handle) const {
         return at(handle);
     }
 
-    class Iterator;
+    /* class Iterator;
 
     Iterator begin() {
-        return Iterator(&m_data, 0);
+        return Iterator(&mData, 0);
     }
 
     Iterator end() {
-        return Iterator(&m_data, m_data.element_capacity);
-    }
+        return Iterator(&mData, mData.element_capacity);
+    } */
 
 private:
-    void allocate() {
-        TK_ASSERT(m_data.element_capacity > 0, "Cannot allocate memory for HandleMap with 0 element count");
-
-        u32 handle_array_size = m_data.element_capacity * sizeof(ValueType*);
-        m_data.buffer_capacity = m_data.element_capacity * sizeof(ValueType);
-
-        m_data.ptr = (ValueType**) platform::allocate(handle_array_size + m_data.buffer_capacity);
-        m_data.values_ptr = (ValueType*) &m_data.ptr[m_data.element_capacity];
-    }
-
     b8 is_handle_in_range(const Handle handle) const {
-        return handle.index < m_data.buffer_capacity;
+        return handle.index < mElementCapacity;
     }
 
-    HandlePtr get_next_free() {
-        for (u32 i = m_data.next_free_index; i < m_data.element_capacity; i++) {
-            if (m_data.ptr[i] == nullptr) {
-                ++m_data.next_free_index;
-                return { .handle = i, .ptr = &(m_data.values_ptr)[i] };
-            }
+    i32 get_next_free_block_index() {
+        if (mFreeListSize <= 0 && mNextFreeBlockIndex >= mElementCapacity) {
+            TK_LOG_TRACE("HandleMap's capacity reached, returning index to NOOP object");
+            return -1;
         }
 
-        TK_ASSERT(false, "Not enough memory allocated");
-        std::unreachable();
+        TK_ASSERT(mFreeListSize > 0 || mNextFreeBlockIndex < mElementCapacity, "Handle map is full");
+
+        if (mFreeListSize > 0) {
+            return mFreeList[(mFreeListSize--) - 1];
+        }
+
+        return mNextFreeBlockIndex++;
     }
 
-    struct InternalData {
-        u32 element_capacity{};
-        u32 element_size{};
-        u32 buffer_capacity{};
-        u32 next_free_index{};
-        u32 last_allocated_index{};
-        u32 size{};
-        ValueType** ptr{};
-        ValueType* values_ptr{};
-    } m_data;
-
 public:
-    class Iterator {
+    /* class Iterator {
     public:
         using iterator_category = std::random_access_iterator_tag;
         using value_type = ValueType;
@@ -238,7 +196,7 @@ public:
     private:
         InternalData* m_data{};
         u64 m_index{};
-    };
+    }; */
 };
 
 }  // namespace toki

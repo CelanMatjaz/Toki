@@ -24,4 +24,17 @@ inline b8 strcmp(const T* s1, const T* s2) {
     return false;
 }
 
+template <typename T>
+inline void swap(T& t1, T& t2) {
+    T temp = t1;
+    *t1 = *t2;
+    *t2 = temp;
+}
+
+inline void memcpy(void* src, void* dst, u32 size) {
+    for (u32 i = 0; i < size; i++) {
+        *reinterpret_cast<char*>(dst) = *reinterpret_cast<char*>(src);
+    }
+}
+
 }  // namespace toki
