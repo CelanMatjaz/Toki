@@ -1,207 +1,133 @@
 #pragma once
 
-#include <functional>
-#include <string>
+#include "../core/common.h"
+#include "../core/concepts.h"
+#include "../core/logging.h"
 
-#include "core/assert.h"
-#include "core/base.h"
-#include "memory/allocators/stack_allocator.h"
+// NOTE(Matjaž): https://programming.guide/robin-hood-hashing.html
 
 namespace toki {
 
 template <typename T, typename HashType>
 concept HasHashFunction = requires(const T& value) {
-    { HashType::hash(value) } -> std::same_as<u64>;
+    { HashType::hash(value) } -> SameAsConcept<u64>;
 };
 
-struct StringHash {
-    static u64 hash(const std::string& value) {
-        return std::hash<std::string>{}(value);
-    }
-};
-
-struct StringViewHash {
-    static u64 hash(const std::string_view& value) {
-        return std::hash<std::string_view>{}(value);
-    }
-};
-
-template <typename ValueType>
+template <typename K, typename V, typename H = K>
 class HashMap {
-    struct Pair {
-        std::string key;
+private:
+    using KeyType = K;
+    using ValueType = V;
+    using HashType = H;
+    constexpr static u64 EMPTY_SLOT_PSL = 0;
+    constexpr static u64 INITIAL_PSL = 1;
+
+    // NOTE(Matjaž): invalid index is -1 to return
+    // the NOOP value to not crash program
+    constexpr static i32 INVALID_INDEX = -1;
+
+    struct Bucket {
+        u64 psl;
+        KeyType key;
         ValueType value;
     };
 
-    struct BucketEntry {
-        BucketEntry* next;
-        Pair pair;
-    };
-
 public:
-    HashMap(): m_data{} {};
-    HashMap(u32 element_capacity, StackAllocator* allocator): m_data{ element_capacity, 0 } {
-        m_data.first = m_data.ptr =
-            (BucketEntry*) allocator->allocate_aligned(sizeof(BucketEntry) * (m_data.capacity), alignof(BucketEntry));
+    HashMap(AllocatorConcept auto& allocator, u64 element_capacity):
+        mData(nullptr),
+        mElementCapacity(element_capacity) {
+        u32 total_size = (element_capacity + 1) * sizeof(Bucket);
+        mData = reinterpret_cast<Bucket*>(allocator.allocate(total_size)) + 1;
     }
     ~HashMap() {}
 
-    u32 size() const {
-        return m_data.size;
+    Bucket* mData;
+    u64 mElementCapacity;
+
+    b8 contains(const KeyType& key) const {
+        return lookup_index(key) >= 0;
+    }
+
+    inline u32 capacity() const {
+        return mElementCapacity;
     }
 
     template <typename... Args>
-    void emplace(const std::string_view& key, Args&&... args) {
-        emplace(std::string{ key }, std::forward<Args>(args)...);
-    }
+    void emplace(const KeyType& key, Args&&... args) {
+        u64 index = get_index(key);
 
-    template <typename... Args>
-    void emplace(const std::string& key, Args&&... args) {
-        TK_ASSERT(m_data.size < m_data.capacity, "HashMap capacity full ({})", m_data.capacity);
+        Bucket& bucket = mData[index];
+        // Empty slot
+        if (bucket.psl == 0) {
+            new (&bucket.value) ValueType(args...);
+            bucket.key = key;
+            bucket.psl = INITIAL_PSL;
+            return;
+        }
 
-        u64 hash = std::hash<std::string>{}(key);
-        u32 index = hash % m_data.capacity;
+        Bucket new_bucket{};
+        new_bucket.psl = INITIAL_PSL;
+        new_bucket.key = key;
+        new (&new_bucket.value) ValueType(args...);
 
-        check_for_clash(index);
+        // Handle collision
+        for (u32 i = index + 1; i < mElementCapacity; i++) {
+            Bucket& current_bucket = mData[i];
 
-        BucketEntry* ptr =
-            new (&m_data.ptr[index]) BucketEntry{ nullptr, { key, ValueType(std::forward<Args>(args)...) } };
-        ++m_data.size;
-
-        if (ptr < m_data.first) {
-            ptr->next = m_data.first;
-            m_data.first = ptr;
-        } else {
-            BucketEntry* p = m_data.first;
-            while (p->next < ptr && p->next != nullptr) {
-                p = p->next;
+            // Found empty slot
+            if (current_bucket.psl == 0) {
+                current_bucket = new_bucket;
+                return;
+            }
+            // Found slot with lower PSL
+            else if (current_bucket.psl < new_bucket.psl) {
+                swap(new_bucket, current_bucket);
             }
 
-            ptr->next = p->next;
-            p->next = ptr;
-        }
-
-        if (index < m_data.first_index) {
-            m_data.first_index = index;
+            ++new_bucket.psl;
         }
     }
 
-    Pair& at(const std::string& key) const {
-        auto index = get_index(key);
-        return m_data.ptr[index].pair;
-    }
-
-    void erase(const std::string& key) const {
-        auto index = get_index(key);
-        m_data.ptr[index].pair.key = "";
-    }
-
-    void erase(const std::string_view& key) const {
-        auto index = get_index(std::string{ key });
-
-        BucketEntry* bucket = m_data.first;
-        while (bucket->next != &m_data.ptr[index]) {
-            bucket = bucket->next;
+    void remove(const KeyType& key) const {
+        i64 index = lookup_index(key);
+        if (index == INVALID_INDEX) {
+            return;
         }
 
-        bucket->next.pair.key = "";
-        bucket->next = bucket->next->next;
+        Bucket& bucket = mData[index];
+        while (bucket.psl != INITIAL_PSL) {
+            *bucket = mData[index + 1];
+            bucket = mData[++index];
+        }
     }
 
-    Pair& operator[](const std::string& key) const {
+    ValueType& operator[](const KeyType& key) const {
         return at(key);
     }
 
-    Pair& operator[](std::string_view key) const {
-        return at(std::string{ key });
-    }
-
-    b8 contains(const std::string& key) const {
-        u64 hash = std::hash<std::string>{}(key);
-        u32 index = hash % m_data.capacity;
-
-        return m_data.ptr[index].pair.key == key;
-    }
-
-    b8 contains(const std::string_view& key) const {
-        return contains(std::string{ key });
-    }
-
-    class Iterator;
-
-    Iterator begin() {
-        return Iterator(&m_data, m_data.first);
-    }
-
-    Iterator end() {
-        return Iterator(&m_data, nullptr);
+    ValueType& at(const KeyType& key) const {
+        i64 index = lookup_index(key);
+        return mData[index];
     }
 
 private:
-    u64 get_index(const std::string& key) const {
-        return std::hash<std::string>{}(key) % m_data.capacity;
+    inline u64 get_index(const KeyType& key) {
+        return HashType::hash(key) % mElementCapacity;
     }
 
-    b8 check_for_clash(u64 index) const {
-        TK_ASSERT(m_data.ptr[index].pair.key == "", "No key clash logic implemented");
-        return false;
+    i64 lookup_index(const KeyType& key) {
+        u64 index = get_index(key);
+        while (mData[index].psl != EMPTY_SLOT_PSL && index < mElementCapacity) {
+            if (mData[index].key_value.key == key) {
+                return index;
+            }
+            ++index;
+        }
+
+        TK_LOG_TRACE(
+            "Attempting to lookup hash table value with a key that's not stored in the table, returning NOOP index");
+        return INVALID_INDEX;
     }
-
-    struct InternalData {
-        u32 capacity;
-        u32 size;
-        u32 first_index{};
-        BucketEntry* ptr = nullptr;
-        BucketEntry* first = nullptr;
-    } m_data;
-
-public:
-    class Iterator {
-    public:
-        using iterator_category = std::random_access_iterator_tag;
-        using value_type = Pair;
-        using difference_type = std::ptrdiff_t;
-        using pointer = Pair*;
-        using reference = Pair&;
-
-        Iterator() = delete;
-        Iterator(InternalData* data, BucketEntry* p): m_data(data), m_entry(p) {}
-        Iterator(const Iterator& other) = default;
-        Iterator& operator=(const Iterator& other) = default;
-
-        reference operator*() const {
-            return m_entry->pair;
-        }
-
-        pointer operator->() const {
-            return &m_entry->pair;
-        }
-
-        Iterator& operator++() {
-            m_entry = m_entry->next;
-            return *this;
-        }
-
-        Iterator operator++(int) {
-            Iterator temp = *this;
-            m_entry = m_entry->next;
-            return temp;
-        }
-
-        bool operator==(const Iterator& other) const {
-            return m_entry == other.m_entry;
-        }
-
-        bool operator!=(const Iterator& other) const {
-            return !(*this == other);
-        }
-
-    private:
-        InternalData* m_data;
-        BucketEntry* m_entry{};
-    };
-
-private:
 };
 
 }  // namespace toki
