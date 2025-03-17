@@ -9,8 +9,6 @@
 
 namespace toki {
 
-namespace platform {
-
 #define MAX_EVENT_PER_LOOP_COUNT 256
 
 void debug_break() {
@@ -35,15 +33,13 @@ u64 get_time() {
     return (ull.QuadPart - 116444736000000000ULL);
 }
 
-u64 get_time_microseconds() {
+u64 time_microseconds() {
     return get_time() / 10ULL;
 }
 
 u64 get_time_milliseconds() {
     return get_time() / 10000ULL;
 }
-
-}  // namespace platform
 
 }  // namespace toki
 

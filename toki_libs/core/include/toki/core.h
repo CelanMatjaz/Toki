@@ -12,8 +12,8 @@
 #include "../../src/containers/basic_ref.h"
 #include "../../src/containers/dynamic_array.h"
 #include "../../src/containers/handle_map.h"
+#include "../../src/containers/hash_map.h"
 #include "../../src/containers/static_array.h"
-// #include "../../src/containers/hash_map.h"
 
 // Platform
 #include "../../src/platform/platform.h"
@@ -22,3 +22,4 @@
 
 // Math
 #include "../../src/math/math.h"
+#include "../../src/math/math_types.h"

@@ -25,6 +25,10 @@ public:
         return bump_allocators[current_index];
     }
 
+    inline operator BumpAllocator&() {
+        return bump_allocators[current_index];
+    }
+
 private:
     BumpAllocator bump_allocators[2];
     u8 current_index{};

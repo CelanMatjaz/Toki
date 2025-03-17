@@ -1,19 +1,8 @@
 #include "window.h"
 
-#include <winuser.h>
-
 #include "events/event.h"
 
 namespace toki {
-
-void Window::create(const Config& config) {
-    m_native_handle = platform::window_create(config.title, config.width, config.height);
-}
-
-void Window::destroy() {
-    platform::window_destroy(m_native_handle);
-    *this = {};
-}
 
 #if defined(TK_PLATFORM_WINDOWS)
 void Window::handle_events(EventHandler& handler) {
@@ -21,7 +10,7 @@ void Window::handle_events(EventHandler& handler) {
     handler.handle(e);
     MSG msg{};
 
-    while (PeekMessageA(&msg, m_native_handle, 0, 0, PM_REMOVE)) {
+    while (PeekMessageA(&msg, mNativeHandle, 0, 0, PM_REMOVE)) {
         TranslateMessage(&msg);
         DispatchMessageA(&msg);
     }

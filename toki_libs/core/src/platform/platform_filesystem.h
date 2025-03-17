@@ -4,8 +4,6 @@
 
 namespace toki {
 
-namespace platform {
-
 void file_delete(PATH_TYPE path);
 
 b8 file_exists(PATH_TYPE path);
@@ -54,7 +52,5 @@ private:
     STREAM_OFFSET_TYPE m_Offset{ 0 };
     NativeWindowHandle m_NativeHandle{};
 };
-
-}  // namespace platform
 
 }  // namespace toki

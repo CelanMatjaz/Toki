@@ -13,7 +13,7 @@ namespace toki {
     } else {                                                  \
         printf("Assertion failed %s:%i", __FILE__, __LINE__); \
         printf(message __VA_OPT__(, ) __VA_ARGS__);           \
-        toki::platform::debug_break();                        \
+        toki::debug_break();                                  \
     }
 
 inline void print_error_code() {
@@ -31,7 +31,7 @@ inline void print_error_code() {
         printf("Assertion failed %s:%i", __FILE__, __LINE__); \
         printf(message __VA_OPT__(, ) __VA_ARGS__);           \
         print_error_code();                                   \
-        toki::platform::debug_break();                        \
+        toki::debug_break();                                  \
     }
 
 }  // namespace toki

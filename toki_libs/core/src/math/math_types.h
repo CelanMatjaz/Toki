@@ -4,39 +4,59 @@
 
 namespace toki {
 
-template <typename T, int N>
+template <typename T, u32 N>
 struct Data {
-    T data[N]{};
+    T data[N];
 };
 
+template <typename T, u32 N>
+struct Vector;
+
+template <typename T, u32 R, u32 C>
+struct Matrix;
+
+template <typename T>
 struct Vec2 {
-    f32 x, y;
-
-    Vec2 add(const Vec2& other) {
-        return { x + other.x, y + other.y };
-    }
-
-    Vec2 add(f32 value) {
-        return { x + value, y + value };
-    }
+    T x;
+    T y;
 };
 
+template <typename T>
 struct Vec3 {
-    f32 x, y, z;
-};
-
-struct Vec4 {
     union {
-        f32 x, y, z, w;
+        T x, r;
     };
     union {
-        f32 r, g, b, a;
+        T y, g;
+    };
+    union {
+        T z, b;
+    };
+};
+
+template <typename T>
+struct Vec4 {
+    union {
+        T x, r;
+    };
+    union {
+        T y, g;
+    };
+    union {
+        T z, b;
+    };
+    union {
+        T w, a;
+    };
+
+    union {
+        Data<T, 4> data;
     };
 };
 
 struct Rect2D {
-    Vec2 pos;
-    Vec2 size;
+    Vec2<i32> pos;
+    Vec2<u32> size;
 };
 
 }  // namespace toki

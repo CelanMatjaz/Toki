@@ -1,18 +1,20 @@
+#include <winuser.h>
+
 #include "../platform_window.h"
 
 #if defined(TK_PLATFORM_WINDOWS)
 
+#include <windef.h>
+//
 #include <Windows.h>
 
 namespace toki {
-
-namespace platform {
 
 #define TK_WIN32_WINDOW_CLASS_NAME "TokiEngineWindowClass"
 
 static HINSTANCE win32_instance{};
 
-void window_system_initialize(const window_system_init& init) {
+void window_system_initialize(const WindowSystemInit& init) {
     WNDCLASSA window_class{};
     window_class.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
     window_class.lpfnWndProc = init.window_proc;
@@ -26,11 +28,11 @@ void window_system_initialize(const window_system_init& init) {
 
 void window_system_shutdown() {}
 
-NativeWindowHandle window_create(const char* title, u32 width, u32 height) {
+NativeWindowHandle window_create(const char* title, u32 width, u32 height, const WindowInitFlags& flags) {
     HWND handle = CreateWindowA(
         TK_WIN32_WINDOW_CLASS_NAME,
         title,
-        WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+        WS_OVERLAPPEDWINDOW | (flags.show_on_create ? WS_VISIBLE : 0),
         CW_USEDEFAULT,
         CW_USEDEFAULT,
         width,
@@ -49,7 +51,11 @@ void window_destroy(NativeWindowHandle handle) {
     DestroyWindow(handle);
 }
 
-}  // namespace platform
+Vec2<u32> window_get_dimensions(NativeWindowHandle handle) {
+    RECT rect{};
+    GetWindowRect(handle, &rect);
+    return Vec2<u32>(static_cast<u32>(rect.right - rect.left), static_cast<u32>(rect.bottom - rect.top));
+}
 
 }  // namespace toki
 

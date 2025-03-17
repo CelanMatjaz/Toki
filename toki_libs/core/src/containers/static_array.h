@@ -8,23 +8,19 @@ namespace toki {
 //
 // Class is used for static allocations with different types
 // of allocators that match the AllocatorConcept concept.
-//
-//
-//
-// Memory allocated through an allocator with an instance of
-// StaticArray MUST be manually freed with the same allocator its
-// buffer was allocated, if needed. This will most likely not be
-// needed if the instance was created with a short-lived bump allocator
-// allocation.
 
-template <typename T, u64 SIZE>
+template <typename T, u64 SIZE, typename A = Allocator>
+    requires AllocatorConcept<A>
 class StaticArray {
 public:
     StaticArray() = delete;
-    ~StaticArray() = default;
 
-    StaticArray(AllocatorConcept auto& allocator) {
-        _ptr = reinterpret_cast<T*>(allocator.allocate(SIZE * sizeof(T)));
+    StaticArray(A& allocator) {
+        mPtr = reinterpret_cast<T*>(allocator.allocate(SIZE * sizeof(T)));
+    }
+
+    ~StaticArray() {
+        mAllocator.free(mPtr);
     }
 
     constexpr u64 size() const {
@@ -32,7 +28,7 @@ public:
     }
 
     inline const T* pointer() const {
-        return _ptr;
+        return mPtr;
     }
 
     inline T& operator[](u64 index) const {
@@ -41,11 +37,12 @@ public:
 
     inline T& at(u64 index) const {
         TK_ASSERT(index < SIZE, "Provided index is out of array bounds");
-        return _ptr[index];
+        return mPtr[index];
     }
 
 private:
-    T* _ptr = nullptr;
+    A& mAllocator;
+    T* mPtr = nullptr;
 };
 
 }  // namespace toki

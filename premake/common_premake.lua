@@ -74,7 +74,7 @@ function configuration_configs()
 
     filter "platforms:Windows"
         system "windows"
-        defines { "TK_PLATFORM_WINDOWS", "NOMINMAX" }
+        defines { "TK_PLATFORM_WINDOWS", "NOMINMAX", "_WIN32", "WIN32_LEAN_AND_MEAN" }
         links { "user32", "gdi32", "shell32" }
 
     filter "platforms:Linux"
@@ -167,6 +167,14 @@ function toki_executable(name)
         filter "action:vs*"
             debugargs "."
 
-
         filter {}
+end
+
+function pch(path)
+    pchheader(path .. ".h")
+
+    filter { "action:vs*" }
+        pchsource(path .. ".cpp")
+        buildoptions("/FI" .. path .. ".h")
+        includedirs(".")
 end

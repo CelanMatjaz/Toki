@@ -11,8 +11,8 @@ namespace toki {
 constexpr u32 INVALID_HANDLE_ID = 0;
 
 struct Handle {
-    Handle() = delete;
-    Handle(u32 index, u32 version = 1): index(index), version(version), id(platform::get_time_milliseconds()) {}
+    Handle(): index(0), version(0), id(INVALID_HANDLE_ID) {};
+    Handle(u32 index, u32 version = 1): index(index), version(version), id(time_milliseconds()) {}
 
     inline operator b8() const {
         return id != INVALID_HANDLE_ID;
@@ -29,6 +29,7 @@ struct Handle {
     u32 index{ 0 };
     u32 version{ 0 };
     u32 id{ INVALID_HANDLE_ID };
+    u32 data{ 0 };
 };
 
 template <typename ValueType>
@@ -53,14 +54,6 @@ public:
 
     ~HandleMap() {}
 
-    u32* mFreeList{};
-    u32* mVersionList{};
-    u32* mSkipField{};
-    ValueType* mData{};
-    u32 mFreeListSize{};
-    u32 mElementCapacity{};
-    u32 mNextFreeBlockIndex{};
-
     DELETE_COPY(HandleMap)
     DELETE_MOVE(HandleMap)
 
@@ -68,15 +61,6 @@ public:
         TK_ASSERT(is_handle_valid(handle), "Cannot invalidate an invalid handle");
         ++mVersionList[handle.index];
         handle.invalidate();
-    }
-
-    inline b8 is_handle_valid(const Handle& handle) const {
-        return handle.valid() && handle.version == is_version_valid(handle);
-    }
-
-    inline b8 is_version_valid(const Handle& handle) const {
-        TK_ASSERT(handle.index <= mElementCapacity, "Handle index invalid");
-        return mVersionList[handle.index] == handle.version;
     }
 
     inline b8 contains(const Handle handle) const {
@@ -98,6 +82,8 @@ public:
     Handle insert(ValueType&& value) {
         i32 free_block_index = get_next_free_block_index();
         memcpy(&value, &mData[free_block_index], sizeof(ValueType));
+        ++mVersionList[free_block_index];
+        return Handle{ static_cast<u32>(free_block_index), mVersionList[free_block_index] };
     }
 
     inline ValueType& at(const Handle handle) const {
@@ -120,7 +106,16 @@ public:
     } */
 
 private:
-    b8 is_handle_in_range(const Handle handle) const {
+    inline b8 is_handle_valid(const Handle& handle) const {
+        return handle.valid() && handle.version == is_version_valid(handle);
+    }
+
+    inline b8 is_version_valid(const Handle& handle) const {
+        TK_ASSERT(handle.index <= mElementCapacity, "Handle index invalid");
+        return mVersionList[handle.index] == handle.version;
+    }
+
+    inline b8 is_handle_in_range(const Handle handle) const {
         return handle.index < mElementCapacity;
     }
 
@@ -138,6 +133,14 @@ private:
 
         return mNextFreeBlockIndex++;
     }
+
+    u32* mFreeList{};
+    u32* mVersionList{};
+    u32* mSkipField{};
+    ValueType* mData{};
+    u32 mFreeListSize{};
+    u32 mElementCapacity{};
+    u32 mNextFreeBlockIndex{};
 
 public:
     /* class Iterator {

@@ -4,6 +4,12 @@
 
 #include "window.h"
 
+#if defined(TK_PLATFORM_WINDOWS)
+namespace toki {
+extern LRESULT window_proc(HWND handle, u32 msg, WPARAM w_param, LPARAM l_param);
+}
+#endif
+
 #if defined(TK_DIST) && defined(TK_PLATFORM_WINDOWS)
 int APIENTRY WinMain(
     HINSTANCE instance,
@@ -18,16 +24,16 @@ int main(int argc, char** argv) {
 
 #if defined(TK_PLATFORM_WINDOWS)
     HINSTANCE instance{};
-    toki::platform::window_system_init window_init{};
+    toki::WindowSystemInit window_init{};
     window_init.instance = instance;
     window_init.window_proc = toki::window_proc;
 
-    toki::platform::window_system_initialize(window_init);
+    toki::window_system_initialize(window_init);
 #else
-    toki::platform::window_system_initialize();    
+    toki::window_system_initialize();
 #endif
 
     auto result = tk_entry_point(argc, argv);
-    toki::platform::window_system_shutdown();
+    toki::window_system_shutdown();
     return result;
 }

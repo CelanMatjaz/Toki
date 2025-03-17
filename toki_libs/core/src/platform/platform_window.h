@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../math/math_types.h"
 #include "platform.h"
 
 #if defined(TK_PLATFORM_WINDOWS)
@@ -8,23 +9,25 @@
 
 namespace toki {
 
-namespace platform {
-
-union window_system_init {
+union WindowSystemInit {
 #if defined(TK_PLATFORM_WINDOWS)
     HINSTANCE instance;
     LRESULT (*window_proc)(HWND handle, u32 msg, WPARAM w_param, LPARAM l_param);
 #endif
 };
 
-void window_system_initialize(const window_system_init& = {});
+struct WindowInitFlags {
+    b8 show_on_create : 1;
+};
+
+void window_system_initialize(const WindowSystemInit& = {});
 
 void window_system_shutdown();
 
-NativeWindowHandle window_create(const char* title, u32 width, u32 height);
+NativeWindowHandle window_create(const char* title, u32 width, u32 height, const WindowInitFlags& flags = {});
 
 void window_destroy(NativeWindowHandle handle);
 
-}  // namespace platform
+Vec2<u32> window_get_dimensions(NativeWindowHandle handle);
 
 }  // namespace toki

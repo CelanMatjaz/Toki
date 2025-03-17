@@ -7,8 +7,6 @@
 
 namespace toki {
 
-namespace platform {
-
 void file_delete(PATH_TYPE path) {
     TK_ASSERT(DeleteFileA(path) != 0, "Could not delete file, platform specific error code: %lu", GetLastError());
 }
@@ -68,8 +66,6 @@ void Stream::close() {
         m_NativeHandle.ptr = nullptr;
     }
 }
-
-}  // namespace platform
 
 }  // namespace toki
 

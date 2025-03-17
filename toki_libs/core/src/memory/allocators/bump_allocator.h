@@ -20,6 +20,11 @@ public:
     DELETE_COPY(BumpAllocator);
     DELETE_MOVE(BumpAllocator);
 
+    template <typename T>
+    inline T* allocate(u64 allocation_size) {
+        return reinterpret_cast<T*>(allocate(allocation_size));
+    }
+
     void* allocate(u64 allocation_size) {
         TK_ASSERT(offset + allocation_size <= size, "Allocation would overflow bump allocator buffer");
         void* return_ptr = reinterpret_cast<void*>(ptrdiff(buffer) + offset);
