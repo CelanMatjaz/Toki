@@ -16,11 +16,6 @@ project "Renderer"
     build_options()
     link_vulkan()
 
-    pchheader "src/tkpch-renderer.h"
-
-    filter { "action:vs*" }
-        pchsource "src/tkpch_renderer.cpp"
-        buildoptions "/FIsrc/tkpch_renderer.h"
-        includedirs { "." }
+    pch("src/tkpch_renderer")
 
     filter {}

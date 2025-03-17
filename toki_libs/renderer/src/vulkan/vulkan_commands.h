@@ -7,11 +7,9 @@
 
 namespace toki {
 
-namespace renderer {
-
 class VulkanBackend;
 
-class VulkanCommands : public Commands {
+class VulkanCommands : public RendererCommands {
 public:
     VulkanCommands() = delete;
     VulkanCommands(VulkanBackend* backend);
@@ -35,12 +33,10 @@ public:
     virtual void draw_instanced(u32 index_count, u32 instance_count) override;
 
 private:
-    VulkanBackend* m_backend;
-    VkCommandBuffer m_commandBuffer;
-    Handle m_framebufferHandle;
-    Handle m_shaderHandle;
+    VulkanBackend* mBackend;
+    VkCommandBuffer mCommandBuffer;
+    Handle mFramebufferHandle;
+    Handle mShaderHandle;
 };
-
-}  // namespace renderer
 
 }  // namespace toki

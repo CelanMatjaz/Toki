@@ -6,6 +6,10 @@ namespace toki {
 
 struct RendererObject {
     Handle handle;
+
+    operator Handle() {
+        return handle;
+    }
 };
 
 struct Framebuffer : RendererObject {};
@@ -25,18 +29,14 @@ enum class ColorFormat : u16 {
 };
 
 enum class ShaderType : u8 {
-    GRAPHICS
-};
-
-enum class ShaderStage : u8 {
-    Vertex,
-    Fragment,
+    VERTEX,
+    FRAGMENT,
     SHADER_STAGE_COUNT
 };
 
 enum class VertexInputRate : u8 {
-    Vertex,
-    Instance,
+    VERTEX,
+    INSTANCE,
 };
 
 enum class VertexFormat : u8 {

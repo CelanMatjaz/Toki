@@ -20,8 +20,6 @@
 
 namespace toki {
 
-namespace renderer {
-
 VkSurfaceKHR create_surface(VkInstance instance, VkAllocationCallbacks* allocation_callbacks, Window* window) {
     GlfwWindow* w = reinterpret_cast<GlfwWindow*>(window);
 
@@ -44,8 +42,6 @@ VkSurfaceKHR create_surface(VkInstance instance, VkAllocationCallbacks* allocati
 
     return surface;
 }
-
-}  // namespace renderer
 
 }  // namespace toki
 

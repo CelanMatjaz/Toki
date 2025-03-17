@@ -4,12 +4,9 @@
 
 namespace toki {
 
-namespace renderer {
-
 struct InternalRenderPass {
     VkRenderPass render_pass;
     BasicRef<VkFramebuffer> framebuffers;
-    PackedAttachments attachments;
     u16 attachment_count;
 };
 
@@ -34,9 +31,6 @@ struct InternalShader {
     Pipeline pipelines[1];
     VkShaderStageFlags push_constant_stage_flags;
     u8 pipeline_count;
-    u8 layout_counts[MAX_DESCRIPTOR_SET_COUNT];
-    VkDescriptorSetLayout descriptor_set_layouts[MAX_DESCRIPTOR_BINDING_COUNT][MAX_DESCRIPTOR_SET_COUNT]
-                                                [MAX_FRAMES_IN_FLIGHT];
 };
 
 struct InternalWindowData {
@@ -49,7 +43,5 @@ struct InternalFramebuffer {
     b8 has_depth : 1;
     b8 has_stencil : 1;
 };
-
-}  // namespace renderer
 
 }  // namespace toki

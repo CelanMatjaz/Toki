@@ -9,14 +9,10 @@
 
 namespace toki {
 
-namespace platform {
 extern HINSTANCE win32_instance;
-}
 
-namespace renderer {
-
-VkSurfaceKHR create_surface(
-    VkInstance instance, VkAllocationCallbacks* allocation_callbacks, platform::NativeWindowHandle handle) {
+VkSurfaceKHR vulkan_surface_create(
+    VkInstance instance, VkAllocationCallbacks* allocation_callbacks, NativeWindowHandle handle) {
     VkWin32SurfaceCreateInfoKHR surface_create_info{};
     surface_create_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     surface_create_info.hwnd = handle;
@@ -29,8 +25,6 @@ VkSurfaceKHR create_surface(
 
     return surface;
 }
-
-}  // namespace renderer
 
 }  // namespace toki
 

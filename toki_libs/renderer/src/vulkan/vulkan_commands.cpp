@@ -6,19 +6,17 @@
 
 namespace toki {
 
-namespace renderer {
+#define backend mBackend
 
-#define backend m_backend
+VulkanCommands::VulkanCommands(VulkanBackend* b): mBackend(b), mCommandBuffer(b->get_command_buffer()) {}
 
-VulkanCommands::VulkanCommands(VulkanBackend* b): m_backend(b), m_commandBuffer(b->get_command_buffer()) {}
-
-void VulkanCommands::begin_rendering(const Framebuffer* framebuffer, const Rect2D& render_area) {
-    m_framebufferHandle = framebuffer->handle;
-    backend->begin_rendering(m_commandBuffer, framebuffer->handle, render_area);
+void VulkanCommands::begin_rendering(const Framebuffer& framebuffer, const Rect2D& render_area) {
+    mFramebufferHandle = framebuffer.handle;
+    backend->begin_rendering(mCommandBuffer, framebuffer.handle, render_area);
 }
 
 void VulkanCommands::end_rendering() {
-    backend->end_rendering(m_commandBuffer, m_framebufferHandle);
+    backend->end_rendering(mCommandBuffer, mFramebufferHandle);
 }
 
 void VulkanCommands::set_viewport(const Rect2D& rect) {
@@ -29,7 +27,7 @@ void VulkanCommands::set_viewport(const Rect2D& rect) {
     viewport.height = (f32) rect.size.y;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
-    vkCmdSetViewport(m_commandBuffer, 0, 1, &viewport);
+    vkCmdSetViewport(mCommandBuffer, 0, 1, &viewport);
 }
 
 void VulkanCommands::reset_viewport() {
@@ -38,9 +36,9 @@ void VulkanCommands::reset_viewport() {
 
 void VulkanCommands::set_scissor(const Rect2D& rect) {
     VkRect2D scissor{};
-    scissor.offset = { rect.pos.x, rect.pos.y };
-    scissor.extent = { rect.size.x, rect.size.y };
-    vkCmdSetScissor(m_commandBuffer, 0, 1, &scissor);
+    scissor.offset = { static_cast<i32>(rect.pos.x), static_cast<i32>(rect.pos.y) };
+    scissor.extent = { static_cast<u32>(rect.size.x), static_cast<u32>(rect.size.y) };
+    vkCmdSetScissor(mCommandBuffer, 0, 1, &scissor);
 }
 
 void VulkanCommands::reset_scissor() {
@@ -48,33 +46,31 @@ void VulkanCommands::reset_scissor() {
 }
 
 void VulkanCommands::bind_shader(Shader const& shader) {
-    m_shaderHandle = shader.handle;
-    backend->bind_shader(m_commandBuffer, shader);
+    mShaderHandle = shader.handle;
+    backend->bind_shader(mCommandBuffer, shader);
 }
 
 void VulkanCommands::bind_buffer(Buffer const& buffer) {
-    backend->bind_buffer(m_commandBuffer, buffer);
+    backend->bind_buffer(mCommandBuffer, buffer);
 }
 
 void VulkanCommands::push_constants(u32 offset, u32 size, const void* data) {
-    InternalShader* shader = backend->get_shader(m_shaderHandle);
-    VkPipelineLayout pipeline_layout = shader->pipelines[m_shaderHandle.data].pipeline_layout;
+    InternalShader* shader = backend->get_shader(mShaderHandle);
+    VkPipelineLayout pipeline_layout = shader->pipelines[mShaderHandle.data].pipeline_layout;
     VkShaderStageFlags shader_stage_flags = shader->push_constant_stage_flags;
-    backend->push_constants(m_commandBuffer, pipeline_layout, shader_stage_flags, offset, size, data);
+    backend->push_constants(mCommandBuffer, pipeline_layout, shader_stage_flags, offset, size, data);
 }
 
 void VulkanCommands::draw(u32 vertex_count) {
-    m_backend->draw(m_commandBuffer, vertex_count);
+    mBackend->draw(mCommandBuffer, vertex_count);
 }
 
 void VulkanCommands::draw_indexed(u32 index_count) {
-    m_backend->draw_indexed(m_commandBuffer, index_count);
+    mBackend->draw_indexed(mCommandBuffer, index_count);
 }
 
 void VulkanCommands::draw_instanced(u32 index_count, u32 instance_count) {
-    m_backend->draw_instanced(m_commandBuffer, index_count, instance_count);
+    mBackend->draw_instanced(mCommandBuffer, index_count, instance_count);
 }
-
-}  // namespace renderer
 
 }  // namespace toki

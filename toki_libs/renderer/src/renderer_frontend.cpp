@@ -4,15 +4,13 @@
 
 namespace toki {
 
-namespace renderer {
-
 // QoL macro
-#define backend reinterpret_cast<renderer::VulkanBackend*>(m_backend)
+#define backend reinterpret_cast<VulkanBackend*>(mBackend)
 
-RendererFrontend::RendererFrontend(const Config& config): m_backend(new renderer::VulkanBackend()) {
-    backend->create_device(config.initial_window);
-    backend->create_swapchain(config.initial_window);
-    backend->initialize_resources();
+RendererFrontend::RendererFrontend([[maybe_unused]] const Config& config): mBackend(new VulkanBackend()) {}
+
+RendererFrontend::~RendererFrontend() {
+    backend->~VulkanBackend();
 }
 
 void RendererFrontend::begin_frame() {
@@ -28,12 +26,12 @@ void RendererFrontend::present() {
     backend->present();
 }
 
-void RendererFrontend::submit(SubmitFn submit_fn) {
+void RendererFrontend::submit(SubmitFunctionConcept auto submit_fn) {
     RendererCommands* commands = backend->get_commands();
     submit_fn(*commands);
 }
 
-void RendererFrontend::set_color_clear(const glm::vec4& color) {
+void RendererFrontend::set_color_clear(const Vec4<f32>& color) {
     backend->set_color_clear(color);
 }
 
@@ -41,7 +39,7 @@ void RendererFrontend::set_depth_clear(f32 depth) {
     backend->set_depth_clear(depth);
 }
 
-Framebuffer RendererFrontend::create_framebuffer(const FramebufferConfig& config) {
+Framebuffer RendererFrontend::framebuffer_create(const FramebufferConfig& config) {
     Framebuffer new_framebuffer{};
     new_framebuffer.handle = backend->create_framebuffer(
         config.image_width,
@@ -53,54 +51,46 @@ Framebuffer RendererFrontend::create_framebuffer(const FramebufferConfig& config
     return new_framebuffer;
 }
 
-void RendererFrontend::destroy_framebuffer(Framebuffer* framebuffer) {
-    backend->destroy_framebuffer(framebuffer->handle);
+void RendererFrontend::framebuffer_destroy(Framebuffer& framebuffer) {
+    backend->destroy_framebuffer(framebuffer.handle);
 }
 
-Buffer RendererFrontend::create_buffer(const BufferConfig& config) {
+Buffer RendererFrontend::buffer_create(const BufferConfig& config) {
     Buffer new_buffer{};
     new_buffer.handle = backend->create_buffer(config.type, config.size);
-    new_buffer.size = config.size;
-    new_buffer.type = config.type;
     return new_buffer;
 }
 
-void RendererFrontend::destroy_buffer(Buffer* buffer) {
+void RendererFrontend::buffer_destroy(Buffer& buffer) {
     backend->destroy_buffer(buffer);
 }
 
-void RendererFrontend::set_bufffer_data(Buffer* buffer, u32 size, void* data) {
+void RendererFrontend::buffer_set_data(const Buffer& buffer, u32 size, void* data) {
     backend->set_buffer_data(buffer, size, data);
 }
 
-Texture RendererFrontend::create_texture(const TextureConfig& config) {
+Texture RendererFrontend::texture_create(const TextureConfig& config) {
     Texture new_texture{};
     new_texture.handle = backend->create_image(config.format, config.width, config.height);
-    new_texture.width = config.width;
-    new_texture.height = config.height;
     return new_texture;
 }
 
-void RendererFrontend::destroy_texture(Texture* texture) {
-    backend->destroy_image(texture->handle);
+void RendererFrontend::texture_destroy(Texture& texture) {
+    backend->destroy_image(texture.handle);
 }
 
-Shader RendererFrontend::create_shader(const Framebuffer* framebuffer, const ShaderConfig& config) {
+Shader RendererFrontend::shader_create(const Framebuffer& framebuffer, const ShaderConfig& config) {
     Shader shader{};
     shader.handle = backend->create_shader_internal(framebuffer, config);
     return shader;
 }
 
-void RendererFrontend::destroy_shader(Shader* shader) {
-    backend->destroy_shader_internal(shader->handle);
+void RendererFrontend::shader_destroy(Shader& shader) {
+    backend->destroy_shader_internal(shader.handle);
 }
 
 void RendererFrontend::wait_for_resources() {
     backend->wait_for_resources();
 }
-
-#undef backend
-
-}  // namespace renderer
 
 }  // namespace toki

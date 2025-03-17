@@ -5,10 +5,7 @@
 
 namespace toki {
 
-namespace renderer {
-
-VkSurfaceKHR create_surface(VkInstance instance, VkAllocationCallbacks* allocation_callbacks, platform::NativeWindowHandle handle);
-
-}
+VkSurfaceKHR vulkan_surface_create(
+    VkInstance instance, VkAllocationCallbacks* allocation_callbacks, NativeWindowHandle handle);
 
 }  // namespace toki

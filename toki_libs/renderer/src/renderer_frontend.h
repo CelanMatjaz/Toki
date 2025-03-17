@@ -7,10 +7,8 @@
 
 namespace toki {
 
-namespace renderer {
-
 template <typename F>
-concept SubmitFunctionConcept = requires(F fn, renderer::Commands& commands) {
+concept SubmitFunctionConcept = requires(F fn, RendererCommands& commands) {
     { fn(commands) } -> SameAsConcept<void>;
 };
 
@@ -30,28 +28,29 @@ public:
     void end_frame();
     void present();
 
-    void submit(SubmitFunctionConcept auto submit);
+    void submit(SubmitFunctionConcept auto submit_fn);
 
     Framebuffer framebuffer_create(const FramebufferConfig& config);
     void framebuffer_destroy(Framebuffer& framebuffer);
-    void framebuffer_resize(Framebuffer& framebuffer, u32 width, u32 height);
+    void framebuffer_resize(const Framebuffer& framebuffer, u32 width, u32 height);
 
     Buffer buffer_create(const BufferConfig& config);
-    void buffer_destroy(Buffer* buffer);
-    void buffer_set_data(Buffer* buffer, u32 size, void* data);
+    void buffer_destroy(Buffer& buffer);
+    void buffer_set_data(const Buffer& buffer, u32 size, void* data);
 
     Texture texture_create(const TextureConfig& config);
-    void texture_destroy(Texture* texture);
+    void texture_destroy(Texture& texture);
 
-    Shader shader_create(const Framebuffer* framebuffer, const ShaderConfig& config);
-    void shader_destroy(Shader* shader);
+    Shader shader_create(const Framebuffer& framebuffer, const ShaderConfig& config);
+    void shader_destroy(Shader& shader);
 
     void wait_for_resources();
 
-protected:
-    void* m_backend;
-};
+    void set_color_clear(const Vec4<f32>& color);
+    void set_depth_clear(f32 depth);
 
-}  // namespace renderer
+protected:
+    void* mBackend;
+};
 
 }  // namespace toki

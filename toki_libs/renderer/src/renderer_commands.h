@@ -4,9 +4,7 @@
 
 namespace toki {
 
-namespace renderer {
-
-class Commands {
+class RendererCommands {
 public:
     virtual void begin_rendering(const Framebuffer& framebuffer, const Rect2D& render_area) = 0;
     virtual void end_rendering() = 0;
@@ -26,7 +24,5 @@ public:
     virtual void draw_indexed(u32 count) = 0;
     virtual void draw_instanced(u32 index_count, u32 instance_count = 1) = 0;
 };
-
-}  // namespace renderer
 
 }  // namespace toki
