@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../core/core.h"
 #include "../memory/allocators/allocator.h"
 
 namespace toki {
@@ -16,6 +15,8 @@ class DynamicArray {
 public:
     DynamicArray() = delete;
 
+    DynamicArray(A& allocator): mAllocator(allocator), mSize(0) {}
+
     DynamicArray(A& allocator, u64 size): mAllocator(allocator), mSize(size) {
         mPtr = reinterpret_cast<T*>(allocator.allocate(size * sizeof(T)));
     }
@@ -26,38 +27,38 @@ public:
         }
     }
 
-    DynamicArray(DynamicArray&& other) {
-        swap(other);
+    DynamicArray(DynamicArray&& other): mAllocator(other.mAllocator), mPtr(other.mPtr), mSize(other.mSize) {
+        other.mPtr = nullptr;
+        other.mSize = 0;
     }
 
     ~DynamicArray() {
-        mAllocator.free(mPtr);
+        if (mPtr != nullptr) {
+            mAllocator.free(mPtr);
+        }
     }
 
     DELETE_COPY(DynamicArray);
 
     DynamicArray& operator=(DynamicArray&& other) {
-        if (*this != other) {
-            swap(other);
+        if (this != &other) {
+            swap(move(other));
         }
         return *this;
     }
 
-    // Function assumes that the allocator is the same
-    // allocator used to allocate previous buffer.
     // This function will NOT resize/reallocate a new
-    // buffer if new_size is less than _size.
-    void resize(u32 new_size, AllocatorConcept auto& allocator) {
+    // buffer if new_size is less than mSize.
+    void resize(u32 new_size) {
         if (new_size > mSize) {
             T* old_ptr = mPtr;
-            mPtr = reinterpret_cast<T*>(allocator.allocate(new_size * sizeof(T)));
+            mSize = new_size;
+            mPtr = reinterpret_cast<T*>(mAllocator.allocate(new_size * sizeof(T)));
 
-            for (u32 i = 0; i < mSize; i++) {
-                mPtr[i] = static_cast<T&&>(old_ptr[i]);
-            }
+            memcpy(old_ptr, mPtr, mSize);
 
             if (old_ptr != nullptr) {
-                allocator.free(old_ptr);
+                mAllocator.free(old_ptr);
             }
         }
         mSize = new_size;
@@ -78,10 +79,6 @@ public:
 
     inline const u64& get_capacity() const {
         return mSize;
-    }
-
-    inline const T* pointer() const {
-        return mPtr;
     }
 
     inline u64 size() const {

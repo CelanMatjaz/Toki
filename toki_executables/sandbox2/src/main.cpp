@@ -8,7 +8,7 @@ int tk_entry_point(int, char**) {
     engine_config.memory_config.renderer_frame_memory_block_size = toki::MB(128);
 
     toki::Engine engine(engine_config);
-    engine.add_window("Test", 800, 600);
+    engine.window_add("Test", 800, 600);
     engine.run();
 
     return 0;

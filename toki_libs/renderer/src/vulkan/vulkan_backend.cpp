@@ -3,14 +3,33 @@
 #include <toki/core.h>
 #include <vulkan/vulkan.h>
 
+#include "vulkan/vulkan_commands.h"
+#include "vulkan/vulkan_core.h"
+#include "vulkan/vulkan_types.h"
+
 #if defined(TK_PLATFORM_WINDOWS)
 #include <vulkan/vulkan_win32.h>
 #endif
 
-// #include <shaderc/shaderc.hpp>
+#include <shaderc/shaderc.hpp>
 // #include <spirv_cross/spirv_cross.hpp>
 
 #include "vulkan_platform.h"
+
+#define ASSERT_EXISTS(resource_array, handle, resource)                \
+    TK_ASSERT(                                                         \
+        handle.valid() && mResources->resource_array.contains(handle), \
+        "Handle is not associated with any Vulkan " #resource);
+
+#define ASSERT_BUFFER(handle) ASSERT_EXISTS(buffers, handle, buffer)
+
+#define ASSERT_IMAGE(handle) ASSERT_EXISTS(images, handle, image)
+
+#define ASSERT_SHADER(handle) ASSERT_EXISTS(shaders, handle, shader)
+
+#define ASSERT_FRAMEBUFFER(handle) ASSERT_EXISTS(framebuffers, handle, framebuffer)
+
+#define SWAPCHAIN_IMAGE(swapchain) swapchain.images[swapchain.image_index]
 
 namespace toki {
 
@@ -21,12 +40,12 @@ VulkanBackend::VulkanBackend():
     mSettings(mAllocator),
     mFrameAllocator(mAllocator, MB(50)) {
     create_instance();
-    create_device();
-    initialize_resources();
+    device_create();
+    resources_initialize();
 }
 
 VulkanBackend::~VulkanBackend() {
-    cleanup_resources();
+    resources_cleanup();
 }
 
 const Limits& VulkanBackend::limits() const {
@@ -122,8 +141,8 @@ void VulkanBackend::find_physical_device(VkSurfaceKHR surface) {
     };
 
     u32 best_score = 0;
-    VkPhysicalDeviceProperties device_properties;
-    VkPhysicalDeviceFeatures device_features;
+    VkPhysicalDeviceProperties device_properties{};
+    VkPhysicalDeviceFeatures device_features{};
 
     for (u32 i = 0; i < physical_device_count; i++) {
         VkPhysicalDevice physical_device = physical_devices[i];
@@ -171,7 +190,7 @@ void VulkanBackend::find_physical_device(VkSurfaceKHR surface) {
     TK_ASSERT(mContext->graphics_queue.family_index != 1, "No queue family that supports graphics found");
 }
 
-void VulkanBackend::create_device() {
+void VulkanBackend::device_create() {
     auto handle = window_create("", 0, 0);
     VkSurfaceKHR surface = vulkan_surface_create(mContext->instance, mContext->allocation_callbacks, handle);
 
@@ -246,7 +265,7 @@ static VkPresentModeKHR get_disabled_vsync_present_mode(VkPresentModeKHR* presen
             case VK_PRESENT_MODE_FIFO_KHR:
                 break;
             default:
-                std::unreachable();
+                UNREACHABLE;
         }
     }
 
@@ -267,10 +286,10 @@ static VkExtent2D get_surface_extent(VkSurfaceCapabilitiesKHR* capabilities, Nat
     return extent;
 }
 
-void VulkanBackend::create_swapchain(NativeWindowHandle handle) {
+void VulkanBackend::swapchain_create(NativeWindowHandle handle) {
     TK_LOG_INFO("Creating swapchain");
 
-    Swapchain& swapchain = mResources->swapchains[0];
+    Swapchain& swapchain = mResources->swapchain;
     swapchain.window_handle = handle;
     swapchain.can_render = true;
     VkSurfaceKHR surface = swapchain.surface =
@@ -324,7 +343,7 @@ void VulkanBackend::create_swapchain(NativeWindowHandle handle) {
         }
     }
 
-    recreate_swapchain(swapchain);
+    swapchain_recreate(swapchain);
 
     // window->get_event_handler().bind_event(EventType::WindowResize, this, [this, &swapchain](void*, void*, Event&) {
     //     if (!swapchain.can_render) {
@@ -345,10 +364,10 @@ void VulkanBackend::create_swapchain(NativeWindowHandle handle) {
     // });
 }
 
-void VulkanBackend::recreate_swapchain(Swapchain& swapchain) {
-    if (swapchain.image_views && swapchain.image_views.size() > 0) {
-        VkImageView* image_views = swapchain.image_views;
-        for (u32 i = 0; i < swapchain.image_count; i++) {
+void VulkanBackend::swapchain_recreate(Swapchain& swapchain) {
+    if (swapchain.image_views.size() > 0) {
+        VkImageView* image_views = swapchain.image_views.data();
+        for (u32 i = 0; i < swapchain.image_views.size(); i++) {
             vkDestroyImageView(mContext->device, image_views[i], mContext->allocation_callbacks);
         }
     }
@@ -399,12 +418,13 @@ void VulkanBackend::recreate_swapchain(Swapchain& swapchain) {
 
     {
         vkGetSwapchainImagesKHR(mContext->device, swapchain.swapchain, &swapchain.image_count, nullptr);
-        VkImage* swapchain_images = swapchain.images = BasicRef<VkImage>(mAllocator, swapchain.image_count);
+        swapchain.images = DynamicArray<VkImage>(mAllocator, swapchain.image_count);
+        VkImage* swapchain_images = swapchain.images.data();
         vkGetSwapchainImagesKHR(mContext->device, swapchain.swapchain, &swapchain.image_count, swapchain_images);
         TK_ASSERT(swapchain.image_count > 0, "No images found for swapchain");
 
-        if (!swapchain.image_views) {
-            swapchain.image_views = BasicRef<VkImageView>(mAllocator, swapchain.image_count);
+        if (swapchain.image_views.size() == 0) {
+            swapchain.image_views = DynamicArray<VkImageView>(mAllocator, swapchain.image_count);
         }
 
         VkImageViewCreateInfo image_view_create_info{};
@@ -434,43 +454,55 @@ void VulkanBackend::recreate_swapchain(Swapchain& swapchain) {
     }
 }
 
-Handle VulkanBackend::create_framebuffer(
-    u32 width, u32 height, u32 color_attachment_count, ColorFormat format, b8 has_depth, b8 has_stencil) {
+void VulkanBackend::swapchain_destroy() {
+    Swapchain& swapchain = mResources->swapchain;
+
+    for (u32 i = 0; i < swapchain.image_count; i++) {
+        vkDestroyImageView(mContext->device, swapchain.image_views[i], mContext->allocation_callbacks);
+    }
+
+    vkDestroySwapchainKHR(mContext->device, swapchain.swapchain, mContext->allocation_callbacks);
+    vkDestroySurfaceKHR(mContext->instance, swapchain.surface, mContext->allocation_callbacks);
+}
+
+Handle VulkanBackend::framebuffer_create(const FramebufferConfig& config) {
     InternalFramebuffer framebuffer{};
-    framebuffer.has_depth = has_depth;
-    framebuffer.has_stencil = has_stencil;
+    framebuffer.has_depth = config.has_depth_attachment;
+    framebuffer.has_stencil = config.has_stencil_attachment;
+    framebuffer.attachment_count = config.color_format_count;
+    framebuffer.image_color_format = config.color_format;
 
     TK_ASSERT(
-        color_attachment_count <= limits().max_color_attachments,
+        config.color_format_count <= limits().max_color_attachments,
         "Maximum %ul color attachments supported",
         limits().max_color_attachments);
 
     framebuffer.color_image = BasicRef<InternalImage>(mAllocator);
 
-    *framebuffer.color_image = create_image_internal(
-        width,
-        height,
-        color_attachment_count,
-        get_format(format),
+    *framebuffer.color_image = image_internal_create(
+        config.image_width,
+        config.image_height,
+        config.color_format_count,
+        get_format(config.color_format),
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         VK_IMAGE_ASPECT_COLOR_BIT);
 
     VkImageAspectFlags depthStenctilAspectFlags = 0;
 
-    if (has_depth) {
+    if (config.has_depth_attachment) {
         depthStenctilAspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT;
     }
 
-    if (has_stencil) {
+    if (config.has_stencil_attachment) {
         depthStenctilAspectFlags |= VK_IMAGE_ASPECT_STENCIL_BIT;
     }
 
-    if (depthStenctilAspectFlags) {
+    if (depthStenctilAspectFlags > 0) {
         framebuffer.depth_stencil_image = BasicRef<InternalImage>(mAllocator);
-        *framebuffer.depth_stencil_image = create_image_internal(
-            width,
-            height,
+        *framebuffer.depth_stencil_image = image_internal_create(
+            config.image_width,
+            config.image_height,
             1,
             get_depth_format(
                 mContext->physical_device,
@@ -480,33 +512,154 @@ Handle VulkanBackend::create_framebuffer(
             depthStenctilAspectFlags);
     }
 
-    return mResources->framebuffers.emplace(framebuffer);
+    return mResources->framebuffers.insert(move(framebuffer));
 }
 
-void VulkanBackend::destroy_framebuffer(Handle framebuffer_handle) {
-    TK_ASSERT(mResources->framebuffers.contains(framebuffer_handle), "Framebuffer does not exist");
-
+void VulkanBackend::framebuffer_destroy(Handle& framebuffer_handle) {
+    ASSERT_FRAMEBUFFER(framebuffer_handle);
     InternalFramebuffer& framebuffer = mResources->framebuffers[framebuffer_handle];
-    destroy_image_internal(framebuffer.color_image);
+    image_internal_destroy(framebuffer.color_image);
     if (framebuffer.depth_stencil_image) {
-        destroy_image_internal(framebuffer.depth_stencil_image);
+        image_internal_destroy(*framebuffer.depth_stencil_image.data());
     }
 }
 
-void VulkanBackend::destroy_swapchain(Handle& window_data_handle) {
-    Swapchain& swapchain = mResources->swapchains[0];
-    // swapchain.window->get_event_handler().unbind_event(EventType::WindowResize, this);
-
-    VkImageView* image_views = swapchain.image_views;
-
-    for (u32 i = 0; i < swapchain.image_count; i++) {
-        vkDestroyImageView(mContext->device, image_views[i], mContext->allocation_callbacks);
+Handle VulkanBackend::buffer_create(const BufferConfig& config) {
+    VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    switch (config.type) {
+        case BufferType::VERTEX:
+            usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+            break;
+        case BufferType::INDEX:
+            usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+            break;
+        default:
+            UNREACHABLE;
     }
 
-    vkDestroySwapchainKHR(mContext->device, swapchain.swapchain, mContext->allocation_callbacks);
-    vkDestroySurfaceKHR(mContext->instance, swapchain.surface, mContext->allocation_callbacks);
+    return mResources->buffers.insert(
+        move(buffer_internal_create(config.size, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)));
+}
 
-    mResources->swapchains.invalidate(window_data_handle);
+void VulkanBackend::buffer_destroy(Handle& buffer_handle) {
+    ASSERT_BUFFER(buffer_handle)
+    InternalBuffer& internal_buffer = mResources->buffers[buffer_handle];
+    buffer_internal_destroy(internal_buffer);
+    mResources->buffers.invalidate(buffer_handle);
+}
+
+void* VulkanBackend::buffer_map_memory(VkDeviceMemory memory, u32 offset, u32 size) {
+    void* data{};
+    VK_CHECK(vkMapMemory(mContext->device, memory, offset, size, 0, &data), "Could not map buffer memory");
+    return data;
+}
+
+void VulkanBackend::buffer_unmap_memory(VkDeviceMemory memory) {
+    vkUnmapMemory(mContext->device, memory);
+}
+
+void VulkanBackend::buffer_flush(Buffer& buffer) {
+    TK_ASSERT(mResources->buffers.contains(buffer), "Buffer with provided handle does not exist");
+    InternalBuffer& internal_buffer = mResources->buffers[buffer];
+
+    if ((internal_buffer.memory_property_flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0) {
+        VkMappedMemoryRange mapped_memory_range{};
+        mapped_memory_range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+        mapped_memory_range.memory = internal_buffer.memory;
+        mapped_memory_range.offset = 0;
+        mapped_memory_range.size = internal_buffer.size;
+        VK_CHECK(vkFlushMappedMemoryRanges(mContext->device, 1, &mapped_memory_range), "Could not flush buffer memory");
+    }
+}
+
+void VulkanBackend::buffer_set_data(const Buffer& buffer, u32 size, void* data) {
+    TK_ASSERT(mResources->buffers.contains(buffer.handle), "Buffer with provided handle does not exist");
+    InternalBuffer& staging_buffer = mResources->staging_buffer;
+
+    // Copy to staging buffer
+    void* mapped_data = buffer_map_memory(staging_buffer.memory, mResources->staging_buffer_offset, size);
+    toki::memcpy(data, mapped_data, size);
+    buffer_unmap_memory(staging_buffer.memory);
+    mapped_data = nullptr;
+
+    InternalBuffer& internal_buffer = mResources->buffers[buffer.handle];
+
+    // Copy to uploaded buffer
+    buffer_copy_data(internal_buffer.buffer, staging_buffer.buffer, size, 0, mResources->staging_buffer_offset);
+
+    mResources->staging_buffer_offset += size;
+}
+
+void VulkanBackend::buffer_copy_data(VkBuffer dst, VkBuffer src, u32 size, u32 dst_offset, u32 src_offset) {
+    VkCommandBuffer cmd = start_single_use_command_buffer();
+
+    VkBufferCopy buffer_copy{};
+    buffer_copy.srcOffset = src_offset;
+    buffer_copy.dstOffset = dst_offset;
+    buffer_copy.size = size;
+    vkCmdCopyBuffer(cmd, src, dst, 1, &buffer_copy);
+
+    submit_single_use_command_buffer(cmd);
+}
+
+Handle VulkanBackend::image_create(const TextureConfig& config) {
+    InternalImage new_image = image_internal_create(
+        config.width,
+        config.height,
+        1,
+        get_format(config.format),
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        VK_IMAGE_ASPECT_COLOR_BIT);
+
+    return mResources->images.insert(move(new_image));
+}
+
+void VulkanBackend::image_destroy(Handle& texture_handle) {
+    ASSERT_IMAGE(texture_handle);
+    mResources->images.invalidate(texture_handle);
+}
+
+Handle VulkanBackend::shader_create(const Framebuffer& framebuffer, const ShaderConfig& config) {
+    InternalShader new_shader(mAllocator);
+    new_shader.type = config.type;
+    new_shader.framebuffer_handle = framebuffer.handle;
+
+    VkPipelineLayoutCreateInfo pipeline_layout_create_info{};
+    pipeline_layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipeline_layout_create_info.pSetLayouts = nullptr;
+    pipeline_layout_create_info.setLayoutCount = 0;
+    pipeline_layout_create_info.pPushConstantRanges = nullptr;
+    pipeline_layout_create_info.pushConstantRangeCount = 0;
+
+    VK_CHECK(
+        vkCreatePipelineLayout(
+            mContext->device,
+            &pipeline_layout_create_info,
+            mContext->allocation_callbacks,
+            &new_shader.pipeline_layout),
+        "Could not create pipeline layout");
+
+    return mResources->shaders.insert(move(new_shader));
+}
+
+void VulkanBackend::shader_destroy(Handle& shader_handle) {
+    ASSERT_SHADER(shader_handle);
+    InternalShader& shader = mResources->shaders[shader_handle];
+    for (u32 i = 0; i < shader.pipelines.size(); i++) {
+        vkDestroyPipeline(mContext->device, shader.pipelines[i].pipeline, mContext->allocation_callbacks);
+    }
+}
+
+Handle VulkanBackend::shader_variant_create(Shader& _shader, const ShaderVariantConfig& config) {
+    ASSERT_SHADER(_shader.handle);
+    InternalShader& shader = mResources->shaders[_shader.handle];
+    ASSERT_FRAMEBUFFER(shader.framebuffer_handle);
+    InternalFramebuffer& framebuffer = mResources->framebuffers[shader.framebuffer_handle];
+
+    pipeline_internal_create(framebuffer, config, shader.pipeline_layout);
+
+    return {};
 }
 
 // PipelineResources VulkanBackend::create_pipeline_resources(const std::vector<configs::Shader>& _) {
@@ -533,35 +686,43 @@ void VulkanBackend::destroy_swapchain(Handle& window_data_handle) {
 //     return resources;
 // }
 
-Pipeline VulkanBackend::create_pipeline_internal(
-    std::string_view config_path,
-    VkFormat format,
-    u64 attachment_count,
-    VkFormat depth_format,
-    VkFormat stencil_format) {
-    auto config = configs::load_shader_config(config_path);
+InternalPipeline VulkanBackend::pipeline_internal_create(
+    const InternalFramebuffer& framebuffer, const ShaderVariantConfig& config, VkPipelineLayout pipeline_layout) {
+    InternalPipeline pipeline{};
 
-    Pipeline pipeline{};
+    TK_ASSERT(
+        config.sources[static_cast<u32>(ShaderStage::VERTEX)].source_path.valid(),
+        "Graphics pipeline requires vertex shader source");
+    TK_ASSERT(
+        config.sources[static_cast<u32>(ShaderStage::FRAGMENT)].source_path.valid(),
+        "Graphics pipeline requires fragment shader source");
 
-    PipelineResources resources = create_pipeline_resources(config.stages);
-    pipeline.pipeline_layout = resources.pipeline_layout;
+    VkPipelineShaderStageCreateInfo default_pipeline_shader_stage_create_info{};
+    default_pipeline_shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    default_pipeline_shader_stage_create_info.pName = "main";
 
-    VkShaderModule* shader_modules = m_frameAllocator->allocate_aligned<VkShaderModule>(config.stages.size());
-    VkPipelineShaderStageCreateInfo* shader_stage_create_infos =
-        m_frameAllocator->allocate_aligned<VkPipelineShaderStageCreateInfo>(config.stages.size());
-    for (u32 i = 0; i < config.stages.size(); i++) {
-        ShaderModule module = create_shader_module(config.stages[i].stage, config.stages[i].path);
-        shader_modules[i] = module.shader_module;
-        shader_stage_create_infos[i] = module.shader_stage_create_info;
-    }
+    u32 max_shader_stages = static_cast<u32>(ShaderStage::SHADER_STAGE_COUNT);
 
-    VkVertexInputBindingDescription* vertex_binding_descriptions =
-        m_frameAllocator->allocate_aligned<VkVertexInputBindingDescription>(config.bindings.size());
-    for (u32 i = 0; i < config.bindings.size(); i++) {
-        vertex_binding_descriptions[i].binding = config.bindings[i].binding;
-        vertex_binding_descriptions[i].stride = config.bindings[i].stride;
+    DynamicArray<VkPipelineShaderStageCreateInfo, BumpAllocator> shader_stage_create_infos(
+        mFrameAllocator, max_shader_stages);
 
-        switch (config.bindings[i].inputRate) {
+    shader_stage_create_infos[0] = default_pipeline_shader_stage_create_info;
+    shader_stage_create_infos[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+    shader_stage_create_infos[0].module = create_shader_module(
+        ShaderStage::VERTEX, config.sources[0].source_path.data(), config.sources[0].source_path.size());
+
+    shader_stage_create_infos[1] = default_pipeline_shader_stage_create_info;
+    shader_stage_create_infos[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    shader_stage_create_infos[1].module = create_shader_module(
+        ShaderStage::VERTEX, config.sources[1].source_path.data(), config.sources[1].source_path.size());
+
+    DynamicArray<VkVertexInputBindingDescription, BumpAllocator> vertex_binding_descriptions(
+        mFrameAllocator, config.binding_count);
+    for (u32 i = 0; i < config.binding_count; i++) {
+        vertex_binding_descriptions[i].binding = config.vertex_bindings[i].binding;
+        vertex_binding_descriptions[i].stride = config.vertex_bindings[i].stride;
+
+        switch (config.vertex_bindings[i].inputRate) {
             case VertexInputRate::VERTEX:
                 vertex_binding_descriptions[i].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
                 break;
@@ -571,14 +732,14 @@ Pipeline VulkanBackend::create_pipeline_internal(
         }
     }
 
-    VkVertexInputAttributeDescription* vertex_attribute_descriptions =
-        m_frameAllocator->allocate_aligned<VkVertexInputAttributeDescription>(config.attributes.size());
-    for (u32 i = 0; i < config.attributes.size(); i++) {
-        vertex_attribute_descriptions[i].binding = config.attributes[i].binding;
-        vertex_attribute_descriptions[i].offset = config.attributes[i].offset;
-        vertex_attribute_descriptions[i].location = config.attributes[i].location;
+    DynamicArray<VkVertexInputAttributeDescription, BumpAllocator> vertex_attribute_descriptions(
+        mFrameAllocator, config.attribute_count);
+    for (u32 i = 0; i < config.attribute_count; i++) {
+        vertex_attribute_descriptions[i].binding = config.vertex_attributes[i].binding;
+        vertex_attribute_descriptions[i].offset = config.vertex_attributes[i].offset;
+        vertex_attribute_descriptions[i].location = config.vertex_attributes[i].location;
 
-        switch (config.attributes[i].format) {
+        switch (config.vertex_attributes[i].format) {
             case VertexFormat::FLOAT1:
                 vertex_attribute_descriptions[i].format = VK_FORMAT_R32_SFLOAT;
                 break;
@@ -592,53 +753,53 @@ Pipeline VulkanBackend::create_pipeline_internal(
                 vertex_attribute_descriptions[i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
                 break;
             default:
-                std::unreachable();
+                UNREACHABLE;
         }
     }
 
     VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info{};
     vertex_input_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertex_input_state_create_info.vertexBindingDescriptionCount = config.bindings.size();
-    vertex_input_state_create_info.pVertexBindingDescriptions = vertex_binding_descriptions;
-    vertex_input_state_create_info.vertexAttributeDescriptionCount = config.attributes.size();
-    vertex_input_state_create_info.pVertexAttributeDescriptions = vertex_attribute_descriptions;
+    vertex_input_state_create_info.vertexBindingDescriptionCount = vertex_binding_descriptions.size();
+    vertex_input_state_create_info.pVertexBindingDescriptions = vertex_binding_descriptions.data();
+    vertex_input_state_create_info.vertexAttributeDescriptionCount = vertex_attribute_descriptions.size();
+    vertex_input_state_create_info.pVertexAttributeDescriptions = vertex_attribute_descriptions.data();
 
     VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info{};
     input_assembly_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     input_assembly_state_create_info.primitiveRestartEnable = VK_FALSE;
 
-    switch (config.options.primitive_topology) {
-        case PrimitiveTopology::PointList:
+    switch (config.primitive_topology) {
+        case PrimitiveTopology::POINT_LIST:
             input_assembly_state_create_info.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
             break;
-        case PrimitiveTopology::LineList:
+        case PrimitiveTopology::LINE_LIST:
             input_assembly_state_create_info.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
             break;
-        case PrimitiveTopology::LineStrip:
+        case PrimitiveTopology::LINE_STRIP:
             input_assembly_state_create_info.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
             break;
-        case PrimitiveTopology::TriangleList:
+        case PrimitiveTopology::TRIANGLE_LIST:
             input_assembly_state_create_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
             break;
-        case PrimitiveTopology::TriangleStrip:
+        case PrimitiveTopology::TRIANGLE_STRIP:
             input_assembly_state_create_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
             break;
-        case PrimitiveTopology::TriangleFan:
+        case PrimitiveTopology::TRIANGLE_FAN:
             input_assembly_state_create_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
             break;
-        case PrimitiveTopology::LineListWithAdjacency:
+        case PrimitiveTopology::LINE_LIST_WITH_ADJACENCY:
             input_assembly_state_create_info.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY;
             break;
-        case PrimitiveTopology::LineStripWithAdjacency:
+        case PrimitiveTopology::LINE_STRIP_WITH_ADJACENCY:
             input_assembly_state_create_info.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY;
             break;
-        case PrimitiveTopology::TriangleListWithAdjacency:
+        case PrimitiveTopology::TRIANGLE_LIST_WITH_ADJACENCY:
             input_assembly_state_create_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY;
             break;
-        case PrimitiveTopology::TriangleStripWithAdjacency:
+        case PrimitiveTopology::TRIANGLE_STRIP_WITH_ADJACENCY:
             input_assembly_state_create_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY;
             break;
-        case PrimitiveTopology::PatchList:
+        case PrimitiveTopology::PATH_LIST:
             input_assembly_state_create_info.topology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
             break;
     }
@@ -653,38 +814,38 @@ Pipeline VulkanBackend::create_pipeline_internal(
     rasterization_state_create_info.depthBiasClamp = 0.0f;
     rasterization_state_create_info.depthBiasSlopeFactor = 0.0f;
 
-    switch (config.options.front_face) {
-        case FrontFace::Clockwise:
+    switch (config.front_face) {
+        case FrontFace::CLOCKWISE:
             rasterization_state_create_info.frontFace = VK_FRONT_FACE_CLOCKWISE;
             break;
-        case FrontFace::CounterClockwise:
+        case FrontFace::COUNTER_CLOCKWISE:
             rasterization_state_create_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
             break;
     }
 
-    switch (config.options.polygon_mode) {
-        case PolygonMode::Fill:
+    switch (config.polygon_mode) {
+        case PolygonMode::FILL:
             rasterization_state_create_info.polygonMode = VK_POLYGON_MODE_FILL;
             break;
-        case PolygonMode::Line:
+        case PolygonMode::LINE:
             rasterization_state_create_info.polygonMode = VK_POLYGON_MODE_LINE;
             break;
-        case PolygonMode::Point:
+        case PolygonMode::POINT:
             rasterization_state_create_info.polygonMode = VK_POLYGON_MODE_POINT;
             break;
     }
 
-    switch (config.options.cull_mode) {
-        case CullMode::None:
+    switch (config.cull_mode) {
+        case CullMode::NONE:
             rasterization_state_create_info.cullMode = VK_CULL_MODE_NONE;
             break;
-        case CullMode::Front:
+        case CullMode::FRONT:
             rasterization_state_create_info.cullMode = VK_CULL_MODE_FRONT_BIT;
             break;
-        case CullMode::Back:
+        case CullMode::BACK:
             rasterization_state_create_info.cullMode = VK_CULL_MODE_BACK_BIT;
             break;
-        case CullMode::Both:
+        case CullMode::BOTH:
             rasterization_state_create_info.cullMode = VK_CULL_MODE_FRONT_AND_BACK;
             break;
     }
@@ -700,40 +861,43 @@ Pipeline VulkanBackend::create_pipeline_internal(
 
     VkPipelineDepthStencilStateCreateInfo depth_stencil_state_create_info{};
     depth_stencil_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depth_stencil_state_create_info.depthTestEnable = config.options.depth_test_enable ? VK_TRUE : VK_FALSE;
-    depth_stencil_state_create_info.depthWriteEnable = config.options.depth_write_enable ? VK_TRUE : VK_FALSE;
-    depth_stencil_state_create_info.depthBoundsTestEnable = VK_FALSE;
-    depth_stencil_state_create_info.minDepthBounds = 0.0f;
-    depth_stencil_state_create_info.maxDepthBounds = 1.0f;
-    depth_stencil_state_create_info.stencilTestEnable = VK_FALSE;
-    depth_stencil_state_create_info.front = {};
-    depth_stencil_state_create_info.back = {};
+    depth_stencil_state_create_info.depthTestEnable = VK_FALSE;
+    if (config.depth_test_config.valid()) {
+        depth_stencil_state_create_info.depthTestEnable = config.depth_test_config.valid() ? VK_TRUE : VK_FALSE;
+        depth_stencil_state_create_info.depthWriteEnable = config.depth_test_config->write_enable ? VK_TRUE : VK_FALSE;
+        depth_stencil_state_create_info.depthBoundsTestEnable = VK_FALSE;
+        depth_stencil_state_create_info.minDepthBounds = 0.0f;
+        depth_stencil_state_create_info.maxDepthBounds = 1.0f;
+        depth_stencil_state_create_info.stencilTestEnable = VK_FALSE;
+        depth_stencil_state_create_info.front = {};
+        depth_stencil_state_create_info.back = {};
 
-    switch (config.options.depth_compare_op) {
-        case CompareOp::Never:
-            depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_NEVER;
-            break;
-        case CompareOp::Less:
-            depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_LESS;
-            break;
-        case CompareOp::Equal:
-            depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_EQUAL;
-            break;
-        case CompareOp::LessOrEqual:
-            depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-            break;
-        case CompareOp::Greater:
-            depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_GREATER;
-            break;
-        case CompareOp::NotEqual:
-            depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_NOT_EQUAL;
-            break;
-        case CompareOp::GreaterOrEqual:
-            depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
-            break;
-        case CompareOp::Always:
-            depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_ALWAYS;
-            break;
+        switch (config.depth_test_config->compare_operation) {
+            case CompareOp::NEVER:
+                depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_NEVER;
+                break;
+            case CompareOp::LESS:
+                depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_LESS;
+                break;
+            case CompareOp::EQUAL:
+                depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_EQUAL;
+                break;
+            case CompareOp::LESS_OR_EQUAL:
+                depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+                break;
+            case CompareOp::GREATER:
+                depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_GREATER;
+                break;
+            case CompareOp::NOT_EQUAL:
+                depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_NOT_EQUAL;
+                break;
+            case CompareOp::GREATER_OR_EQUAL:
+                depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
+                break;
+            case CompareOp::ALWAYS:
+                depth_stencil_state_create_info.depthCompareOp = VK_COMPARE_OP_ALWAYS;
+                break;
+        }
     }
 
     VkPipelineColorBlendAttachmentState color_blend_attachment_state{};
@@ -747,8 +911,8 @@ Pipeline VulkanBackend::create_pipeline_internal(
     color_blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     color_blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
 
-    std::vector<VkPipelineColorBlendAttachmentState> color_blend_attachment_states(
-        attachment_count, color_blend_attachment_state);
+    DynamicArray<VkPipelineColorBlendAttachmentState, BumpAllocator> color_blend_attachment_states(
+        mFrameAllocator, framebuffer.attachment_count, move(color_blend_attachment_state));
 
     VkPipelineColorBlendStateCreateInfo color_blend_state_create_info{};
     color_blend_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -781,23 +945,27 @@ Pipeline VulkanBackend::create_pipeline_internal(
     viewport_state_create_info.scissorCount = 1;
     viewport_state_create_info.pScissors = &scissor;
 
-    VkFormat* formats = m_frameAllocator->allocate_aligned<VkFormat>(attachment_count);
-    for (u32 i = 0; i < attachment_count; i++) {
-        formats[i] = format;
+    BumpRef<VkFormat> formats(mFrameAllocator, framebuffer.attachment_count);
+    for (u32 i = 0; i < formats.size(); i++) {
+        formats[i] = get_format(framebuffer.image_color_format);
     }
 
     VkPipelineRenderingCreateInfoKHR pipeline_rendering_create_info{};
     pipeline_rendering_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
-    pipeline_rendering_create_info.colorAttachmentCount = attachment_count;
+    pipeline_rendering_create_info.colorAttachmentCount = framebuffer.attachment_count;
     pipeline_rendering_create_info.pColorAttachmentFormats = formats;
-    pipeline_rendering_create_info.depthAttachmentFormat = depth_format;
-    pipeline_rendering_create_info.stencilAttachmentFormat = stencil_format;
+    if (framebuffer.has_depth) {
+        pipeline_rendering_create_info.depthAttachmentFormat = framebuffer.depth_stencil_image->format;
+    }
+    if (framebuffer.has_stencil) {
+        pipeline_rendering_create_info.stencilAttachmentFormat = framebuffer.depth_stencil_image->format;
+    }
 
     VkGraphicsPipelineCreateInfo graphics_pipeline_create_info{};
     graphics_pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     graphics_pipeline_create_info.pNext = &pipeline_rendering_create_info;
-    graphics_pipeline_create_info.stageCount = config.stages.size();
-    graphics_pipeline_create_info.pStages = shader_stage_create_infos;
+    graphics_pipeline_create_info.stageCount = shader_stage_create_infos.size();
+    graphics_pipeline_create_info.pStages = shader_stage_create_infos.data();
     graphics_pipeline_create_info.pVertexInputState = &vertex_input_state_create_info;
     graphics_pipeline_create_info.pInputAssemblyState = &input_assembly_state_create_info;
     graphics_pipeline_create_info.pRasterizationState = &rasterization_state_create_info;
@@ -808,7 +976,7 @@ Pipeline VulkanBackend::create_pipeline_internal(
     graphics_pipeline_create_info.pDynamicState = &dynamic_state_create_info;
     graphics_pipeline_create_info.renderPass = nullptr;
     graphics_pipeline_create_info.subpass = 0;
-    graphics_pipeline_create_info.layout = resources.pipeline_layout;
+    graphics_pipeline_create_info.layout = pipeline_layout;
 
     TK_LOG_INFO("Creating new graphics pipeline");
     VK_CHECK(
@@ -821,58 +989,18 @@ Pipeline VulkanBackend::create_pipeline_internal(
             &pipeline.pipeline),
         "Could not create graphics pipeline");
 
-    for (u32 i = 0; i < config.stages.size(); i++) {
-        vkDestroyShaderModule(mContext->device, shader_modules[i], mContext->allocation_callbacks);
+    for (u32 i = 0; i < shader_stage_create_infos.size(); i++) {
+        vkDestroyShaderModule(mContext->device, shader_stage_create_infos[i].module, mContext->allocation_callbacks);
     }
 
     return pipeline;
 }
 
-void VulkanBackend::destroy_pipeline_internal(Pipeline* pipeline) {
-    vkDestroyPipeline(mContext->device, pipeline->pipeline, mContext->allocation_callbacks);
-    vkDestroyPipelineLayout(mContext->device, pipeline->pipeline_layout, mContext->allocation_callbacks);
+void VulkanBackend::pipeline_internal_destroy(InternalPipeline& pipeline) {
+    vkDestroyPipeline(mContext->device, pipeline.pipeline, mContext->allocation_callbacks);
 }
 
-Handle VulkanBackend::create_shader_internal(const Framebuffer* fb, const ShaderConfig& config) {
-    TK_ASSERT(mContext->internal_framebuffers.contains(fb->handle), "No handle associated with provided handle");
-    InternalFramebuffer& framebuffer = mContext->internal_framebuffers[fb->handle];
-
-    InternalShader internal_shader{};
-    internal_shader.pipelines[internal_shader.pipeline_count] = create_pipeline_internal(
-        config.config_path,
-        framebuffer.color_image->format,
-        framebuffer.color_image->image_views.count(),
-        framebuffer.has_depth ? mContext->properties.depth_format : VK_FORMAT_UNDEFINED,
-        framebuffer.has_stencil ? mContext->properties.depth_stencil_format : VK_FORMAT_UNDEFINED);
-    Handle handle = mContext->internal_shaders.emplace(internal_shader);
-    handle.data = internal_shader.pipeline_count++;
-    return handle;
-}
-
-void VulkanBackend::destroy_shader_internal(Handle shader_handle) {
-    InternalShader& internal_shader = mResources->shaders[shader_handle];
-    for (u32 i = 0; i < internal_shader.pipeline_count; i++) {
-        vkDestroyPipeline(mContext->device, internal_shader.pipelines[i].pipeline, mContext->allocation_callbacks);
-        vkDestroyPipelineLayout(
-            mContext->device, internal_shader.pipelines[i].pipeline_layout, mContext->allocation_callbacks);
-    }
-
-    for (u32 frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; frame_index++) {
-        for (u32 set_index = 0; set_index < MAX_DESCRIPTOR_SET_COUNT; set_index++) {
-            for (u32 binding_index = 0; binding_index < internal_shader.layout_counts[set_index]; binding_index++) {
-                vkDestroyDescriptorSetLayout(
-                    mContext->device,
-                    internal_shader.descriptor_set_layouts[binding_index][set_index][frame_index],
-                    mContext->allocation_callbacks);
-            }
-        }
-    }
-    mResources->shaders.invalidate(shader_handle);
-}
-
-ShaderModule VulkanBackend::create_shader_module(ShaderStage stage, std::string_view path) {
-    std::string shader_source = loaders::read_text_file(path);
-
+VkShaderModule VulkanBackend::create_shader_module(ShaderStage stage, char* source_path, u64 source_path_length) {
     shaderc::Compiler compiler;
     shaderc::CompileOptions options;
     options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
@@ -895,11 +1023,20 @@ ShaderModule VulkanBackend::create_shader_module(ShaderStage stage, std::string_
             break;
         default:
             TK_ASSERT(false, "Shader stage not supported");
-            std::unreachable();
+            UNREACHABLE;
     }
 
+    DynamicArray<char, BumpAllocator> path(mFrameAllocator, source_path_length + 1);
+    memcpy(source_path, path.data(), source_path_length);
+    path[source_path_length] = 0;
+    Stream stream(source_path, Stream::STREAM_FLAGS::ATE | Stream::STREAM_FLAGS::INPUT);
+    u32 source_size = stream.tell();
+    stream.seek(0);
+
+    DynamicArray<char, BumpAllocator> source_data(mFrameAllocator, source_size);
+
     shaderc::SpvCompilationResult spirv_module =
-        compiler.CompileGlslToSpv(shader_source.data(), shader_kind, path.data(), options);
+        compiler.CompileGlslToSpv(source_data.data(), source_size, shader_kind, path.data(), "main", options);
     if (spirv_module.GetCompilationStatus() != shaderc_compilation_status::shaderc_compilation_status_success) {
         TK_LOG_ERROR(
             "ERROR MESSAGE:\n{}\n\nCOMPILATION STATUS: {}",
@@ -915,27 +1052,11 @@ ShaderModule VulkanBackend::create_shader_module(ShaderStage stage, std::string_
     shader_module_create_info.pCode = reinterpret_cast<const u32*>(spirv_module.begin());
     shader_module_create_info.codeSize = ((uintptr_t) spirv_module.end()) - ((uintptr_t) spirv_module.begin());
 
-    ShaderModule shader_module{};
+    VkShaderModule shader_module{};
     VK_CHECK(
         vkCreateShaderModule(
-            mContext->device, &shader_module_create_info, mContext->allocation_callbacks, &shader_module.shader_module),
+            mContext->device, &shader_module_create_info, mContext->allocation_callbacks, &shader_module),
         "Could not create shader module");
-
-    VkPipelineShaderStageCreateInfo& shader_stage_create_info = shader_module.shader_stage_create_info;
-    shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    shader_stage_create_info.module = shader_module.shader_module;
-    shader_stage_create_info.pName = "main";
-
-    switch (stage) {
-        case ShaderStage::VERTEX:
-            shader_stage_create_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
-            break;
-        case ShaderStage::FRAGMENT:
-            shader_stage_create_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-            break;
-        default:
-            std::unreachable();
-    }
 
     return shader_module;
 }
@@ -958,7 +1079,7 @@ void VulkanBackend::reflect_shader(
             shader_stage = VK_SHADER_STAGE_FRAGMENT_BIT;
             break;
         default:
-            std::unreachable();
+            UNREACHABLE;
     }
 
     for (u32 i = 0; i < resources.push_constant_buffers.size(); i++) {
@@ -1020,17 +1141,17 @@ void VulkanBackend::reflect_shader(
     }
 }*/
 
-void VulkanBackend::prepare_swapchain_frame(Swapchain* swapchain) {
+void VulkanBackend::swapchain_prepare_frame(Swapchain& swapchain) {
     VkResult result = vkAcquireNextImageKHR(
         mContext->device,
-        swapchain->swapchain,
+        swapchain.swapchain,
         UINT64_MAX,
-        swapchain->image_available_semaphores[m_inFlightFrameIndex],
+        swapchain.image_available_semaphores[mInFlightFrameIndex],
         VK_NULL_HANDLE,
-        &swapchain->image_index);
+        &swapchain.image_index);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        recreate_swapchain(swapchain);
+        swapchain_recreate(swapchain);
         return;
     } else {
         TK_ASSERT(
@@ -1039,15 +1160,15 @@ void VulkanBackend::prepare_swapchain_frame(Swapchain* swapchain) {
     }
 }
 
-void VulkanBackend::reset_swapchain_frame(Swapchain* swapchain) {
-    swapchain->is_recording_commands = false;
+void VulkanBackend::swapchain_reset_frame(Swapchain& swapchain) {
+    swapchain.is_recording_commands = false;
 }
 
 VkCommandBuffer VulkanBackend::start_single_use_command_buffer() {
     VkCommandBufferAllocateInfo command_buffer_allocate_info{};
     command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    command_buffer_allocate_info.commandPool = mContext->extra_command_pools[0];
+    command_buffer_allocate_info.commandPool = mResources->extra_command_pools[0];
     command_buffer_allocate_info.commandBufferCount = 1;
 
     VkCommandBuffer command_buffer;
@@ -1075,15 +1196,15 @@ void VulkanBackend::submit_single_use_command_buffer(VkCommandBuffer cmd) {
 }
 
 FrameData* VulkanBackend::get_current_frame() {
-    return &mFrames[m_inFlightFrameIndex];
+    return &mFrames[mInFlightFrameIndex];
 }
 
-CommandBuffers* VulkanBackend::get_current_command_buffers() {
-    return &mContext->command_buffers[m_inFlightFrameIndex];
+CommandBuffers& VulkanBackend::get_current_command_buffers() {
+    return mResources->command_buffers;
 }
 
 void VulkanBackend::transition_framebuffer_images(VkCommandBuffer cmd, InternalFramebuffer* framebuffer) {
-    VkImageMemoryBarrier* image_memory_barriers = m_frameAllocator->allocate_aligned<VkImageMemoryBarrier>(2);
+    StaticArray<VkImageMemoryBarrier, 2, BumpAllocator> image_memory_barriers(mFrameAllocator);
     u32 memory_barrier_count = 1;
 
     VkImageMemoryBarrier& color_image_memory_barrier = image_memory_barriers[0];
@@ -1096,7 +1217,7 @@ void VulkanBackend::transition_framebuffer_images(VkCommandBuffer cmd, InternalF
     color_image_memory_barrier.subresourceRange.baseMipLevel = 0;
     color_image_memory_barrier.subresourceRange.levelCount = 1;
     color_image_memory_barrier.subresourceRange.baseArrayLayer = 0;
-    color_image_memory_barrier.subresourceRange.layerCount = framebuffer->color_image->image_views.count();
+    color_image_memory_barrier.subresourceRange.layerCount = framebuffer->color_image->image_views.size();
 
     if (framebuffer->depth_stencil_image) {
         memory_barrier_count++;
@@ -1128,17 +1249,17 @@ void VulkanBackend::transition_framebuffer_images(VkCommandBuffer cmd, InternalF
         0,
         nullptr,
         memory_barrier_count,
-        image_memory_barriers);
+        image_memory_barriers.data());
 }
 
-void VulkanBackend::transition_swapchain_image(VkCommandBuffer cmd, Swapchain* swapchain) {
+void VulkanBackend::transition_swapchain_image(VkCommandBuffer cmd, Swapchain& swapchain) {
     VkImageMemoryBarrier image_memory_barrier{};
     image_memory_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     image_memory_barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     image_memory_barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
     image_memory_barrier.srcQueueFamilyIndex = mContext->graphics_queue.family_index;
     image_memory_barrier.dstQueueFamilyIndex = mContext->graphics_queue.family_index;
-    image_memory_barrier.image = swapchain_image(swapchain);
+    image_memory_barrier.image = SWAPCHAIN_IMAGE(swapchain);
     image_memory_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     image_memory_barrier.subresourceRange.baseMipLevel = 0;
     image_memory_barrier.subresourceRange.levelCount = 1;
@@ -1187,17 +1308,26 @@ void VulkanBackend::transition_image_layouts(
     VkImageMemoryBarrier image_memory_barrier =
         create_image_memory_barrier(config.old_layout, config.new_layout, aspect_flags);
 
-    VkImageMemoryBarrier* image_memory_barriers = m_frameAllocator->allocate_aligned<VkImageMemoryBarrier>(image_count);
+    DynamicArray<VkImageMemoryBarrier, BumpAllocator> image_memory_barriers(mFrameAllocator, image_count);
     for (u32 i = 0; i < image_count; i++) {
         image_memory_barriers[i] = image_memory_barrier;
         image_memory_barriers[i].image = images[i];
     }
 
     vkCmdPipelineBarrier(
-        cmd, config.src_stage, config.dst_stage, 0, 0, nullptr, 0, nullptr, image_count, image_memory_barriers);
+        cmd,
+        config.src_stage,
+        config.dst_stage,
+        0,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        image_memory_barriers.size(),
+        image_memory_barriers.data());
 }
 
-void VulkanBackend::wait_for_resources() {
+void VulkanBackend::resources_wait() {
     vkDeviceWaitIdle(mContext->device);
 }
 
@@ -1207,41 +1337,36 @@ void VulkanBackend::prepare_frame_resources() {
     VkResult result = vkWaitForFences(mContext->device, 1, &frame->render_fence, VK_TRUE, UINT64_MAX);
     TK_ASSERT(result == VK_SUCCESS || result == VK_TIMEOUT, "Failed waiting for fences");
 
-    for (u32 i = 0; i < 1; i++) {
-        prepare_swapchain_frame(&mContext->swapchains[i]);
-    }
+    swapchain_prepare_frame(mResources->swapchain);
 
     VK_CHECK(vkResetFences(mContext->device, 1, &frame->render_fence), "Could not reset render fence");
 
     {
-        CommandBuffers* command_buffers = get_current_command_buffers();
-        for (u32 i = 0; i < command_buffers->count; i++) {
-            vkResetCommandBuffer(command_buffers->command_buffers[i], 0);
+        CommandBuffers& command_buffers = get_current_command_buffers();
+        for (u32 i = 0; i < command_buffers.used_count; i++) {
+            vkResetCommandBuffer(command_buffers.array[i], 0);
         }
-        command_buffers->count = 0;
     }
 }
 
 void VulkanBackend::submit_commands() {
-    CommandBuffers* command_buffers = get_current_command_buffers();
-    for (u32 i = 0; i < command_buffers->count; i++) {
-        vkEndCommandBuffer(command_buffers->command_buffers[i]);
+    CommandBuffers& command_buffers = get_current_command_buffers();
+    for (u32 i = 0; i < command_buffers.used_count; i++) {
+        vkEndCommandBuffer(command_buffers.array[i]);
     }
 
     submit_frame_command_buffers();
 }
 
 void VulkanBackend::cleanup_frame_resources() {
-    for (auto& swapchain : mContext->swapchains) {
-        reset_swapchain_frame(&swapchain);
-    }
+    swapchain_reset_frame(mResources->swapchain);
 
-    m_inFlightFrameIndex = (m_inFlightFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
+    mInFlightFrameIndex = (mInFlightFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 
-    m_frameAllocator.swap();
-    m_frameAllocator->clear();
+    mFrameAllocator.swap();
+    mFrameAllocator->clear();
 
-    mContext->staging_buffer_offset = 0;
+    mResources->staging_buffer_offset = 0;
 }
 
 void VulkanBackend::present() {
@@ -1249,40 +1374,38 @@ void VulkanBackend::present() {
     VkSemaphore wait_semaphores[] = { frame->present_semaphore };
 
     u32 swapchain_count = 1;
-    VkSwapchainKHR* swapchain_handles = m_frameAllocator->allocate_aligned<VkSwapchainKHR>(swapchain_count);
-    u32* swapchain_image_indices = m_frameAllocator->allocate_aligned<u32>(swapchain_count);
-    Swapchain** swapchains = m_frameAllocator->allocate_aligned<Swapchain*>(swapchain_count);
+
+    DynamicArray<VkSwapchainKHR, BumpAllocator> swapchain_handles(mFrameAllocator, swapchain_count);
+    DynamicArray<u32, BumpAllocator> swapchain_image_indices(mFrameAllocator, swapchain_count);
+    DynamicArray<Swapchain*, BumpAllocator> swapchains(mFrameAllocator, swapchain_count);
 
     swapchain_count = 0;
 
-    for (auto& swapchain : mContext->swapchains) {
-        if (!swapchain.can_render) {
-            continue;
-        }
+    Swapchain& swapchain = mResources->swapchain;
+    if (!swapchain.can_render) {}
 
-        swapchain_handles[swapchain_count] = swapchain.swapchain;
-        swapchain_image_indices[swapchain_count] = swapchain.image_index;
-        swapchains[swapchain_count] = &swapchain;
-        swapchain_count++;
-    }
+    swapchain_handles[swapchain_count] = swapchain.swapchain;
+    swapchain_image_indices[swapchain_count] = swapchain.image_index;
+    swapchains[swapchain_count] = &swapchain;
+    swapchain_count++;
 
-    VkResult* results = m_frameAllocator->allocate_aligned<VkResult>(swapchain_count);
+    DynamicArray<VkResult, BumpAllocator> results(mFrameAllocator, swapchain_count);
 
     VkPresentInfoKHR present_info{};
     present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     present_info.waitSemaphoreCount = 1;
     present_info.pWaitSemaphores = wait_semaphores;
     present_info.swapchainCount = swapchain_count;
-    present_info.pSwapchains = swapchain_handles;
-    present_info.pImageIndices = swapchain_image_indices;
-    present_info.pResults = results;
+    present_info.pSwapchains = swapchain_handles.data();
+    present_info.pImageIndices = swapchain_image_indices.data();
+    present_info.pResults = results.data();
 
     VK_CHECK(vkQueuePresentKHR(mContext->present_queue.handle, &present_info), "Could not present");
 
     for (u32 i = 0; i < swapchain_count; i++) {
         swapchains[i]->waiting_to_present = false;
         if (results[i] == VK_ERROR_OUT_OF_DATE_KHR || results[i] == VK_SUBOPTIMAL_KHR) {
-            recreate_swapchain(swapchains[i]);
+            swapchain_recreate(swapchain);
         }
     }
 }
@@ -1292,25 +1415,25 @@ b8 VulkanBackend::submit_frame_command_buffers() {
 
     VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
     VkSemaphore signal_semaphores[] = { current_frame->present_semaphore };
-    VkSemaphore* wait_semaphores = m_frameAllocator->allocate_aligned<VkSemaphore>(MAX_SWAPCHAIN_COUNT);
+    DynamicArray<VkSemaphore, BumpAllocator> wait_semaphores(mFrameAllocator, MAX_SWAPCHAIN_COUNT);
 
     // TODO: make this dynamic when more than 1 swapchain is supported
     for (u32 i = 0; i < MAX_SWAPCHAIN_COUNT; i++) {
-        wait_semaphores[i] = mContext->swapchains[i].image_available_semaphores[m_inFlightFrameIndex];
+        wait_semaphores[i] = mResources->swapchain.image_available_semaphores[mInFlightFrameIndex];
     }
 
-    CommandBuffers* command_buffers = get_current_command_buffers();
+    CommandBuffers& command_buffers = get_current_command_buffers();
 
     VkSubmitInfo submit_info{};
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submit_info.pWaitDstStageMask = wait_stages;
     // TODO: make this dynamic when more than 1 swapchain is supported
     submit_info.waitSemaphoreCount = 1;
-    submit_info.pWaitSemaphores = wait_semaphores;
+    submit_info.pWaitSemaphores = wait_semaphores.data();
     submit_info.signalSemaphoreCount = 1;
     submit_info.pSignalSemaphores = signal_semaphores;
-    submit_info.pCommandBuffers = command_buffers->command_buffers;
-    submit_info.commandBufferCount = command_buffers->count;
+    submit_info.pCommandBuffers = command_buffers.array.data();
+    submit_info.commandBufferCount = command_buffers.used_count;
 
     VK_CHECK(
         vkQueueSubmit(mContext->graphics_queue.handle, 1, &submit_info, current_frame->render_fence),
@@ -1320,9 +1443,10 @@ b8 VulkanBackend::submit_frame_command_buffers() {
 }
 
 VkCommandBuffer VulkanBackend::get_command_buffer() {
-    CommandBuffers* command_buffers = get_current_command_buffers();
+    CommandBuffers& command_buffers = get_current_command_buffers();
 
-    VkCommandBuffer cmd = command_buffers->command_buffers[command_buffers->count++];
+    TK_ASSERT(command_buffers.used_count < MAX_IN_FLIGHT_COMMAND_BUFFER_COUNT, "Cannot get another command buffer");
+    VkCommandBuffer cmd = command_buffers.array[command_buffers.used_count++];
 
     VkCommandBufferBeginInfo command_buffer_begin_info{};
     command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -1334,42 +1458,41 @@ VkCommandBuffer VulkanBackend::get_command_buffer() {
 }
 
 RendererCommands* VulkanBackend::get_commands() {
-    return m_frameAllocator->emplace<VulkanCommands>(this);
+    return new (mFrameAllocator->allocate(sizeof(VulkanCommands))) VulkanCommands(this);
 }
 
-void VulkanBackend::set_color_clear(const Vec4<f32>& color) {
-    mContext->color_clear = { { c.r, c.g, c.b, c.a } };
+void VulkanBackend::set_color_clear(const Vec4<f32>& c) {
+    mSettings->color_clear = { { c.r, c.g, c.b, c.a } };
 }
 
 void VulkanBackend::set_depth_clear(f32 depth_clear) {
-    mContext->depth_stencil_clear.depth = depth_clear;
+    mSettings->depth_stencil_clear.depth = depth_clear;
 }
 
 void VulkanBackend::set_stencil_clear(u32 stencil_clear) {
-    mContext->depth_stencil_clear.stencil = stencil_clear;
+    mSettings->depth_stencil_clear.stencil = stencil_clear;
 }
 
-InternalShader* VulkanBackend::get_shader(Handle handle) {
-    TK_ASSERT(mContext->internal_shaders.contains(handle), "No shader associated with provided handle");
-    return &mContext->internal_shaders[handle];
+InternalShader* VulkanBackend::get_shader(const Handle handle) {
+    ASSERT_SHADER(handle);
+    return &mResources->shaders[handle];
 }
 
 void VulkanBackend::begin_rendering(VkCommandBuffer cmd, Handle framebuffer_handle, const Rect2D& a) {
-    TK_ASSERT(
-        mContext->internal_framebuffers.contains(framebuffer_handle), "No framebuffer associated with provided handle");
+    ASSERT_FRAMEBUFFER(framebuffer_handle);
 
-    InternalFramebuffer& framebuffer = mContext->internal_framebuffers[framebuffer_handle];
-    u64 total_attachment_count = framebuffer.color_image->image_views.count();
+    InternalFramebuffer& framebuffer = mResources->framebuffers[framebuffer_handle];
+    u64 total_attachment_count = framebuffer.color_image->image_views.size();
 
     VkRenderingAttachmentInfo rendering_attachment_info{};
     rendering_attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
     rendering_attachment_info.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     rendering_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     rendering_attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    rendering_attachment_info.clearValue.color = mContext->color_clear;
+    rendering_attachment_info.clearValue.color = mSettings->color_clear;
 
-    VkRenderingAttachmentInfo* rendering_attachment_infos =
-        m_frameAllocator->allocate_aligned<VkRenderingAttachmentInfo>(total_attachment_count);
+    DynamicArray<VkRenderingAttachmentInfo, BumpAllocator> rendering_attachment_infos(
+        mFrameAllocator, total_attachment_count);
 
     for (u32 i = 0; i < total_attachment_count; i++) {
         rendering_attachment_infos[i] = rendering_attachment_info;
@@ -1389,12 +1512,12 @@ void VulkanBackend::begin_rendering(VkCommandBuffer cmd, Handle framebuffer_hand
     rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
     rendering_info.layerCount = 1;
     rendering_info.renderArea = VkRect2D{ { a.pos.x, a.pos.y }, { a.size.x, a.size.y } };
-    rendering_info.colorAttachmentCount = framebuffer.color_image->image_views.count();
-    rendering_info.pColorAttachments = rendering_attachment_infos;
+    rendering_info.colorAttachmentCount = framebuffer.color_image->image_views.size();
+    rendering_info.pColorAttachments = rendering_attachment_infos.data();
 
     if (framebuffer.depth_stencil_image) {
         VkRenderingAttachmentInfo* depth_stencil_attachment =
-            m_frameAllocator->allocate_aligned<VkRenderingAttachmentInfo>(1);
+            mFrameAllocator->allocate<VkRenderingAttachmentInfo>(sizeof(VkRenderingAttachmentInfo));
 
         transition_layout_config.new_layout = framebuffer.has_stencil ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
                                                                       : VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
@@ -1402,11 +1525,12 @@ void VulkanBackend::begin_rendering(VkCommandBuffer cmd, Handle framebuffer_hand
         transition_layout_config.dst_stage =
             VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-        transition_image_layout(transition_layout_cmd, transition_layout_config, framebuffer.depth_stencil_image.get());
+        transition_image_layout(
+            transition_layout_cmd, transition_layout_config, framebuffer.depth_stencil_image.data());
 
         *depth_stencil_attachment = rendering_attachment_info;
         depth_stencil_attachment->imageView = framebuffer.depth_stencil_image->image_views[0];
-        depth_stencil_attachment->clearValue.depthStencil = mContext->depth_stencil_clear;
+        depth_stencil_attachment->clearValue.depthStencil = mSettings->depth_stencil_clear;
 
         rendering_info.pDepthAttachment = depth_stencil_attachment;
         if (framebuffer.has_stencil) {
@@ -1423,13 +1547,12 @@ void VulkanBackend::begin_rendering(VkCommandBuffer cmd, Handle framebuffer_hand
 }
 
 void VulkanBackend::end_rendering(VkCommandBuffer cmd, Handle framebuffer_handle) {
-    TK_ASSERT(
-        mContext->internal_framebuffers.contains(framebuffer_handle), "No framebuffer associated with provided handle");
+    ASSERT_FRAMEBUFFER(framebuffer_handle);
 
     vkCmdEndRendering(cmd);
 
-    InternalFramebuffer& framebuffer = mContext->internal_framebuffers[framebuffer_handle];
-    Swapchain* swapchain = &mContext->swapchains[0];
+    InternalFramebuffer& framebuffer = mResources->framebuffers[framebuffer_handle];
+    Swapchain& swapchain = mResources->swapchain;
 
     // TODO: make layer index be dynamic
     VkImageCopy image_copy{};
@@ -1454,31 +1577,32 @@ void VulkanBackend::end_rendering(VkCommandBuffer cmd, Handle framebuffer_handle
         cmd,
         framebuffer.color_image->image,
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        swapchain_image(swapchain),
+        SWAPCHAIN_IMAGE(swapchain),
         VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
         1,
         &image_copy);
 
-    transition_swapchain_image(cmd, &mContext->swapchains[0]);
+    transition_swapchain_image(cmd, swapchain);
 }
 
 void VulkanBackend::bind_shader(VkCommandBuffer cmd, Shader const& shader) {
-    Pipeline& pipeline = mContext->internal_shaders[shader.handle].pipelines[shader.handle.data];
+    ASSERT_SHADER(shader.handle);
+    InternalPipeline& pipeline = mResources->shaders[shader.handle].pipelines[shader.handle.data];
     vkCmdBindPipeline(cmd, pipeline.bind_point, pipeline.pipeline);
 }
 
 void VulkanBackend::bind_buffer(VkCommandBuffer cmd, Buffer const& buffer) {
-    TK_ASSERT(mContext->internal_buffers.contains(buffer.handle), "Buffer with provided handle does not exist");
-    InternalBuffer& internal_buffer = mContext->internal_buffers[buffer.handle];
+    ASSERT_BUFFER(buffer.handle);
+    InternalBuffer& internal_buffer = mResources->buffers[buffer.handle];
 
-    switch (buffer.type) {
-        case BufferType::Vertex: {
+    switch (internal_buffer.usage) {
+        case VK_BUFFER_USAGE_VERTEX_BUFFER_BIT: {
             VkDeviceSize offsets[] = { 0 };
             VkBuffer buffers[] = { internal_buffer.buffer };
             vkCmdBindVertexBuffers(cmd, 0, 1, buffers, offsets);
             break;
         }
-        case BufferType::Index: {
+        case VK_BUFFER_USAGE_INDEX_BUFFER_BIT: {
             VkDeviceSize offset = 0;
             VkBuffer index_buffer = internal_buffer.buffer;
             vkCmdBindIndexBuffer(cmd, index_buffer, offset, VK_INDEX_TYPE_UINT32);
@@ -1511,15 +1635,13 @@ void VulkanBackend::push_constants(
     vkCmdPushConstants(cmd, layout, stage_flags, offset, size, data);
 }
 
-void VulkanBackend::initialize_resources() {
+void VulkanBackend::resources_initialize() {
     // Internal buffer creation
     {
-        mContext->staging_buffer = {};
-        InternalBuffer buffer = create_buffer_internal(
+        mResources->staging_buffer = buffer_internal_create(
             DEFAULT_STAGING_BUFFER_SIZE,
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        mContext->staging_buffer = buffer;
     }
 
     // Command pool creation
@@ -1529,24 +1651,24 @@ void VulkanBackend::initialize_resources() {
         command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         command_pool_create_info.queueFamilyIndex = mContext->graphics_queue.family_index;
 
-        mContext->command_pools = BasicRef<VkCommandPool>(&m_allocator, 1);
+        mResources->command_pools = move(DynamicArray<VkCommandPool>(mAllocator, 1));
 
         VK_CHECK(
             vkCreateCommandPool(
                 mContext->device,
                 &command_pool_create_info,
                 mContext->allocation_callbacks,
-                mContext->command_pools.get()),
+                mResources->command_pools.data()),
             "Could not create command pool(s)");
 
-        mContext->extra_command_pools = BasicRef<VkCommandPool>(&m_allocator, 1);
+        mResources->extra_command_pools = move(DynamicArray<VkCommandPool>(mAllocator, 1));
 
         VK_CHECK(
             vkCreateCommandPool(
                 mContext->device,
                 &command_pool_create_info,
                 mContext->allocation_callbacks,
-                mContext->extra_command_pools.get()),
+                mResources->extra_command_pools.data()),
             "Could not create extra command pool(s)");
     }
 
@@ -1554,17 +1676,18 @@ void VulkanBackend::initialize_resources() {
     {
         VkCommandBufferAllocateInfo command_buffer_allocate_info{};
         command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        command_buffer_allocate_info.commandPool = mContext->command_pools[0];
+        command_buffer_allocate_info.commandPool = mResources->command_pools[0];
         command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        command_buffer_allocate_info.commandBufferCount = MAX_IN_FLIGHT_COMMAND_BUFFERS;
+        command_buffer_allocate_info.commandBufferCount = MAX_IN_FLIGHT_COMMAND_BUFFER_COUNT;
 
         for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            mContext->command_buffers[i].command_buffers = { &m_allocator, MAX_IN_FLIGHT_COMMAND_BUFFERS };
-            mContext->command_buffers[i].count = 0;
+            mResources->command_buffers.array =
+                move(StaticArray<VkCommandBuffer, MAX_IN_FLIGHT_COMMAND_BUFFER_COUNT>(mAllocator));
+            mResources->command_buffers.used_count = 0;
 
             VK_CHECK(
                 vkAllocateCommandBuffers(
-                    mContext->device, &command_buffer_allocate_info, mContext->command_buffers[i].command_buffers),
+                    mContext->device, &command_buffer_allocate_info, mResources->command_buffers.array.data()),
                 "Could not allocate command buffers");
         }
     }
@@ -1594,8 +1717,8 @@ void VulkanBackend::initialize_resources() {
     }
 }
 
-void VulkanBackend::cleanup_resources() {
-    wait_for_resources();
+void VulkanBackend::resources_cleanup() {
+    resources_wait();
 
     // Cleanup frames
     {
@@ -1607,119 +1730,22 @@ void VulkanBackend::cleanup_resources() {
 
     // Cleanup command pools
     {
-        for (u32 i = 0; i < mContext->command_pools.count(); i++) {
-            vkDestroyCommandPool(mContext->device, mContext->command_pools[i], mContext->allocation_callbacks);
+        for (u32 i = 0; i < mResources->command_pools.size(); i++) {
+            vkDestroyCommandPool(mContext->device, mResources->command_pools[i], mContext->allocation_callbacks);
         }
 
-        for (u32 i = 0; i < mContext->extra_command_pools.count(); i++) {
-            vkDestroyCommandPool(mContext->device, mContext->extra_command_pools[i], mContext->allocation_callbacks);
+        for (u32 i = 0; i < mResources->extra_command_pools.size(); i++) {
+            vkDestroyCommandPool(mContext->device, mResources->extra_command_pools[i], mContext->allocation_callbacks);
         }
     }
 
     // Cleanup internal buffers
-    destroy_buffer_internal(&mContext->staging_buffer);
+    buffer_internal_destroy(mResources->staging_buffer);
 }
 
-Handle VulkanBackend::create_buffer(BufferType type, u32 size) {
-    VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    switch (type) {
-        case BufferType::Vertex:
-            usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-            break;
-        case BufferType::Index:
-            usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-            break;
-        default:
-            std::unreachable();
-    }
-
-    return mContext->internal_buffers.emplace(create_buffer_internal(size, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT));
-}
-
-void VulkanBackend::destroy_buffer(Buffer& buffer) {
-    TK_ASSERT(buffer && buffer->size, "Invalid buffer provided");
-    TK_ASSERT(mContext->internal_buffers.contains(buffer->handle), "Buffer with provided handle does not exist");
-
-    InternalBuffer& internal_buffer = mContext->internal_buffers[buffer->handle];
-    destroy_buffer_internal(&internal_buffer);
-    mResources->buffers.invalidate(buffer);
-}
-
-void* VulkanBackend::map_buffer_memory(VkDeviceMemory memory, u32 offset, u32 size) {
-    void* data{};
-    VK_CHECK(vkMapMemory(mContext->device, memory, offset, size, 0, &data), "Could not map buffer memory");
-    return data;
-}
-
-void VulkanBackend::unmap_buffer_memory(VkDeviceMemory memory) {
-    vkUnmapMemory(mContext->device, memory);
-}
-
-void VulkanBackend::flush_buffer(Buffer* buffer) {
-    TK_ASSERT(mContext->internal_buffers.contains(buffer->handle), "Buffer with provided handle does not exist");
-    InternalBuffer& internal_buffer = mContext->internal_buffers[buffer->handle];
-
-    if ((internal_buffer.memory_property_flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0) {
-        VkMappedMemoryRange mapped_memory_range{};
-        mapped_memory_range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-        mapped_memory_range.memory = internal_buffer.memory;
-        mapped_memory_range.offset = 0;
-        mapped_memory_range.size = buffer->size;
-        VK_CHECK(vkFlushMappedMemoryRanges(mContext->device, 1, &mapped_memory_range), "Could not flush buffer memory");
-    }
-}
-
-void VulkanBackend::set_buffer_data(const Buffer& buffer, u32 size, void* data) {
-    TK_ASSERT(mResources->buffers.contains(buffer), "Buffer with provided handle does not exist");
-    InternalBuffer& staging_buffer = mContext->staging_buffer;
-
-    // Copy to staging buffer
-    void* mapped_data = map_buffer_memory(staging_buffer.memory, mContext->staging_buffer_offset, size);
-    std::memcpy(mapped_data, data, size);
-    unmap_buffer_memory(staging_buffer.memory);
-    mapped_data = nullptr;
-
-    InternalBuffer& internal_buffer = mContext->internal_buffers[buffer->handle];
-
-    // Copy to uploaded buffer
-    copy_buffer_data(internal_buffer.buffer, staging_buffer.buffer, size, 0, mContext->staging_buffer_offset);
-
-    mContext->staging_buffer_offset += size;
-}
-
-void VulkanBackend::copy_buffer_data(VkBuffer dst, VkBuffer src, u32 size, u32 dst_offset, u32 src_offset) {
-    VkCommandBuffer cmd = start_single_use_command_buffer();
-
-    VkBufferCopy buffer_copy{};
-    buffer_copy.srcOffset = src_offset;
-    buffer_copy.dstOffset = dst_offset;
-    buffer_copy.size = size;
-    vkCmdCopyBuffer(cmd, src, dst, 1, &buffer_copy);
-
-    submit_single_use_command_buffer(cmd);
-}
-
-Handle VulkanBackend::create_image(ColorFormat format, u32 width, u32 height) {
-    InternalImage new_image = create_image_internal(
-        width,
-        height,
-        1,
-        get_format(format),
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        VK_IMAGE_ASPECT_COLOR_BIT);
-
-    return mContext->internal_images.emplace(new_image);
-}
-
-void VulkanBackend::destroy_image(Handle image_handle) {
-    TK_ASSERT(mContext->internal_images.contains(image_handle), "Handle is not associated with any Vulkan image");
-    mContext->internal_images.erase(image_handle);
-}
-
-InternalBuffer VulkanBackend::create_buffer_internal(
+InternalBuffer VulkanBackend::buffer_internal_create(
     u32 size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memory_properties) {
-    InternalBuffer buffer{};
+    InternalBuffer internal_buffer{};
 
     VkBufferCreateInfo buffer_create_info{};
     buffer_create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -1728,11 +1754,11 @@ InternalBuffer VulkanBackend::create_buffer_internal(
     buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     VK_CHECK(
-        vkCreateBuffer(mContext->device, &buffer_create_info, mContext->allocation_callbacks, &buffer.buffer),
+        vkCreateBuffer(mContext->device, &buffer_create_info, mContext->allocation_callbacks, &internal_buffer.buffer),
         "Could not create buffer");
 
     VkMemoryRequirements memory_requirements;
-    vkGetBufferMemoryRequirements(mContext->device, buffer.buffer, &memory_requirements);
+    vkGetBufferMemoryRequirements(mContext->device, internal_buffer.buffer, &memory_requirements);
 
     VkMemoryAllocateInfo memory_allocate_info{};
     memory_allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -1741,24 +1767,28 @@ InternalBuffer VulkanBackend::create_buffer_internal(
         find_memory_type_index(memory_requirements.memoryTypeBits, memory_properties);
 
     VK_CHECK(
-        vkAllocateMemory(mContext->device, &memory_allocate_info, mContext->allocation_callbacks, &buffer.memory),
+        vkAllocateMemory(
+            mContext->device, &memory_allocate_info, mContext->allocation_callbacks, &internal_buffer.memory),
         "Could not allocate image memory");
-    VK_CHECK(vkBindBufferMemory(mContext->device, buffer.buffer, buffer.memory, 0), "Could not bind buffer memory");
+    VK_CHECK(
+        vkBindBufferMemory(mContext->device, internal_buffer.buffer, internal_buffer.memory, 0),
+        "Could not bind buffer memory");
 
-    buffer.usage = usage;
-    buffer.memory_requirements = memory_requirements;
-    buffer.memory_property_flags = memory_properties;
+    internal_buffer.size = size;
+    internal_buffer.usage = usage;
+    internal_buffer.memory_requirements = memory_requirements;
+    internal_buffer.memory_property_flags = memory_properties;
 
-    return buffer;
+    return internal_buffer;
 }
 
-void VulkanBackend::destroy_buffer_internal(InternalBuffer* buffer) {
-    vkFreeMemory(mContext->device, buffer->memory, mContext->allocation_callbacks);
-    vkDestroyBuffer(mContext->device, buffer->buffer, mContext->allocation_callbacks);
-    *buffer = {};
+void VulkanBackend::buffer_internal_destroy(InternalBuffer& buffer) {
+    vkFreeMemory(mContext->device, buffer.memory, mContext->allocation_callbacks);
+    vkDestroyBuffer(mContext->device, buffer.buffer, mContext->allocation_callbacks);
+    buffer = {};
 }
 
-InternalImage VulkanBackend::create_image_internal(
+InternalImage VulkanBackend::image_internal_create(
     u32 width,
     u32 height,
     u32 layer_count,
@@ -1766,18 +1796,17 @@ InternalImage VulkanBackend::create_image_internal(
     VkImageUsageFlags usage,
     VkMemoryPropertyFlags memory_properties,
     VkImageAspectFlags aspect_flags) {
-    InternalImage image{};
+    InternalImage new_image(move(DynamicArray<VkImageView>(mAllocator, layer_count)));
 
-    image.extent = VkExtent3D{ width, height, 1 };
-    image.format = format;
-    image.aspect_flags = aspect_flags;
-    image.image_views = BasicRef<VkImageView>(&m_allocator, layer_count);
+    new_image.extent = VkExtent3D{ width, height, 1 };
+    new_image.format = format;
+    new_image.aspect_flags = aspect_flags;
 
     VkImageCreateInfo image_create_info{};
     image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     image_create_info.imageType = VK_IMAGE_TYPE_2D;
     image_create_info.format = format;
-    image_create_info.extent = image.extent;
+    image_create_info.extent = new_image.extent;
     image_create_info.mipLevels = 1;
     image_create_info.arrayLayers = layer_count;
     image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -1785,11 +1814,11 @@ InternalImage VulkanBackend::create_image_internal(
     image_create_info.usage = usage;
 
     VK_CHECK(
-        vkCreateImage(mContext->device, &image_create_info, mContext->allocation_callbacks, &image.image),
+        vkCreateImage(mContext->device, &image_create_info, mContext->allocation_callbacks, &new_image.image),
         "Could not create image");
 
     VkMemoryRequirements memory_requirements;
-    vkGetImageMemoryRequirements(mContext->device, image.image, &memory_requirements);
+    vkGetImageMemoryRequirements(mContext->device, new_image.image, &memory_requirements);
 
     VkMemoryAllocateInfo memory_allocate_info{};
     memory_allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -1798,15 +1827,15 @@ InternalImage VulkanBackend::create_image_internal(
         find_memory_type_index(memory_requirements.memoryTypeBits, memory_properties);
 
     VK_CHECK(
-        vkAllocateMemory(mContext->device, &memory_allocate_info, mContext->allocation_callbacks, &image.memory),
+        vkAllocateMemory(mContext->device, &memory_allocate_info, mContext->allocation_callbacks, &new_image.memory),
         "Could not allocate image memory");
-    VK_CHECK(vkBindImageMemory(mContext->device, image.image, image.memory, 0), "Could not bind image memory");
+    VK_CHECK(vkBindImageMemory(mContext->device, new_image.image, new_image.memory, 0), "Could not bind image memory");
 
     VkImageViewCreateInfo image_view_create_info{};
     image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
     image_view_create_info.format = format;
-    image_view_create_info.image = image.image;
+    image_view_create_info.image = new_image.image;
     image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
     image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
     image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -1821,20 +1850,19 @@ InternalImage VulkanBackend::create_image_internal(
         image_view_create_info.subresourceRange.baseArrayLayer = i;
         VK_CHECK(
             vkCreateImageView(
-                mContext->device, &image_view_create_info, mContext->allocation_callbacks, &image.image_views[i]),
+                mContext->device, &image_view_create_info, mContext->allocation_callbacks, &new_image.image_views[i]),
             "Could not create image view");
     }
 
-    return image;
+    return new_image;
 }
 
-void VulkanBackend::destroy_image_internal(InternalImage* image) {
-    vkFreeMemory(mContext->device, image->memory, mContext->allocation_callbacks);
-    for (u32 i = 0; i < image->image_views.count(); i++) {
-        vkDestroyImageView(mContext->device, image->image_views[i], mContext->allocation_callbacks);
+void VulkanBackend::image_internal_destroy(InternalImage& image) {
+    vkFreeMemory(mContext->device, image.memory, mContext->allocation_callbacks);
+    for (u32 i = 0; i < image.image_views.size(); i++) {
+        vkDestroyImageView(mContext->device, image.image_views[i], mContext->allocation_callbacks);
     }
-    vkDestroyImage(mContext->device, image->image, mContext->allocation_callbacks);
-    *image = {};
+    vkDestroyImage(mContext->device, image.image, mContext->allocation_callbacks);
 }
 
 u32 VulkanBackend::find_memory_type_index(u32 type_filter, VkMemoryPropertyFlags properties) {
@@ -1847,20 +1875,20 @@ u32 VulkanBackend::find_memory_type_index(u32 type_filter, VkMemoryPropertyFlags
     }
 
     TK_ASSERT(false, "No correct memory type found");
-    std::unreachable();
+    UNREACHABLE;
 }
 
 static VkFormat get_format(ColorFormat format_in) {
     switch (format_in) {
         case ColorFormat::RGBA8:
             return VK_FORMAT_R8G8B8A8_SRGB;
-        case ColorFormat::None:
+        case ColorFormat::NONE:
             TK_ASSERT(false, "Color format not provided");
         default:
             TK_ASSERT(false, "TODO: add other formats");
     }
 
-    std::unreachable();
+    UNREACHABLE;
 };
 
 static VkFormat get_depth_format(VkPhysicalDevice device, b8 has_stencil) {
@@ -1874,7 +1902,7 @@ static VkFormat get_depth_format(VkPhysicalDevice device, b8 has_stencil) {
     }
 
     TK_ASSERT(false, "GPU does not support depth/stencil format");
-    std::unreachable();
+    UNREACHABLE;
 }
 
 VkImageMemoryBarrier VulkanBackend::create_image_memory_barrier(

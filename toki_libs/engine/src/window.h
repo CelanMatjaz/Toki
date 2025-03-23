@@ -6,8 +6,6 @@
 
 namespace toki {
 
-constexpr u32 MAX_ENGINE_WINDOW_COUNT = 1;
-
 struct EventHandler {
     void handle(Event&) {}
 };
@@ -24,7 +22,7 @@ public:
     b32 mShouldClose{ false };
 };
 
-inline Window sWindows[MAX_ENGINE_WINDOW_COUNT];
+inline Window sWindows[TK_MAX_WINDOW_COUNT];
 inline u32 sWindowCount = 0;
 
 }  // namespace toki

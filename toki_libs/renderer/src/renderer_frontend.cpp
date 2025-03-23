@@ -13,11 +13,11 @@ RendererFrontend::~RendererFrontend() {
     backend->~VulkanBackend();
 }
 
-void RendererFrontend::begin_frame() {
+void RendererFrontend::frame_begin() {
     backend->prepare_frame_resources();
 }
 
-void RendererFrontend::end_frame() {
+void RendererFrontend::frame_end() {
     backend->cleanup_frame_resources();
 }
 
@@ -31,6 +31,10 @@ void RendererFrontend::submit(SubmitFunctionConcept auto submit_fn) {
     submit_fn(*commands);
 }
 
+void RendererFrontend::window_add(NativeWindowHandle handle) {
+    backend->swapchain_create(handle);
+}
+
 void RendererFrontend::set_color_clear(const Vec4<f32>& color) {
     backend->set_color_clear(color);
 }
@@ -41,56 +45,50 @@ void RendererFrontend::set_depth_clear(f32 depth) {
 
 Framebuffer RendererFrontend::framebuffer_create(const FramebufferConfig& config) {
     Framebuffer new_framebuffer{};
-    new_framebuffer.handle = backend->create_framebuffer(
-        config.image_width,
-        config.image_height,
-        config.color_attachment_count,
-        config.color_format,
-        config.has_depth_attachment,
-        config.has_stencil_attachment);
+    new_framebuffer.handle = backend->framebuffer_create(config);
     return new_framebuffer;
 }
 
 void RendererFrontend::framebuffer_destroy(Framebuffer& framebuffer) {
-    backend->destroy_framebuffer(framebuffer.handle);
+    backend->framebuffer_destroy(framebuffer.handle);
 }
 
 Buffer RendererFrontend::buffer_create(const BufferConfig& config) {
     Buffer new_buffer{};
-    new_buffer.handle = backend->create_buffer(config.type, config.size);
+    new_buffer.handle = backend->buffer_create(config);
     return new_buffer;
 }
 
 void RendererFrontend::buffer_destroy(Buffer& buffer) {
-    backend->destroy_buffer(buffer);
+    backend->buffer_destroy(buffer.handle);
 }
 
 void RendererFrontend::buffer_set_data(const Buffer& buffer, u32 size, void* data) {
-    backend->set_buffer_data(buffer, size, data);
+    backend->buffer_set_data(buffer, size, data);
 }
 
 Texture RendererFrontend::texture_create(const TextureConfig& config) {
     Texture new_texture{};
-    new_texture.handle = backend->create_image(config.format, config.width, config.height);
+    new_texture.handle = backend->image_create(config);
     return new_texture;
 }
 
 void RendererFrontend::texture_destroy(Texture& texture) {
-    backend->destroy_image(texture.handle);
+    backend->image_destroy(texture.handle);
 }
 
 Shader RendererFrontend::shader_create(const Framebuffer& framebuffer, const ShaderConfig& config) {
     Shader shader{};
-    shader.handle = backend->create_shader_internal(framebuffer, config);
+    shader.handle = backend->shader_create(framebuffer, config);
     return shader;
 }
 
 void RendererFrontend::shader_destroy(Shader& shader) {
-    backend->destroy_shader_internal(shader.handle);
+    backend->shader_destroy(shader.handle);
 }
 
 void RendererFrontend::wait_for_resources() {
-    backend->wait_for_resources();
+    backend->resources_wait();
 }
 
 }  // namespace toki

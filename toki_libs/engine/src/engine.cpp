@@ -1,6 +1,7 @@
 #include "engine.h"
 
 #include <toki/core.h>
+#include <toki/renderer.h>
 
 #include "window.h"
 
@@ -35,16 +36,27 @@ void Engine::run() {
         delta_time = (frame_start_time - last_frame_time) / 1'000'000.0f;
         last_frame_time = frame_start_time;
 
+        mRenderer->frame_begin();
+
+        // Submit commands in here
+
+        mRenderer->frame_end();
+
         mFrameAllocator.swap();
         mFrameAllocator->clear();
     }
 }
 
-void Engine::add_window(const char* title, u32 width, u32 height) {
-    TK_ASSERT(sWindowCount < MAX_ENGINE_WINDOW_COUNT, "Adding another window would go over current limit");
+void Engine::window_add(const char* title, u32 width, u32 height) {
+    TK_ASSERT(
+        sWindowCount < TK_MAX_WINDOW_COUNT,
+        "Adding another window would go over current limit (%i)",
+        TK_MAX_WINDOW_COUNT);
 
-    auto handle = window_create(title, width, height, WindowInitFlags{ .show_on_create = true });
+    NativeWindowHandle handle = window_create(title, width, height, WindowInitFlags{ .show_on_create = true });
     sWindows[sWindowCount++].mNativeHandle = handle;
+
+    mRenderer->window_add(handle);
 }
 
 }  // namespace toki

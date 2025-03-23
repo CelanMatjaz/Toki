@@ -12,7 +12,7 @@ constexpr u32 INVALID_HANDLE_ID = 0;
 
 struct Handle {
     Handle(): index(0), version(0), id(INVALID_HANDLE_ID) {};
-    Handle(u32 index, u32 version = 1): index(index), version(version), id(time_milliseconds()) {}
+    Handle(u32 index, u32 version = 1): index(index), version(version), id(static_cast<u32>(time_milliseconds())) {}
 
     inline operator b8() const {
         return id != INVALID_HANDLE_ID;
@@ -41,7 +41,7 @@ public:
         u32 free_list_size = free_list_element_count * sizeof(u32);
         u32 version_list_size = element_count * sizeof(u32);
         u32 skip_field_size = element_count * sizeof(u32);
-        u32 element_list_size = (element_count + 1) * sizeof(ValueType);
+        u32 element_list_size = (static_cast<u64>(element_count) + 1) * sizeof(ValueType);
 
         u32 total_size = free_list_size + skip_field_size + version_list_size + element_list_size;
 
@@ -86,12 +86,12 @@ public:
         return Handle{ static_cast<u32>(free_block_index), mVersionList[free_block_index] };
     }
 
-    inline ValueType& at(const Handle handle) const {
+    inline ValueType& at(const Handle& handle) const {
         TK_ASSERT(is_handle_valid(handle), "Invalid handle provided");
         return mData[handle.index];
     }
 
-    inline ValueType& operator[](const Handle handle) const {
+    inline ValueType& operator[](const Handle& handle) const {
         return at(handle);
     }
 

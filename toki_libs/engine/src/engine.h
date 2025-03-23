@@ -1,11 +1,10 @@
 #pragma once
 
 #include <toki/core.h>
-#include <toki/renderer.h>
-
-#include "window.h"
 
 namespace toki {
+
+class RendererFrontend;
 
 class Engine {
 public:
@@ -21,7 +20,7 @@ public:
 
     void run();
 
-    void add_window(const char* title, u32 width, u32 height);
+    void window_add(const char* title, u32 width, u32 height);
 
 private:
     Allocator mGlobalAllocator;

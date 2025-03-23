@@ -81,10 +81,11 @@ function configuration_configs()
         system "linux"
         defines { "TK_PLATFORM_LINUX", "TK_WINDOW_SYSTEM_WAYLAND" }
 
-    enablewarnings { "all" }
-    fatalwarnings { "all" }
-
     filter {}
+        defines { "TK_MAX_WINDOW_COUNT" }
+
+    enablewarnings { "all" }
+    -- fatalwarnings { "all" }
 end
 
 function link_vulkan()
@@ -96,9 +97,9 @@ function link_vulkan()
             "spirv-cross-reflectd",
             "shadercd",
             "shaderc_combinedd"
-        }
+        }]]
 
-    filter { "platforms:Windows", "configurations:not Debug" }
+    filter { "platforms:windows", "configurations:not Debug" }
         links {
             "spirv-cross-core",
             "spirv-cross-cpp",
@@ -108,7 +109,7 @@ function link_vulkan()
             "shaderc_combined"
         }
 
-    filter { "platforms:Linux" }
+    --[[ filter { "platforms:Linux" }
         links {
             "spirv-cross-core",
             "spirv-cross-cpp",
@@ -145,7 +146,7 @@ function toki_executable(name)
 
         filter {}
 
-        links { "Core"--[[ , "Renderer" ]], "Engine" }
+        links { "Core", "Engine", "Renderer" }
         includedirs {
             "%{wks.location}/toki_libs/core/include",
             "%{wks.location}/toki_libs/engine/include",
@@ -159,7 +160,7 @@ function toki_executable(name)
         link_vulkan()
 
         filter "system:windows"
-            links { "gdi32", "user32", "shell32", "kernel32", "pathcch", "Shlwapi.lib" }
+            links { "gdi32", "user32", "shell32", "kernel32", "pathcch", "Shlwapi" }
 
         filter "system:linux"
             links { "wayland-client" }
@@ -174,7 +175,8 @@ function pch(path)
     pchheader(path .. ".h")
 
     filter { "action:vs*" }
+        files(path .. ".cpp")
         pchsource(path .. ".cpp")
         buildoptions("/FI" .. path .. ".h")
-        includedirs(".")
+        includedirs { "." }
 end

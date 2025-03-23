@@ -18,7 +18,7 @@ constexpr b8 IsIntegral = false;
 
 #define IS_INTEGRAL(type) \
     template <>           \
-    constexpr b8 IsIntegral<type> = true;
+    inline constexpr b8 IsIntegral<type> = true;
 
 IS_INTEGRAL(b8)
 IS_INTEGRAL(i8)

@@ -8,6 +8,14 @@
 
 namespace toki {
 
+#if (defined(__GNUC__) || defined(__clang__)) && __cplusplus >= 202302L
+#define UNREACHABLE __builtin_unreachable();
+#elif defined(_MSC_VER)
+#define UNREACHABLE _STL_UNREACHABLE;
+#else
+#error "unreachable compiler function not found, only Clang, GCC and MSVC supported"
+#endif
+
 using PATH_TYPE = const char*;
 
 union NativeWindowHandle {
@@ -34,8 +42,6 @@ u64 time_microseconds();
 u64 time_milliseconds();
 
 void debug_break();
-
-void unreachable();
 
 template <typename... Args>
 constexpr void print(const char* fmt, Args&&...);

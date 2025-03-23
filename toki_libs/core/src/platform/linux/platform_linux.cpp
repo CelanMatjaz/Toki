@@ -18,14 +18,6 @@ void debug_break() {
     signal(SIGTRAP, SIG_DFL);
 }
 
-void unreachable() {
-#if (defined(__GNUC__) || defined(__clang__)) && __cplusplus >= 202302L
-    __builtin_unreachable();
-#else
-#error "unreachable compiler function not found, only Clang and GCC supported"
-#endif
-}
-
 void* memory_allocate(u64 size) {
     void* ptr = mmap(0, size + sizeof(u64), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     *reinterpret_cast<u64*>(ptr) = size;

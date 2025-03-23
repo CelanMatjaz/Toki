@@ -9,6 +9,8 @@ namespace toki {
 
 #define VK_CHECK(result, message, ...) { TK_ASSERT(result == VK_SUCCESS, message __VA_OPT__(, ) __VA_ARGS__) }
 
+constexpr u32 MAX_SWAPCHAIN_COUNT = TK_MAX_WINDOW_COUNT;
+
 constexpr u32 MAX_FRAMES_IN_FLIGHT = 2;
 
 constexpr u32 MAX_LOADED_BUFFER_COUNT = 128;
@@ -17,6 +19,7 @@ constexpr u32 MAX_LOADED_SHADER_COUNT = 32;
 constexpr u32 MAX_LOADED_FRAMEBUFFER_COUNT = 8;
 
 constexpr u64 DEFAULT_STAGING_BUFFER_SIZE = GB(1);
+constexpr u32 MAX_IN_FLIGHT_COMMAND_BUFFER_COUNT = 8;
 
 constexpr const char* vulkan_extensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
@@ -35,36 +38,33 @@ struct FrameData {
 };
 
 struct CommandBuffers {
-    u32 count;
-    BasicRef<VkCommandBuffer> command_buffers;
+    CommandBuffers(AllocatorConcept auto& allocator): array(allocator) {}
+    u64 used_count = 0;
+    StaticArray<VkCommandBuffer, MAX_IN_FLIGHT_COMMAND_BUFFER_COUNT> array;
 };
 
 struct Swapchain {
-    VkSwapchainKHR swapchain;
-    VkSurfaceKHR surface;
-    VkExtent2D extent;
-    NativeWindowHandle window_handle;
+    Swapchain(Allocator& allocator): images(allocator), image_views(allocator) {}
 
-    VkSurfaceFormatKHR surface_format;
-    VkSemaphore image_available_semaphores[MAX_FRAMES_IN_FLIGHT];
+    VkSwapchainKHR swapchain{};
+    VkSurfaceKHR surface{};
+    VkExtent2D extent{};
+    NativeWindowHandle window_handle{};
 
-    u32 image_index = 0;
-    u32 image_count;
+    VkSurfaceFormatKHR surface_format{};
+    VkSemaphore image_available_semaphores[MAX_FRAMES_IN_FLIGHT]{};
 
-    BasicRef<VkImage> images;
-    BasicRef<VkImageView> image_views;
+    u32 image_index{};
+    u32 image_count{};
 
-    b8 can_render : 1;
-    b8 is_recording_commands : 1;
-    b8 waiting_to_present : 1;
-    u8 submit_count : 4;
-    VkPresentModeKHR vsync_disabled_present_mode;
-};
+    DynamicArray<VkImage> images;
+    DynamicArray<VkImageView> image_views;
 
-struct Pipeline {
-    VkPipeline pipeline;
-    VkPipelineLayout pipeline_layout;
-    VkPipelineBindPoint bind_point;
+    b8 can_render : 1 {};
+    b8 is_recording_commands : 1 {};
+    b8 waiting_to_present : 1 {};
+    u8 submit_count : 4 {};
+    VkPresentModeKHR vsync_disabled_present_mode{};
 };
 
 struct Queue {
@@ -90,6 +90,50 @@ struct TransitionLayoutConfig {
     VkImageLayout new_layout;
     VkPipelineStageFlags src_stage;
     VkPipelineStageFlags dst_stage;
+};
+
+struct InternalBuffer {
+    VkBuffer buffer;
+    VkDeviceMemory memory;
+    VkBufferUsageFlags usage;
+    VkMemoryRequirements memory_requirements;
+    u32 memory_property_flags;
+    u32 size;
+};
+
+struct InternalImage {
+    InternalImage(const DynamicArray<VkImageView>&& image_views): image_views(move(image_views)) {}
+
+    VkImage image;
+    DynamicArray<VkImageView> image_views;
+    VkDeviceMemory memory;
+    VkFormat format;
+    VkExtent3D extent;
+    VkImageAspectFlags aspect_flags;
+};
+
+struct InternalPipeline {
+    VkPipeline pipeline;
+    VkPipelineBindPoint bind_point;
+};
+
+struct InternalShader {
+    InternalShader(Allocator& a): pipelines(a, 1), push_constant_stage_flags{}, pipeline_layout{} {}
+
+    Handle framebuffer_handle;
+    DynamicArray<InternalPipeline> pipelines;
+    VkShaderStageFlags push_constant_stage_flags;
+    VkPipelineLayout pipeline_layout;
+    ShaderType type;
+};
+
+struct InternalFramebuffer {
+    BasicRef<InternalImage> color_image;
+    BasicRef<InternalImage> depth_stencil_image;
+    ColorFormat image_color_format;
+    u32 attachment_count : 6;
+    b8 has_depth : 1;
+    b8 has_stencil : 1;
 };
 
 }  // namespace toki

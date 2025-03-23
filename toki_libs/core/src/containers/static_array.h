@@ -15,19 +15,32 @@ class StaticArray {
 public:
     StaticArray() = delete;
 
-    StaticArray(A& allocator) {
-        mPtr = reinterpret_cast<T*>(allocator.allocate(SIZE * sizeof(T)));
-    }
+    StaticArray(A& allocator):
+        mAllocator(allocator),
+        mPtr(reinterpret_cast<T*>(allocator.allocate(SIZE * sizeof(T)))) {}
 
     ~StaticArray() {
-        mAllocator.free(mPtr);
+        if (mPtr != nullptr) {
+            mAllocator.free(mPtr);
+        }
+    }
+
+    StaticArray& operator=(StaticArray&& other) {
+        if (this != &other) {
+            mAllocator = other.mAllocator;
+            mPtr = other.mPtr;
+
+            other.mPtr = nullptr;
+        }
+
+        return *this;
     }
 
     constexpr u64 size() const {
         return SIZE;
     }
 
-    inline const T* pointer() const {
+    inline T* data() const {
         return mPtr;
     }
 

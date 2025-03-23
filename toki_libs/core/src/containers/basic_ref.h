@@ -14,15 +14,26 @@ public:
     BasicRef() {};
     BasicRef(A& allocator, u32 element_count = 1):
         mAllocator(&allocator),
-        mData(reinterpret_cast<T*>(allocator.allocate(element_count * sizeof(T)))),
+        mData(reinterpret_cast<T*>(allocator.allocate(element_count * sizeof(T) + sizeof(u64)))),
         mCapacity(element_count) {}
 
     ~BasicRef() {
-        mAllocator->free(mData);
+        --(*reinterpret_cast<u64*>(mData));
+        if (*reinterpret_cast<u64*>(mData)) {
+            mAllocator->free(mData);
+        }
     }
 
-    BasicRef(const BasicRef& other) = delete;
-    BasicRef& operator=(const BasicRef& other) = delete;
+    BasicRef(const BasicRef& other): mAllocator(other.mAllocator), mData(other.mData), mCapacity(other.mCapacity) {
+        ++(*reinterpret_cast<u64*>(mData));
+    }
+
+    BasicRef& operator=(const BasicRef& other) {
+        mAllocator = other.mAllocator;
+        mData = other.mData;
+        mCapacity = other.mCapacity;
+        ++(*reinterpret_cast<u64*>(mData));
+    }
 
     BasicRef(BasicRef<T>&& other) {
         if (this != &other) {
@@ -38,29 +49,37 @@ public:
         return *this;
     }
 
-    u64 size() const {
+    inline u64 size() const {
         return mCapacity;
     }
 
-    T* data() const {
-        return mData;
+    inline T* data() const {
+        return reinterpret_cast<T*>(reinterpret_cast<u64*>(mData) + 1);
     }
 
-    operator bool() const {
+    inline operator bool() const {
+        return mData != nullptr;
+    }
+
+    inline bool valid() const {
         return mData != nullptr;
     }
 
     T& operator[](u32 index) const {
-        TK_ASSERT(index < mCapacity, "Out of bounds index");
-        return mData[index];
+        TK_ASSERT(index < mCapacity, "Index out of bounds");
+        return data()[index];
     }
 
-    T* operator->() const {
+    inline T* operator->() const {
         return mData;
     }
 
-    operator T*() const {
+    inline operator T*() const {
         return mData;
+    }
+
+    inline operator T&() const {
+        return *mData;
     }
 
 private:

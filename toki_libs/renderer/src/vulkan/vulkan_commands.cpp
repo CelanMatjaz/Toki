@@ -31,7 +31,7 @@ void VulkanCommands::set_viewport(const Rect2D& rect) {
 }
 
 void VulkanCommands::reset_viewport() {
-    set_viewport({ { 0, 0 }, { 600.0f, 600.0f } });
+    set_viewport({ { 0, 0 }, { 600, 600 } });
 }
 
 void VulkanCommands::set_scissor(const Rect2D& rect) {
@@ -56,7 +56,7 @@ void VulkanCommands::bind_buffer(Buffer const& buffer) {
 
 void VulkanCommands::push_constants(u32 offset, u32 size, const void* data) {
     InternalShader* shader = backend->get_shader(mShaderHandle);
-    VkPipelineLayout pipeline_layout = shader->pipelines[mShaderHandle.data].pipeline_layout;
+    VkPipelineLayout pipeline_layout = shader->pipeline_layout;
     VkShaderStageFlags shader_stage_flags = shader->push_constant_stage_flags;
     backend->push_constants(mCommandBuffer, pipeline_layout, shader_stage_flags, offset, size, data);
 }

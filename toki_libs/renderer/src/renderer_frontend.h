@@ -24,11 +24,13 @@ public:
     DELETE_MOVE(RendererFrontend);
 
 public:
-    void begin_frame();
-    void end_frame();
+    void frame_begin();
+    void frame_end();
     void present();
 
     void submit(SubmitFunctionConcept auto submit_fn);
+
+    void window_add(NativeWindowHandle handle);
 
     Framebuffer framebuffer_create(const FramebufferConfig& config);
     void framebuffer_destroy(Framebuffer& framebuffer);

@@ -18,12 +18,6 @@ project "Engine"
     build_options()
     link_vulkan()
 
-    pchheader "src/tkpch_engine.h"
-
-    filter { "action:vs*" }
-    files("src/tkpch_engine.cpp")
-    pchsource "src/tkpch_engine.cpp"
-        buildoptions "/FIsrc/tkpch_engine.h"
-        includedirs { "." }
+    pch("src/tkpch_engine")
 
     filter {}

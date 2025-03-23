@@ -55,6 +55,8 @@ struct Vec4 {
 };
 
 struct Rect2D {
+    Rect2D(Vec2<i32> pos, Vec2<u32> size): pos(pos), size(size) {}
+
     Vec2<i32> pos;
     Vec2<u32> size;
 };

@@ -4,6 +4,9 @@
 
 namespace toki {
 
+constexpr u64 MAX_VERTEX_BINDING_COUNT = 4;
+constexpr u64 MAX_VERTEX_ATTRIBUTE_COUNT = 8;
+
 struct RendererObject {
     Handle handle;
 
@@ -17,29 +20,29 @@ struct Buffer : RendererObject {};
 struct Texture : RendererObject {};
 struct Shader : RendererObject {};
 
-enum class ColorFormat : u16 {
-    None,
+enum ColorFormat : u8 {
+    NONE,
     R8,
     RGBA8,
-    Depth,
-    Stencil,
-    DepthStencil,
+    DEPTH,
+    STENCIL,
 
-    COLOR_FORMAT_COUNT = DepthStencil
+    COLOR_FORMAT_COUNT
 };
 
-enum class ShaderType : u8 {
+enum class ShaderStage {
     VERTEX,
     FRAGMENT,
+
     SHADER_STAGE_COUNT
 };
 
-enum class VertexInputRate : u8 {
+enum class VertexInputRate {
     VERTEX,
     INSTANCE,
 };
 
-enum class VertexFormat : u8 {
+enum class VertexFormat {
     FLOAT1,
     FLOAT2,
     FLOAT3,
@@ -47,10 +50,10 @@ enum class VertexFormat : u8 {
 };
 
 struct VertexAttributeDescription {
-    uint32_t location;
-    uint32_t binding;
+    u32 location;
+    u32 binding;
+    u32 offset;
     VertexFormat format;
-    uint32_t offset;
 };
 
 struct VertexBindingDescription {
@@ -59,64 +62,69 @@ struct VertexBindingDescription {
     VertexInputRate inputRate;
 };
 
-enum class BufferType : u8 {
-    None,
-    Vertex,
-    Index,
-    Uniform,
-    BUFFER_TYPE_COUNT = Uniform,
+enum class BufferType {
+    NONE,
+    VERTEX,
+    INDEX,
+    UNIFORM,
+
+    BUFFER_TYPE_COUNT
 };
 
-enum class CompareOp : u8 {
-    Never,
-    Less,
-    Equal,
-    LessOrEqual,
-    Greater,
-    NotEqual,
-    GreaterOrEqual,
-    Always,
+enum class CompareOp {
+    NEVER,
+    LESS,
+    EQUAL,
+    LESS_OR_EQUAL,
+    GREATER,
+    NOT_EQUAL,
+    GREATER_OR_EQUAL,
+    ALWAYS,
 };
 
 enum class PrimitiveTopology : u8 {
-    PointList,
-    LineList,
-    LineStrip,
-    TriangleList,
-    TriangleStrip,
-    TriangleFan,
-    LineListWithAdjacency,
-    LineStripWithAdjacency,
-    TriangleListWithAdjacency,
-    TriangleStripWithAdjacency,
-    PatchList,
+    POINT_LIST,
+    LINE_LIST,
+    LINE_STRIP,
+    TRIANGLE_LIST,
+    TRIANGLE_STRIP,
+    TRIANGLE_FAN,
+    LINE_LIST_WITH_ADJACENCY,
+    LINE_STRIP_WITH_ADJACENCY,
+    TRIANGLE_LIST_WITH_ADJACENCY,
+    TRIANGLE_STRIP_WITH_ADJACENCY,
+    PATH_LIST,
 };
 
 enum class CullMode : u8 {
-    None,
-    Front,
-    Back,
-    Both
+    NONE,
+    FRONT,
+    BACK,
+    BOTH
 };
 
 enum class PolygonMode : u8 {
-    Fill,
-    Line,
-    Point,
+    FILL,
+    LINE,
+    POINT,
 };
 
 enum class FrontFace : u8 {
-    CounterClockwise,
-    Clockwise,
+    COUNTER_CLOCKWISE,
+    CLOCKWISE,
+};
+
+enum class ShaderType : u8 {
+    GRAPHICS
 };
 
 struct FramebufferConfig {
-    ColorFormat color_format;
-    u32 color_attachment_count;
-    u32 image_width;
-    u32 image_height;
+    ColorFormat color_format : 8;
+    u8 color_format_count : 6;
     b8 has_depth_attachment : 1;
     b8 has_stencil_attachment : 1;
+    u32 image_width;
+    u32 image_height;
 };
 
 struct BufferConfig {
@@ -130,8 +138,32 @@ struct TextureConfig {
     u32 height;
 };
 
+template <typename AllocatorType = Allocator>
+struct ShaderSource {
+    BasicRef<char, AllocatorType> source_path;
+};
+
+struct DepthTestConfig {
+    CompareOp compare_operation : 4;
+    b8 write_enable : 1;
+};
+
 struct ShaderConfig {
-    std::string_view config_path;
+    ShaderType type = ShaderType::GRAPHICS;
+    DynamicArray<ColorFormat> attachment_color_formats;
+};
+
+struct ShaderVariantConfig {
+    ShaderSource<BumpAllocator> sources[static_cast<u32>(ShaderStage::SHADER_STAGE_COUNT)];
+    BasicRef<DepthTestConfig, BumpAllocator> depth_test_config;
+    PrimitiveTopology primitive_topology = PrimitiveTopology::TRIANGLE_LIST;
+    FrontFace front_face : 1 = FrontFace::COUNTER_CLOCKWISE;
+    CullMode cull_mode : 2 = CullMode::NONE;
+    PolygonMode polygon_mode : 2 = PolygonMode::FILL;
+    VertexBindingDescription vertex_bindings[MAX_VERTEX_BINDING_COUNT];
+    VertexAttributeDescription vertex_attributes[MAX_VERTEX_ATTRIBUTE_COUNT];
+    u32 binding_count;
+    u32 attribute_count;
 };
 
 }  // namespace toki
