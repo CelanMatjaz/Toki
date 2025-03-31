@@ -1,9 +1,9 @@
 #include "../platform.h"
-#include "core/common.h"
-#include "core/concepts.h"
 
 #if defined(TK_PLATFORM_LINUX)
 
+#include "../../core/common.h"
+#include "../../core/concepts.h"
 #include <signal.h>
 #include <sys/mman.h>
 #include <sys/time.h>

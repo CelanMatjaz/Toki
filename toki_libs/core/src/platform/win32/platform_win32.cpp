@@ -5,7 +5,7 @@
 #include <Shlwapi.h>
 #include <Windows.h>
 
-#include "core/assert.h"
+#include "../../core/assert.h"
 
 namespace toki {
 
@@ -24,7 +24,7 @@ void memory_free(void* ptr) {
     bool _ = HeapFree(GetProcessHeap(), 0, ptr);
 }
 
-u64 get_time() {
+static u64 get_time() {
     FILETIME ft{};
     GetSystemTimeAsFileTime(&ft);
     ULARGE_INTEGER ull{};

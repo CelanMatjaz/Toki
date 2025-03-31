@@ -2,6 +2,8 @@
 .cache
 compile_commands
 
+build
+
 .bin
 .obj
 

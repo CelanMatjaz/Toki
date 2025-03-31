@@ -12,10 +12,14 @@ template <typename T, typename A = Allocator>
 class BasicRef {
 public:
     BasicRef() {};
-    BasicRef(A& allocator, u32 element_count = 1):
+    BasicRef(A& allocator, u32 element_count = 1, const T* data = nullptr):
         mAllocator(&allocator),
         mData(reinterpret_cast<T*>(allocator.allocate(element_count * sizeof(T) + sizeof(u64)))),
-        mCapacity(element_count) {}
+        mCapacity(element_count) {
+        if (data != nullptr) {
+            toki::memcpy(data, mData, element_count * sizeof(T));
+        }
+    }
 
     ~BasicRef() {
         --(*reinterpret_cast<u64*>(mData));

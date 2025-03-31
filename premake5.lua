@@ -1,21 +1,61 @@
 require "premake/export-compile-commands/export-compile-commands"
-require "premake/common_premake"
+require "premake.common"
+local toki_projects = require "premake.projects"
 
 workspace "Toki"
-    configurations { "Debug", "Release", "Dist" }
-    architecture "x64"
-    platforms { "Windows", "Linux" }
+configurations { "Debug", "Release", "Dist" }
+architecture "x64"
 
-startproject "Sandbox"
+if os.host() == "windows" then
+    platforms { "Windows" }
+elseif of.host() == "linux" then
+    platforms { "Linux" }
+end
 
-group "Dependencies"
-    -- include "./vendor"
+-- startproject "Sandbox"
 
-group "Toki"
-    include "./toki_libs"
+location "build"
 
-group "Misc"
-    include "./toki_executables"
+local function MapDeps(proj)
+    local links_out = {}
+    local includes_out = {}
 
--- group "Examples"
---     include "./toki_examples"
+    if proj.deps == nil or type(proj.deps) ~= "table" then
+        return { links = links_out, includedirs = includes_out }
+    end
+
+    for _, dep in pairs(proj.deps) do
+        table.insert(links_out, toki_projects.libraries[dep].name)
+        table.insert(includes_out, path.join(toki_projects.libraries[dep].dir, "include"))
+    end
+
+    if proj.extra_lib_includes ~= nil then
+        for _, inc in pairs(proj.extra_lib_includes) do
+            table.insert(includes_out, path.join(toki_projects.libraries[inc].dir, "include"))
+        end
+    end
+
+    return { links = links_out, includedirs = includes_out }
+end
+
+group "Libraries"
+for _, proj in pairs(toki_projects.libraries) do
+    ProjectLibrary(proj)
+
+    -- if proj.pch ~= nil then
+    --     PrecompiledHeader(proj.pch, proj.dir)
+    -- end
+
+    local deps = MapDeps(proj)
+    links(deps.links)
+    includedirs(deps.includedirs)
+end
+
+group "Executables"
+for _, proj in pairs(toki_projects.executables) do
+    ProjectExecutable(proj)
+
+    local deps = MapDeps(proj)
+    links(deps.links)
+    includedirs(deps.includedirs)
+end

@@ -9,12 +9,12 @@ class BumpAllocator {
 public:
     BumpAllocator() = delete;
 
-    BumpAllocator(Allocator& allocator, u64 size): size(size), allocator(allocator) {
-        buffer = allocator.allocate(size);
+    BumpAllocator(Allocator& allocator, u64 size): mSize(size), mAllocator(allocator) {
+        mBuffer = allocator.allocate(size);
     }
 
     ~BumpAllocator() {
-        allocator.free(buffer);
+        mAllocator.free(mBuffer);
     }
 
     DELETE_COPY(BumpAllocator);
@@ -26,27 +26,27 @@ public:
     }
 
     void* allocate(u64 allocation_size) {
-        TK_ASSERT(offset + allocation_size <= size, "Allocation would overflow bump allocator buffer");
-        void* return_ptr = reinterpret_cast<void*>(ptrdiff(buffer) + offset);
-        offset += allocation_size;
+        TK_ASSERT(mOffset + allocation_size <= mSize, "Allocation would overflow bump allocator buffer");
+        void* return_ptr = reinterpret_cast<void*>(ptrdiff(mBuffer) + mOffset);
+        mOffset += allocation_size;
         return return_ptr;
     }
 
     void free(void*) {}  // NOOP for concept to work
 
     void free_to_offset(u64 offset) {
-        this->offset = offset;
+        this->mOffset = offset;
     }
 
     void clear() {
-        offset = 0;
+        mOffset = 0;
     }
 
 private:
-    u64 size;
-    Allocator& allocator;
-    u64 offset{};
-    void* buffer{};
+    Allocator& mAllocator;
+    u64 mSize{};
+    u64 mOffset{};
+    void* mBuffer{};
 };
 
 }  // namespace toki

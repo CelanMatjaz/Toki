@@ -46,9 +46,9 @@ inline T&& move(const T& value) {
     return static_cast<T&&>(const_cast<T&>(value));
 }
 
-inline void memcpy(void* src, void* dst, u32 size) {
+inline void memcpy(const void* src, void* dst, u32 size) {
     for (u32 i = 0; i < size; i++) {
-        *reinterpret_cast<char*>(dst) = *reinterpret_cast<char*>(src);
+        *reinterpret_cast<char*>(dst) = *reinterpret_cast<const char*>(src);
     }
 }
 

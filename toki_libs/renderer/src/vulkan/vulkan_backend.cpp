@@ -11,9 +11,6 @@
 #include <vulkan/vulkan_win32.h>
 #endif
 
-#include <shaderc/shaderc.hpp>
-// #include <spirv_cross/spirv_cross.hpp>
-
 #include "vulkan_platform.h"
 
 #define ASSERT_EXISTS(resource_array, handle, resource)                \
@@ -22,11 +19,8 @@
         "Handle is not associated with any Vulkan " #resource);
 
 #define ASSERT_BUFFER(handle) ASSERT_EXISTS(buffers, handle, buffer)
-
 #define ASSERT_IMAGE(handle) ASSERT_EXISTS(images, handle, image)
-
 #define ASSERT_SHADER(handle) ASSERT_EXISTS(shaders, handle, shader)
-
 #define ASSERT_FRAMEBUFFER(handle) ASSERT_EXISTS(framebuffers, handle, framebuffer)
 
 #define SWAPCHAIN_IMAGE(swapchain) swapchain.images[swapchain.image_index]
@@ -998,67 +992,6 @@ InternalPipeline VulkanBackend::pipeline_internal_create(
 
 void VulkanBackend::pipeline_internal_destroy(InternalPipeline& pipeline) {
     vkDestroyPipeline(mContext->device, pipeline.pipeline, mContext->allocation_callbacks);
-}
-
-VkShaderModule VulkanBackend::create_shader_module(ShaderStage stage, char* source_path, u64 source_path_length) {
-    shaderc::Compiler compiler;
-    shaderc::CompileOptions options;
-    options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
-    options.SetSourceLanguage(shaderc_source_language::shaderc_source_language_glsl);
-
-#ifdef TK_DIST
-    options.SetOptimizationLevel(shaderc_optimization_level_performance);
-#else
-    options.SetOptimizationLevel(shaderc_optimization_level_zero);
-#endif
-
-    shaderc_shader_kind shader_kind;
-
-    switch (stage) {
-        case ShaderStage::VERTEX:
-            shader_kind = shaderc_shader_kind::shaderc_glsl_vertex_shader;
-            break;
-        case ShaderStage::FRAGMENT:
-            shader_kind = shaderc_shader_kind::shaderc_glsl_fragment_shader;
-            break;
-        default:
-            TK_ASSERT(false, "Shader stage not supported");
-            UNREACHABLE;
-    }
-
-    DynamicArray<char, BumpAllocator> path(mFrameAllocator, source_path_length + 1);
-    memcpy(source_path, path.data(), source_path_length);
-    path[source_path_length] = 0;
-    Stream stream(source_path, Stream::STREAM_FLAGS::ATE | Stream::STREAM_FLAGS::INPUT);
-    u32 source_size = stream.tell();
-    stream.seek(0);
-
-    DynamicArray<char, BumpAllocator> source_data(mFrameAllocator, source_size);
-
-    shaderc::SpvCompilationResult spirv_module =
-        compiler.CompileGlslToSpv(source_data.data(), source_size, shader_kind, path.data(), "main", options);
-    if (spirv_module.GetCompilationStatus() != shaderc_compilation_status::shaderc_compilation_status_success) {
-        TK_LOG_ERROR(
-            "ERROR MESSAGE:\n{}\n\nCOMPILATION STATUS: {}",
-            spirv_module.GetErrorMessage(),
-            (int) spirv_module.GetCompilationStatus());
-    }
-    TK_ASSERT(
-        spirv_module.GetCompilationStatus() == shaderc_compilation_status::shaderc_compilation_status_success,
-        "Shader compilation error");
-
-    VkShaderModuleCreateInfo shader_module_create_info{};
-    shader_module_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    shader_module_create_info.pCode = reinterpret_cast<const u32*>(spirv_module.begin());
-    shader_module_create_info.codeSize = ((uintptr_t) spirv_module.end()) - ((uintptr_t) spirv_module.begin());
-
-    VkShaderModule shader_module{};
-    VK_CHECK(
-        vkCreateShaderModule(
-            mContext->device, &shader_module_create_info, mContext->allocation_callbacks, &shader_module),
-        "Could not create shader module");
-
-    return shader_module;
 }
 
 /*
