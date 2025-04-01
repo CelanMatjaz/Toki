@@ -8,11 +8,12 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 
-#include "core/assert.h"
+#include "../../core/assert.h"
+#include "../../core/common.h"
+
+extern char** environ;
 
 namespace toki {
-
-namespace platform {
 
 void debug_break() {
     signal(SIGTRAP, SIG_DFL);
@@ -30,32 +31,31 @@ void memory_free(void* ptr) {
     munmap(ptr, size);
 }
 
-u64 get_time_microseconds() {
+u64 time_microseconds() {
     timeval tv{};
     gettimeofday(&tv, NULL);
     return tv.tv_usec;
 }
 
-u64 get_time_milliseconds() {
+u64 time_milliseconds() {
     timeval tv{};
     gettimeofday(&tv, NULL);
     return tv.tv_usec / 1000ULL;
 }
 
-template <typename... Args>
-constexpr void print(const char* fmt, Args&&... args) {
-    u32 total_length = strlen(fmt);
+const char* getenv(const char* var) {
+    u32 length = strlen(var);
+    char** env = environ;
 
-    // ([&](auto&& arg) {
-    //     if constexpr (isSameValue<decltype(arg), int>) {
-    //     }
-    //
-    //     else {
-    //     }
-    // }(args)...);
+    while (*env) {
+        if (strcmp(var, *env, length) && (*env)[length] == '=') {
+            return env[length + 1];
+        }
+        env++;
+    }
+
+    return nullptr;
 }
-
-}  // namespace platform
 
 }  // namespace toki
 

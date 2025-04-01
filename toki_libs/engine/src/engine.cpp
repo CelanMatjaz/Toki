@@ -10,7 +10,7 @@ namespace toki {
 Engine::Engine(const Config& config):
     mGlobalAllocator(config.memory_config.engine_memory_block_size),
     mFrameAllocator(mGlobalAllocator, config.memory_config.engine_frame_memory_block_size) {
-    mRenderer = move(BasicRef<RendererFrontend>(mGlobalAllocator));
+    // mRenderer = move(BasicRef<RendererFrontend>(mGlobalAllocator));
 }
 
 Engine::~Engine() {
@@ -23,7 +23,7 @@ void Engine::run() {
     mIsRunning = true;
 
     static auto last_frame_time = time_microseconds();
-    [[maybe_unused]] float delta_time = 0;
+    float delta_time = 0;
 
     EventHandler h;
 
@@ -36,11 +36,11 @@ void Engine::run() {
         delta_time = (frame_start_time - last_frame_time) / 1'000'000.0f;
         last_frame_time = frame_start_time;
 
-        mRenderer->frame_begin();
+        // mRenderer->frame_begin();
 
         // Submit commands in here
 
-        mRenderer->frame_end();
+        // mRenderer->frame_end();
 
         mFrameAllocator.swap();
         mFrameAllocator->clear();
@@ -56,7 +56,7 @@ void Engine::window_add(const char* title, u32 width, u32 height) {
     NativeWindowHandle handle = window_create(title, width, height, WindowInitFlags{ .show_on_create = true });
     sWindows[sWindowCount++].mNativeHandle = handle;
 
-    mRenderer->window_add(handle);
+    // mRenderer->window_add(handle);
 }
 
 }  // namespace toki

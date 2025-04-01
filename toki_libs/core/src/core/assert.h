@@ -14,7 +14,7 @@ namespace toki {
         printf("Assertion failed %s:%i", __FILE__, __LINE__); \
         printf(message __VA_OPT__(, ) __VA_ARGS__);           \
         toki::debug_break();                                  \
-        UNREACHABLE                                           \
+        UNREACHABLE;                                          \
     }
 
 inline void print_error_code() {

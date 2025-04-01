@@ -3,7 +3,7 @@
 #include "../core/common.h"
 #include "../core/concepts.h"
 #include "../core/types.h"
-#include "../memory/allocators/allocator.h"
+#include "../memory/allocator.h"
 
 namespace toki {
 

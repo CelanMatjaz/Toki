@@ -4,12 +4,16 @@
 
 #if defined(TK_PLATFORM_WINDOWS)
 #include <Windows.h>
+
+#elif defined(TK_PLATFORM_LINUX) && defined(TK_WINDOW_SYSTEM_WAYLAND)
+struct wl_display;
+struct wl_surface;
 #endif
 
 namespace toki {
 
 #if (defined(__GNUC__) || defined(__clang__)) && __cplusplus >= 202302L
-#define UNREACHABLE __builtin_unreachable();
+#define UNREACHABLE __builtin_unreachable()
 #elif defined(_MSC_VER)
 #define UNREACHABLE _STL_UNREACHABLE;
 #else
@@ -26,9 +30,21 @@ union NativeWindowHandle {
         return i64;
     }
 
-#if defined(TK_PLATFORM_WINDOWS)
+#if defined(TK_PLATFORM_WINDOWS) && defined(TK_WINDOW_SYSTEM_WINDOWS)
     inline operator HWND() {
         return reinterpret_cast<HWND>(ptr);
+    }
+#elif defined(TK_PLATFORM_LINUX) && defined(TK_WINDOW_SYSTEM_WAYLAND)
+    struct {
+        uint32_t wl_display, wl_surface;
+    } double_u32;
+
+    struct wl_display* wl_display() {
+        return reinterpret_cast<struct wl_display*>(&double_u32.wl_display);
+    }
+
+    struct wl_surface* wl_surface() {
+        return reinterpret_cast<struct wl_surface*>(&double_u32.wl_surface);
     }
 #endif
 };
@@ -42,8 +58,5 @@ u64 time_microseconds();
 u64 time_milliseconds();
 
 void debug_break();
-
-template <typename... Args>
-constexpr void print(const char* fmt, Args&&...);
 
 }  // namespace toki

@@ -8,7 +8,7 @@ architecture "x64"
 
 if os.host() == "windows" then
     platforms { "Windows" }
-elseif of.host() == "linux" then
+elseif os.host() == "linux" then
     platforms { "Linux" }
 end
 

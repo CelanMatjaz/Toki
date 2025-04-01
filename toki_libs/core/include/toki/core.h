@@ -4,9 +4,9 @@
 #include "../../src/core/core.h"
 
 // Allocators
-#include "../../src/memory/allocators/allocator.h"
-#include "../../src/memory/allocators/bump_allocator.h"
-#include "../../src/memory/allocators/double_bump_allocator.h"
+#include "../../src/memory/allocator.h"
+#include "../../src/memory/bump_allocator.h"
+#include "../../src/memory/double_bump_allocator.h"
 
 // Containers
 #include "../../src/containers/basic_ref.h"

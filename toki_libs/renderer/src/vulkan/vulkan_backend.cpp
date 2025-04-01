@@ -62,9 +62,13 @@ void VulkanBackend::create_instance() {
     application_info.engineVersion = VK_MAKE_VERSION(0, 0, 0);
     application_info.apiVersion = VK_API_VERSION_1_3;
 
-    BumpRef<const char*> extensions(mFrameAllocator.get(), 2);
+    StaticArray<const char*, 2, BumpAllocator> extensions(mFrameAllocator);
     extensions[0] = VK_KHR_SURFACE_EXTENSION_NAME;
+#if defined(TK_PLATFORM_WINDOWS)
     extensions[1] = VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
+#elif defined(TK_PLATFORM_LINUX)
+    extensions[1] = VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME;
+#endif
 
     VkInstanceCreateInfo instance_create_info{};
     instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;

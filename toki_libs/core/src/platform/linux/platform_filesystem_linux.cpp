@@ -9,8 +9,6 @@
 
 namespace toki {
 
-namespace platform {
-
 void file_delete(PATH_TYPE path) {
     syscall(SYS_unlink, path);
 }
@@ -80,8 +78,6 @@ void Stream::close() {
         syscall(SYS_close, m_NativeHandle.i64);
     }
 }
-
-}  // namespace platform
 
 }  // namespace toki
 

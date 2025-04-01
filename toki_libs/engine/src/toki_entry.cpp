@@ -11,11 +11,7 @@ extern LRESULT window_proc(HWND handle, u32 msg, WPARAM w_param, LPARAM l_param)
 #endif
 
 #if defined(TK_DIST) && defined(TK_PLATFORM_WINDOWS)
-int APIENTRY WinMain(
-    HINSTANCE instance,
-    [[maybe_unused]] HINSTANCE prev_instance,
-    [[maybe_unused]] LPSTR command_line,
-    [[maybe_unused]] int nShowCmd) {
+int APIENTRY WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR command_line, int nShowCmd) {
     int argc = __argc;
     char** argv = __argv;
 #else

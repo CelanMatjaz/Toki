@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../memory/allocators/allocator.h"
+#include "../memory/allocator.h"
 
 namespace toki {
 

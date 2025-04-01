@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../core/core.h"
-#include "../../platform/platform.h"
+#include "../core/core.h"
+#include "../platform/platform.h"
 
 namespace toki {
 
@@ -36,7 +36,7 @@ public:
         if (mParentAllocator) {
             mParentAllocator->free(mBufferStart);
         } else {
-            memory_free(mBufferStart);
+            toki::memory_free(mBufferStart);
         }
     }
 

@@ -10,18 +10,18 @@ inline void emplace(void* dst, Args&&... args) {
 }
 
 template <typename T>
-inline u64 strlen(const T* str) {
+inline constexpr u64 strlen(const T* str) {
     u64 len = 0;
     while (str[len++]) {}
     return len;
 }
 
 template <typename T>
-inline b8 strcmp(const T* s1, const T* s2) {
+inline constexpr b8 strcmp(const T* s1, const T* s2, u32 length = 0) {
     for (u32 i = 0;; i++) {
         if (s1[i] != s2[i]) {
             return false;
-        } else if (s1[i] == 0 && s2[i] == 0) {
+        } else if ((length > 0 && i == length) || (s1[i] == 0 && s2[i] == 0)) {
             return true;
         }
     }

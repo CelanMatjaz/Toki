@@ -23,6 +23,7 @@ function CommonOptions(proj)
     filter { "platforms:Windows" }
     defines {
         "TK_PLATFORM_WINDOWS",
+        "TK_WINDOW_SYSTEM_WINDOWS",
         "_WIN32",
         "NOMINMAX",
         "WIN32_LEAN_AND_MEAN",
@@ -43,6 +44,26 @@ function CommonOptions(proj)
 
     filter { "platforms:Linux" }
     defines { "TK_PLATFORM_LINUX" }
+    if os.host() == "linux" then
+        if _OPTIONS["display-server"] ~= "<Empty>" then
+            if _OPTIONS["display-server"] == "wayland" then
+                defines { "TK_WINDOW_SYSTEM_WAYLAND" }
+            elseif _OPTIONS["display-server"] == "x11" then
+                defines { "TK_WINDOW_SYSTEM_X11" }
+            else
+                error("Provided display server can only be one of wayland and x11")
+            end
+        else
+            linux_display = os.getenv("XDG_SESSION_TYPE")
+            if linux_display == "wayland" then
+                defines { "TK_WINDOW_SYSTEM_WAYLAND" }
+            elseif linux_display == "x11" then
+                defines { "TK_WINDOW_SYSTEM_X11" }
+            else
+                error("Display server not found for Linux platform (XDG_SESSION_TYPE is not set to either wayland or x11)")
+            end
+        end
+    end
 
     filter { "configurations:Debug" }
     defines { "TK_DEBUG" }
@@ -85,7 +106,7 @@ function CommonOptions(proj)
 
     enablewarnings { "all" }
 
-    defines { ("TK_MAX_WINDOW_COUNT=" .. _OPTIONS["maxwindows"]) }
+    defines { ("TK_MAX_WINDOW_COUNT=" .. _OPTIONS["max-windows"]) }
 
     if proj.extra_defines ~= nil and type(proj.extra_defines) == "table" then
         defines(proj.extra_defines)
@@ -140,6 +161,13 @@ function ProjectLibrary(proj)
 
     project(proj.name)
     kind(proj.kind)
+
+    if kind == "SharedLib" then
+        filter { "toolset:clang or gcc" }
+        buildoptions { "-fPIC" }
+
+        filter {}
+    end
 
     basedir(path.getabsolute(proj.dir))
 

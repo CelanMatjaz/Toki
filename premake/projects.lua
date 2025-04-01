@@ -40,8 +40,8 @@ local projects = {
             name = "ShaderCompiler",
             kind = "SharedLib",
             dir = "toki_libs/shader_compiler",
-            deps = { "core" },
-            extra_lib_includes = { "renderer" },
+            -- deps = { "core" },
+            extra_lib_includes = { "renderer", "core" },
             vulkan_sdk_options = { includes = true },
             extra_links = {
                 "spirv-cross-cored",
