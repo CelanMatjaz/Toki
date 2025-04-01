@@ -20,17 +20,16 @@ local function MapDeps(proj)
     local links_out = {}
     local includes_out = {}
 
-    if proj.deps == nil or type(proj.deps) ~= "table" then
-        return { links = links_out, includedirs = includes_out }
+    if proj.deps ~= nil and type(proj.deps) == "table" then
+        for _, dep in pairs(proj.deps) do
+            table.insert(links_out, toki_projects.libraries[dep].name)
+            table.insert(includes_out, path.join(toki_projects.libraries[dep].dir, "include"))
+        end
     end
 
-    for _, dep in pairs(proj.deps) do
-        table.insert(links_out, toki_projects.libraries[dep].name)
-        table.insert(includes_out, path.join(toki_projects.libraries[dep].dir, "include"))
-    end
-
-    if proj.extra_lib_includes ~= nil then
+    if proj.extra_lib_includes ~= nil and type(proj.extra_lib_includes) == "table" then
         for _, inc in pairs(proj.extra_lib_includes) do
+            print(path.join(toki_projects.libraries[inc].dir, "include"))
             table.insert(includes_out, path.join(toki_projects.libraries[inc].dir, "include"))
         end
     end

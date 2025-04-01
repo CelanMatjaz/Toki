@@ -38,18 +38,18 @@ local projects = {
 
         shader_compiler = {
             name = "ShaderCompiler",
-            kind = "SharedLib",
+            kind = "StaticLib",
             dir = "toki_libs/shader_compiler",
-            -- deps = { "core" },
-            extra_lib_includes = { "renderer", "core" },
+            deps = { "core" },
+            extra_lib_includes = { "renderer" },
             vulkan_sdk_options = { includes = true },
             extra_links = {
-                "spirv-cross-cored",
-                "spirv-cross-cppd",
-                "spirv-cross-glsld",
-                "spirv-cross-reflectd",
-                "shadercd",
-                "shaderc_combinedd"
+                -- "spirv-cross-cored",
+                -- "spirv-cross-cppd",
+                -- "spirv-cross-glsld",
+                -- "spirv-cross-reflectd",
+                "shaderc_sharedd",
+                -- "shaderc_combinedd"
             },
             extra_defines = { "TK_SHARED_LIB_EXPORT" },
         },

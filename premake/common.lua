@@ -15,10 +15,7 @@ function CommonOptions(proj)
     }
 
     filter { "toolset:clang or gcc" }
-    buildoptions "--std=c++23"
-
-    filter { "toolset:clang or gcc" }
-    buildoptions "-ftrivial-auto-var-init=pattern"
+    buildoptions "--std=c++23 -ftrivial-auto-var-init=pattern"
 
     filter { "platforms:Windows" }
     defines {
