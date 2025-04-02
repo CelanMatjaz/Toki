@@ -1,7 +1,7 @@
 #include "engine.h"
 
 #include <toki/core.h>
-#include <toki/renderer.h>
+// #include <toki/renderer.h>
 
 #include "window.h"
 

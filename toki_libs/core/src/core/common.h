@@ -12,21 +12,19 @@ inline void emplace(void* dst, Args&&... args) {
 template <typename T>
 inline constexpr u64 strlen(const T* str) {
     u64 len = 0;
-    while (str[len++]) {}
+    while (str[++len]) {}
     return len;
 }
 
 template <typename T>
 inline constexpr b8 strcmp(const T* s1, const T* s2, u32 length = 0) {
-    for (u32 i = 0;; i++) {
+    for (u32 i = 0; i < length || !length; i++) {
         if (s1[i] != s2[i]) {
             return false;
-        } else if ((length > 0 && i == length) || (s1[i] == 0 && s2[i] == 0)) {
-            return true;
         }
     }
 
-    return false;
+    return true;
 }
 
 template <typename T>
@@ -48,7 +46,7 @@ inline T&& move(const T& value) {
 
 inline void memcpy(const void* src, void* dst, u32 size) {
     for (u32 i = 0; i < size; i++) {
-        *reinterpret_cast<char*>(dst) = *reinterpret_cast<const char*>(src);
+        *&reinterpret_cast<char*>(dst)[i] = *&reinterpret_cast<const char*>(src)[i];
     }
 }
 

@@ -28,6 +28,8 @@ NativeWindowHandle window_create(const char* title, u32 width, u32 height, const
 
 void window_destroy(NativeWindowHandle handle);
 
+void window_poll_events();
+
 Vec2<u32> window_get_dimensions(NativeWindowHandle handle);
 
 }  // namespace toki

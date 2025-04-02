@@ -8,8 +8,8 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "args": ["${workspaceFolder}/toki_sandbox"],
-            "program": "${workspaceFolder}/.bin/Linux-x86_64/Debug/Sandbox",
-            "preLaunchTask": "Build Sandbox - Debug"
+            "program": "${workspaceFolder}/build/build/bin/Linux-x86_64/Debug/Sandbox"
+            // "preLaunchTask": "Build Sandbox - Debug"
         },
         {
             "name": "Launch Sandbox - De1",
@@ -17,8 +17,8 @@
             "request": "launch",
             "cwd": "${workspaceFolder}",
             "args": ["${workspaceFolder}/toki_sandbox"],
-            "program": "${workspaceFolder}/.bin/Linux-x86_64/Debug/Sandbox",
-            "preLaunchTask": "Build Sandbox - Debug"
+            "program": "${workspaceFolder}/build/build/bin/Linux-x86_64/Debug/Sandbox"
+            // "preLaunchTask": "Build Sandbox - Debug"
         }
     ]
 }

@@ -92,7 +92,7 @@ void VulkanBackend::create_instance() {
 
             for (u32 i = 0; i < layers.size(); i++) {
                 const auto& found_layer = layers[i];
-                if (strcmp(required_layer, found_layer.layerName) == 0) {
+                if (strncmp(required_layer, found_layer.layerName) == 0) {
                     layer_found = true;
                     break;
                 }
