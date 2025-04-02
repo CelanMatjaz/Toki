@@ -59,4 +59,6 @@ u64 time_milliseconds();
 
 void debug_break();
 
+const char* getenv(const char* var);
+
 }  // namespace toki
