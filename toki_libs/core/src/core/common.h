@@ -1,8 +1,12 @@
 #pragma once
 
+#include <cstdio>
+
 #include "types.h"
 
 namespace toki {
+
+#define ARRAY_SIZE(array) sizeof(array) / sizeof(array[0])
 
 template <typename T, typename... Args>
 inline void emplace(void* dst, Args&&... args) {
@@ -21,6 +25,9 @@ inline constexpr b8 strcmp(const T* s1, const T* s2, u32 length = 0) {
     for (u32 i = 0; i < length || !length; i++) {
         if (s1[i] != s2[i]) {
             return false;
+        }
+        if (s1[i] == 0 && s2[i] == 0) {
+            return true;
         }
     }
 
