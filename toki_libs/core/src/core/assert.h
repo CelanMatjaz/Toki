@@ -2,19 +2,21 @@
 
 #include <cstdio>
 
+#include "../platform/platform.h"
+
 #if defined(TK_PLATFORM_WINDOWS)
 #include "Windows.h"
 #endif
 
 namespace toki {
 
-#define TK_ASSERT(condition, message, ...)                    \
-    if (condition) {                                          \
-    } else {                                                  \
+#define TK_ASSERT(condition, message, ...)                      \
+    if (condition) {                                            \
+    } else {                                                    \
         printf("Assertion failed %s:%i\n", __FILE__, __LINE__); \
-        printf(message "\n" __VA_OPT__(, ) __VA_ARGS__);           \
-        toki::debug_break();                                  \
-        UNREACHABLE;                                          \
+        printf(message "\n" __VA_OPT__(, ) __VA_ARGS__);        \
+        toki::debug_break();                                    \
+        UNREACHABLE;                                            \
     }
 
 inline void print_error_code() {

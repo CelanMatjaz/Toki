@@ -7,8 +7,10 @@
 #include "vulkan/vulkan_core.h"
 #include "vulkan/vulkan_types.h"
 
-#if defined(TK_PLATFORM_WINDOWS)
+#if defined(TK_WINDOW_SYSTEM_WINDOWS)
 #include <vulkan/vulkan_win32.h>
+#elif defined(TK_WINDOW_SYSTEM_WAYLAND)
+#include <vulkan/vulkan_wayland.h>
 #endif
 
 #include "vulkan_platform.h"
@@ -92,7 +94,7 @@ void VulkanBackend::create_instance() {
 
             for (u32 i = 0; i < layers.size(); i++) {
                 const auto& found_layer = layers[i];
-                if (strncmp(required_layer, found_layer.layerName) == 0) {
+                if (toki::strcmp(required_layer, found_layer.layerName)) {
                     layer_found = true;
                     break;
                 }

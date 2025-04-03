@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/core.h"
+#include "../core/types.h"
 
 #if defined(TK_PLATFORM_WINDOWS)
 #include <Windows.h>
@@ -25,7 +25,6 @@ using PATH_TYPE = const char*;
 union NativeWindowHandle {
     void* ptr;
     toki::i64 i64;
-
     inline operator u64() {
         return i64;
     }
@@ -36,15 +35,15 @@ union NativeWindowHandle {
     }
 #elif defined(TK_PLATFORM_LINUX) && defined(TK_WINDOW_SYSTEM_WAYLAND)
     struct {
-        uint32_t wl_display, wl_surface;
-    } double_u32;
+        u32 wl_display, wl_surface, xdg_surface, xdg_toplevel;
+    } wl;
 
     struct wl_display* wl_display() {
-        return reinterpret_cast<struct wl_display*>(&double_u32.wl_display);
+        return reinterpret_cast<struct wl_display*>(&wl.wl_display);
     }
 
     struct wl_surface* wl_surface() {
-        return reinterpret_cast<struct wl_surface*>(&double_u32.wl_surface);
+        return reinterpret_cast<struct wl_surface*>(&wl.wl_surface);
     }
 #endif
 };

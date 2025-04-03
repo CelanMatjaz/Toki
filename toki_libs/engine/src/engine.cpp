@@ -1,7 +1,7 @@
 #include "engine.h"
 
 #include <toki/core.h>
-// #include <toki/renderer.h>
+#include <toki/renderer.h>
 
 #include "window.h"
 
@@ -10,7 +10,7 @@ namespace toki {
 Engine::Engine(const Config& config):
     mGlobalAllocator(config.memory_config.engine_memory_block_size),
     mFrameAllocator(mGlobalAllocator, config.memory_config.engine_frame_memory_block_size) {
-    // mRenderer = move(BasicRef<RendererFrontend>(mGlobalAllocator));
+    mRenderer = move(BasicRef<RendererFrontend>(mGlobalAllocator));
 }
 
 Engine::~Engine() {
@@ -22,8 +22,10 @@ Engine::~Engine() {
 void Engine::run() {
     mIsRunning = true;
 
-    static auto last_frame_time = time_microseconds();
-    float delta_time = 0;
+    // NOTE(Matjaž): should this have better precision?
+    u64 time = time_milliseconds();
+    u64 last_frame_time = time;
+    f32 delta_time = 0;
 
     EventHandler h;
 
@@ -32,8 +34,8 @@ void Engine::run() {
             sWindows[i].handle_events(h);
         }
 
-        auto frame_start_time = time_microseconds();
-        delta_time = (frame_start_time - last_frame_time) / 1'000'000.0f;
+        auto frame_start_time = time_milliseconds();
+        delta_time = (frame_start_time - last_frame_time) / 1'000.0f;
         last_frame_time = frame_start_time;
 
         // mRenderer->frame_begin();

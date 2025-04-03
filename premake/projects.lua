@@ -20,7 +20,7 @@ local projects = {
             name = "Engine",
             kind = "StaticLib",
             dir = "toki_libs/engine",
-            deps = { --[[ "renderer", ]] "core" },
+            deps = { "renderer", "core" },
             sources = {
                 "src/engine.cpp",
                 "src/window.cpp",
@@ -28,31 +28,31 @@ local projects = {
             }
         },
 
-        -- renderer = {
-        --     name = "Renderer",
-        --     kind = "StaticLib",
-        --     dir = "toki_libs/renderer",
-        --     deps = { "shader_compiler", "core" },
-        --     vulkan_sdk_options = { includes = true },
-        -- },
+        renderer = {
+            name = "Renderer",
+            kind = "StaticLib",
+            dir = "toki_libs/renderer",
+            deps = { "shader_compiler", "core" },
+            vulkan_sdk_options = { includes = true },
+        },
 
-        -- shader_compiler = {
-        --     name = "ShaderCompiler",
-        --     kind = "StaticLib",
-        --     dir = "toki_libs/shader_compiler",
-        --     deps = { "core" },
-        --     extra_lib_includes = { "renderer" },
-        --     vulkan_sdk_options = { includes = true },
-        --     extra_links = {
-        --         -- "spirv-cross-cored",
-        --         -- "spirv-cross-cppd",
-        --         -- "spirv-cross-glsld",
-        --         -- "spirv-cross-reflectd",
-        --         "shaderc_sharedd",
-        --         -- "shaderc_combinedd"
-        --     },
-        --     extra_defines = { "TK_SHARED_LIB_EXPORT" },
-        -- },
+        shader_compiler = {
+            name = "ShaderCompiler",
+            kind = "StaticLib",
+            dir = "toki_libs/shader_compiler",
+            deps = { "core" },
+            extra_lib_includes = { "renderer" },
+            vulkan_sdk_options = { includes = true },
+            extra_links = {
+                -- "spirv-cross-cored",
+                -- "spirv-cross-cppd",
+                -- "spirv-cross-glsld",
+                -- "spirv-cross-reflectd",
+                "shaderc_sharedd",
+                -- "shaderc_combinedd"
+            },
+            extra_defines = { "TK_SHARED_LIB_EXPORT" },
+        },
     }
 }
 

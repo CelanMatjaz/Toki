@@ -7,6 +7,8 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#include "../../core/assert.h"
+
 namespace toki {
 
 void file_delete(PATH_TYPE path) {

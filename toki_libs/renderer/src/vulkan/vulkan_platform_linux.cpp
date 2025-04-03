@@ -3,9 +3,11 @@
 #if defined(TK_PLATFORM_LINUX)
 
 #if defined(TK_WINDOW_SYSTEM_WAYLAND)
-#define VK_USE_PLATFORM_WAYLAND_KHR
+#include "vulkan/vulkan_wayland.h"
 #elif defined(TK_WINDOW_SYSTEM_X11)
 #define VK_USE_PLATFORM_XCB_KHR
+#else
+#error "Undefined window system for Linux"
 #endif
 
 #include <vulkan/vulkan.h>
