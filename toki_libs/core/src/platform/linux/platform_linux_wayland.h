@@ -2,6 +2,8 @@
 
 #include <unistd.h>
 
+#include <cstdio>
+
 #include "../../core/assert.h"
 #include "../../core/concepts.h"
 #include "../../core/types.h"
@@ -38,7 +40,18 @@ struct WaylandGlobals {
     struct wl_callback* wl_callback;
     struct wl_compositor* wl_compositor;
     struct wl_shm* wl_shm;
+    struct wl_seat* wl_seat;
     struct xdg_wm_base* xdg_wm_base;
+
+    void print() {
+        printf("wl_callback:   %i\n", *reinterpret_cast<u32*>(wl_callback));
+        printf("wl_display:    %i\n", *reinterpret_cast<u32*>(wl_display));
+        printf("wl_registry:   %i\n", *reinterpret_cast<u32*>(wl_registry));
+        printf("wl_seat:       %i\n", *reinterpret_cast<u32*>(wl_seat));
+        printf("wl_compositor: %i\n", *reinterpret_cast<u32*>(wl_compositor));
+        printf("wl_shm:        %i\n", *reinterpret_cast<u32*>(wl_shm));
+        printf("xxg_wm_base:   %i\n", *reinterpret_cast<u32*>(xdg_wm_base));
+    }
 };
 
 enum WaylandGlobalIds {
@@ -47,6 +60,7 @@ enum WaylandGlobalIds {
     WL_CALLBACK,
     WL_COMPOSITOR,
     WL_SHM,
+    WL_SEAT,
     XDG_WM_BASE,
 
     WAYLAND_GLOBAL_ID_COUNT
@@ -54,6 +68,7 @@ enum WaylandGlobalIds {
 
 inline static constexpr u32 REQUIRED_WL_COMPOSITOR_VERSION = 6;
 inline static constexpr u32 REQUIRED_XDG_WM_BASE_VERSION = 6;
+inline static constexpr u32 REQUIRED_WL_SEAT_VERSION = 9;
 
 void wayland_send(const u32 id, const u16 opcode, const u32 data_size = 0, const void* data = nullptr);
 
@@ -64,6 +79,7 @@ struct {
 } inline constexpr required_registry_objects[]{
     { "wl_compositor", REQUIRED_WL_COMPOSITOR_VERSION, WL_COMPOSITOR },
     { "xdg_wm_base", REQUIRED_XDG_WM_BASE_VERSION, XDG_WM_BASE },
+    { "wl_seat", REQUIRED_WL_SEAT_VERSION, WL_SEAT },
     { "wl_shm", 1, WL_SHM },
 };
 
@@ -76,6 +92,7 @@ public:
         reinterpret_cast<struct wl_callback*>(&global_ids[WL_CALLBACK]),
         reinterpret_cast<struct wl_compositor*>(&global_ids[WL_COMPOSITOR]),
         reinterpret_cast<struct wl_shm*>(&global_ids[WL_SHM]),
+        reinterpret_cast<struct wl_seat*>(&global_ids[WL_SEAT]),
         reinterpret_cast<struct xdg_wm_base*>(&global_ids[XDG_WM_BASE]),
     };
 
@@ -114,7 +131,8 @@ public:
         TK_ASSERT(shm_unlink(random_name) != -1, "shm_unlink failed")
         TK_ASSERT(ftruncate(shm_fd, shm_pool_size) != -1, "ftruncate failed");
 
-        shm_pool_data = reinterpret_cast<char*>(mmap(nullptr, shm_pool_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0));
+        shm_pool_data =
+            reinterpret_cast<char*>(mmap(nullptr, shm_pool_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0));
         TK_ASSERT(shm_pool_data != nullptr, "mmap failed");
     }
 

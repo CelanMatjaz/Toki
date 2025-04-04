@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <print>
 #if defined(TK_PLATFORM_LINUX) && defined(TK_WINDOW_SYSTEM_WAYLAND)
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -21,6 +22,7 @@ constexpr u32 WL_DISPLAY_ERROR_EVENT = 0;
 constexpr u16 WL_CALLBACK_DONE_EVENT = 0;
 constexpr u32 WL_REGISTRY_GLOBAL_EVENT = 0;
 constexpr u32 XDG_WM_BASE_PING_EVENT = 0;
+constexpr u32 XDG_SURFACE_CONFIGURE_EVENT = 0;
 
 static void wayland_handle_events(WaylandHandlerFunctionConcept auto handler_fn);
 
@@ -45,9 +47,12 @@ struct xdg_toplevel : wl_struct {
 };
 
 struct xdg_surface : wl_struct {
+    b32 acknowledged = false;
+
     static constexpr u16 XDG_SURFACE_DESTROY_OPCODE = 0;
     static constexpr u16 XDG_SURFACE_GET_TOPLEVEL_OPCODE = 1;
     static constexpr u16 XDG_SURFACE_SET_WINDOW_GEOMETRY_OPCODE = 3;
+    static constexpr u16 XDG_SURFACE_ACK_CONFIGURE_OPCODE = 4;
 
     inline void destroy() {
         wayland_send(id, XDG_SURFACE_DESTROY_OPCODE);
@@ -62,6 +67,10 @@ struct xdg_surface : wl_struct {
     inline void set_geometry(int x, int y, int width, int height) {
         int data[4] = { x, y, width, height };
         wayland_send(id, XDG_SURFACE_SET_WINDOW_GEOMETRY_OPCODE, sizeof(data), data);
+    }
+
+    inline void ack_configure(u32 serial) {
+        wayland_send(id, XDG_SURFACE_ACK_CONFIGURE_OPCODE, sizeof(serial), &serial);
     }
 };
 
@@ -199,8 +208,9 @@ static void wayland_handle_events(WaylandHandlerFunctionConcept auto handler_fn)
     char buf[4096]{};
     i32 read_byte_count{};
     Header* header{};
+    b8 handled = false;
 
-    for (;;) {
+    for (; !handled;) {
         read_byte_count = recv(wayland_state.socket_fd, buf, sizeof(buf), 0);
         TK_ASSERT(read_byte_count != -1, "Error reading from Wayland socket");
 
@@ -229,7 +239,7 @@ static void wayland_handle_events(WaylandHandlerFunctionConcept auto handler_fn)
 
             // Call provided handler
             if (handler_fn(header, reinterpret_cast<u32*>(header + 1))) {
-                return;
+                handled = true;
             }
 
             header = reinterpret_cast<Header*>(reinterpret_cast<char*>(header) + header->size);
@@ -253,7 +263,7 @@ void wayland_sync() {
 }
 
 void wayland_send(const u32 id, const u16 opcode, const u32 data_size, const void* data) {
-    printf("id=%i opcode=%i\n", id, opcode);
+    printf("sending: id=%i opcode=%i\n", id, opcode);
     char msg[128]{};
 
     Header header{ .id = id, .opcode = opcode, .size = static_cast<u16>(sizeof(Header) + data_size) };
@@ -362,16 +372,34 @@ void window_system_shutdown() {
 }
 
 NativeWindowHandle window_create(const char* title, u32 width, u32 height, const WindowInitFlags& flags) {
-    // wayland_sync();
-
     wl_surface wl_surface = wayland_state.globals.wl_compositor->create_surface();
     xdg_surface xdg_surface = wayland_state.globals.xdg_wm_base->get_xdg_surface(wl_surface);
     xdg_toplevel xdg_toplevel = xdg_surface.get_toplevel();
-    wl_surface.commit();
 
     xdg_surface.set_geometry(0, 0, width, height);
     xdg_toplevel.set_title(title);
     wl_surface.commit();
+
+    wayland_state.globals.print();
+    printf("wl_surface     %i\n", wl_surface.id);
+    printf("xdg_surface    %i\n", xdg_surface.id);
+    printf("xdg_toplevel   %i\n", xdg_toplevel.id);
+    wayland_handle_events([&xdg_surface](Header* header, const u32* data) {
+        printf("event: object_id=%i, opcode=%i\n", header->id, header->opcode);
+        if (header->id == xdg_surface.id && xdg_surface::XDG_SURFACE_ACK_CONFIGURE_OPCODE) {
+            xdg_surface.acknowledged = true;
+
+            return true;
+        }
+
+        return false;
+    });
+
+    TK_ASSERT(xdg_surface.acknowledged, "XDG_SURFACE configure was not acknowledged")
+
+    wl_surface.commit();
+
+    // wayland_sync();
 
     wayland_state.create_shared_memory_file();
     wl_shm_pool wl_shm_pool = wayland_state.globals.wl_shm->create_pool();
@@ -388,16 +416,16 @@ NativeWindowHandle window_create(const char* title, u32 width, u32 height, const
 
     printf("window created %i\n", wl_surface.id);
 
-    while (true) {
-        window_poll_events();
-    }
+    // while (true) {
+    //     window_poll_events();
+    // }
 
     return { .wl = { wayland_state.globals.wl_display->id, wl_surface, xdg_surface, xdg_toplevel } };
 }
 
 void window_destroy(NativeWindowHandle handle) {
     xdg_toplevel{ handle.wl.xdg_toplevel }.destroy();
-    xdg_surface{ handle.wl.xdg_surface }.destroy();
+    xdg_surface{ { handle.wl.xdg_surface } }.destroy();
 }
 
 Vec2<u32> window_get_dimensions(NativeWindowHandle handle) {
@@ -405,7 +433,11 @@ Vec2<u32> window_get_dimensions(NativeWindowHandle handle) {
 }
 
 void window_poll_events() {
-    wayland_sync();
+    wayland_handle_events([](Header* header, const u32*) {
+        printf("event: object_id=%i, opcode=%i\n", header->id, header->opcode);
+
+        return false;
+    });
 }
 
 }  // namespace toki

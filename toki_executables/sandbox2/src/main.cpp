@@ -9,7 +9,9 @@ int tk_entry_point(int, char**) {
 
     auto handle = toki::window_create("Test", 400, 400);
 
-    while (true) {}
+    while (true) {
+        toki::window_poll_events();
+    }
 
     toki::Engine engine(engine_config);
     engine.window_add("Test", 800, 600);
