@@ -108,7 +108,7 @@ struct xdg_wm_base : wl_struct {
     inline xdg_surface get_xdg_surface(wl_surface wl_surface) {
         u32 data[2] = { wayland_state.create(), wl_surface };
         wayland_send(id, XDG_WM_BASE_GET_XDG_SURFACE_OPCODE, sizeof(data), data);
-        return { data[0] };
+        return { { data[0] } };
     }
 };
 
@@ -224,7 +224,7 @@ static void wayland_handle_events(WaylandHandlerFunctionConcept auto handler_fn)
                 // u32 message_length = data[2];
                 char* message = reinterpret_cast<char*>(&data[3]);
                 printf("Wayland error object_id=%i, code=%i, %s\n", object_id, code, message);
-                UNREACHABLE;
+                TK_UNREACHABLE();
             }
 
             // Handle sync

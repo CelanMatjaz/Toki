@@ -14,11 +14,11 @@ template <typename T1, typename T2>
 concept SameAsConcept = IsSameValue<T1, T2>;
 
 template <typename>
-constexpr b8 IsIntegral = false;
+constexpr b8 IsIntegralValue = false;
 
 #define IS_INTEGRAL(type) \
     template <>           \
-    inline constexpr b8 IsIntegral<type> = true;
+    inline constexpr b8 IsIntegralValue<type> = true;
 
 IS_INTEGRAL(b8)
 IS_INTEGRAL(i8)
@@ -31,6 +31,9 @@ IS_INTEGRAL(i64)
 IS_INTEGRAL(u64)
 
 #undef IS_INTEGRAL
+
+template <typename T>
+inline constexpr b8 IsIntegralValue<T*> = true;
 
 template <typename T>
 concept AllocatorConcept = requires(T a, u64 size, void* free_ptr) {

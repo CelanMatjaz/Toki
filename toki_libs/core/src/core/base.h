@@ -35,14 +35,4 @@ constexpr u64 BIT(u64 value) {
     return static_cast<u64>(1) << value;
 }
 
-template <typename T>
-inline constexpr T&& MOVE(T& v) {
-    return static_cast<T&&>(v);
-}
-
-template <typename T>
-inline constexpr const T&& MOVE(const T& v) {
-    return static_cast<T&&>(const_cast<T&>(v));
-}
-
 }  // namespace toki

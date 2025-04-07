@@ -20,16 +20,29 @@ struct WindowInitFlags {
     b8 show_on_create : 1;
 };
 
+class Window {
+public:
+    static void initialize();
+    static void shutdown();
+
+public:
+    Window(const char* title, u32 width, u32 height, const WindowInitFlags& flags = {});
+    ~Window();
+
+private:
+    inline static b8 initialized = false;
+};
+
 void window_system_initialize(const WindowSystemInit& = {});
 
 void window_system_shutdown();
 
-NativeWindowHandle window_create(const char* title, u32 width, u32 height, const WindowInitFlags& flags = {});
+NativeHandle window_create(const char* title, u32 width, u32 height, const WindowInitFlags& flags = {});
 
-void window_destroy(NativeWindowHandle handle);
+void window_destroy(NativeHandle handle);
 
 void window_poll_events();
 
-Vec2<u32> window_get_dimensions(NativeWindowHandle handle);
+Vec2<u32> window_get_dimensions(NativeHandle handle);
 
 }  // namespace toki

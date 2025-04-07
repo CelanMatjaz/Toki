@@ -36,13 +36,6 @@ local projects = {
             vulkan_sdk_options = { includes = true },
         },
 
-        window = {
-            name = "Window",
-            kind = "StaticLib",
-            dir = "toki_libs/window",
-            deps = { "core" },
-        },
-
         shader_compiler = {
             name = "ShaderCompiler",
             kind = "StaticLib",

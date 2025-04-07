@@ -15,9 +15,25 @@ function CommonOptions(proj)
     }
 
     filter { "toolset:clang or gcc" }
-    buildoptions "--std=c++23 -ftrivial-auto-var-init=pattern"
+    buildoptions "--std=c++23 -ftrivial-auto-var-init=pattern -nostartfiles -nostdlib"
+
+    includedirs { path.join(proj.dir, "src") }
+    files { path.join(proj.dir, "src/**.h") }
+
+    -- Use proj.sources if defined, else add all .cpp files
+    if proj.sources ~= nil then
+        for _, source in ipairs(proj.sources) do
+            files { path.join(proj.dir, source) }
+        end
+    else
+        files { path.join(proj.dir, "src/**.cpp") }
+        removefiles { path.join(proj.dir, "src/**/linux_*.*") }
+        removefiles { path.join(proj.dir, "src/**/win32_*.*") }
+    end
 
     filter { "platforms:Windows" }
+    files { path.join(proj.dir, "src/**/win32_*.*") }
+
     defines {
         "TK_PLATFORM_WINDOWS",
         "TK_WINDOW_SYSTEM_WINDOWS",
@@ -25,6 +41,7 @@ function CommonOptions(proj)
         "NOMINMAX",
         "WIN32_LEAN_AND_MEAN",
     }
+
     links {
         "user32",
         "gdi32",
@@ -40,7 +57,10 @@ function CommonOptions(proj)
     end
 
     filter { "platforms:Linux" }
+    files { path.join(proj.dir, "src/**/linux_*.*") }
+
     defines { "TK_PLATFORM_LINUX" }
+
     if os.host() == "linux" then
         if _OPTIONS["display-server"] ~= "<Empty>" then
             if _OPTIONS["display-server"] == "wayland" then
@@ -57,7 +77,8 @@ function CommonOptions(proj)
             elseif linux_display == "x11" then
                 defines { "TK_WINDOW_SYSTEM_X11" }
             else
-                error("Display server not found for Linux platform (XDG_SESSION_TYPE is not set to either wayland or x11)")
+                error(
+                    "Display server not found for Linux platform (XDG_SESSION_TYPE is not set to either wayland or x11)")
             end
         end
     end
@@ -83,18 +104,6 @@ function CommonOptions(proj)
     optimize "Speed"
 
     filter {}
-
-    includedirs { path.join(proj.dir, "src") }
-    files { path.join(proj.dir, "src/**.h") }
-
-    -- Use proj.sources if defined, else add all .cpp files
-    if proj.sources ~= nil then
-        for _, source in ipairs(proj.sources) do
-            files { path.join(proj.dir, source) }
-        end
-    else
-        files { path.join(proj.dir, "src/**.cpp") }
-    end
 
     local outputdir = "%{cfg.platform}-%{cfg.architecture}/%{cfg.buildcfg}"
 

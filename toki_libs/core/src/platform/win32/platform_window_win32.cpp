@@ -1,4 +1,3 @@
-#include "../platform_window.h"
 
 #if defined(TK_PLATFORM_WINDOWS)
 

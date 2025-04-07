@@ -14,7 +14,7 @@ inline void emplace(void* dst, Args&&... args) {
 }
 
 template <typename T>
-inline constexpr u64 strlen(const T* str) {
+inline constexpr u32 strlen(const T* str) {
     u64 len = 0;
     while (str[++len]) {}
     return len;
@@ -47,8 +47,13 @@ inline void swap(T& t1, T& t2) {
 }
 
 template <typename T>
-inline T&& move(const T& value) {
-    return static_cast<T&&>(const_cast<T&>(value));
+inline constexpr T&& move(T& v) {
+    return static_cast<T&&>(v);
+}
+
+template <typename T>
+inline constexpr const T&& move(const T& v) {
+    return static_cast<T&&>(const_cast<T&>(v));
 }
 
 inline void memcpy(const void* src, void* dst, u32 size) {

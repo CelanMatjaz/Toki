@@ -17,7 +17,7 @@ struct HashFunctions {
     // NOTE(Matjaž): Should this be changed?
     // Arbitrary integral hashing function
     template <typename T>
-        requires(IsIntegral<T>)
+        requires(IsIntegralValue<T>)
     u64 hash(T& v) {
         constexpr u32 multiplier = 107;
 

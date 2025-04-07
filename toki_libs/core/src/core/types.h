@@ -24,9 +24,9 @@ static_assert(sizeof(i32) == 4);
 using u32 = unsigned int;
 static_assert(sizeof(u32) == 4);
 
-using i64 = long long;
+using i64 = long;
 static_assert(sizeof(i64) == 8);
-using u64 = unsigned long long;
+using u64 = unsigned long;
 static_assert(sizeof(u64) == 8);
 
 using f32 = float;
@@ -34,7 +34,7 @@ static_assert(sizeof(f32) == 4);
 using f64 = double;
 static_assert(sizeof(f64) == 8);
 
-using byte = unsigned char;
+using byte = u8;
 static_assert(sizeof(byte) == 1);
 using word = u16;
 static_assert(sizeof(word) == 2);

@@ -16,7 +16,7 @@ cd $SCRIPT_DIR
 premake5 export-compile-commands --cc="$COMPILER" --os=linux > /dev/null
 cp "build/compile_commands/$CONFIG_LOWER_CASE.json" build/compile_commands.json > /dev/null
 premake5 gmake2 "--cc=$COMPILER" "--os=$PLATFORM_LOWER_CASE"
-# make Sandbox -j$(($(nproc) - 1)) "config=$CONFIG_LOWER_CASE"
 pushd build > /dev/null
-make Sandbox -j$(($(nproc) - 1)) "config=$CONFIG_LOWER_CASE"
+# make Sandbox -j$(($(nproc) - 1)) "config=$CONFIG_LOWER_CASE"
+make Sandbox "config=$CONFIG_LOWER_CASE"
 popd > /dev/null

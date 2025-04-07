@@ -1,5 +1,3 @@
-#include "../platform_filesystem.h"
-
 #if defined(TK_PLATFORM_WINDOWS)
 
 #include <Shlwapi.h>

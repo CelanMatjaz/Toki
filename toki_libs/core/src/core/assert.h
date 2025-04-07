@@ -11,13 +11,21 @@
 namespace toki {
 
 #define TK_ASSERT(condition, message, ...)                      \
-    if (condition) {                                            \
-    } else {                                                    \
+    if (!condition) {                                           \
         printf("Assertion failed %s:%i\n", __FILE__, __LINE__); \
         printf(message "\n" __VA_OPT__(, ) __VA_ARGS__);        \
-        toki::debug_break();                                    \
-        UNREACHABLE;                                            \
+        TK_UNREACHABLE();                                       \
     }
+
+#if defined(TK_PLATFORM_WINDOWS)
+#elif defined(TK_PLATFORM_LINUX)
+#define TK_ASSERT_PLATFORM_ERROR(value, message, ...)                                                                  \
+    if (i64 v = value; v < 0) {                                                                                        \
+        printf("Platform error assertion failed with error %i %s:%i\n", -static_cast<i32>(value), __FILE__, __LINE__); \
+        printf(message "\n" __VA_OPT__(, ) __VA_ARGS__);                                                               \
+        TK_UNREACHABLE();                                                                                              \
+    }
+#endif
 
 inline void print_error_code() {
 #if defined(TK_PLATFORM_WINDOWS)
