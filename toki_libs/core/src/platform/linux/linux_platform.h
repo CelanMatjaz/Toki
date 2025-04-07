@@ -1,17 +1,16 @@
 #pragma once
 
 #include "../../core/concepts.h"
-#include "platform/platform.h"
 
 namespace toki {
 
 template <typename T>
-concept SyscallArgumentConcept = IsIntegralValue<T> || IsSameValue<NativeHandle, T>;
+concept SyscallArgumentConcept = IsConvertibleConcept<T, i64>;
 
 template <typename... Args>
     requires(SyscallArgumentConcept<Args> && ...) && (sizeof...(Args) <= 6)
-i64 syscall(u64 _syscall, Args... args) {
-    i64 casted_args[sizeof...(Args)] = { (i64) (args)... };
+[[nodiscard]] i64 syscall(u64 _syscall, Args... args) {
+    i64 casted_args[sizeof...(Args)] = { ((i64) (args))... };
 
     i64 ret{};
 

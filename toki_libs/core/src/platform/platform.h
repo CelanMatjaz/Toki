@@ -37,4 +37,8 @@ const char* getenv(const char* var);
 
 void exit(i32 error);
 
+void* memory_allocate(u64 size);
+
+void memory_free(void* ptr);
+
 }  // namespace toki

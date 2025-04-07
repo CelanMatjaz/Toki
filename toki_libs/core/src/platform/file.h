@@ -41,6 +41,14 @@ public:
     void write(u32 n, const void* data);
     void read(u32 n, void* data);
 
+    NativeHandle handle() const {
+        return _handle;
+    }
+
+    b8 is_open() const {
+        return _is_open;
+    }
+
 protected:
     void swap(File&& other) {
         if (this != &other) {

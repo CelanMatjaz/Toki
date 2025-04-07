@@ -16,9 +16,13 @@
 #include "../../src/containers/static_array.h"
 
 // Platform
+#include "../../src/platform/file.h"
+#include "../../src/platform/filesystem.h"
 #include "../../src/platform/platform.h"
-#include "../../src/platform/platform_filesystem.h"
-#include "../../src/platform/platform_window.h"
+#include "../../src/platform/socket.h"
+#include "../../src/platform/stream.h"
+#include "../../src/platform/time.h"
+#include "../../src/platform/window.h"
 
 // Math
 #include "../../src/math/math.h"

@@ -1,6 +1,9 @@
 #pragma once
 
+#include <cstring>
+
 #include "../core/common.h"
+#include "../core/concepts.h"
 #include "../core/logging.h"
 #include "../platform/platform.h"
 
@@ -14,8 +17,6 @@ concept HasHashFunction = requires(const T& value) {
 };
 
 struct HashFunctions {
-    // NOTE(Matjaž): Should this be changed?
-    // Arbitrary integral hashing function
     template <typename T>
         requires(IsIntegralValue<T>)
     u64 hash(T& v) {
@@ -30,8 +31,19 @@ struct HashFunctions {
         return value;
     }
 
-    inline u64 hash(NativeWindowHandle& value) {
-        return hash(value.i64);
+    inline u64 hash(NativeHandle& handle) {
+        return hash(handle);
+    }
+
+    u64 hash(const char* str) {
+        constexpr u32 multiplier = 107;
+
+        u64 output = 0;
+        for (u32 i = 0; i < strlen(str); i++) {
+            output += str[i] * multiplier;
+        }
+
+        return output;
     }
 };
 

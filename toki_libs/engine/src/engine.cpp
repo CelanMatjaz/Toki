@@ -22,9 +22,8 @@ Engine::~Engine() {
 void Engine::run() {
     mIsRunning = true;
 
-    // NOTE(Matjaž): should this have better precision?
-    u64 time = time_milliseconds();
-    u64 last_frame_time = time;
+    Time time;
+    Time last_frame_time = time;
     f32 delta_time = 0;
 
     EventHandler h;
@@ -34,8 +33,8 @@ void Engine::run() {
             sWindows[i].handle_events(h);
         }
 
-        auto frame_start_time = time_milliseconds();
-        delta_time = (frame_start_time - last_frame_time) / 1'000.0f;
+        Time frame_start_time;
+        delta_time = (frame_start_time - last_frame_time).as<Time::Unit::Seconds>() / 1'000;
         last_frame_time = frame_start_time;
 
         // mRenderer->frame_begin();
@@ -55,7 +54,7 @@ void Engine::window_add(const char* title, u32 width, u32 height) {
         "Adding another window would go over current limit (%i)",
         TK_MAX_WINDOW_COUNT);
 
-    NativeWindowHandle handle = window_create(title, width, height, WindowInitFlags{ .show_on_create = true });
+    NativeHandle handle = window_create(title, width, height, WindowInitFlags{ .show_on_create = true });
     sWindows[sWindowCount++].mNativeHandle = handle;
 
     // mRenderer->window_add(handle);

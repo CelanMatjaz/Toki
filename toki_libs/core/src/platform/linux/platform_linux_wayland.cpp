@@ -1,17 +1,20 @@
-#include <cstdio>
-#include <print>
-#if defined(TK_PLATFORM_LINUX) && defined(TK_WINDOW_SYSTEM_WAYLAND)
+#include "platform_linux_wayland.h"
+
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
 
+#include <cstdio>
+#include <print>
+
 #include "../../core/assert.h"
 #include "../../core/common.h"
 #include "../../core/logging.h"
+#include "../../core/string.h"
 #include "../../core/types.h"
 #include "../platform.h"
 #include "../platform_window.h"
-#include "platform_linux_wayland.h"
+#include "../socket.h"
 
 #define ROUND_UP_4(n) ((n + 3) & -4)
 
@@ -159,7 +162,7 @@ struct wl_shm : wl_struct {
         *((int*) CMSG_DATA(cmsg)) = wayland_state.shm_fd;
         socket_msg.msg_controllen = CMSG_SPACE(sizeof(wayland_state.shm_fd));
 
-        if (sendmsg(wayland_state.socket_fd, &socket_msg, 0) == -1)
+        if (sendmsg(wayland_state.socket.handle(), &socket_msg, 0) == -1)
             exit(errno);
 
         return { msg[2] };
@@ -280,37 +283,34 @@ void WaylandState::display_connect() {
 
     u64 xdg_runtime_dir_len = strlen(xdg_runtime_dir);
 
-    struct sockaddr_un addr = { .sun_family = AF_UNIX, .sun_path = {} };
-    TK_ASSERT(xdg_runtime_dir_len <= sizeof(addr.sun_path), "XDG runtime dir is too long");
+    char socket_addr[108]{};
     u64 socket_path_len = 0;
 
-    toki::memcpy(xdg_runtime_dir, addr.sun_path, xdg_runtime_dir_len);
+    toki::memcpy(xdg_runtime_dir, socket_addr, xdg_runtime_dir_len);
     socket_path_len += xdg_runtime_dir_len;
 
-    addr.sun_path[socket_path_len++] = '/';
+    socket_addr[socket_path_len++] = '/';
 
     const char* wayland_display = toki::getenv("WAYLAND_DISPLAY");
     if (wayland_display == nullptr) {
         char wayland_display_default[] = "wayland-0";
         u64 wayland_display_default_len = sizeof(wayland_display_default);
 
-        toki::memcpy(wayland_display_default, addr.sun_path + socket_path_len, wayland_display_default_len);
+        toki::memcpy(wayland_display_default, socket_addr + socket_path_len, wayland_display_default_len);
         socket_path_len += wayland_display_default_len;
     } else {
         u64 wayland_display_len = strlen(wayland_display);
-        toki::memcpy(wayland_display, addr.sun_path + socket_path_len, wayland_display_len);
+        toki::memcpy(wayland_display, socket_addr + socket_path_len, wayland_display_len);
         socket_path_len += wayland_display_len;
     }
 
-    socket_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    TK_ASSERT(socket_fd != -1, "Error creating socket when initializing Wayland display");
-    TK_ASSERT(
-        connect(socket_fd, (struct sockaddr*) &addr, sizeof(addr)) != -1,
-        "Error connecting to socket when initializing Wayland display");
+    Socket::ConnectOptions connect_options{};
+    connect_options.address = socket_addr;
+    wayland_state.socket.connect(Socket::ConnectionType::LOCAL, connect_options);
 }
 
 void WaylandState::display_disconnect() {
-    close(wayland_state.socket_fd);
+    wayland_state.socket.close();
 }
 
 void WaylandState::init_interfaces() {

@@ -7,6 +7,7 @@
 #include "../../core/assert.h"
 #include "../../core/concepts.h"
 #include "../../core/types.h"
+#include "../socket.h"
 
 #if defined(TK_DEBUG) && defined(TK_WINDOW_SYSTEM_WAYLAND) && !defined(WAYLAND_TEST_BUFFER)
 #define WAYLAND_TEST_BUFFER
@@ -112,7 +113,7 @@ public:
         global_ids[value].id = create();
     }
 
-    i32 socket_fd{};
+    Socket socket;
 
 #if defined(TK_DEBUG) && defined(WAYLAND_TEST_BUFFER)
     u32 buffer_width = 400;

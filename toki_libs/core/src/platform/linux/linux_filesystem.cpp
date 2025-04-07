@@ -10,7 +10,7 @@
 namespace toki {
 
 void file_delete(const char* path) {
-    syscall(SYS_unlink, path);
+    TK_ASSERT_PLATFORM_ERROR(syscall(SYS_unlink, path), "Could not delete path");
 }
 
 b8 path_exists(const char* path) {

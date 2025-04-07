@@ -41,4 +41,9 @@ concept AllocatorConcept = requires(T a, u64 size, void* free_ptr) {
     { a.free(free_ptr) } -> SameAsConcept<void>;
 };
 
+template <typename From, typename To>
+concept IsConvertibleConcept = requires(From from, To to) {
+    { (To)(from) } -> SameAsConcept<To>;
+};
+
 }  // namespace toki

@@ -11,7 +11,7 @@
 namespace toki {
 
 #define TK_ASSERT(condition, message, ...)                      \
-    if (!condition) {                                           \
+    if (!(condition)) {                                         \
         printf("Assertion failed %s:%i\n", __FILE__, __LINE__); \
         printf(message "\n" __VA_OPT__(, ) __VA_ARGS__);        \
         TK_UNREACHABLE();                                       \
