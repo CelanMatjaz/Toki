@@ -1,19 +1,8 @@
 #pragma once
 
-#include <unistd.h>
+#include <toki/core.h>
 
-#include <cstdio>
-
-#include "../../core/assert.h"
-#include "../../core/concepts.h"
-#include "../../core/types.h"
-#include "../socket.h"
-
-#if defined(TK_DEBUG) && defined(TK_WINDOW_SYSTEM_WAYLAND) && !defined(WAYLAND_TEST_BUFFER)
-#define WAYLAND_TEST_BUFFER
-#include <fcntl.h>
-#include <sys/mman.h>
-#endif
+#if defined(TK_WINDOW_SYSTEM_WAYLAND)
 
 namespace toki {
 
@@ -115,29 +104,14 @@ public:
 
     Socket socket;
 
-#if defined(TK_DEBUG) && defined(WAYLAND_TEST_BUFFER)
-    u32 buffer_width = 400;
-    u32 buffer_height = 400;
-    u32 buffer_stride = buffer_width * 4;
-    u32 shm_pool_size = buffer_height * buffer_stride;
-    i32 shm_fd{};
-    char* shm_pool_data;
+    // u32 buffer_width = 400;
+    // u32 buffer_height = 400;
+    // u32 buffer_stride = buffer_width * 4;
+    // u32 shm_pool_size = buffer_height * buffer_stride;
+    i64 shm{};
+    char* shm_data;
 
-    void create_shared_memory_file() {
-        char random_name[] = "/Random_name";
-
-        shm_fd = shm_open(random_name, O_RDWR | O_EXCL | O_CREAT, 0600);
-        TK_ASSERT(shm_fd != -1, "shm_open failed");
-
-        TK_ASSERT(shm_unlink(random_name) != -1, "shm_unlink failed")
-        TK_ASSERT(ftruncate(shm_fd, shm_pool_size) != -1, "ftruncate failed");
-
-        shm_pool_data =
-            reinterpret_cast<char*>(mmap(nullptr, shm_pool_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0));
-        TK_ASSERT(shm_pool_data != nullptr, "mmap failed");
-    }
-
-#endif
+    void create_shared_memory_file(u32 size);
 
 private:
     wl_struct global_ids[WAYLAND_GLOBAL_ID_COUNT]{
@@ -159,3 +133,5 @@ concept WaylandHandlerFunctionConcept = requires(T fn, Header* header, const u32
 };
 
 }  // namespace toki
+
+#endif

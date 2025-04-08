@@ -6,14 +6,14 @@
 
 namespace toki {
 
-class Stream {
+class Stream : public File {
 public:
     using OffsetType = u32;
 
-    Stream(): _file(), _offset(0) {}
-    Stream(const char* path, FileOpenFlags flags = FILE_OPEN_READ): _file(path, flags), _offset(0) {}
+    Stream(): File() {}
+    Stream(const char* path, u32 flags = FILE_OPEN_READ): File(path, flags), _offset(0) {}
     ~Stream() {
-        _file.close();
+        File::close();
     }
 
     DELETE_COPY(Stream);
@@ -34,13 +34,11 @@ public:
 
 private:
     void swap(Stream&& other) {
-        _file = move(other._file);
-        other._file = {};
+        File::swap(move(*reinterpret_cast<File*>(&other)));
         _offset = other._offset;
         other._offset = {};
     }
 
-    File _file{};
     OffsetType _offset{};
 };
 

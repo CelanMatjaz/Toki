@@ -1,8 +1,7 @@
 #include "toki_entry.h"
 
 #include <toki/core.h>
-
-#include "window.h"
+#include <toki/window.h>
 
 #if defined(TK_PLATFORM_WINDOWS)
 namespace toki {
@@ -26,10 +25,11 @@ int main(int argc, char** argv) {
 
     toki::window_system_initialize(window_init);
 #else
-    toki::window_system_initialize();
+    toki::WindowSystem::initialize();
 #endif
 
     auto result = tk_entry_point(argc, argv);
-    toki::window_system_shutdown();
+
+    toki::WindowSystem::shutdown();
     return result;
 }

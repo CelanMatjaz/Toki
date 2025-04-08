@@ -8,7 +8,7 @@
 
 namespace toki {
 
-void File::open(const char* path, FileOpenFlags flags) {
+void File::open(const char* path, u32 flags) {
     TK_ASSERT(!_is_open, "Trying to open an file that already has a file handle open");
 
     i32 open_flags = 0;
@@ -27,6 +27,8 @@ void File::open(const char* path, FileOpenFlags flags) {
     if (flags & FileOpenFlags::FILE_OPEN_TRUNC) {
         open_flags |= O_TRUNC;
     }
+
+    open_flags |= O_CREAT;
 
     _handle = syscall(SYS_open, path, open_flags);
     TK_ASSERT_PLATFORM_ERROR(_handle, "Error opening fd");

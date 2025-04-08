@@ -1,7 +1,14 @@
 #pragma once
 
 // Core
-#include "../../src/core/core.h"
+#include "../../src/core/assert.h"
+#include "../../src/core/base.h"
+#include "../../src/core/common.h"
+#include "../../src/core/concepts.h"
+#include "../../src/core/logging.h"
+#include "../../src/core/macros.h"
+#include "../../src/core/string.h"
+#include "../../src/core/types.h"
 
 // Allocators
 #include "../../src/memory/allocator.h"
@@ -22,7 +29,10 @@
 #include "../../src/platform/socket.h"
 #include "../../src/platform/stream.h"
 #include "../../src/platform/time.h"
-#include "../../src/platform/window.h"
+
+#if defined(TK_PLATFORM_LINUX)
+#include "../../src/platform/linux/linux_platform.h"
+#endif
 
 // Math
 #include "../../src/math/math.h"

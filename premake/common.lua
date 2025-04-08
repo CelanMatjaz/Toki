@@ -88,6 +88,7 @@ function CommonOptions(proj)
     symbols "On"
     runtime "Debug"
     optimize "Debug"
+    buildoptions "-fconcepts-diagnostics-depth=10"
 
     filter { "configurations:Release or Dist" }
     defines { "TK_NDEBUG" }

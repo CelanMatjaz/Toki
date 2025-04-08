@@ -3,7 +3,7 @@ local projects = {
         sandbox2 = {
             name = "Sandbox",
             dir = "toki_executables/sandbox2",
-            deps = { "engine", "core" },
+            deps = { "window", "engine", "core" },
             vulkan_sdk_options = { link = true },
         },
     },
@@ -20,39 +20,46 @@ local projects = {
             name = "Engine",
             kind = "StaticLib",
             dir = "toki_libs/engine",
-            deps = { "renderer", "core" },
+            deps = { "window", --[[ "renderer", ]] "core" },
             sources = {
                 "src/engine.cpp",
-                "src/window.cpp",
+                -- "src/window.cpp",
                 "src/toki_entry.cpp",
             }
         },
 
-        renderer = {
-            name = "Renderer",
+        -- renderer = {
+        --     name = "Renderer",
+        --     kind = "StaticLib",
+        --     dir = "toki_libs/renderer",
+        --     deps = { "shader_compiler", "core" },
+        --     vulkan_sdk_options = { includes = true },
+        -- },
+
+        window = {
+            name = "WindowSystem",
             kind = "StaticLib",
-            dir = "toki_libs/renderer",
-            deps = { "shader_compiler", "core" },
-            vulkan_sdk_options = { includes = true },
+            dir = "toki_libs/window",
+            deps = { "core" },
         },
 
-        shader_compiler = {
-            name = "ShaderCompiler",
-            kind = "StaticLib",
-            dir = "toki_libs/shader_compiler",
-            deps = { "core" },
-            extra_lib_includes = { "renderer" },
-            vulkan_sdk_options = { includes = true },
-            extra_links = {
-                -- "spirv-cross-cored",
-                -- "spirv-cross-cppd",
-                -- "spirv-cross-glsld",
-                -- "spirv-cross-reflectd",
-                "shaderc_sharedd",
-                -- "shaderc_combinedd"
-            },
-            extra_defines = { "TK_SHARED_LIB_EXPORT" },
-        },
+        -- shader_compiler = {
+        --     name = "ShaderCompiler",
+        --     kind = "StaticLib",
+        --     dir = "toki_libs/shader_compiler",
+        --     deps = { "core" },
+        --     extra_lib_includes = { "renderer" },
+        --     vulkan_sdk_options = { includes = true },
+        --     extra_links = {
+        --         -- "spirv-cross-cored",
+        --         -- "spirv-cross-cppd",
+        --         -- "spirv-cross-glsld",
+        --         -- "spirv-cross-reflectd",
+        --         "shaderc_sharedd",
+        --         -- "shaderc_combinedd"
+        --     },
+        --     extra_defines = { "TK_SHARED_LIB_EXPORT" },
+        -- },
     }
 }
 

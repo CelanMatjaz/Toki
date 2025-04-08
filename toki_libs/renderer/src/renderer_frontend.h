@@ -30,7 +30,7 @@ public:
 
     void submit(SubmitFunctionConcept auto submit_fn);
 
-    void window_add(NativeWindowHandle handle);
+    void window_add(NativeHandle handle);
 
     Framebuffer framebuffer_create(const FramebufferConfig& config);
     void framebuffer_destroy(Framebuffer& framebuffer);

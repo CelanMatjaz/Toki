@@ -27,14 +27,15 @@ BumpRef<u32> compile_shader(const CompileShaderConfig& config) {
             break;
         default:
             TK_ASSERT(false, "Shader stage not supported");
-            UNREACHABLE;
+            TK_UNREACHABLE();
     }
 
-    Stream stream(config.source_path, Stream::STREAM_FLAGS::ATE | Stream::STREAM_FLAGS::INPUT);
+    Stream stream(config.source_path, FILE_OPEN_READ | FILE_OPEN_APPEND);
     u32 source_size = stream.tell();
     stream.seek(0);
 
     DynamicArray<char, BumpAllocator> source_data(config.allocator, source_size);
+    stream.read(source_size, source_data.data());
 
     shaderc::SpvCompilationResult spirv_module =
         compiler.CompileGlslToSpv(source_data.data(), source_size, shader_kind, config.source_path, "main", options);

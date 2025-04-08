@@ -2,6 +2,7 @@
 
 #include "../core/common.h"
 #include "../core/concepts.h"
+#include "../core/string.h"
 #include "../core/types.h"
 #include "../memory/allocator.h"
 

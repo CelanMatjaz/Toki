@@ -28,4 +28,12 @@ inline constexpr const T&& move(const T& v) {
     return static_cast<T&&>(const_cast<T&>(v));
 }
 
+template <typename T>
+
+inline constexpr void swap(T&& t1, T&& t2) {
+    T temp = t1;
+    t1 = t2;
+    t2 = temp;
+}
+
 }  // namespace toki

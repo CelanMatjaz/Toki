@@ -1,24 +1,17 @@
-#include "platform_linux_wayland.h"
+#include "wayland.h"
 
+#include "window.h"
+
+#if defined(TK_WINDOW_SYSTEM_WAYLAND)
+
+#include <fcntl.h>
+#include <sys/mman.h>
 #include <sys/socket.h>
-#include <sys/un.h>
-#include <unistd.h>
-
-#include <cstdio>
-#include <print>
-
-#include "../../core/assert.h"
-#include "../../core/common.h"
-#include "../../core/logging.h"
-#include "../../core/string.h"
-#include "../../core/types.h"
-#include "../platform.h"
-#include "../platform_window.h"
-#include "../socket.h"
-
-#define ROUND_UP_4(n) ((n + 3) & -4)
+#include <sys/syscall.h>
 
 namespace toki {
+
+#define ROUND_UP_4(n) ((n + 3) & -4)
 
 // Event codes
 constexpr u32 WL_DISPLAY_ERROR_EVENT = 0;
@@ -30,6 +23,22 @@ constexpr u32 XDG_SURFACE_CONFIGURE_EVENT = 0;
 static void wayland_handle_events(WaylandHandlerFunctionConcept auto handler_fn);
 
 static WaylandState wayland_state{};
+
+void WaylandState::create_shared_memory_file(u32 size) {
+    char random_name[] = "/random_name";
+    i64 shm = toki::syscall(SYS_memfd_create, random_name, O_RDWR | O_EXCL | O_CREAT);
+    TK_ASSERT_PLATFORM_ERROR(shm, "Could not create shm");
+
+    TK_ASSERT_PLATFORM_ERROR(toki::syscall(SYS_unlinkat, random_name), "Could not unlink shm");
+    TK_ASSERT_PLATFORM_ERROR(toki::syscall(SYS_truncate, shm, size), "Could resize shm");
+
+    void* shm_data =
+        reinterpret_cast<void*>(toki::syscall(SYS_mmap, nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, shm, 0));
+    TK_ASSERT(shm_data != nullptr, "mmap failed");
+
+    this->shm_data = reinterpret_cast<char*>(shm_data);
+    this->shm = shm;
+}
 
 struct xdg_toplevel : wl_struct {
     static constexpr u16 XDG_TOPLEVEL_DESTROY_OPCODE = 0;
@@ -137,14 +146,14 @@ struct wl_shm_pool : wl_struct {
 };
 
 struct wl_shm : wl_struct {
-    wl_shm_pool create_pool() {
+    wl_shm_pool create_pool(u32 size) {
         Header header{ id, 0, 16 };
-        u32 msg[4]{ 0, 0, wayland_state.create(), wayland_state.shm_pool_size };
+        u32 msg[4]{ 0, 0, wayland_state.create(), size };
         *reinterpret_cast<Header*>(msg) = header;
 
         u32 msg_size = sizeof(msg);
 
-        char buf[CMSG_SPACE(sizeof(wayland_state.shm_fd))] = "";
+        char buf[CMSG_SPACE(sizeof(wayland_state.shm))] = "";
 
         struct iovec io = { .iov_base = msg, .iov_len = msg_size };
         struct msghdr socket_msg = {
@@ -157,10 +166,10 @@ struct wl_shm : wl_struct {
         struct cmsghdr* cmsg = CMSG_FIRSTHDR(&socket_msg);
         cmsg->cmsg_level = SOL_SOCKET;
         cmsg->cmsg_type = SCM_RIGHTS;
-        cmsg->cmsg_len = CMSG_LEN(sizeof(wayland_state.shm_fd));
+        cmsg->cmsg_len = CMSG_LEN(sizeof(wayland_state.shm));
 
-        *((int*) CMSG_DATA(cmsg)) = wayland_state.shm_fd;
-        socket_msg.msg_controllen = CMSG_SPACE(sizeof(wayland_state.shm_fd));
+        *((int*) CMSG_DATA(cmsg)) = wayland_state.shm;
+        socket_msg.msg_controllen = CMSG_SPACE(sizeof(wayland_state.shm));
 
         if (sendmsg(wayland_state.socket.handle(), &socket_msg, 0) == -1)
             exit(errno);
@@ -214,7 +223,7 @@ static void wayland_handle_events(WaylandHandlerFunctionConcept auto handler_fn)
     b8 handled = false;
 
     for (; !handled;) {
-        read_byte_count = recv(wayland_state.socket_fd, buf, sizeof(buf), 0);
+        wayland_state.socket.receive_blocking(sizeof(buf), buf);
         TK_ASSERT(read_byte_count != -1, "Error reading from Wayland socket");
 
         header = reinterpret_cast<Header*>(buf);
@@ -273,7 +282,7 @@ void wayland_send(const u32 id, const u16 opcode, const u32 data_size, const voi
     *reinterpret_cast<Header*>(msg) = header;
     toki::memcpy(data, &msg[sizeof(Header)], data_size);
 
-    i32 sent = send(wayland_state.socket_fd, msg, header.size, MSG_DONTWAIT);
+    u64 sent = wayland_state.socket.send(header.size, msg);
     TK_ASSERT(sent == header.size, "Error sending data over Wayland socket");
 }
 
@@ -358,20 +367,20 @@ void WaylandState::init_interfaces() {
     TK_ASSERT(required_registry_object_count == ARRAY_SIZE(required_registry_objects), "Not good");
 }
 
-void window_system_initialize(const WindowSystemInit& init) {
-    wayland_state.display_connect();
-    wayland_state.init_interfaces();
+// void window_system_initialize(const WindowSystemInit& init) {
+//     wayland_state.display_connect();
+//     wayland_state.init_interfaces();
+//
+// #if defined(TK_DEBUG) && defined(WAYLAND_TEST_BUFFER)
+//
+// #endif
+// }
+//
+// void window_system_shutdown() {
+//     wayland_state.display_disconnect();
+// }
 
-#if defined(TK_DEBUG) && defined(WAYLAND_TEST_BUFFER)
-
-#endif
-}
-
-void window_system_shutdown() {
-    wayland_state.display_disconnect();
-}
-
-NativeWindowHandle window_create(const char* title, u32 width, u32 height, const WindowInitFlags& flags) {
+NativeHandle window_create(const char* title, u32 width, u32 height, const WindowInitFlags& flags) {
     wl_surface wl_surface = wayland_state.globals.wl_compositor->create_surface();
     xdg_surface xdg_surface = wayland_state.globals.xdg_wm_base->get_xdg_surface(wl_surface);
     xdg_toplevel xdg_toplevel = xdg_surface.get_toplevel();
@@ -401,13 +410,14 @@ NativeWindowHandle window_create(const char* title, u32 width, u32 height, const
 
     // wayland_sync();
 
-    wayland_state.create_shared_memory_file();
-    wl_shm_pool wl_shm_pool = wayland_state.globals.wl_shm->create_pool();
-    wl_buffer wl_buffer = wl_shm_pool.create_buffer(
-        0, wayland_state.buffer_width, wayland_state.buffer_height, wayland_state.buffer_stride, 1);
+    u64 size = width * height * sizeof(u32);
 
-    uint32_t* pixels = (uint32_t*) wayland_state.shm_pool_data;
-    for (uint32_t i = 0; i < wayland_state.buffer_width * wayland_state.buffer_height; i++) {
+    wayland_state.create_shared_memory_file(size);
+    wl_shm_pool wl_shm_pool = wayland_state.globals.wl_shm->create_pool(size);
+    wl_buffer wl_buffer = wl_shm_pool.create_buffer(0, width, height, width * sizeof(u32), 1);
+
+    uint32_t* pixels = (uint32_t*) wayland_state.shm_data;
+    for (uint32_t i = 0; i < width * height; i++) {
         pixels[i] = (u32) -1;
     }
 
@@ -420,16 +430,7 @@ NativeWindowHandle window_create(const char* title, u32 width, u32 height, const
     //     window_poll_events();
     // }
 
-    return { .wl = { wayland_state.globals.wl_display->id, wl_surface, xdg_surface, xdg_toplevel } };
-}
-
-void window_destroy(NativeWindowHandle handle) {
-    xdg_toplevel{ handle.wl.xdg_toplevel }.destroy();
-    xdg_surface{ { handle.wl.xdg_surface } }.destroy();
-}
-
-Vec2<u32> window_get_dimensions(NativeWindowHandle handle) {
-    return {};
+    return { wl_surface };
 }
 
 void window_poll_events() {

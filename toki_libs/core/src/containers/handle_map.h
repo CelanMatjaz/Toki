@@ -1,11 +1,9 @@
 #pragma once
 
 #include "../core/assert.h"
-#include "../core/common.h"
 #include "../core/logging.h"
 #include "../core/types.h"
-#include "../memory/allocator.h"
-#include "../platform/platform.h"
+#include "../platform/time.h"
 
 namespace toki {
 
@@ -13,7 +11,10 @@ constexpr u32 INVALID_HANDLE_ID = 0;
 
 struct Handle {
     Handle(): index(0), version(0), id(INVALID_HANDLE_ID) {};
-    Handle(u32 index, u32 version = 1): index(index), version(version), id(static_cast<u32>(time_milliseconds())) {}
+    Handle(u32 index, u32 version = 1):
+        index(index),
+        version(version),
+        id(static_cast<u32>(Time().as<Time::Unit::Nanoseconds>())) {}
 
     inline operator b8() const {
         return id != INVALID_HANDLE_ID;

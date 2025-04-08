@@ -17,7 +17,7 @@ enum FileOpenFlags : u32 {
 class File {
 public:
     File(): _handle(), _is_open(false), _flags() {}
-    File(const char* path, FileOpenFlags flags = FILE_OPEN_READ) {
+    File(const char* path, u32 flags = FILE_OPEN_READ) {
         open(path, flags);
     }
     ~File() {
@@ -35,7 +35,7 @@ public:
 
     DELETE_COPY(File)
 
-    void open(const char* path, FileOpenFlags flags = FILE_OPEN_READ);
+    void open(const char* path, u32 flags = FILE_OPEN_READ);
     void close();
 
     void write(u32 n, const void* data);

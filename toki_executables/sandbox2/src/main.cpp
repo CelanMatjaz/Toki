@@ -1,5 +1,6 @@
 #include <toki/core.h>
 #include <toki/engine.h>
+#include <toki/window.h>
 
 int tk_entry_point(int, char**) {
     toki::Engine::Config engine_config{};
@@ -7,17 +8,17 @@ int tk_entry_point(int, char**) {
     engine_config.memory_config.engine_frame_memory_block_size = toki::MB(128);
     engine_config.memory_config.renderer_frame_memory_block_size = toki::MB(128);
 
-    auto handle = toki::window_create("Test", 400, 400);
+    auto window = toki::WindowSystem::create_window("Test", 400, 400);
 
     while (true) {
-        toki::window_poll_events();
+        toki::WindowSystem::poll_events();
     }
 
     toki::Engine engine(engine_config);
     engine.window_add("Test", 800, 600);
     engine.run();
 
-    toki::window_destroy(handle);
+    toki::WindowSystem::destroy_window(window);
 
     return 0;
 }

@@ -5,6 +5,7 @@
 #include "../core/common.h"
 #include "../core/concepts.h"
 #include "../core/logging.h"
+#include "../memory/allocator.h"
 #include "../platform/platform.h"
 
 // NOTE(Matjaž): https://programming.guide/robin-hood-hashing.html
@@ -12,14 +13,14 @@
 namespace toki {
 
 template <typename T, typename HashType>
-concept HasHashFunction = requires(const T& value) {
+concept HasHashFunction = requires(T value) {
     { HashType::hash(value) } -> SameAsConcept<u64>;
 };
 
 struct HashFunctions {
     template <typename T>
         requires(IsIntegralValue<T>)
-    u64 hash(T& v) {
+    static u64 hash(const T v) {
         constexpr u32 multiplier = 107;
 
         T value = v;
@@ -31,11 +32,11 @@ struct HashFunctions {
         return value;
     }
 
-    inline u64 hash(NativeHandle& handle) {
-        return hash(handle);
+    static inline u64 hash(const NativeHandle handle) {
+        return hash(handle.handle);
     }
 
-    u64 hash(const char* str) {
+    static u64 hash(const char* str) {
         constexpr u32 multiplier = 107;
 
         u64 output = 0;
@@ -47,8 +48,8 @@ struct HashFunctions {
     }
 };
 
-template <typename K, typename V, typename H = HashFunctions>
-    requires HasHashFunction<K, H>
+template <typename K, typename V, typename A = Allocator, typename H = HashFunctions>
+    requires HasHashFunction<K, H> && AllocatorConcept<A>
 class HashMap {
 private:
     using KeyType = K;
@@ -68,44 +69,42 @@ private:
     };
 
 public:
-    HashMap(AllocatorConcept auto& allocator, u32 element_capacity):
-        mData(nullptr),
-        mElementCapacity(element_capacity),
-        mCount(0) {
+    HashMap(A& allocator, u32 element_capacity):
+        _allocator(allocator),
+        _data(nullptr),
+        _element_capacity(element_capacity),
+        _count(0) {
         u32 total_size = (element_capacity + 1) * sizeof(Bucket);
-        mData = reinterpret_cast<Bucket*>(allocator.allocate(total_size)) + 1;
+        _data = reinterpret_cast<Bucket*>(allocator.allocate(total_size)) + 1;
     }
 
-    HashMap(void* buffer, u64 element_capacity_plus_1):
-        mData(reinterpret_cast<Bucket*>(buffer) + 1),
-        mElementCapacity(element_capacity_plus_1),
-        mCount(0) {}
-
-    ~HashMap() {}
+    ~HashMap() {
+        _allocator.free(reinterpret_cast<Bucket*>(_data) - 1);
+    }
 
     b8 contains(const KeyType& key) const {
         return lookup_index(key) >= 0;
     }
 
     inline u32 capacity() const {
-        return mElementCapacity;
+        return _element_capacity;
     }
 
     inline u32 count() const {
-        return mCount;
+        return _count;
     }
 
     template <typename... Args>
     void emplace(const KeyType& key, Args&&... args) {
         u64 index = get_index(key);
 
-        Bucket& bucket = mData[index];
+        Bucket& bucket = _data[index];
         // Empty slot
         if (bucket.psl == 0) {
             new (&bucket.value) ValueType(args...);
             bucket.key = key;
             bucket.psl = INITIAL_PSL;
-            mCount++;
+            _count++;
             return;
         }
 
@@ -115,8 +114,8 @@ public:
         new (&new_bucket.value) ValueType(args...);
 
         // Handle collision
-        for (u32 i = index + 1; i < mElementCapacity; i++) {
-            Bucket& current_bucket = mData[i];
+        for (u32 i = index + 1; i < _element_capacity; i++) {
+            Bucket& current_bucket = _data[i];
 
             // Found empty slot
             if (current_bucket.psl == 0) {
@@ -131,7 +130,7 @@ public:
             ++new_bucket.psl;
         }
 
-        mCount++;
+        _count++;
     }
 
     void remove(const KeyType& key) {
@@ -140,17 +139,17 @@ public:
             return;
         }
 
-        Bucket& bucket = mData[index];
-        while (bucket.psl != INITIAL_PSL && index < mElementCapacity - 1) {
-            *bucket = mData[index + 1];
-            bucket = mData[++index];
+        Bucket& bucket = _data[index];
+        while (bucket.psl != INITIAL_PSL && index < _element_capacity - 1) {
+            *bucket = _data[index + 1];
+            bucket = _data[++index];
         }
 
-        if (static_cast<u64>(index) < mElementCapacity) {
-            mData[index].psl = EMPTY_SLOT_PSL;
+        if (static_cast<u64>(index) < _element_capacity) {
+            _data[index].psl = EMPTY_SLOT_PSL;
         }
 
-        mCount--;
+        _count--;
     }
 
     ValueType& operator[](const KeyType& key) const {
@@ -159,18 +158,18 @@ public:
 
     ValueType& at(const KeyType& key) const {
         i64 index = lookup_index(key);
-        return mData[index];
+        return _data[index];
     }
 
 private:
     inline u64 get_index(const KeyType& key) const {
-        return HashType::hash(static_cast<KeyType>(key)) % mElementCapacity;
+        return HashType::hash(static_cast<KeyType>(key)) % _element_capacity;
     }
 
     i64 lookup_index(const KeyType& key) const {
         u64 index = get_index(key);
-        while (mData[index].psl != EMPTY_SLOT_PSL && index < mElementCapacity) {
-            if (mData[index].key_value.key == key) {
+        while (_data[index].psl != EMPTY_SLOT_PSL && index < _element_capacity) {
+            if (_data[index].key_value.key == key) {
                 return index;
             }
             ++index;
@@ -181,9 +180,10 @@ private:
         return INVALID_INDEX;
     }
 
-    Bucket* mData;
-    u32 mElementCapacity;
-    u32 mCount;
+    A& _allocator;
+    Bucket* _data;
+    u32 _element_capacity;
+    u32 _count;
 
     // public:
     //     class Iterator;

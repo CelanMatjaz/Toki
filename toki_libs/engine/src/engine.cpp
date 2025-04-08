@@ -1,23 +1,17 @@
 #include "engine.h"
 
 #include <toki/core.h>
-#include <toki/renderer.h>
-
-#include "window.h"
+// #include <toki/renderer.h>
 
 namespace toki {
 
 Engine::Engine(const Config& config):
     mGlobalAllocator(config.memory_config.engine_memory_block_size),
     mFrameAllocator(mGlobalAllocator, config.memory_config.engine_frame_memory_block_size) {
-    mRenderer = move(BasicRef<RendererFrontend>(mGlobalAllocator));
+    // mRenderer = move(BasicRef<RendererFrontend>(mGlobalAllocator));
 }
 
-Engine::~Engine() {
-    for (u32 i = 0; i < sWindowCount; i++) {
-        window_destroy(sWindows[i].mNativeHandle);
-    }
-}
+Engine::~Engine() {}
 
 void Engine::run() {
     mIsRunning = true;
@@ -26,13 +20,7 @@ void Engine::run() {
     Time last_frame_time = time;
     f32 delta_time = 0;
 
-    EventHandler h;
-
     while (mIsRunning) {
-        for (u32 i = 0; i < sWindowCount; i++) {
-            sWindows[i].handle_events(h);
-        }
-
         Time frame_start_time;
         delta_time = (frame_start_time - last_frame_time).as<Time::Unit::Seconds>() / 1'000;
         last_frame_time = frame_start_time;
@@ -48,16 +36,6 @@ void Engine::run() {
     }
 }
 
-void Engine::window_add(const char* title, u32 width, u32 height) {
-    TK_ASSERT(
-        sWindowCount < TK_MAX_WINDOW_COUNT,
-        "Adding another window would go over current limit (%i)",
-        TK_MAX_WINDOW_COUNT);
-
-    NativeHandle handle = window_create(title, width, height, WindowInitFlags{ .show_on_create = true });
-    sWindows[sWindowCount++].mNativeHandle = handle;
-
-    // mRenderer->window_add(handle);
-}
+void Engine::window_add(const char* title, u32 width, u32 height) {}
 
 }  // namespace toki
