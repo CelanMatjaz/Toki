@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/types.h"
+#include "../types/types.h"
 
 namespace toki {
 
@@ -30,6 +30,12 @@ struct NativeHandle {
     i64 handle;
 #endif
 };
+
+struct PlatformInit {};
+
+void platform_initialize(const PlatformInit& init = {});
+
+void platform_shutdown();
 
 void debug_break();
 

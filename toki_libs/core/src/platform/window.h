@@ -22,15 +22,14 @@ struct WindowInitFlags {
 
 class Window {
 public:
-    static void initialize();
-    static void shutdown();
-
-public:
     Window(const char* title, u32 width, u32 height, const WindowInitFlags& flags = {});
     ~Window();
 
 private:
-    inline static b8 initialized = false;
+    static void initialize();
+    static void shutdown();
+    inline static b8 s_initialized = false;
+    inline static u8 s_window_count = 0;
 };
 
 void window_system_initialize(const WindowSystemInit& = {});

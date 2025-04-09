@@ -2,7 +2,7 @@
 
 #include <cstdio>
 
-#include "types.h"
+#include "../types/types.h"
 
 namespace toki {
 

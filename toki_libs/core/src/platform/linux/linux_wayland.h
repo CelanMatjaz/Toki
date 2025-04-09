@@ -1,8 +1,8 @@
 #pragma once
 
-#include <toki/core.h>
-
 #if defined(TK_WINDOW_SYSTEM_WAYLAND)
+
+#include "../../core/types.h"
 
 namespace toki {
 

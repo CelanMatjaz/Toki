@@ -1,6 +1,6 @@
 #pragma once
 
-#include "types.h"
+#include "types/types.h"
 
 namespace toki {
 
@@ -33,6 +33,21 @@ IS_INTEGRAL(u64)
 #undef IS_INTEGRAL
 
 template <typename T>
+    requires IsIntegralValue<T>
+constexpr b8 IsSignedValue = false;
+
+#define IS_SIGNED(type) \
+    template <>         \
+    inline constexpr b8 IsSignedValue<type> = true;
+
+IS_SIGNED(i8)
+IS_SIGNED(i16)
+IS_SIGNED(i32)
+IS_SIGNED(i64)
+
+#undef IS_SIGNED
+
+template <typename T>
 inline constexpr b8 IsIntegralValue<T*> = true;
 
 template <typename T>
@@ -44,6 +59,11 @@ concept AllocatorConcept = requires(T a, u64 size, void* free_ptr) {
 template <typename From, typename To>
 concept IsConvertibleConcept = requires(From from, To to) {
     { (To)(from) } -> SameAsConcept<To>;
+};
+
+template <typename T>
+concept HasToStringFunctionConcept = requires(T t, char* buf, u32 n) {
+    { to_string(t, buf, n) } -> SameAsConcept<void>;
 };
 
 }  // namespace toki

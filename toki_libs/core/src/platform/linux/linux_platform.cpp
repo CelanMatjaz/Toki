@@ -6,10 +6,20 @@
 #include <csignal>
 
 #include "../../core/assert.h"
-#include "../../core/common.h"
 #include "../../core/string.h"
 
 namespace toki {
+
+#if defined (TK_WINDOW_SYSTEM_WAYLAND)
+#endif
+
+void platform_initialize(const PlatformInit& init) {
+#if defined (TK_WINDOW_SYSTEM_WAYLAND)
+
+#endif
+}
+
+void platform_shutdown() {}
 
 void* memory_allocate(u64 size) {
     i64 ptr = syscall(SYS_mmap, 0, size + sizeof(u64), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);

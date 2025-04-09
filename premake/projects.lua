@@ -3,7 +3,7 @@ local projects = {
         sandbox2 = {
             name = "Sandbox",
             dir = "toki_executables/sandbox2",
-            deps = { "window", "engine", "core" },
+            deps = { "engine", "core" },
             vulkan_sdk_options = { link = true },
         },
     },
@@ -20,10 +20,9 @@ local projects = {
             name = "Engine",
             kind = "StaticLib",
             dir = "toki_libs/engine",
-            deps = { "window", --[[ "renderer", ]] "core" },
+            deps = { --[[ "renderer", ]] "core" },
             sources = {
                 "src/engine.cpp",
-                -- "src/window.cpp",
                 "src/toki_entry.cpp",
             }
         },
@@ -35,13 +34,6 @@ local projects = {
         --     deps = { "shader_compiler", "core" },
         --     vulkan_sdk_options = { includes = true },
         -- },
-
-        window = {
-            name = "WindowSystem",
-            kind = "StaticLib",
-            dir = "toki_libs/window",
-            deps = { "core" },
-        },
 
         -- shader_compiler = {
         --     name = "ShaderCompiler",

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../core/common.h"
-#include "../core/macros.h"
+#include "../utils/macros.h"
 #include "platform.h"
 
 namespace toki {

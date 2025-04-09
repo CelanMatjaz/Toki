@@ -25,11 +25,12 @@ int main(int argc, char** argv) {
 
     toki::window_system_initialize(window_init);
 #else
-    toki::WindowSystem::initialize();
+    toki::platform_initialize();
 #endif
 
     auto result = tk_entry_point(argc, argv);
 
-    toki::WindowSystem::shutdown();
+    toki::platform_shutdown();
+
     return result;
 }

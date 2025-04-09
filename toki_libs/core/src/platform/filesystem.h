@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/types.h"
+#include "../types/types.h"
 
 namespace toki {
 
