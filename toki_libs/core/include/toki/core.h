@@ -4,11 +4,11 @@
 #include "../../src/core/assert.h"
 #include "../../src/core/base.h"
 #include "../../src/core/common.h"
-#include "../../src/core/concepts.h"
 #include "../../src/core/logging.h"
-#include "../../src/core/macros.h"
 #include "../../src/core/string.h"
-#include "../../src/core/types.h"
+#include "../../src/types/types.h"
+#include "../../src/utils/concepts.h"
+#include "../../src/utils/macros.h"
 
 // Allocators
 #include "../../src/memory/allocator.h"

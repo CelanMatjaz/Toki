@@ -1,13 +1,12 @@
 #pragma once
 
-#include "platform.h"
+#include "../core/string.h"
 
 namespace toki {
 
-void print(const char* str);
+void println(StringView str);
 
-void print(NativeHandle fd, const char* str, u64 n);
-
-void println(const char* str);
+template <typename... Args>
+void println(StringView str, Args... args);
 
 }  // namespace toki

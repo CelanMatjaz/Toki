@@ -1,7 +1,6 @@
 #include "toki_entry.h"
 
 #include <toki/core.h>
-#include <toki/window.h>
 
 #if defined(TK_PLATFORM_WINDOWS)
 namespace toki {

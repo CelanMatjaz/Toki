@@ -1,13 +1,14 @@
-#include "wayland.h"
-
-#include "window.h"
-
-#if defined(TK_WINDOW_SYSTEM_WAYLAND)
+#include "linux_wayland.h"
 
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
+
+#include "../../core/assert.h"
+#include "../../core/logging.h"
+#include "../window.h"
+#include "linux_platform.h"
 
 namespace toki {
 
@@ -171,8 +172,8 @@ struct wl_shm : wl_struct {
         *((int*) CMSG_DATA(cmsg)) = wayland_state.shm;
         socket_msg.msg_controllen = CMSG_SPACE(sizeof(wayland_state.shm));
 
-        if (sendmsg(wayland_state.socket.handle(), &socket_msg, 0) == -1)
-            exit(errno);
+        TK_ASSERT_PLATFORM_ERROR(
+            toki::syscall(SYS_sendmsg, wayland_state.socket.handle(), &socket_msg, 0), "Could not send message");
 
         return { msg[2] };
     }
@@ -442,5 +443,3 @@ void window_poll_events() {
 }
 
 }  // namespace toki
-
-#endif

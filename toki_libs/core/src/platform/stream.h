@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../core/common.h"
-#include "../core/macros.h"
+#include "../utils/macros.h"
 #include "file.h"
 
 namespace toki {
@@ -34,7 +34,7 @@ public:
 
 private:
     void swap(Stream&& other) {
-        File::swap(move(*reinterpret_cast<File*>(&other)));
+        File::swap(move(reinterpret_cast<File&>(other)));
         _offset = other._offset;
         other._offset = {};
     }

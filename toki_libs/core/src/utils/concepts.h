@@ -1,6 +1,6 @@
 #pragma once
 
-#include "types/types.h"
+#include "../types/types.h"
 
 namespace toki {
 
@@ -62,8 +62,8 @@ concept IsConvertibleConcept = requires(From from, To to) {
 };
 
 template <typename T>
-concept HasToStringFunctionConcept = requires(T t, char* buf, u32 n) {
-    { to_string(t, buf, n) } -> SameAsConcept<void>;
+concept HasToStringFunctionConcept = requires(T t, char* buf) {
+    { to_string(t, buf) } -> SameAsConcept<u32>;
 };
 
 }  // namespace toki

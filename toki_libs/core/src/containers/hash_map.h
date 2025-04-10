@@ -1,12 +1,11 @@
 #pragma once
 
-#include <cstring>
-
 #include "../core/common.h"
-#include "../core/concepts.h"
 #include "../core/logging.h"
+#include "../core/string.h"
 #include "../memory/allocator.h"
 #include "../platform/platform.h"
+#include "../utils/concepts.h"
 
 // NOTE(Matjaž): https://programming.guide/robin-hood-hashing.html
 
@@ -40,7 +39,7 @@ struct HashFunctions {
         constexpr u32 multiplier = 107;
 
         u64 output = 0;
-        for (u32 i = 0; i < strlen(str); i++) {
+        for (u32 i = 0; i < toki::strlen(str); i++) {
             output += str[i] * multiplier;
         }
 

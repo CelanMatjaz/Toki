@@ -1,10 +1,10 @@
 #pragma once
 
 #include "../core/common.h"
-#include "../core/concepts.h"
 #include "../core/string.h"
-#include "../core/types.h"
 #include "../memory/allocator.h"
+#include "../types/types.h"
+#include "../utils/concepts.h"
 
 namespace toki {
 

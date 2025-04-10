@@ -34,4 +34,9 @@ inline constexpr T pow(T value, u32 exp) {
     return value;
 }
 
+template <typename T>
+inline constexpr T abs(T value) {
+    return value < 0 ? -value : value;
+}
+
 }  // namespace toki

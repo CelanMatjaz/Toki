@@ -2,8 +2,8 @@
 
 #include "../core/assert.h"
 #include "../core/logging.h"
-#include "../core/types.h"
 #include "../platform/time.h"
+#include "../types/types.h"
 
 namespace toki {
 

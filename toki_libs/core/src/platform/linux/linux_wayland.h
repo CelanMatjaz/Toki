@@ -1,8 +1,9 @@
 #pragma once
 
-#if defined(TK_WINDOW_SYSTEM_WAYLAND)
-
-#include "../../core/types.h"
+#include "../../types/types.h"
+#include "../../utils/concepts.h"
+#include "../print.h"
+#include "../socket.h"
 
 namespace toki {
 
@@ -34,13 +35,13 @@ struct WaylandGlobals {
     struct xdg_wm_base* xdg_wm_base;
 
     void print() {
-        printf("wl_callback:   %i\n", *reinterpret_cast<u32*>(wl_callback));
-        printf("wl_display:    %i\n", *reinterpret_cast<u32*>(wl_display));
-        printf("wl_registry:   %i\n", *reinterpret_cast<u32*>(wl_registry));
-        printf("wl_seat:       %i\n", *reinterpret_cast<u32*>(wl_seat));
-        printf("wl_compositor: %i\n", *reinterpret_cast<u32*>(wl_compositor));
-        printf("wl_shm:        %i\n", *reinterpret_cast<u32*>(wl_shm));
-        printf("xxg_wm_base:   %i\n", *reinterpret_cast<u32*>(xdg_wm_base));
+        toki::println("wl_callback:   %i", *reinterpret_cast<u32*>(wl_callback));
+        toki::println("wl_display:    %i\n", *reinterpret_cast<u32*>(wl_display));
+        toki::println("wl_registry:   %i\n", *reinterpret_cast<u32*>(wl_registry));
+        toki::println("wl_seat:       %i\n", *reinterpret_cast<u32*>(wl_seat));
+        toki::println("wl_compositor: %i\n", *reinterpret_cast<u32*>(wl_compositor));
+        toki::println("wl_shm:        %i\n", *reinterpret_cast<u32*>(wl_shm));
+        toki::println("xxg_wm_base:   %i\n", *reinterpret_cast<u32*>(xdg_wm_base));
     }
 };
 
@@ -133,5 +134,3 @@ concept WaylandHandlerFunctionConcept = requires(T fn, Header* header, const u32
 };
 
 }  // namespace toki
-
-#endif

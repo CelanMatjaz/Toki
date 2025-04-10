@@ -11,11 +11,25 @@ inline constexpr u32 strlen(const T* str) {
     return len;
 }
 
-struct StringView {
-    StringView(const char* str): ptr(str), length(strlen(str)) {}
+class StringView {
+public:
+    StringView(const char* str): _data(str), _length(strlen(str)) {}
 
-    const char* ptr;
-    const u64 length;
+    inline const char* data() const {
+        return _data;
+    }
+
+    inline u64 length() const {
+        return _length;
+    }
+
+    inline operator const char*() const {
+        return _data;
+    }
+
+private:
+    const char* _data;
+    const u64 _length;
 };
 
 inline constexpr b8 strcmp(const char* s1, const char* s2, u32 length = 0) {

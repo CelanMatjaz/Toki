@@ -12,11 +12,11 @@
 #include "core/assert.h"
 #include "core/base.h"
 #include "core/common.h"
-#include "core/concepts.h"
 #include "core/logging.h"
-#include "core/macros.h"
 #include "core/string.h"
-#include "core/types.h"
+#include "types/types.h"
+#include "utils/concepts.h"
+#include "utils/macros.h"
 
 // Memory
 #include "memory/allocator.h"

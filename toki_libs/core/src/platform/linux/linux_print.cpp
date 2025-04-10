@@ -5,27 +5,32 @@
 #include "../../utils/concepts.h"
 #include "../print.h"
 #include "linux_platform.h"
+#include "math/math.h"
 #include "types/type_traits.h"
 
 namespace toki {
 
 constexpr u32 PRINT_BUFFER_SIZE = 4096;
 
-void print(const char* str) {
-    print(1, str, toki::strlen(str));
-}
-
-void print(NativeHandle fd, const void* str, u64 n) {
+static void _print(NativeHandle fd, const void* str, u64 n) {
     TK_ASSERT_PLATFORM_ERROR(toki::syscall(SYS_write, fd, str, n), "Could not write to fd");
 }
 
-void println(const char* str) {
-    char buf[PRINT_BUFFER_SIZE]{};
-    u64 length = toki::strlen(str);
-    TK_ASSERT(length + 1 < sizeof(buf), "Buffer for printing not big enough, maybe time to write a loop here?");
-    toki::memcpy(str, buf, length);
-    buf[length] = '\n';
-    print(1, buf, length + 1);
+// void println(const char* str) {
+//     char buf[PRINT_BUFFER_SIZE]{};
+//     u64 length = toki::strlen(str);
+//     TK_ASSERT(length + 1 < sizeof(buf), "Buffer for printing not big enough, maybe time to write a loop here?");
+//     toki::memcpy(str, buf, length);
+//     buf[length] = '\n';
+//     print(1, buf, length + 1);
+// }
+
+void println(StringView str) {
+    TK_ASSERT(str.length() < PRINT_BUFFER_SIZE - 1, "Long prints are currently not supported");
+    char buf[PRINT_BUFFER_SIZE];
+    toki::memcpy(str.data(), buf, str.length());
+    _print(1, buf, str.length() + 1);
+    buf[str.length()] = '\n';
 }
 
 // template <typename T>
@@ -39,20 +44,62 @@ void println(const char* str) {
 // constexpr void _printf(char* buffer, u32 buffer_offset, const char* fmt, T arg1, Args... args) {
 //
 // }
+//
+
+template <u32 SIZE = PRINT_BUFFER_SIZE>
+struct PrintBuffer {
+    char data[SIZE]{};
+    u64 offset = 0;
+
+    void flush(NativeHandle fd) {
+        _print(1, data, offset);
+    }
+};
 
 template <typename T>
-constexpr void _arg_max_length() {
-    return Type<T>::max_digits_10;
+    requires IsIntegralValue<T>
+u32 to_string(const T value, char* buf_out) {
+    if (value == 0) {
+        buf_out[0] = '0';
+        return 1;
+    }
+
+    char buf[20]{};
+    u32 offset = 0;
+
+    T temp = abs(value);
+    while (temp != 0) {
+        auto a = temp % 10;
+        buf[offset++] = '0' + temp % 10;
+        temp /= 10;
+    }
+
+    if (value < 0) {
+        buf[offset++] = '-';
+    }
+
+    for (u32 i = 0; i < offset; i++) {
+        buf_out[i] = buf[offset - i - 1];
+    }
+
+    return offset;
 }
 
 template <typename T, typename... Args>
-constexpr u32 _arg_max_length() {
-    return Type<T>::max_digits_10 + _arg_max_length<Args...>();
+    requires HasToStringFunctionConcept<T>
+static void _print_formatted(PrintBuffer<PRINT_BUFFER_SIZE>& buffer, T&& arg, Args&&... args) {
+    toki::to_string(arg, buffer.data);
+
+    if constexpr (sizeof...(args) == 0) {
+        return;
+    } else {
+        _print_formatted(buffer, args...);
+    }
 }
 
 template <typename... Args>
-constexpr void printf(const char* fmt, Args... args) {
-    char buf[strlen(fmt) + _arg_max_length<Args...>()]{};
+void println(StringView str, Args&&... args) {
+    PrintBuffer<PRINT_BUFFER_SIZE> buffer;
 }
 
 }  // namespace toki
