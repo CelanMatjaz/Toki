@@ -2,8 +2,6 @@
 
 #include <cstdio>
 
-#include "../types/types.h"
-
 namespace toki {
 
 #define ARRAY_SIZE(array) sizeof(array) / sizeof(array[0])

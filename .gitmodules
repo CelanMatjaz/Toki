@@ -1,3 +1,6 @@
 [submodule "premake/export-compile-commands"]
 	path = premake/export-compile-commands
 	url = git@github.com:tarruda/premake-export-compile-commands.git
+[submodule "vendor/glfw"]
+	path = vendor/glfw
+	url = git@github.com:glfw/glfw.git

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../types/types.h"
-#include "../utils/macros.h"
 #include "allocator.h"
+#include "core/macros.h"
+#include "types/types.h"
 
 namespace toki {
 

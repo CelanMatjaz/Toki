@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../core/assert.h"
-#include "../platform/platform.h"
+#include "core/assert.h"
+#include "platform/platform.h"
 
 namespace toki {
 
