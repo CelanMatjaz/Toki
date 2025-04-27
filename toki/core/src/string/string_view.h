@@ -1,12 +1,13 @@
 #pragma once
 
-#include "string/string.h"
+#include "string.h"
 
 namespace toki {
 
 class StringView {
 public:
 	StringView(const char* str): m_data(str), m_length(toki::strlen(str)) {}
+	StringView(const char* str, u32 length): m_data(str), m_length(length) {}
 
 	inline const char* data() const {
 		return m_data;

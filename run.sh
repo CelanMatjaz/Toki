@@ -2,8 +2,10 @@
 set -e
 
 clear
+mkdir -p build
 pushd build
-cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+# cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DTOKI_NO_STDLIB=ON -GNinja
+cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -GNinja
 cmake --build . -j$(nproc)
 popd
 

@@ -1,0 +1,31 @@
+#pragma once
+
+namespace toki {
+
+#if (defined(__GNUC__) || defined(__clang__)) && __cplusplus >= 202302L
+	#define TK_UNREACHABLE() __builtin_unreachable()
+#elif defined(_MSC_VER)
+	#define TK_UNREACHABLE() _STL_UNREACHABLE;
+#else
+	#error "unreachable compiler function not found, only Clang, GCC and MSVC supported"
+#endif
+
+#if defined(__has_builtin)
+	#if defined(_MSC_VER)
+		#define TK_DEBUG_BREAK() __debugbreak()
+	#elif defined(__clang__)
+		#if __has_builtin(__builtin_debugtrap)
+			#define TK_DEBUG_BREAK() __builtin_debugtrap();
+		#else
+			#define TK_DEBUG_BREAK() __builtin_trap();
+		#endif
+	#elif defined(__GNUC__)
+		#define TK_DEBUG_BREAK() __builtin_trap();
+	#endif
+#endif
+
+#if !defined(TK_DEBUG_BREAK)
+	#error "TK_DEBUG_BREAK is required but not defined"
+#endif
+
+}  // namespace toki

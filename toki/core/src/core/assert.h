@@ -1,15 +1,21 @@
 #pragma once
 
-#include "core/macros.h"
-#include "platform/platform.h"
-#include "print.h"
+#include "../platform/attributes.h"
+#include "../print.h"
+#include "macros.h"
 
 namespace toki {
 
 #define TK_ASSERT(condition, message)                                                                  \
 	if (auto c = condition; !c) {                                                                      \
 		toki::print("Assertion " #condition " failed in file " __FILE__ ":" AS_STRING(__LINE__) "\n"); \
+		toki::println(message);                                                                        \
 		TK_DEBUG_BREAK();                                                                              \
+	}  // namespace toki
+
+#define TK_ASSERT_OR_RETURN(condition, return_value) \
+	if (auto c = condition; !c) {                    \
+		return return_value;                         \
 	}
 
 }  // namespace toki

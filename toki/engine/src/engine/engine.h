@@ -23,7 +23,7 @@ public:
     void add_window(const char* title, u32 width, u32 height);
 
 private:
-    Allocator m_global_allocator;
+    Allocator mEngineAllocator;
     DoubleBumpAllocator m_frame_allocator;
     b32 m_is_running = false;
 

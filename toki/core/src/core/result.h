@@ -1,7 +1,7 @@
 #pragma once
 
-#include "core/concepts.h"
-#include "types/types.h"
+#include "concepts.h"
+#include "types.h"
 
 namespace toki {
 

@@ -1,14 +1,14 @@
 #pragma once
 
-#include "core/assert.h"
-#include "platform/platform.h"
-#include "types/types.h"
+#include "../core/assert.h"
+#include "../core/types.h"
+#include "../platform/platform.h"
 
 namespace toki {
 
 #define ptrdiff(ptr) reinterpret_cast<u64>(ptr)
 
-static constexpr u64 MAX_FREELIST_ENTRY_COUNT = 512;
+inline constexpr u64 MAX_FREELIST_ENTRY_COUNT = 512;
 
 class Allocator {
 public:

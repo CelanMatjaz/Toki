@@ -1,8 +1,8 @@
 #pragma once
 
-#include "core/assert.h"
-#include "core/log.h"
-#include "types/types.h"
+#include "../core/assert.h"
+#include "../core/log.h"
+#include "../core/types.h"
 
 namespace toki {
 

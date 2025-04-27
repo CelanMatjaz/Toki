@@ -1,13 +1,11 @@
-set(ENGINE_TARGET_NAME Engine)
-
 add_library(${ENGINE_TARGET_NAME} STATIC
-	engine.cpp
-)
+	engine.cpp)
 
 target_include_directories(${ENGINE_TARGET_NAME}
 	PRIVATE src
-)
+	INTERFACE include)
 
-target_link_libraries(${ENGINE_TARGET_NAME} ${CORE_TARGET_NAME})
+target_link_libraries(${ENGINE_TARGET_NAME}
+	PRIVATE ${CORE_TARGET_NAME})
 
 set_common_options(${ENGINE_TARGET_NAME})

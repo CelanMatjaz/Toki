@@ -1,10 +1,10 @@
 #pragma once
 
-#include "core/common.h"
-#include "core/concepts.h"
-#include "core/log.h"
-#include "memory/allocator.h"
-#include "string/string.h"
+#include "../core/common.h"
+#include "../core/concepts.h"
+#include "../core/log.h"
+#include "../memory/allocator.h"
+#include "../string/string.h"
 
 // NOTE(Matjaž): https://programming.guide/robin-hood-hashing.html
 

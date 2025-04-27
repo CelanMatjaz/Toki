@@ -1,9 +1,8 @@
 #pragma once
 
-#include "../core/types.h"
+#include <toki/core.h>
 
 #if defined(TK_PLATFORM_WINDOWS)
-
 
 #endif
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "core/concepts.h"
-#include "memory/allocator.h"
+#include "../core/concepts.h"
+#include "../memory/allocator.h"
 
 namespace toki {
 

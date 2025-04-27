@@ -1,37 +1,16 @@
 #pragma once
 
-#include "platform/defines.h"
-#include "types/types.h"
+#include "../core/types.h"
 
 namespace toki {
 
-#if (defined(__GNUC__) || defined(__clang__)) && __cplusplus >= 202302L
-	#define TK_UNREACHABLE() __builtin_unreachable()
-#elif defined(_MSC_VER)
-	#define TK_UNREACHABLE() _STL_UNREACHABLE;
-#else
-	#error "unreachable compiler function not found, only Clang, GCC and MSVC supported"
-#endif
-
-#if defined(__has_builtin)
-	#if defined(_MSC_VER)
-		#define TK_DEBUG_BREAK() __debugbreak()
-	#elif defined(__clang__)
-		#if __has_builtin(__builtin_debugtrap)
-			#define TK_DEBUG_BREAK() __builtin_debugtrap();
-		#else
-			#define TK_DEBUG_BREAK() __builtin_trap();
-		#endif
-	#elif defined(__GNUC__)
-		#define TK_DEBUG_BREAK() __builtin_trap();
-	#endif
-#endif
-
-#if !defined(TK_DEBUG_BREAK)
-	#error "TK_DEBUG_BREAK is required but not defined"
-#endif
+class Allocator;
 
 namespace pt {
+
+void initialize(Allocator& allocator);
+
+void shutdown(Allocator& allocator);
 
 constexpr u64 STD_IN = 0;
 constexpr u64 STD_OUT = 1;
@@ -61,6 +40,8 @@ i64 close(Handle handle);
 void* allocate(u64 size);
 
 void deallocate(void* ptr);
+
+u64 time_nanoseconds();
 
 }  // namespace pt
 

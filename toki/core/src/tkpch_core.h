@@ -1,7 +1,7 @@
 #pragma once
 
 #if defined(TK_PLATFORM_WINDOWS)
-#include "Windows.h"
+	#include "Windows.h"
 #elif defined(TK_PLATFORM_LINUX)
 #endif
 
@@ -11,8 +11,9 @@
 #include "core/common.h"
 #include "core/concepts.h"
 #include "core/macros.h"
+#include "core/time.h"
+#include "core/types.h"
 #include "string/string.h"
-#include "types/types.h"
 
 // Memory
 #include "memory/allocator.h"

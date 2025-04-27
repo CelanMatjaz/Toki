@@ -1,71 +1,89 @@
-cmake_minimum_required(VERSION 3.16...3.28)
+cmake_minimum_required(VERSION 3.23)
 project(MyProject LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(TOKI_NO_STDLIB "Build project without cstdlib" OFF)
 option(TOKI_USE_GLFW "Build and use GLFW submodule" OFF)
 
 # Make debug default
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
-    message("No build configuration specified... Using Debug.")
+	set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
+	message("No build configuration specified... Using Debug.")
 endif()
 
-add_compile_definitions(
-    $<$<CONFIG:Debug>:TK_DEBUG>
-    $<$<CONFIG:Release>:TK_NDEBUG>
-    $<$<CONFIG:Release>:TK_RELEASE>
-    $<$<CONFIG:Dist>:TK_NDEBUG>
-    $<$<CONFIG:Dist>:TK_DIST>
-)
-
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    add_compile_definitions(TK_PLATFORM_WINDOWS)
+	add_compile_definitions(TK_PLATFORM_WINDOWS)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    add_compile_definitions(TK_PLATFORM_LINUX)
+	add_compile_definitions(TK_PLATFORM_LINUX)
 
-    # set(XDG_SESSION_TYPE $ENV{XDG_SESSION_TYPE})
-    # if(XDG_SESSION_TYPE STREQUAL "wayland")
-    # elseif(XDG_SESSION_TYPE STREQUAL "x11")
-    # endif()
+	# set(XDG_SESSION_TYPE $ENV{XDG_SESSION_TYPE})
+	# if(XDG_SESSION_TYPE STREQUAL "wayland")
+	# elseif(XDG_SESSION_TYPE STREQUAL "x11")
+	# endif()
 
 else()
-    message(FATAL_ERROR "Platform not supported")
+	message(FATAL_ERROR "Platform not supported")
+endif()
+
+if(TOKI_USE_GLFW)
+	set(TOKI_WINDOW_SYSTEM TK_WINDOW_SYSTEM_GLFW)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	set(TOKI_WINDOW_SYSTEM TK_WINDOW_SYSTEM_WINDOWS)
+elseif(DEFINED ENV{WAYLAND_DISPLAY})
+	set(TOKI_WINDOW_SYSTEM TK_WINDOW_SYSTEM_WAYLAND)
+elseif(DEFINED ENV{DISPLAY})
+	set(TOKI_WINDOW_SYSTEM TK_WINDOW_SYSTEM_X11)
+elseif(DEFINED ENV{XDG_SESSION_TYPE})
+	if("$ENV{XDG_SESSION_TYPE}" STREQUAL "wayland")
+		set(TOKI_WINDOW_SYSTEM TK_WINDOW_SYSTEM_WAYLAND)
+	elseif("$ENV{XDG_SESSION_TYPE}" STREQUAL "x11")
+		set(TOKI_WINDOW_SYSTEM TK_WINDOW_SYSTEM_X11)
+	else()
+		message("Unknown session type: XDG_SESSION_TYPE=$ENV{XDG_SESSION_TYPE}")
+	endif()
+else()
+	message(STATUS "No supported window system detected")
 endif()
 
 function(set_common_options target)
-    message("Target: ${target}")
+	message("Target: ${target}")
 
-    target_link_options(${target} PRIVATE -nostdlib -nostartfiles -fno-stack-protector)
+	target_compile_definitions(${target} PRIVATE
+		$<$<CONFIG:Debug>:TK_DEBUG>
+		$<$<CONFIG:Release>:TK_NDEBUG>
+		$<$<CONFIG:Release>:TK_RELEASE>
+		$<$<CONFIG:Dist>:TK_NDEBUG>
+		$<$<CONFIG:Dist>:TK_DIST>
+		${TOKI_WINDOW_SYSTEM}
+	)
 
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        message(STATUS "Using GNU compiler")
-
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        message(STATUS "Using Clang compiler")
-        # Clang-specific flags or defines
-        target_compile_definitions(${target} PRIVATE MYAPP_CLANG)
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-        message(STATUS "Using MSVC compiler")
-        # MSVC-specific flags or defines
-        target_compile_definitions(${target} PRIVATE MYAPP_MSVC)
-    else()
-        message(WARNING "Unknown compiler: ${CMAKE_CXX_COMPILER_ID}")
-    endif()
+	if(MSVC)
+	elseif(
+			CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
+			CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+		if(TOKI_NO_STDLIB)
+			target_compile_options(${target}
+				PRIVATE -ftrivial-auto-var-init=pattern -fno-exceptions -Wuninitialized)
+			target_link_options(${target}
+				PRIVATE -nostdlib -nostartfiles -fno-stack-protector)
+		endif()
+	endif()
 endfunction()
 
 function(add_pch target pch pch_source)
-    target_precompile_headers(${target} PRIVATE ${pch})
+	target_precompile_headers(${target} PRIVATE ${pch})
 
-    if(MSVC)
-        target_sources(${target} PRIVATE ${pch_source})
-        target_compile_options(${target} -/FI${pch})
-    endif()
+	# MSVC hack to include header in every translation unit
+	if(MSVC)
+		target_sources(${target} PRIVATE ${pch_source})
+		target_compile_options(${target} -/FI${pch})
+	endif()
 endfunction()
 
 add_subdirectory(toki)
 
 if(TOKI_GLFW_SOURCE)
-    add_subdirectory(vendor/glfw)
+	add_subdirectory(vendor/glfw)
 endif()

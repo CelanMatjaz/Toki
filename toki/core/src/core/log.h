@@ -1,7 +1,7 @@
 #pragma once
 
-#include "platform/platform.h"
-#include "print.h"
+#include "../platform/platform.h"
+#include "../print.h"
 
 namespace toki {
 

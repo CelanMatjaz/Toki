@@ -4,9 +4,9 @@ namespace toki {
 
 using b8 = bool;
 static_assert(sizeof(b8) == 1);
-using b16 = short;
+using b16 = unsigned short;
 static_assert(sizeof(b16) == 2);
-using b32 = int;
+using b32 = unsigned int;
 static_assert(sizeof(b32) == 4);
 
 using i8 = char;
