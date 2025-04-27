@@ -46,7 +46,13 @@ i64 syscall(u64 _syscall, Args... args) {
     return ret;
 }
 
+#include <sys/mman.h>
+
 extern "C" void _start() {
+
+    PROT_READ
+    mmap(k, size_t len, int prot, int flags, int fd, __off_t offset)
+    
 
 	syscall(1, 1,  "\033[31mtest\n", 10);
 
