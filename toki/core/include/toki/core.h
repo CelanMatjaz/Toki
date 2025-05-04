@@ -25,12 +25,17 @@
 #include "../../src/memory/allocator.h"
 #include "../../src/memory/bump_allocator.h"
 #include "../../src/memory/double_bump_allocator.h"
+#include "../../src/memory/memory.h"
 
 // Platform
 #include "../../src/platform/defines.h"
 #include "../../src/platform/platform.h"
 
+// Window
+#include "../../src/window/window.h"
+
 // Other
-#include "../../src/string/string.h"
+#include "../../src/format.h"
 #include "../../src/print.h"
+#include "../../src/string/string.h"
 #include "../../src/string/string_view.h"

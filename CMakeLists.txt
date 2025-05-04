@@ -4,8 +4,14 @@ project(MyProject LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(TOKI_NO_STDLIB "Build project without cstdlib" OFF)
 option(TOKI_USE_GLFW "Build and use GLFW submodule" OFF)
+
+if(NOT DEFINED ENV{VULKAN_SDK})
+	message(FATAL "No VULKAN_SDK env variable found")
+endif()
+
+set(VULKAN_SDK $ENV{VULKAN_SDK})
+set(VENDOR_DIR ${CMAKE_SOURCE_DIR}/vendor)
 
 # Make debug default
 if(NOT CMAKE_BUILD_TYPE)
@@ -29,6 +35,7 @@ endif()
 
 if(TOKI_USE_GLFW)
 	set(TOKI_WINDOW_SYSTEM TK_WINDOW_SYSTEM_GLFW)
+	add_subdirectory(${VENDOR_DIR}/glfw)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	set(TOKI_WINDOW_SYSTEM TK_WINDOW_SYSTEM_WINDOWS)
 elseif(DEFINED ENV{WAYLAND_DISPLAY})
@@ -48,8 +55,6 @@ else()
 endif()
 
 function(set_common_options target)
-	message("Target: ${target}")
-
 	target_compile_definitions(${target} PRIVATE
 		$<$<CONFIG:Debug>:TK_DEBUG>
 		$<$<CONFIG:Release>:TK_NDEBUG>
@@ -57,18 +62,15 @@ function(set_common_options target)
 		$<$<CONFIG:Dist>:TK_NDEBUG>
 		$<$<CONFIG:Dist>:TK_DIST>
 		${TOKI_WINDOW_SYSTEM}
+		TK_MAX_WINDOW_COUNT=1
 	)
 
 	if(MSVC)
 	elseif(
 			CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
 			CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-		if(TOKI_NO_STDLIB)
-			target_compile_options(${target}
+		target_compile_options(${target}
 				PRIVATE -ftrivial-auto-var-init=pattern -fno-exceptions -Wuninitialized)
-			target_link_options(${target}
-				PRIVATE -nostdlib -nostartfiles -fno-stack-protector)
-		endif()
 	endif()
 endfunction()
 

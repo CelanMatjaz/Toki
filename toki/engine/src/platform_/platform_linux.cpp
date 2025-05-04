@@ -2,12 +2,9 @@
 
 #if defined(TK_PLATFORM_LINUX)
 
-#include <sys/mman.h>
 
-#include <csignal>
-
-#include "core/assert.h"
-#include "core/base.h"
+#include "../core/assert.h"
+#include "../core/base.h"
 
 namespace toki {
 

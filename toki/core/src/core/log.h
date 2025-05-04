@@ -5,39 +5,63 @@
 
 namespace toki {
 
-enum struct LogLevel {
-	Info,
-	Warn,
-	Error,
-	Fatal,
-	Debug,
-	Trace
+#define LOG_LEVELS(X) \
+	X(INFO)           \
+	X(WARN)           \
+	X(ERROR)          \
+	X(FATAL)          \
+	X(DEBUG)          \
+	X(TRACE)
+
+enum struct LogLevel : u32 {
+#define X(name) name,
+	LOG_LEVELS(X)
+#undef X
 };
 
-consteval const char* const level_to_string(LogLevel level) {
-	switch (level) {
-		case LogLevel::Info:
-			return "INFO";
-		case LogLevel::Warn:
-			return "WARN";
-		case LogLevel::Error:
-			return "ERROR";
-		case LogLevel::Fatal:
-			return "FATAL";
-		case LogLevel::Debug:
-			return "DEBUG";
-		case LogLevel::Trace:
-			return "TRACE";
-	}
+inline const char* LOG_LEVEL_STRINGS[] = {
+#define X(name) "[" #name "]",
+	LOG_LEVELS(X)
+#undef X
+};
 
-	TK_UNREACHABLE();
-}
+#define _LOG_PRINT(level, ...) \
+	toki::print_args(toki::LOG_LEVEL_STRINGS[static_cast<toki::u32>(toki::LogLevel::level)] __VA_OPT__(, ) __VA_ARGS__)
 
-#define TK_LOG(str) toki::println(str);
-#define TK_LOG_INFO(str) toki::println(str);
-#define TK_LOG_WARN(str) toki::println(str);
-#define TK_LOG_FATAL(str) toki::println(str);
-#define TK_LOG_DEBUG(str) toki::println(str);
-#define TK_LOG_TRACE(str) toki::println(str);
+#if defined(LOG_INFO_OFF) || defined(LOGGING_OFF)
+	#define TK_LOG_INFO(message, ...)
+#else
+	#define TK_LOG_INFO(...) _LOG_PRINT(INFO __VA_OPT__(, ) __VA_ARGS__)
+#endif
+
+#if defined(LOG_WARN_OFF) || defined(LOGGING_OFF)
+	#define TK_LOG_WARN(message, ...)
+#else
+	#define TK_LOG_WARN(...) _LOG_PRINT(WARN __VA_OPT__(, ) __VA_ARGS__)
+#endif
+
+#if defined(LOG_ERROR_OFF) || defined(LOGGING_OFF)
+	#define TK_LOG_ERROR(message, ...)
+#else
+	#define TK_LOG_ERROR(...) _LOG_PRINT(ERROR __VA_OPT__(, ) __VA_ARGS__)
+#endif
+
+#if defined(LOG_FATAL_OFF) || defined(LOGGING_OFF)
+	#define TK_LOG_FATAL(message, ...)
+#else
+	#define TK_LOG_FATAL(...) _LOG_PRINT(FATAL __VA_OPT__(, ), __VA_ARGS__)
+#endif
+
+#if defined(LOG_DEBUG_OFF) || defined(LOGGING_OFF)
+	#define TK_LOG_DEBUG(message, ...)
+#else
+	#define TK_LOG_DEBUG(...) _LOG_PRINT(DEBUG __VA_OPT__(, ) __VA_ARGS__)
+#endif
+
+#if defined(LOG_TRACE_OFF) || defined(LOGGING_OFF)
+	#define TK_LOG_TRACE(message, ...)
+#else
+	#define TK_LOG_TRACE(...) _LOG_PRINT(TRACE __VA_OPT__(, ) __VA_ARGS__)
+#endif
 
 }  // namespace toki

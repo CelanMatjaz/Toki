@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../memory/allocator.h"
+#include "../core/assert.h"
+#include "../memory/memory.h"
 
 namespace toki {
 
@@ -9,53 +10,45 @@ namespace toki {
 // Class is used for static allocations with different types
 // of allocators that match the AllocatorConcept concept.
 
-template <typename T, u64 SIZE, typename A = Allocator>
-    requires AllocatorConcept<A>
+template <typename T, u64 SIZE>
 class StaticArray {
 public:
-    StaticArray() = delete;
+	StaticArray(): m_data(memory_allocate_array<T>(SIZE)) {}
 
-    StaticArray(A& allocator):
-        mAllocator(allocator),
-        mPtr(reinterpret_cast<T*>(allocator.allocate(SIZE * sizeof(T)))) {}
+	~StaticArray() {
+		if (m_data != nullptr) {
+			memory_free(m_data);
+		}
+	}
 
-    ~StaticArray() {
-        if (mPtr != nullptr) {
-            mAllocator.free(mPtr);
-        }
-    }
+	StaticArray& operator=(StaticArray&& other) {
+		if (this != &other) {
+			m_data = other.m_data;
+			other.m_data = nullptr;
+		}
 
-    StaticArray& operator=(StaticArray&& other) {
-        if (this != &other) {
-            mAllocator = other.mAllocator;
-            mPtr = other.mPtr;
+		return *this;
+	}
 
-            other.mPtr = nullptr;
-        }
+	constexpr u64 size() const {
+		return SIZE;
+	}
 
-        return *this;
-    }
+	inline T* data() const {
+		return m_data;
+	}
 
-    constexpr u64 size() const {
-        return SIZE;
-    }
+	inline T& operator[](u64 index) const {
+		return at(index);
+	}
 
-    inline T* data() const {
-        return mPtr;
-    }
-
-    inline T& operator[](u64 index) const {
-        return at(index);
-    }
-
-    inline T& at(u64 index) const {
-        TK_ASSERT(index < SIZE, "Provided index is out of array bounds");
-        return mPtr[index];
-    }
+	inline T& at(u64 index) const {
+		TK_ASSERT(index < SIZE, "Provided index is out of array bounds");
+		return m_data[index];
+	}
 
 private:
-    A& mAllocator;
-    T* mPtr = nullptr;
+	T* m_data = nullptr;
 };
 
 }  // namespace toki

@@ -4,15 +4,15 @@
 
 namespace toki {
 
-namespace pt {
-
-// Syscalls
+/* // Syscalls
 constexpr u64 SYS_READ = 0;
 constexpr u64 SYS_WRITE = 1;
 constexpr u64 SYS_OPEN = 2;
 constexpr u64 SYS_CLOSE = 3;
 constexpr u64 SYS_MMAP = 9;
 constexpr u64 SYS_MUNMAP = 11;
+constexpr u64 SYS_SOCKET = 41;
+constexpr u64 SYS_CONNECT = 42;
 constexpr u64 SYS_EXIT = 60;
 constexpr u64 SYS_CLOCK_GETTIME = 228;
 
@@ -32,6 +32,9 @@ enum SharingTypes {
 	MAP_ANONYMOUS = 0x20
 };
 
-}  // namespace pt
+struct SocketAddr {
+	u16 sun_family;
+	char sun_path[108];
+}; */
 
 }  // namespace toki

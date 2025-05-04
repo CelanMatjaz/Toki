@@ -3,7 +3,7 @@
 #include "../core/common.h"
 #include "../core/concepts.h"
 #include "../core/log.h"
-#include "../memory/allocator.h"
+#include "../memory/memory.h"
 #include "../string/string.h"
 
 // NOTE(Matjaž): https://programming.guide/robin-hood-hashing.html
@@ -30,7 +30,7 @@ struct HashFunctions {
 		return value;
 	}
 
-	static inline u64 hash(const pt::Handle handle) {
+	static inline u64 hash(const NativeHandle handle) {
 		return hash(handle.handle);
 	}
 
@@ -46,8 +46,8 @@ struct HashFunctions {
 	}
 };
 
-template <typename K, typename V, typename A = Allocator, typename H = HashFunctions>
-	requires HasHashFunction<K, H> && AllocatorConcept<A>
+template <typename K, typename V, typename H = HashFunctions>
+	requires HasHashFunction<K, H>
 class HashMap {
 private:
 	using KeyType = K;
@@ -67,17 +67,12 @@ private:
 	};
 
 public:
-	HashMap(A& allocator, u32 element_capacity):
-		_allocator(allocator),
-		_data(nullptr),
-		_element_capacity(element_capacity),
-		_count(0) {
-		u32 total_size = (element_capacity + 1) * sizeof(Bucket);
-		_data = reinterpret_cast<Bucket*>(allocator.allocate(total_size)) + 1;
+	HashMap(u32 element_capacity): m_data(nullptr), m_element_capacity(element_capacity), m_count(0) {
+		m_data = memory_allocate_array<Bucket>(element_capacity + 1);
 	}
 
 	~HashMap() {
-		_allocator.free(reinterpret_cast<Bucket*>(_data) - 1);
+		memory_free(m_data);
 	}
 
 	b8 contains(const KeyType& key) const {
@@ -85,24 +80,24 @@ public:
 	}
 
 	inline u32 capacity() const {
-		return _element_capacity;
+		return m_element_capacity;
 	}
 
 	inline u32 count() const {
-		return _count;
+		return m_count;
 	}
 
 	template <typename... Args>
 	void emplace(const KeyType& key, Args&&... args) {
 		u64 index = get_index(key);
 
-		Bucket& bucket = _data[index];
+		Bucket& bucket = m_data[index];
 		// Empty slot
 		if (bucket.psl == 0) {
 			new (&bucket.value) ValueType(args...);
 			bucket.key = key;
 			bucket.psl = INITIAL_PSL;
-			_count++;
+			m_count++;
 			return;
 		}
 
@@ -112,8 +107,8 @@ public:
 		new (&new_bucket.value) ValueType(args...);
 
 		// Handle collision
-		for (u32 i = index + 1; i < _element_capacity; i++) {
-			Bucket& current_bucket = _data[i];
+		for (u32 i = index + 1; i < m_element_capacity; i++) {
+			Bucket& current_bucket = m_data[i];
 
 			// Found empty slot
 			if (current_bucket.psl == 0) {
@@ -128,7 +123,7 @@ public:
 			++new_bucket.psl;
 		}
 
-		_count++;
+		m_count++;
 	}
 
 	void remove(const KeyType& key) {
@@ -137,17 +132,17 @@ public:
 			return;
 		}
 
-		Bucket& bucket = _data[index];
-		while (bucket.psl != INITIAL_PSL && index < _element_capacity - 1) {
-			*bucket = _data[index + 1];
-			bucket = _data[++index];
+		Bucket& bucket = m_data[index];
+		while (bucket.psl != INITIAL_PSL && index < m_element_capacity - 1) {
+			*bucket = m_data[index + 1];
+			bucket = m_data[++index];
 		}
 
-		if (static_cast<u64>(index) < _element_capacity) {
-			_data[index].psl = EMPTY_SLOT_PSL;
+		if (static_cast<u64>(index) < m_element_capacity) {
+			m_data[index].psl = EMPTY_SLOT_PSL;
 		}
 
-		_count--;
+		m_count--;
 	}
 
 	ValueType& operator[](const KeyType& key) const {
@@ -156,18 +151,18 @@ public:
 
 	ValueType& at(const KeyType& key) const {
 		i64 index = lookup_index(key);
-		return _data[index];
+		return m_data[index];
 	}
 
 private:
 	inline u64 get_index(const KeyType& key) const {
-		return HashType::hash(static_cast<KeyType>(key)) % _element_capacity;
+		return HashType::hash(static_cast<KeyType>(key)) % m_element_capacity;
 	}
 
 	i64 lookup_index(const KeyType& key) const {
 		u64 index = get_index(key);
-		while (_data[index].psl != EMPTY_SLOT_PSL && index < _element_capacity) {
-			if (_data[index].key_value.key == key) {
+		while (m_data[index].psl != EMPTY_SLOT_PSL && index < m_element_capacity) {
+			if (m_data[index].key_value.key == key) {
 				return index;
 			}
 			++index;
@@ -178,10 +173,9 @@ private:
 		return INVALID_INDEX;
 	}
 
-	A& _allocator;
-	Bucket* _data;
-	u32 _element_capacity;
-	u32 _count;
+	Bucket* m_data;
+	u32 m_element_capacity;
+	u32 m_count;
 
 	// public:
 	//     class Iterator;

@@ -11,180 +11,172 @@
 namespace toki {
 
 struct VulkanContext {
-    VkInstance instance;
-    VkPhysicalDevice physical_device;
-    VkPhysicalDeviceProperties physical_device_properties;
-    VkDevice device;
-    Queue graphics_queue, present_queue;
-    Limits limits;
-    DeviceProperties properties;
+	VkInstance instance;
+	VkPhysicalDevice physical_device;
+	VkPhysicalDeviceProperties physical_device_properties;
+	VkDevice device;
+	Queue graphics_queue, present_queue;
+	Limits limits;
+	DeviceProperties properties;
 
-    VkAllocationCallbacks* allocation_callbacks;
+	VkAllocationCallbacks* allocation_callbacks;
 };
 
 struct VulkanResources {
-    VulkanResources(AllocatorConcept auto& allocator):
-        swapchain(allocator),
-        buffers(allocator, MAX_LOADED_BUFFER_COUNT),
-        images(allocator, MAX_LOADED_BUFFER_COUNT),
-        shaders(allocator, MAX_LOADED_BUFFER_COUNT),
-        framebuffers(allocator, MAX_LOADED_BUFFER_COUNT),
-        command_buffers(allocator) {}
+	InternalBuffer staging_buffer{};
+	u64 staging_buffer_offset{};
 
-    InternalBuffer staging_buffer{};
-    u64 staging_buffer_offset{};
+	// Swapchain swapchain;
+	// HandleMap<Swapchain> swapchains;
+	DynamicArray<Swapchain> swapchains;
+	HandleMap<InternalBuffer> buffers;
+	HandleMap<InternalImage> images;
+	HandleMap<InternalShader> shaders;
+	HandleMap<InternalFramebuffer> framebuffers;
 
-    Swapchain swapchain;
-    // HandleMap<Swapchain> swapchains;
-    HandleMap<InternalBuffer> buffers;
-    HandleMap<InternalImage> images;
-    HandleMap<InternalShader> shaders;
-    HandleMap<InternalFramebuffer> framebuffers;
+	DynamicArray<VkCommandPool> command_pools;
+	DynamicArray<VkCommandPool> extra_command_pools;
 
-    DynamicArray<VkCommandPool> command_pools;
-    DynamicArray<VkCommandPool> extra_command_pools;
-
-    CommandBuffers command_buffers;
+	CommandBuffers command_buffers;
 };
 
 struct VulkanSettings {
-    u8 swapchain_count : 4 {};
-    b8 vsync_enabled : 1 { false };
+	u8 swapchain_count : 4 {};
+	b8 vsync_enabled : 1 { false };
 
-    VkClearColorValue color_clear{};
-    VkClearDepthStencilValue depth_stencil_clear{ 1.0f, 0 };
+	VkClearColorValue color_clear{};
+	VkClearDepthStencilValue depth_stencil_clear{ 1.0f, 0 };
 };
 
 class VulkanBackend {
 public:
-    VulkanBackend();
-    ~VulkanBackend();
+	VulkanBackend();
+	~VulkanBackend();
 
-    void device_create();
+	void device_create();
 
-    void swapchain_create(NativeWindowHandle handle);
-    void swapchain_destroy();
-    void swapchain_recreate(Swapchain& swapchain);
+	void swapchain_create(Window* window);
+	void swapchain_destroy();
+	void swapchain_recreate(Swapchain& swapchain);
 
-    Handle framebuffer_create(const FramebufferConfig& config);
-    void framebuffer_destroy(Handle& framebuffer_handle);
+	Handle framebuffer_create(const FramebufferConfig& config);
+	void framebuffer_destroy(Handle& framebuffer_handle);
 
-    Handle buffer_create(const BufferConfig& config);
-    void buffer_destroy(Handle& buffer_handle);
-    void* buffer_map_memory(VkDeviceMemory memory, u32 offset, u32 size);
-    void buffer_unmap_memory(VkDeviceMemory memory);
-    void buffer_flush(Buffer& buffer);
-    void buffer_set_data(const Buffer& buffer, u32 size, void* data);
-    void buffer_copy_data(VkBuffer dst, VkBuffer src, u32 size, u32 dst_offset = 0, u32 src_offset = 0);
+	Handle buffer_create(const BufferConfig& config);
+	void buffer_destroy(Handle& buffer_handle);
+	void* buffer_map_memory(VkDeviceMemory memory, u32 offset, u32 size);
+	void buffer_unmap_memory(VkDeviceMemory memory);
+	void buffer_flush(Buffer& buffer);
+	void buffer_set_data(const Buffer& buffer, u32 size, void* data);
+	void buffer_copy_data(VkBuffer dst, VkBuffer src, u32 size, u32 dst_offset = 0, u32 src_offset = 0);
 
-    Handle image_create(const TextureConfig& config);
-    void image_destroy(Handle& texture_handle);
+	Handle image_create(const TextureConfig& config);
+	void image_destroy(Handle& texture_handle);
 
-    Handle shader_create(const Framebuffer& framebuffer, const ShaderConfig& config);
-    void shader_destroy(Handle& shader_handle);
-    Handle shader_variant_create(Shader& shader, const ShaderVariantConfig& config);
+	Handle shader_create(const Framebuffer& framebuffer, const ShaderConfig& config);
+	void shader_destroy(Handle& shader_handle);
+	Handle shader_variant_create(Shader& shader, const ShaderVariantConfig& config);
 
-    void resources_initialize();
-    void resources_cleanup();
+	void resources_initialize();
+	void resources_cleanup();
 
-    void resources_wait();
+	void resources_wait();
 
-    void prepare_frame_resources();
-    void cleanup_frame_resources();
-    void submit_commands();
-    void present();
+	void prepare_frame_resources();
+	void cleanup_frame_resources();
+	void submit_commands();
+	void present();
 
-    VkCommandBuffer get_command_buffer();
-    RendererCommands* get_commands();
+	VkCommandBuffer get_command_buffer();
+	RendererCommands* get_commands();
 
-    void set_color_clear(const Vec4<f32>& color);
-    void set_depth_clear(f32 depth_clear);
-    void set_stencil_clear(u32 stencil_clear);
+	void set_color_clear(const Vec4<f32>& color);
+	void set_depth_clear(f32 depth_clear);
+	void set_stencil_clear(u32 stencil_clear);
 
-    InternalShader* get_shader(const Handle handle);
+	InternalShader* get_shader(const Handle handle);
 
-    // Draw commands
-    void begin_rendering(VkCommandBuffer cmd, Handle framebuffer_handle, const Rect2D& render_area);
-    void end_rendering(VkCommandBuffer cmd, Handle framebuffer_handle);
+	// Draw commands
+	void begin_rendering(VkCommandBuffer cmd, Handle framebuffer_handle, const Rect2D& render_area);
+	void end_rendering(VkCommandBuffer cmd, Handle framebuffer_handle);
 
-    void bind_shader(VkCommandBuffer cmd, Shader const& shader);
-    void bind_buffer(VkCommandBuffer cmd, Buffer const& buffer);
-    void draw(VkCommandBuffer cmd, u32 count);
-    void draw_indexed(VkCommandBuffer cmd, u32 count);
-    void draw_instanced(VkCommandBuffer cmd, u32 index_count, u32 instance_count = 1);
+	void bind_shader(VkCommandBuffer cmd, Shader const& shader);
+	void bind_buffer(VkCommandBuffer cmd, Buffer const& buffer);
+	void draw(VkCommandBuffer cmd, u32 count);
+	void draw_indexed(VkCommandBuffer cmd, u32 count);
+	void draw_instanced(VkCommandBuffer cmd, u32 index_count, u32 instance_count = 1);
 
-    void push_constants(
-        VkCommandBuffer cmd,
-        VkPipelineLayout layout,
-        VkShaderStageFlags stage_flags,
-        u32 offset,
-        u32 size,
-        const void* data);
-
-private:
-    void create_instance();
-    void find_physical_device(VkSurfaceKHR surface);
-
-    InternalBuffer buffer_internal_create(u32 size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memory_properties);
-    void buffer_internal_destroy(InternalBuffer& buffer);
-
-    InternalImage image_internal_create(
-        u32 width,
-        u32 height,
-        u32 layer_count,
-        VkFormat format,
-        VkImageUsageFlags usage,
-        VkMemoryPropertyFlags memory_properties,
-        VkImageAspectFlags aspect_flags);
-    void image_internal_destroy(InternalImage& image);
-
-    void swapchain_prepare_frame(Swapchain& swapchain);
-    void swapchain_reset_frame(Swapchain& swapchain);
-
-    b8 submit_frame_command_buffers();
-    VkCommandBuffer start_single_use_command_buffer();
-    void submit_single_use_command_buffer(VkCommandBuffer cmd);
-
-    FrameData* get_current_frame();
-    CommandBuffers& get_current_command_buffers();
-
-    void transition_framebuffer_images(VkCommandBuffer cmd, InternalFramebuffer* framebuffer);
-    void transition_swapchain_image(VkCommandBuffer cmd, Swapchain& swapchain);
-
-    void transition_image_layout(const TransitionLayoutConfig& config, InternalImage* image);
-    void transition_image_layout(
-        VkCommandBuffer cmd, const TransitionLayoutConfig& config, VkImageAspectFlags aspect_flags, VkImage image);
-    void transition_image_layout(VkCommandBuffer cmd, const TransitionLayoutConfig& config, InternalImage* image);
-    void transition_image_layouts(
-        VkCommandBuffer cmd,
-        const TransitionLayoutConfig& config,
-        VkImageAspectFlags aspect_flags,
-        VkImage* images,
-        u32 image_count);
-
-    InternalPipeline pipeline_internal_create(
-        const InternalFramebuffer& framebuffer, const ShaderVariantConfig& config, VkPipelineLayout pipeline_layout);
-    void pipeline_internal_destroy(InternalPipeline& pipeline);
-    // PipelineResources create_pipeline_resources(const std::vector<configs::Shader>& stages);
-    VkShaderModule create_shader_module(ShaderStage stage, char* source_path, u64 source_path_length);
-
-    u32 find_memory_type_index(u32 type_filter, VkMemoryPropertyFlags properties);
-    VkImageMemoryBarrier create_image_memory_barrier(
-        VkImageLayout old_layout, VkImageLayout new_layout, VkImageAspectFlags aspect_flags);
-
-    const Limits& limits() const;
-    const DeviceProperties& device_properties() const;
-    VkImage get_swapchain_image(u32 swapchain_index);
-    VkImageView get_swapchain_image_view(u32 swapchain_index);
+	void push_constants(
+		VkCommandBuffer cmd,
+		VkPipelineLayout layout,
+		VkShaderStageFlags stage_flags,
+		u32 offset,
+		u32 size,
+		const void* data);
 
 private:
-    Allocator mAllocator;
-    BasicRef<VulkanContext> mContext;
-    BasicRef<VulkanResources> mResources;
-    BasicRef<VulkanSettings> mSettings;
-    FrameData mFrames[MAX_FRAMES_IN_FLIGHT];
-    u32 mInFlightFrameIndex{};
-    DoubleBumpAllocator mFrameAllocator;
+	void create_instance();
+	void find_physical_device(VkSurfaceKHR surface);
+
+	InternalBuffer buffer_internal_create(u32 size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memory_properties);
+	void buffer_internal_destroy(InternalBuffer& buffer);
+
+	InternalImage image_internal_create(
+		u32 width,
+		u32 height,
+		u32 layer_count,
+		VkFormat format,
+		VkImageUsageFlags usage,
+		VkMemoryPropertyFlags memory_properties,
+		VkImageAspectFlags aspect_flags);
+	void image_internal_destroy(InternalImage& image);
+
+	void swapchain_prepare_frame(Swapchain& swapchain);
+	void swapchain_reset_frame(Swapchain& swapchain);
+
+	b8 submit_frame_command_buffers();
+	VkCommandBuffer start_single_use_command_buffer();
+	void submit_single_use_command_buffer(VkCommandBuffer cmd);
+
+	FrameData* get_current_frame();
+	CommandBuffers& get_current_command_buffers();
+
+	void transition_framebuffer_images(VkCommandBuffer cmd, InternalFramebuffer* framebuffer);
+	void transition_swapchain_image(VkCommandBuffer cmd, Swapchain& swapchain);
+
+	void transition_image_layout(const TransitionLayoutConfig& config, InternalImage* image);
+	void transition_image_layout(
+		VkCommandBuffer cmd, const TransitionLayoutConfig& config, VkImageAspectFlags aspect_flags, VkImage image);
+	void transition_image_layout(VkCommandBuffer cmd, const TransitionLayoutConfig& config, InternalImage* image);
+	void transition_image_layouts(
+		VkCommandBuffer cmd,
+		const TransitionLayoutConfig& config,
+		VkImageAspectFlags aspect_flags,
+		VkImage* images,
+		u32 image_count);
+
+	InternalPipeline pipeline_internal_create(
+		const InternalFramebuffer& framebuffer, const ShaderVariantConfig& config, VkPipelineLayout pipeline_layout);
+	void pipeline_internal_destroy(InternalPipeline& pipeline);
+	// PipelineResources create_pipeline_resources(const std::vector<configs::Shader>& stages);
+	Span<u32> compile_shader(ShaderStage stage, StringView source_path);
+
+	u32 find_memory_type_index(u32 type_filter, VkMemoryPropertyFlags properties);
+	VkImageMemoryBarrier create_image_memory_barrier(
+		VkImageLayout old_layout, VkImageLayout new_layout, VkImageAspectFlags aspect_flags);
+
+	const Limits& limits() const;
+	const DeviceProperties& device_properties() const;
+	VkImage get_swapchain_image(u32 swapchain_index);
+	VkImageView get_swapchain_image_view(u32 swapchain_index);
+
+private:
+	VulkanContext mContext;
+	VulkanResources mResources;
+	VulkanSettings mSettings;
+	FrameData mFrames[MAX_FRAMES_IN_FLIGHT];
+	u32 mInFlightFrameIndex{};
+	DoubleBumpAllocator mFrameAllocator;
 };
 
 }  // namespace toki

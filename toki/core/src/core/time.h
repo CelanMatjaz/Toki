@@ -15,7 +15,7 @@ public:
 	};
 
 public:
-	Time(): m_time(pt::time_nanoseconds()) {}
+	Time(): m_time(time_nanoseconds()) {}
 	Time(u64 time): m_time(time) {}
 
 	static Time now() {

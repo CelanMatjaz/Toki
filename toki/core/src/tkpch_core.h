@@ -25,3 +25,7 @@
 #include "containers/handle_map.h"
 #include "containers/hash_map.h"
 #include "containers/static_array.h"
+
+// Other
+#include "format.h"
+#include "print.h"

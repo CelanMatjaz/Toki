@@ -3,6 +3,7 @@
 #include "../core/assert.h"
 #include "../core/log.h"
 #include "../core/types.h"
+#include "../memory/memory.h"
 
 namespace toki {
 
@@ -33,14 +34,11 @@ struct Handle {
 	u32 data{ 0 };
 };
 
-template <typename ValueType, typename A = Allocator>
-	requires AllocatorConcept<A>
+template <typename ValueType>
 class HandleMap {
 public:
 	HandleMap() {}
-	HandleMap(A& allocator, u32 element_count, u32 free_list_element_count):
-		_allocator(allocator),
-		element_capacity(element_count) {
+	HandleMap(u32 element_count, u32 free_list_element_count): m_element_capacity(element_count) {
 		u32 free_list_size = free_list_element_count * sizeof(u32);
 		u32 version_list_size = element_count * sizeof(u32);
 		u32 skip_field_size = element_count * sizeof(u32);
@@ -48,11 +46,11 @@ public:
 
 		u32 total_size = free_list_size + skip_field_size + version_list_size + element_list_size;
 
-		void* ptr = allocator.allocate(total_size);
-		_free_list = reinterpret_cast<u32*>(ptr);
-		_version_list = reinterpret_cast<u32*>(_free_list + free_list_element_count);
-		_skip_field = reinterpret_cast<u32*>(_version_list + free_list_element_count);
-		_data = reinterpret_cast<ValueType*>(_skip_field + element_count) + 1;
+		void* ptr = memory_allocate(total_size);
+		m_free_list = reinterpret_cast<u32*>(ptr);
+		m_version_list = reinterpret_cast<u32*>(m_free_list + free_list_element_count);
+		m_skip_field = reinterpret_cast<u32*>(m_version_list + free_list_element_count);
+		m_data = reinterpret_cast<ValueType*>(m_skip_field + element_count) + 1;
 	}
 
 	~HandleMap() {}
@@ -62,7 +60,7 @@ public:
 
 	inline void invalidate(Handle& handle) {
 		TK_ASSERT(is_handle_valid(handle), "Cannot invalidate an invalid handle");
-		++_version_list[handle.index];
+		++m_version_list[handle.index];
 		handle.invalidate();
 	}
 
@@ -71,27 +69,27 @@ public:
 	}
 
 	inline u32 capacity() const {
-		return element_capacity;
+		return m_element_capacity;
 	}
 
 	template <typename... Args>
 	Handle emplace(Args&&... args) {
 		i32 free_block_index = get_next_free_block_index();
-		new (&_data[free_block_index]) ValueType(args...);
-		u32 version = _version_list[free_block_index]++;
+		new (&m_data[free_block_index]) ValueType(args...);
+		u32 version = m_version_list[free_block_index]++;
 		return Handle{ static_cast<u32>(free_block_index), version };
 	}
 
 	Handle insert(ValueType&& value) {
 		i32 free_block_index = get_next_free_block_index();
-		memcpy(&value, &_data[free_block_index], sizeof(ValueType));
-		++_version_list[free_block_index];
-		return Handle{ static_cast<u32>(free_block_index), _version_list[free_block_index] };
+		memcpy(&value, &m_data[free_block_index], sizeof(ValueType));
+		++m_version_list[free_block_index];
+		return Handle{ static_cast<u32>(free_block_index), m_version_list[free_block_index] };
 	}
 
 	inline ValueType& at(const Handle& handle) const {
 		TK_ASSERT(is_handle_valid(handle), "Invalid handle provided");
-		return _data[handle.index];
+		return m_data[handle.index];
 	}
 
 	inline ValueType& operator[](const Handle& handle) const {
@@ -114,37 +112,38 @@ private:
 	}
 
 	inline b8 is_version_valid(const Handle& handle) const {
-		TK_ASSERT(handle.index <= element_capacity, "Handle index invalid");
-		return _version_list[handle.index] == handle.version;
+		TK_ASSERT(handle.index <= m_element_capacity, "Handle index invalid");
+		return m_version_list[handle.index] == handle.version;
 	}
 
 	inline b8 is_handle_in_range(const Handle handle) const {
-		return handle.index < element_capacity;
+		return handle.index < m_element_capacity;
 	}
 
 	i32 get_next_free_block_index() {
-		if (_free_list_size <= 0 && _next_free_block_index >= element_capacity) {
-			TK_LOG_TRACE("HandleMap's capacity reached, returning index to NOOP object");
+		if (m_free_list_size <= 0 && m_next_free_block_index >= m_element_capacity) {
+			toki ::print_args(
+				toki ::LOG_LEVEL_STRINGS[static_cast<toki ::u32>(toki ::LogLevel ::TRACE)],
+				"HandleMap's capacity reached, returning index to NOOP object");
 			return -1;
 		}
 
-		TK_ASSERT(_free_list_size > 0 || _next_free_block_index < element_capacity, "Handle map is full");
+		TK_ASSERT(m_free_list_size > 0 || m_next_free_block_index < m_element_capacity, "Handle map is full");
 
-		if (_free_list_size > 0) {
-			return _free_list[(_free_list_size--) - 1];
+		if (m_free_list_size > 0) {
+			return m_free_list[(m_free_list_size--) - 1];
 		}
 
-		return _next_free_block_index++;
+		return m_next_free_block_index++;
 	}
 
-	A& _allocator;
-	u32* _free_list{};
-	u32* _version_list{};
-	u32* _skip_field{};
-	ValueType* _data{};
-	u32 _free_list_size{};
-	u32 element_capacity{};
-	u32 _next_free_block_index{};
+	u32* m_free_list{};
+	u32* m_version_list{};
+	u32* m_skip_field{};
+	ValueType* m_data{};
+	u32 m_free_list_size{};
+	u32 m_element_capacity{};
+	u32 m_next_free_block_index{};
 
 public:
 	/* class Iterator {

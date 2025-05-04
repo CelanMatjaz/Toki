@@ -6,7 +6,6 @@ namespace pt {
 
 struct Handle {};
 
-
 }  // namespace pt
 
 }  // namespace toki

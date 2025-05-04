@@ -1,5 +1,7 @@
 add_library(${CORE_TARGET_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/src/print.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/memory/memory.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/window/event_handler.cpp
 )
 
 target_include_directories(${CORE_TARGET_NAME}
@@ -7,16 +9,20 @@ target_include_directories(${CORE_TARGET_NAME}
 	INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+if( TOKI_USE_GLFW)
+	target_sources(${CORE_TARGET_NAME}
+			PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/platform/glfw_window.cpp)
+endif()
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	# target_sources(${CORE_TARGET_NAME}
-	# 	PRIVATE platform/win32/platform_window_win32.cpp
-	# 	PRIVATE platform/win32/platform_win32.cpp
-	# 	PRIVATE platform/win32/platform_filesystem_win32.cpp
-	# )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	target_sources(${CORE_TARGET_NAME}
-		PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/platform/linux_platform.cpp
-	)
+			PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/platform/linux_platform.cpp)
+	if(NOT TOKI_USE_GLFW)
+		target_sources(${CORE_TARGET_NAME}
+			PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/platform/linux_wayland.cpp)
+	endif()
+
 	if(TOKI_NO_STDLIB)
 		target_sources(${CORE_TARGET_NAME}
 			PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/platform/linux_entry.cpp)

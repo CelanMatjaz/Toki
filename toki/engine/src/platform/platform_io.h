@@ -12,39 +12,39 @@ using PATH = const wchar_t*;
 static_assert(sizeof(wchar_t) == 2);
 
 enum FileOpenFlags {
-    // Open file for reading
-    FileOpen_Read = BIT(0),
+	// Open file for reading
+	FileOpen_Read = BIT(0),
 
-    // Open file for writing
-    FileOpen_Write = BIT(1),
+	// Open file for writing
+	FileOpen_Write = BIT(1),
 
-    // Open file for reading and writing
-    FileOpen_ReadWrite = FileOpen_Read | FileOpen_Write,
+	// Open file for reading and writing
+	FileOpen_ReadWrite = FileOpen_Read | FileOpen_Write,
 
-    // Open existing file
-    //
-    // File needs to exist, or call will fail
-    // and return a file with an invalid handle
-    FileOpen_OpenExisting = BIT(2),
+	// Open existing file
+	//
+	// File needs to exist, or call will fail
+	// and return a file with an invalid handle
+	FileOpen_OpenExisting = BIT(2),
 
-    // Create new file or overwrite existing one
-    FileOpen_CreateNew = BIT(3),
+	// Create new file or overwrite existing one
+	FileOpen_CreateNew = BIT(3),
 };
 
 enum FileCreateAttributeFlags {
-    // Create file without any specific flags - default value
-    FileCreateAttribute_Normal = 0,
+	// Create file without any specific flags - default value
+	FileCreateAttribute_Normal = 0,
 
-    // Create hidden file
-    FileCreateAttribute_Hidden = BIT(0),
+	// Create hidden file
+	FileCreateAttribute_Hidden = BIT(0),
 
-    // Create read-only file
-    FileCreateAttribute_ReadOnly = BIT(1),
+	// Create read-only file
+	FileCreateAttribute_ReadOnly = BIT(1),
 };
 
 // Internal file type
 struct File {
-    void* native_handle;
+	void* native_handle;
 };
 
 // Opens file with provided parameters

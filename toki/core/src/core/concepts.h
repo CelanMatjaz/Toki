@@ -48,7 +48,31 @@ IS_SIGNED(i64)
 #undef IS_SIGNED
 
 template <typename T>
-inline constexpr b8 IsIntegralValue<T*> = true;
+constexpr b8 IsCArray = false;
+
+template <typename T, u64 N>
+constexpr b8 IsCArray<T[N]> = true;
+
+template <typename T, u64 N>
+constexpr b8 IsCArray<const T (&)[N]> = true;
+
+template <typename T>
+constexpr b8 IsFloatingPoint = false;
+template <>
+inline constexpr b8 IsFloatingPoint<f32> = true;
+template <>
+inline constexpr b8 IsFloatingPoint<f64> = true;
+
+template <typename T>
+constexpr b8 IsPointer = false;
+template <typename T>
+constexpr b8 IsPointer<T*> = true;
+template <typename T>
+constexpr b8 IsPointer<const T*> = true;
+template <typename T>
+constexpr b8 IsPointer<T* volatile> = true;
+template <typename T>
+constexpr b8 IsPointer<const T* volatile> = true;
 
 template <typename T>
 concept AllocatorConcept = requires(T a, u64 size, void* free_ptr) {
@@ -62,8 +86,8 @@ concept IsConvertibleConcept = requires(From from, To to) {
 };
 
 template <typename T>
-concept HasToStringFunctionConcept = requires(T t, char* buf) {
-	{ to_string(t, buf) } -> SameAsConcept<u32>;
+concept ToStringFunctionExistsConcept = requires(T t, char* buf) {
+	{ to_string(buf, t) } -> SameAsConcept<u32>;
 };
 
 }  // namespace toki

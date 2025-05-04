@@ -3,19 +3,43 @@
 #include "../core/base.h"
 #include "../core/types.h"
 
+#if defined(TK_WINDOW_SYSTEM_GLFW)
+	#include <GLFW/glfw3.h>
+	#include <GLFW/glfw3native.h>
+#endif
+
 namespace toki {
 
-namespace pt {
+struct NativeHandle {
+#if defined(TK_PLATFORM_LINUX)
+	static constexpr i32 INVALID_HANDLE_VALUE = -1;
+	NativeHandle(i32 value): handle(static_cast<i64>(value)) {}
+	i32 handle;
+
+	operator i32() const {
+		return handle;
+	}
+#endif
+	NativeHandle(): handle(INVALID_HANDLE_VALUE) {}
+};
+
+struct NativeWindow {
+#if defined(TK_WINDOW_SYSTEM_GLFW)
+	GLFWwindow* window;
+#elif defined(TK_WINDOW_SYSTEM_WAYLAND)
+	i32 wl_surface;
+#endif
+};
 
 constexpr u32 PLATFORM_ALLOCATOR_SIZE = MB(16);
 constexpr u32 PLATFORM_MAX_WINDOW_COUNT = 2;
 
-enum OpenFlags : i32 {
-	OPEN_READ = 0,
-	OPEN_WRITE = 1,
-	OPEN_RDWR = 2,
+enum FileOpenFlags : u32 {
+	FILE_READ = 1,
+	FILE_WRITE = 2,
+	FILE_RDWR = FILE_READ | FILE_WRITE,
+	FILE_TRUNC,
+	FILE_APPEND,
 };
-
-}  // namespace pt
 
 }  // namespace toki

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <toki/core.h>
+#include <toki/renderer.h>
 
 namespace toki {
 
@@ -18,11 +19,12 @@ public:
 
 	void run();
 
-	void window_add(const char* title, u32 width, u32 height);
+	void window_add(const Window::Config& config);
 
 private:
-	// Allocator mEngineAllocator;
 	b32 m_is_running = false;
+	RendererFrontend m_renderer;
+	StaticArray<WeakRef<Window>, PLATFORM_MAX_WINDOW_COUNT> m_windows;
 
 public:
 	struct Config {};

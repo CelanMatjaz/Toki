@@ -1,14 +1,21 @@
 #pragma once
 
-#include "core/concepts.h"
-#include "print.h"
-#include "socket.h"
-#include "types/types.h"
+#include "../core/concepts.h"
+#include "../platform/platform.h"
+#include "../print.h"
 
 namespace toki {
 
+namespace pt {
+
 struct wl_struct {
-	u32 id;
+	i32 id;
+
+	wl_struct(u32 id = 0): id(id) {}
+
+	operator i32() const {
+		return id;
+	}
 
 	operator u32() const {
 		return id;
@@ -35,13 +42,13 @@ struct WaylandGlobals {
 	struct xdg_wm_base* xdg_wm_base;
 
 	void print() {
-		toki::println("wl_callback:   %i", *reinterpret_cast<u32*>(wl_callback));
-		toki::println("wl_display:    %i\n", *reinterpret_cast<u32*>(wl_display));
-		toki::println("wl_registry:   %i\n", *reinterpret_cast<u32*>(wl_registry));
-		toki::println("wl_seat:       %i\n", *reinterpret_cast<u32*>(wl_seat));
-		toki::println("wl_compositor: %i\n", *reinterpret_cast<u32*>(wl_compositor));
-		toki::println("wl_shm:        %i\n", *reinterpret_cast<u32*>(wl_shm));
-		toki::println("xxg_wm_base:   %i\n", *reinterpret_cast<u32*>(xdg_wm_base));
+		toki::print_args("wl_callback:   %i", *reinterpret_cast<u32*>(wl_callback));
+		toki::print_args("wl_display:    %i\n", *reinterpret_cast<u32*>(wl_display));
+		toki::print_args("wl_registry:   %i\n", *reinterpret_cast<u32*>(wl_registry));
+		toki::print_args("wl_seat:       %i\n", *reinterpret_cast<u32*>(wl_seat));
+		toki::print_args("wl_compositor: %i\n", *reinterpret_cast<u32*>(wl_compositor));
+		toki::print_args("wl_shm:        %i\n", *reinterpret_cast<u32*>(wl_shm));
+		toki::print_args("xxg_wm_base:   %i\n", *reinterpret_cast<u32*>(xdg_wm_base));
 	}
 };
 
@@ -71,7 +78,7 @@ struct {
 	{ "wl_compositor", REQUIRED_WL_COMPOSITOR_VERSION, WL_COMPOSITOR },
 	{ "xdg_wm_base", REQUIRED_XDG_WM_BASE_VERSION, XDG_WM_BASE },
 	{ "wl_seat", REQUIRED_WL_SEAT_VERSION, WL_SEAT },
-	{ "wl_shm", 1, WL_SHM },
+	// { "wl_shm", 1, WL_SHM },
 };
 
 class WaylandState {
@@ -105,15 +112,6 @@ public:
 
 	Socket socket;
 
-	// u32 buffer_width = 400;
-	// u32 buffer_height = 400;
-	// u32 buffer_stride = buffer_width * 4;
-	// u32 shm_pool_size = buffer_height * buffer_stride;
-	i64 shm{};
-	char* shm_data;
-
-	void create_shared_memory_file(u32 size);
-
 private:
 	wl_struct global_ids[WAYLAND_GLOBAL_ID_COUNT]{
 		[WL_DISPLAY] = { 1 },
@@ -132,5 +130,7 @@ template <typename T>
 concept WaylandHandlerFunctionConcept = requires(T fn, Header* header, const u32* data) {
 	{ fn(header, data) } -> SameAsConcept<b8>;
 };
+
+}  // namespace pt
 
 }  // namespace toki

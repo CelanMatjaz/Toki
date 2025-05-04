@@ -15,35 +15,41 @@ public:
 	Allocator() = delete;
 
 	Allocator(u64 size, u64 max_free_list_entries = MAX_FREELIST_ENTRY_COUNT):
-		mTotalFreeListEntryCount(max_free_list_entries) {
-		mTotalSize = size + max_free_list_entries * sizeof(FreeListEntry);
-		mBufferStart = toki::pt::allocate(mTotalSize);
-		mFreeList = reinterpret_cast<FreeListEntry*>(mBufferStart);
-		mNextFreePtr = mFreeList + max_free_list_entries;
-		mLastFreeEntry = mFreeList;
+		m_total_free_list_entry_count(max_free_list_entries) {
+		m_total_size = size + max_free_list_entries * sizeof(FreeListEntry);
+		m_buffer_start = toki::allocate(m_total_size);
+		m_free_list = reinterpret_cast<FreeListEntry*>(m_buffer_start);
+		m_next_free_ptr = m_free_list + max_free_list_entries * sizeof(FreeListEntry);
+		m_last_free_entry = m_free_list;
 	}
 
-	Allocator(Allocator* other, u64 size, u64 max_free_list_entries = MAX_FREELIST_ENTRY_COUNT):
-		mParentAllocator(other),
-		mTotalFreeListEntryCount(max_free_list_entries) {
-		mTotalSize = size + max_free_list_entries * sizeof(FreeListEntry);
-		mBufferStart = other->allocate(size);
-		mFreeList = reinterpret_cast<FreeListEntry*>(mBufferStart);
-		mNextFreePtr = mFreeList + max_free_list_entries;
-		mLastFreeEntry = mFreeList;
+	DELETE_COPY(Allocator);
+	Allocator(Allocator&& other) = delete;
+
+	Allocator& operator=(Allocator&& other) {
+		if (this != &other) {
+			m_total_free_list_entry_count = other.m_total_free_list_entry_count;
+			m_total_size = other.m_total_size;
+			m_buffer_start = other.m_buffer_start;
+			m_free_list = other.m_free_list;
+			m_next_free_ptr = other.m_next_free_ptr;
+			m_last_free_entry = other.m_last_free_entry;
+
+			other.m_buffer_start = nullptr;
+		}
+
+		return *this;
 	}
 
 	~Allocator() {
-		if (mParentAllocator) {
-			mParentAllocator->free(mBufferStart);
-		} else {
-			toki::pt::deallocate(mBufferStart);
+		if (m_buffer_start != nullptr) {
+			toki::deallocate(m_buffer_start);
 		}
 	}
 
 	void* allocate(u64 size) {
-		if (mTotalFreeListEntryCount > 0) {
-			FreeListEntry* entry = mFreeList;
+		if (m_total_free_list_entry_count > 0) {
+			FreeListEntry* entry = m_free_list;
 
 			while (entry != nullptr && entry->buffer_ptr != nullptr) {
 				u64& entry_size = entry_size_ref(entry);
@@ -70,18 +76,19 @@ public:
 		} else {
 ALLOCATE_NEW:
 			TK_ASSERT(
-				ptrdiff(mNextFreePtr) + size <= ptrdiff(mBufferStart) + mTotalSize, "Allocation would overflow buffer");
+				ptrdiff(m_next_free_ptr) + size <= ptrdiff(m_buffer_start) + m_total_size,
+				"Allocation would overflow buffer");
 
-			u64* allocation_start = reinterpret_cast<u64*>(mNextFreePtr);
+			u64* allocation_start = reinterpret_cast<u64*>(m_next_free_ptr);
 
 			u64 offset = size + sizeof(u64);
-			offset += 64 - offset % 64;
+			offset += offset % 8;
 
 			// Set total allocation size value in the first 64 bits of allocation
-			*allocation_start = offset;
+			(*allocation_start) = offset;
 
 			// Offset next_free_pointer by allocation size
-			mNextFreePtr = offset_ptr(mNextFreePtr, offset);
+			m_next_free_ptr = offset_ptr(m_next_free_ptr, offset);
 
 			return allocation_start + 1;
 		}
@@ -94,7 +101,7 @@ ALLOCATE_NEW:
 		u64 allocation_size = *reinterpret_cast<u64*>(allocation_start);
 		void* ptr_after_allocation = ptr_after(allocation_start, allocation_size);
 
-		FreeListEntry* entry = mFreeList;
+		FreeListEntry* entry = m_free_list;
 		FreeListEntry* entry_after = nullptr;
 		FreeListEntry* entry_before = nullptr;
 
@@ -141,14 +148,14 @@ ALLOCATE_NEW:
 		}
 
 		if (new_entry == nullptr) {
-			new_entry = find_first_free_entry(mFreeList);
+			new_entry = find_first_free_entry(m_free_list);
 			new_entry->buffer_ptr = allocation_start;
 			new_entry->next = find_first_free_entry(new_entry);
 		}
 	}
 
 	inline u64 size() {
-		return mTotalSize;
+		return m_total_size;
 	}
 
 private:
@@ -181,13 +188,12 @@ private:
 		return reinterpret_cast<char*>(ptr) + size;
 	}
 
-	Allocator* mParentAllocator{};
-	void* mBufferStart;
-	void* mNextFreePtr;
-	u64 mTotalSize{};
-	FreeListEntry* mFreeList;
-	FreeListEntry* mLastFreeEntry;
-	u64 mTotalFreeListEntryCount{};
+	void* m_buffer_start;
+	void* m_next_free_ptr;
+	u64 m_total_size{};
+	FreeListEntry* m_free_list;
+	FreeListEntry* m_last_free_entry;
+	u64 m_total_free_list_entry_count{};
 };
 
 }  // namespace toki

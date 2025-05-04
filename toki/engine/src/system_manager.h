@@ -8,30 +8,30 @@
 namespace toki {
 
 struct Systems {
-    TextureSystem* texture_system;
-    FontSystem* font_system;
+	TextureSystem* texture_system;
+	FontSystem* font_system;
 };
 
 class SystemManager {
-    friend class Engine;
+	friend class Engine;
 
 public:
-    SystemManager() = delete;
-    SystemManager(StackAllocator* stack_allocator, Renderer* renderer);
-    ~SystemManager();
+	SystemManager() = delete;
+	SystemManager(StackAllocator* stack_allocator, Renderer* renderer);
+	~SystemManager();
 
 public:
-    Systems& get_systems() {
-        return m_systems;
-    }
+	Systems& get_systems() {
+		return m_systems;
+	}
 
-    Renderer& get_renderer() {
-        return *m_renderer;
-    }
+	Renderer& get_renderer() {
+		return *m_renderer;
+	}
 
 private:
-    Systems m_systems;
-    Renderer* m_renderer;
+	Systems m_systems;
+	Renderer* m_renderer;
 };
 
 }  // namespace toki

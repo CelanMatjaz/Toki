@@ -8,15 +8,15 @@
 namespace toki {
 
 enum class ResourceType : u8 {
-    Binary,
-    String,
-    Texture,
-    FontTFF,
-    Shader,
+	Binary,
+	String,
+	Texture,
+	FontTFF,
+	Shader,
 };
 
 struct Resource {
-    ResourceType type;
+	ResourceType type;
 };
 
 }  // namespace toki

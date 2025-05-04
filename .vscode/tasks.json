@@ -2,26 +2,13 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Generate compile_commands.json files",
-            "command": "premake5",
-            "args": ["export-compile-commands"]
-        },
-        {
-            "label": "Generate Makefiles",
-            "command": "premake5",
-            "args": ["gmake2"],
-            "dependsOn": ["Generate compile_commands.json files"]
-        },
-        {
             "label": "Build Sandbox - Debug",
-            "args": ["-j15", "Sandbox"],
             "windows": {
                 "command": "run.bat"
             },
             "linux": {
                 "command": "run.sh"
-            },
-            "dependsOn": ["Generate Makefiles"]
+            }
         }
     ]
 }

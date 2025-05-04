@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../core/concepts.h"
-#include "../memory/allocator.h"
+#include "../core/assert.h"
+#include "../memory/memory.h"
 
 namespace toki {
 
@@ -10,93 +10,82 @@ namespace toki {
 // Class is used for dynamic allocations with different types
 // of allocators that match the AllocatorConcept concept.
 
-template <typename T, typename A = Allocator>
-    requires AllocatorConcept<A>
+template <typename T>
 class DynamicArray {
 public:
-    DynamicArray() = delete;
+	DynamicArray() {}
+	DynamicArray(u64 count): m_capacity(count), m_data(memory_allocate(sizeof(T) * count)) {}
 
-    DynamicArray(A& allocator): mAllocator(allocator), mSize(0) {}
+	DynamicArray(u64 size, T&& default_value): DynamicArray(size) {
+		for (u32 i = 0; i < size; i++) {
+			m_data[i] = default_value;
+		}
+	}
 
-    DynamicArray(A& allocator, u64 size): mAllocator(allocator), mSize(size) {
-        mPtr = reinterpret_cast<T*>(allocator.allocate(size * sizeof(T)));
-    }
+	DynamicArray(DynamicArray&& other): m_data(other.m_data), m_capacity(other.m_capacity) {
+		other.m_data = nullptr;
+		other.m_capacity = 0;
+	}
 
-    DynamicArray(A& allocator, u64 size, T&& default_value): DynamicArray(allocator, size) {
-        for (u32 i = 0; i < size; i++) {
-            mPtr[i] = default_value;
-        }
-    }
+	~DynamicArray() {
+		if (m_data != nullptr) {
+			memory_free(m_data);
+		}
+	}
 
-    DynamicArray(DynamicArray&& other): mAllocator(other.mAllocator), mPtr(other.mPtr), mSize(other.mSize) {
-        other.mPtr = nullptr;
-        other.mSize = 0;
-    }
+	DELETE_COPY(DynamicArray);
 
-    ~DynamicArray() {
-        if (mPtr != nullptr) {
-            mAllocator.free(mPtr);
-        }
-    }
+	DynamicArray& operator=(DynamicArray&& other) {
+		if (this != &other) {
+			swap(move(other));
+		}
+		return *this;
+	}
 
-    DELETE_COPY(DynamicArray);
+	// This function will NOT resize/reallocate a new
+	// buffer if new_size is less than mSize.
+	void resize(u32 new_capacity) {
+		if (new_capacity > m_capacity) {
+			m_data = memory_reallocate_array<T>(m_data, new_capacity);
+		}
+		m_capacity = new_capacity;
+	}
 
-    DynamicArray& operator=(DynamicArray&& other) {
-        if (this != &other) {
-            swap(move(other));
-        }
-        return *this;
-    }
+	inline void shrink_to_count(u32 new_size) {
+		TK_ASSERT(new_size <= m_capacity, "New size cannot be larger than old size when shrinking");
+		m_capacity = new_size;
+	}
 
-    // This function will NOT resize/reallocate a new
-    // buffer if new_size is less than mSize.
-    void resize(u32 new_size) {
-        if (new_size > mSize) {
-            T* old_ptr = mPtr;
-            mSize = new_size;
-            mPtr = reinterpret_cast<T*>(mAllocator.allocate(new_size * sizeof(T)));
+	inline T& operator[](u64 index) const {
+		return m_data[index];
+	}
 
-            memcpy(old_ptr, mPtr, mSize);
+	inline T* data() const {
+		return m_data;
+	}
 
-            if (old_ptr != nullptr) {
-                mAllocator.free(old_ptr);
-            }
-        }
-        mSize = new_size;
-    }
+	inline u64 get_capacity() const {
+		return m_capacity;
+	}
 
-    inline void shrink_to_count(u32 new_size) {
-        TK_ASSERT(new_size <= mSize, "New size cannot be larger than old size when shrinking");
-        mSize = new_size;
-    }
+	inline u64 size() const {
+		return m_capacity;
+	}
 
-    inline T& operator[](u64 index) const {
-        return mPtr[index];
-    }
+	inline void swap(DynamicArray&& other) {
+		m_data = other.m_data;
+		m_capacity = other.m_capacity;
+		other.m_data = nullptr;
+		other.m_capacity = 0;
+	}
 
-    inline T* data() const {
-        return mPtr;
-    }
-
-    inline const u64& get_capacity() const {
-        return mSize;
-    }
-
-    inline u64 size() const {
-        return mSize;
-    }
-
-    inline void swap(DynamicArray&& other) {
-        mPtr = other.mPtr;
-        mSize = other.mSize;
-        other.mPtr = nullptr;
-        other.mSize = 0;
-    }
+	inline T& last() const {
+		return m_data[m_capacity - 1];
+	}
 
 private:
-    A& mAllocator;
-    T* mPtr = nullptr;
-    u64 mSize = 0;
+	T* m_data{};
+	u64 m_capacity{};
 };
 
 }  // namespace toki

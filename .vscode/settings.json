@@ -1,3 +1,6 @@
 {
-    "C_Cpp.default.compileCommands": "compile_commands.json"
+    "C_Cpp.default.compileCommands": "compile_commands.json",
+    "files.associations": {
+        "memory_resource": "cpp"
+    }
 }

@@ -2,7 +2,4 @@
 
 #include "vulkan_types.h"
 
-namespace toki {
-
-
-}  // namespace toki
+namespace toki {}  // namespace toki
