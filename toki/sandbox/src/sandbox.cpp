@@ -4,7 +4,7 @@
 int main() {
 	toki::memory_initialize({ .total_size = toki::GB(1) });
 	toki::BasicRef<char> formatted =
-		toki::format_string("this {} {} format {} function, number {}", "is", 4, "format", 7);
+		toki::format_string("this {} {} {} function, number {}{} {}", "is", 4, "format", 'i', 's', 7);
 	toki::println(formatted.data());
 
 	// toki::Allocator alloc(toki::MB(64));

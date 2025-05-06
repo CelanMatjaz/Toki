@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../core/assert.h"
 #include "../core/common.h"
 #include "../core/types.h"
 #include "../memory/memory.h"
@@ -16,7 +15,7 @@ public:
 		m_data(memory_allocate(element_count * sizeof(T) + sizeof(u64))),
 		m_capacity(element_count) {
 		if (data != nullptr) {
-			toki::memcpy(data, m_data, element_count * sizeof(T));
+			toki::memcpy(data, reinterpret_cast<byte*>(m_data) + sizeof(u64), element_count * sizeof(T));
 		}
 	}
 
@@ -69,7 +68,7 @@ public:
 	}
 
 	T& operator[](u32 index) const {
-		TK_ASSERT(index < m_capacity, "Index out of bounds");
+		// TK_ASSERT(index < m_capacity, "Index out of bounds");
 		return data()[index];
 	}
 
