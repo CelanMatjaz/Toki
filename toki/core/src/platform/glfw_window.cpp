@@ -1,4 +1,7 @@
-#include <GLFW/glfw3.h>
+#if defined(TK_WINDOW_SYSTEM_GLFW)
+	#include <GLFW/glfw3.h>
+	#include <GLFW/glfw3native.h>
+#endif
 
 #include "../platform/attributes.h"
 #include "../platform/defines.h"
@@ -154,7 +157,7 @@ Window::Window(const Config& config) {
 }
 
 Window::~Window() {
-	glfwDestroyWindow(m_native_window.window);
+	glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(m_native_window.window));
 }
 
 }  // namespace toki

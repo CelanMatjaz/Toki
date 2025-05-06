@@ -3,11 +3,6 @@
 #include "../core/base.h"
 #include "../core/types.h"
 
-#if defined(TK_WINDOW_SYSTEM_GLFW)
-	#include <GLFW/glfw3.h>
-	#include <GLFW/glfw3native.h>
-#endif
-
 namespace toki {
 
 struct NativeHandle {
@@ -25,7 +20,7 @@ struct NativeHandle {
 
 struct NativeWindow {
 #if defined(TK_WINDOW_SYSTEM_GLFW)
-	GLFWwindow* window;
+	void* window;
 #elif defined(TK_WINDOW_SYSTEM_WAYLAND)
 	i32 wl_surface;
 #endif

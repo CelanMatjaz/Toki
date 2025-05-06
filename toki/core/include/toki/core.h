@@ -36,6 +36,8 @@
 
 // Other
 #include "../../src/format.h"
+#include "../../src/math/math.h"
+#include "../../src/math/types.h"
 #include "../../src/print.h"
 #include "../../src/string/string.h"
 #include "../../src/string/string_view.h"

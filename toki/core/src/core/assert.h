@@ -1,10 +1,15 @@
 #pragma once
 
 #include "../platform/attributes.h"
-#include "../print.h"
+#include "../string/string_view.h"
 #include "macros.h"
 
 namespace toki {
+
+void print(const StringView& view);
+
+template <typename... Args>
+void print_args(Args&&... args);
 
 #define TK_ASSERT(condition, message, ...)                                                             \
 	if (auto c = condition; !c) {                                                                      \

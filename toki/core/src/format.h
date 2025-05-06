@@ -1,9 +1,11 @@
 #pragma once
 
+#include "containers/basic_ref.h"
 #include "core/assert.h"
 #include "core/common.h"
 #include "core/concepts.h"
 #include "core/types.h"
+#include "memory/memory.h"
 #include "platform/attributes.h"
 #include "string/string.h"
 
@@ -45,6 +47,38 @@ u32 _dump_args(char* out, const FirstArg& arg, const Args&... args) {
 template <typename... Args>
 u32 dump_args(char* out, Args&&... args) {
 	return _dump_args(out, toki::move(args)...);
+}
+
+template <typename FirstArg, typename... Args>
+u32 _format_string(char* buf_out, const char* fmt, FirstArg&& arg, Args&&... args) {
+	for (u32 i = 0; fmt[i] != 0; i++) {
+		if (fmt[i] == '{') {
+			switch (fmt[i + 1]) {
+				case '\0': {
+					return 0;
+				} break;
+				case '}':
+					toki::memcpy(fmt, buf_out, i);
+					u32 buf_out_offset = i + _dump_single_arg(buf_out + i, arg);
+
+					if constexpr (sizeof...(args) == 0) {
+						return buf_out_offset;
+					} else {
+						u32 byte_count = _format_string(buf_out + buf_out_offset, fmt + i + 2, toki::move(args)...);
+						return buf_out_offset + byte_count;
+					}
+			}
+		}
+	}
+
+	return 0;
+}
+
+template <typename... Args>
+BasicRef<char> format_string(const char* fmt, const Args... args) {
+	char buffer[4096]{};
+	u32 byte_count = _format_string(buffer, fmt, toki::move(args)...);
+	return BasicRef<char>(byte_count + 1, buffer);
 }
 
 }  // namespace toki

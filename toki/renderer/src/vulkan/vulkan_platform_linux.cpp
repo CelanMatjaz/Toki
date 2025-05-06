@@ -22,8 +22,8 @@ VkSurfaceKHR vulkan_surface_create(
 
 	VkResult result = vkCreateXcbSurfaceKHR(instance, &createInfo, allocation_callbacks, &surface);
 #elif defined(TK_WINDOW_SYSTEM_GLFW)
-
-	VkResult result = glfwCreateWindowSurface(instance, window.window, allocation_callbacks, &surface);
+	VkResult result =
+		glfwCreateWindowSurface(instance, reinterpret_cast<GLFWwindow*>(window.window), allocation_callbacks, &surface);
 #endif
 
 	VK_CHECK(result, "Could not create window surface");

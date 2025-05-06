@@ -1,9 +1,5 @@
 #pragma once
 
-#if defined(TK_WINDOW_SYSTEM_GLFW)
-	#include <GLFW/glfw3.h>
-#endif
-
 #include "../containers/weak_ref.h"
 #include "../core/types.h"
 #include "../string/string_view.h"

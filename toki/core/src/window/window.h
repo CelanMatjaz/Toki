@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../core/types.h"
-#include "../math/types.h"
 #include "../platform/defines.h"
 #include "event_handler.h"
 
