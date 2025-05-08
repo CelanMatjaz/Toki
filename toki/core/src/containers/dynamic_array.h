@@ -64,7 +64,7 @@ public:
 		return m_data;
 	}
 
-	inline u64 get_capacity() const {
+	inline u64 capacity() const {
 		return m_capacity;
 	}
 
@@ -81,6 +81,14 @@ public:
 
 	inline T& last() const {
 		return m_data[m_capacity - 1];
+	}
+
+	inline operator T*() const {
+		return m_data;
+	}
+
+	inline operator const T*() const {
+		return m_data;
 	}
 
 private:

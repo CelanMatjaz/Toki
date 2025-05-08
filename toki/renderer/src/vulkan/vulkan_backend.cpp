@@ -143,20 +143,28 @@ void VulkanBackend::find_physical_device(VkSurfaceKHR surface) {
 	VkPhysicalDeviceProperties device_properties{};
 	VkPhysicalDeviceFeatures device_features{};
 
-	for (u32 i = 0; i < physical_device_count; i++) {
-		VkPhysicalDevice physical_device = physical_devices[i];
+	toki::print_args("DEVICE COUNT", physical_device_count);
 
-		VkPhysicalDeviceProperties properties;
-		vkGetPhysicalDeviceProperties(physical_device, &properties);
-		VkPhysicalDeviceFeatures features;
-		vkGetPhysicalDeviceFeatures(physical_device, &features);
+	if (physical_device_count == 1) {
+		mContext.physical_device = physical_devices[0];
+	}
 
-		u32 score = rate_physical_device_suitability(physical_device, properties, features);
-		if (score > best_score) {
-			mContext.physical_device = physical_device;
-			mContext.physical_device_properties = properties;
-			device_properties = properties;
-			device_features = features;
+	else {
+		for (u32 i = 0; i < physical_device_count; i++) {
+			VkPhysicalDevice physical_device = physical_devices[i];
+
+			VkPhysicalDeviceProperties properties;
+			vkGetPhysicalDeviceProperties(physical_device, &properties);
+			VkPhysicalDeviceFeatures features;
+			vkGetPhysicalDeviceFeatures(physical_device, &features);
+
+			u32 score = rate_physical_device_suitability(physical_device, properties, features);
+			if (score > best_score) {
+				mContext.physical_device = physical_device;
+				mContext.physical_device_properties = properties;
+				device_properties = properties;
+				device_features = features;
+			}
 		}
 	}
 
@@ -384,7 +392,7 @@ void VulkanBackend::swapchain_recreate(Swapchain& swapchain) {
 	VkSwapchainCreateInfoKHR swapchain_create_info{};
 	swapchain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	swapchain_create_info.surface = swapchain.surface;
-	swapchain_create_info.minImageCount = swapchain.image_count;
+	swapchain_create_info.minImageCount = capabilities.minImageCount;
 	swapchain_create_info.imageFormat = swapchain.surface_format.format;
 	swapchain_create_info.imageColorSpace = swapchain.surface_format.colorSpace;
 	swapchain_create_info.imageExtent = swapchain.extent;
@@ -1391,7 +1399,7 @@ void VulkanBackend::cleanup_frame_resources() {
 }
 
 void VulkanBackend::present() {
-	u32 swapchain_count = mResources.swapchains.get_capacity();
+	u32 swapchain_count = mResources.swapchains.capacity();
 	if (swapchain_count == 0) {
 		return;
 	}
@@ -1920,11 +1928,17 @@ static VkFormat get_format(ColorFormat format_in) {
 static VkFormat get_depth_format(VkPhysicalDevice device, b8 has_stencil) {
 	VkFormatFeatureFlags format_feature_flags = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
-	VkFormatProperties format_properties;
-	vkGetPhysicalDeviceFormatProperties(device, VK_FORMAT_D24_UNORM_S8_UINT, &format_properties);
+	constexpr VkFormat DEPTH_FORMATS[] = { VK_FORMAT_D24_UNORM_S8_UINT,
+										   VK_FORMAT_D16_UNORM_S8_UINT,
+										   VK_FORMAT_D32_SFLOAT_S8_UINT };
 
-	if ((format_properties.optimalTilingFeatures & format_feature_flags) == format_feature_flags) {
-		return has_stencil ? VK_FORMAT_D24_UNORM_S8_UINT : VK_FORMAT_D32_SFLOAT;
+	VkFormatProperties format_properties;
+	for (u32 i = 0; i < ARRAY_SIZE(DEPTH_FORMATS); i++) {
+		vkGetPhysicalDeviceFormatProperties(device, DEPTH_FORMATS[i], &format_properties);
+
+		if ((format_properties.optimalTilingFeatures & format_feature_flags) == format_feature_flags) {
+			return DEPTH_FORMATS[i];
+		}
 	}
 
 	TK_ASSERT(false, "GPU does not support depth/stencil format");

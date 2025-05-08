@@ -42,31 +42,42 @@ struct CommandBuffers {
 	StaticArray<VkCommandBuffer, MAX_IN_FLIGHT_COMMAND_BUFFER_COUNT> handles;
 };
 
-enum struct SwapchainState {
-	ACQUIRED_IMAGE,
-	RECORDING_COMMANDS
+struct Surface {
+	VkSurfaceKHR handle;
+	VkExtent2D extent;
+	VkSurfaceFormatKHR format;
+	WeakRef<Window> window;
+};
+
+struct _Swapchain {
+	VkSwapchainKHR handle;
+	DynamicArray<VkImage> images;
+	DynamicArray<VkImageView> image_views;
+
+	Surface surface;
+
+	VkSemaphore image_available_semaphores[MAX_FRAMES_IN_FLIGHT];
+	u32 image_index;
 };
 
 struct Swapchain {
-	VkSwapchainKHR swapchain{};
-	VkSurfaceKHR surface{};
-	VkExtent2D extent{};
-	WeakRef<Window> window_handle{};
+	VkSwapchainKHR swapchain;
+	VkSurfaceKHR surface;
+	WeakRef<Window> window_handle;
 
-	VkSurfaceFormatKHR surface_format{};
-	VkSemaphore image_available_semaphores[MAX_FRAMES_IN_FLIGHT]{};
+	VkSemaphore image_available_semaphores[MAX_FRAMES_IN_FLIGHT];
 
-	u32 image_index{};
-	u32 image_count{};
+	u32 image_index;
+	u32 image_count;
 
 	DynamicArray<VkImage> images;
 	DynamicArray<VkImageView> image_views;
 
-	b8 can_render : 1 {};
-	b8 is_recording_commands : 1 {};
-	b8 waiting_to_present : 1 {};
-	u8 submit_count : 4 {};
-	VkPresentModeKHR vsync_disabled_present_mode{};
+	b8 can_render : 1;
+	b8 is_recording_commands : 1;
+	b8 waiting_to_present : 1;
+	u8 submit_count : 4;
+	VkPresentModeKHR vsync_disabled_present_mode;
 };
 
 struct Queue {
