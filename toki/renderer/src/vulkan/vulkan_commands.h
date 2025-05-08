@@ -3,7 +3,7 @@
 #include <toki/core.h>
 #include <vulkan/vulkan.h>
 
-#include "../renderer_commands.h"
+#include "renderer_commands.h"
 
 namespace toki {
 
@@ -14,7 +14,7 @@ public:
 	VulkanCommands() = delete;
 	VulkanCommands(VulkanBackend* backend);
 
-	virtual void begin_rendering(const Framebuffer& framebuffer, const Rect2D& render_area) override;
+	virtual void begin_rendering(Framebuffer framebuffer, const Rect2D& render_area) override;
 	virtual void end_rendering() override;
 
 	virtual void set_viewport(const Rect2D& rect) override;
@@ -22,9 +22,9 @@ public:
 	virtual void set_scissor(const Rect2D& rect) override;
 	virtual void reset_scissor() override;
 
-	virtual void bind_shader(const Shader& shader) override;
-	virtual void bind_buffer(const Buffer& buffer) override;
-	virtual void bind_texture(const Texture& buffer) override;
+	virtual void bind_shader( Shader shader) override;
+	virtual void bind_buffer( Buffer buffer) override;
+	virtual void bind_texture( Texture buffer) override;
 
 	virtual void push_constants(u32 offset, u32 size, const void* data) override;
 
@@ -33,10 +33,10 @@ public:
 	virtual void draw_instanced(u32 index_count, u32 instance_count) override;
 
 private:
-	VulkanBackend* mBackend;
-	VkCommandBuffer mCommandBuffer;
-	Handle mFramebufferHandle;
-	Handle mShaderHandle;
+	VulkanBackend* m_backend;
+	VkCommandBuffer m_command_buffer;
+	Framebuffer m_bound_framebuffer;
+	Shader m_bound_shader;
 };
 
 }  // namespace toki

@@ -25,10 +25,6 @@ constexpr u64 MAX_VERTEX_ATTRIBUTE_COUNT = 8;
 
 struct RendererObject {
 	Handle handle;
-
-	operator Handle() {
-		return handle;
-	}
 };
 
 struct Framebuffer : RendererObject {};

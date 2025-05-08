@@ -6,7 +6,7 @@ namespace toki {
 
 class RendererCommands {
 public:
-	virtual void begin_rendering(const Framebuffer& framebuffer, const Rect2D& render_area) = 0;
+	virtual void begin_rendering(Framebuffer framebuffer, const Rect2D& render_area) = 0;
 	virtual void end_rendering() = 0;
 
 	virtual void set_viewport(const Rect2D& rect) = 0;
@@ -14,9 +14,9 @@ public:
 	virtual void set_scissor(const Rect2D& rect) = 0;
 	virtual void reset_scissor() = 0;
 
-	virtual void bind_shader(const Shader& shader) = 0;
-	virtual void bind_buffer(const Buffer& buffer) = 0;
-	virtual void bind_texture(const Texture& buffer) = 0;
+	virtual void bind_shader(Shader shader) = 0;
+	virtual void bind_buffer(Buffer buffer) = 0;
+	virtual void bind_texture(Texture buffer) = 0;
 
 	virtual void push_constants(u32 offset, u32 size, const void* data) = 0;
 

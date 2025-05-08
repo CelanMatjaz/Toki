@@ -5,8 +5,9 @@ add_library(${RENDERER_TARGET_NAME} STATIC
 )
 
 target_include_directories(${RENDERER_TARGET_NAME}
-	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
 	INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include
+	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
+	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/toki
 	PRIVATE ${VULKAN_SDK}/include)
 target_link_libraries(${RENDERER_TARGET_NAME}
 	PRIVATE ${CORE_TARGET_NAME} vulkan shaderc_shared)

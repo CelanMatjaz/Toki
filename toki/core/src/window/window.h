@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../core/types.h"
+#include "../math/types.h"
 #include "../platform/defines.h"
 #include "event_handler.h"
 
@@ -27,10 +28,17 @@ public:
 
 	WindowEventHandler handler;
 
+	Vec2<u32> dimensions() const {
+		return m_dimensions;
+	};
+
 	static void poll_events();
+
+	void* m_renderer_data{};
 
 private:
 	NativeWindow m_native_window{};
+	Vec2<u32> m_dimensions{};
 };
 
 }  // namespace toki

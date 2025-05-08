@@ -5,11 +5,6 @@
 
 namespace toki {
 
-// DynamicArray
-//
-// Class is used for dynamic allocations with different types
-// of allocators that match the AllocatorConcept concept.
-
 template <typename T>
 class DynamicArray {
 public:
@@ -45,6 +40,10 @@ public:
 	// This function will NOT resize/reallocate a new
 	// buffer if new_size is less than mSize.
 	void resize(u32 new_capacity) {
+		if (new_capacity == m_capacity) {
+			return;
+		}
+
 		if (new_capacity > m_capacity) {
 			m_data = memory_reallocate_array<T>(m_data, new_capacity);
 		}

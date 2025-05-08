@@ -47,22 +47,22 @@ void RendererFrontend::set_depth_clear(f32 depth) {
 
 Framebuffer RendererFrontend::framebuffer_create(const FramebufferConfig& config) {
 	Framebuffer new_framebuffer{};
-	new_framebuffer.handle = backend->framebuffer_create(config);
+	new_framebuffer = backend->framebuffer_create(config);
 	return new_framebuffer;
 }
 
 void RendererFrontend::framebuffer_destroy(Framebuffer& framebuffer) {
-	backend->framebuffer_destroy(framebuffer.handle);
+	backend->framebuffer_destroy(framebuffer);
 }
 
 Buffer RendererFrontend::buffer_create(const BufferConfig& config) {
 	Buffer new_buffer{};
-	new_buffer.handle = backend->buffer_create(config);
+	new_buffer = backend->buffer_create(config);
 	return new_buffer;
 }
 
 void RendererFrontend::buffer_destroy(Buffer& buffer) {
-	backend->buffer_destroy(buffer.handle);
+	backend->buffer_destroy(buffer);
 }
 
 void RendererFrontend::buffer_set_data(const Buffer& buffer, u32 size, void* data) {
@@ -71,22 +71,22 @@ void RendererFrontend::buffer_set_data(const Buffer& buffer, u32 size, void* dat
 
 Texture RendererFrontend::texture_create(const TextureConfig& config) {
 	Texture new_texture{};
-	new_texture.handle = backend->image_create(config);
+	new_texture = backend->texture_create(config);
 	return new_texture;
 }
 
 void RendererFrontend::texture_destroy(Texture& texture) {
-	backend->image_destroy(texture.handle);
+	backend->texture_destroy(texture);
 }
 
-Shader RendererFrontend::shader_create(const Framebuffer& framebuffer, const ShaderConfig& config) {
+Shader RendererFrontend::shader_create(Framebuffer framebuffer, const ShaderConfig& config) {
 	Shader shader{};
-	shader.handle = backend->shader_create(framebuffer, config);
+	shader = backend->shader_create(framebuffer, config);
 	return shader;
 }
 
 void RendererFrontend::shader_destroy(Shader& shader) {
-	backend->shader_destroy(shader.handle);
+	backend->shader_destroy(shader);
 }
 
 void RendererFrontend::wait_for_resources() {

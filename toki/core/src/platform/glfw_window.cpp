@@ -129,7 +129,7 @@ static void window_focus_callback(GLFWwindow* window, int focused) {
 	QUEUE_EVENT(Event::create(WindowEvent::WINDOW_FOCUS));
 }
 
-Window::Window(const Config& config) {
+Window::Window(const Config& config): m_dimensions({ config.width, config.height }) {
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 

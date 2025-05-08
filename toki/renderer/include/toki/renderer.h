@@ -1,3 +1,5 @@
 #pragma once
 
-#include "../../src/renderer_frontend.h"
+#include "renderer_commands.h"
+#include "renderer_frontend.h"
+#include "renderer_types.h"

@@ -5,8 +5,14 @@
 namespace toki {
 
 template <typename T = f32>
-struct Vec2 {
-	T x, y;
+union Vec2 {
+	struct {
+		T x, y;
+	};
+
+	struct {
+		T width, height;
+	};
 };
 
 }  // namespace toki

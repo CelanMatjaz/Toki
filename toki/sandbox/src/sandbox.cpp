@@ -19,4 +19,5 @@ int main() {
 	engine.run();
 
 	toki::platform_shutdown();
+	toki::memory_shutdown();
 }

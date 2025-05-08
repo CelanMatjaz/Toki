@@ -5,11 +5,6 @@
 
 namespace toki {
 
-// StaticArray
-//
-// Class is used for static allocations with different types
-// of allocators that match the AllocatorConcept concept.
-
 template <typename T, u64 SIZE>
 class StaticArray {
 public:

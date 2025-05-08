@@ -3,50 +3,12 @@
 #include <toki/core.h>
 #include <vulkan/vulkan.h>
 
-#include "../renderer_commands.h"
+#include "renderer_commands.h"
 #include "renderer_types.h"
 #include "vulkan_commands.h"
 #include "vulkan_types.h"
 
 namespace toki {
-
-struct VulkanContext {
-	VkInstance instance;
-	VkPhysicalDevice physical_device;
-	VkPhysicalDeviceProperties physical_device_properties;
-	VkDevice device;
-	Queue graphics_queue, present_queue;
-	Limits limits;
-	DeviceProperties properties;
-
-	VkAllocationCallbacks* allocation_callbacks;
-};
-
-struct VulkanResources {
-	InternalBuffer staging_buffer{};
-	u64 staging_buffer_offset{};
-
-	// Swapchain swapchain;
-	// HandleMap<Swapchain> swapchains;
-	DynamicArray<Swapchain> swapchains;
-	HandleMap<InternalBuffer> buffers;
-	HandleMap<InternalImage> images;
-	HandleMap<InternalShader> shaders;
-	HandleMap<InternalFramebuffer> framebuffers;
-
-	DynamicArray<VkCommandPool> command_pools;
-	DynamicArray<VkCommandPool> extra_command_pools;
-
-	CommandBuffers command_buffers;
-};
-
-struct VulkanSettings {
-	u8 swapchain_count : 4 {};
-	b8 vsync_enabled : 1 { false };
-
-	VkClearColorValue color_clear{};
-	VkClearDepthStencilValue depth_stencil_clear{ 1.0f, 0 };
-};
 
 class VulkanBackend {
 public:
@@ -55,27 +17,33 @@ public:
 
 	void device_create();
 
-	void swapchain_create(Window* window);
+	void swapchain_create(WeakRef<Window> window);
 	void swapchain_destroy();
 	void swapchain_recreate(Swapchain& swapchain);
 
-	Handle framebuffer_create(const FramebufferConfig& config);
-	void framebuffer_destroy(Handle& framebuffer_handle);
+	Framebuffer framebuffer_create(const FramebufferConfig& config);
+	void framebuffer_destroy(Framebuffer& framebuffer);
 
-	Handle buffer_create(const BufferConfig& config);
-	void buffer_destroy(Handle& buffer_handle);
-	void* buffer_map_memory(VkDeviceMemory memory, u32 offset, u32 size);
-	void buffer_unmap_memory(VkDeviceMemory memory);
-	void buffer_flush(Buffer& buffer);
-	void buffer_set_data(const Buffer& buffer, u32 size, void* data);
-	void buffer_copy_data(VkBuffer dst, VkBuffer src, u32 size, u32 dst_offset = 0, u32 src_offset = 0);
+	Buffer buffer_create(const BufferConfig& config);
+	void buffer_destroy(Buffer& buffer);
+	void buffer_set_data(Buffer buffer, u32 size, void* data);
+	void* buffer_map_memory(Buffer buffer, u32 offset, u32 size);
+	void buffer_unmap_memory(Buffer buffer);
+	void buffer_flush(Buffer buffer);
+	void buffer_copy_data(Buffer dst, Buffer src, u32 size, u32 dst_offset = 0, u32 src_offset = 0);
 
-	Handle image_create(const TextureConfig& config);
-	void image_destroy(Handle& texture_handle);
+private:
+	void* buffer_map_memory(InternalBuffer& internal_buffer, u32 offset, u32 size);
+	void buffer_unmap_memory(InternalBuffer& internal_buffer);
+	void buffer_copy_data(InternalBuffer& dst, InternalBuffer& src, u32 size, u32 dst_offset = 0, u32 src_offset = 0);
 
-	Handle shader_create(const Framebuffer& framebuffer, const ShaderConfig& config);
-	void shader_destroy(Handle& shader_handle);
-	Handle shader_variant_create(Shader& shader, const ShaderVariantConfig& config);
+public:
+	Texture texture_create(const TextureConfig& config);
+	void texture_destroy(Texture& texture_handle);
+
+	Shader shader_create(Framebuffer framebuffer, const ShaderConfig& config);
+	void shader_destroy(Shader& shader);
+	Handle shader_variant_create(Shader shader, const ShaderVariantConfig& config);
 
 	void resources_initialize();
 	void resources_cleanup();
@@ -94,14 +62,14 @@ public:
 	void set_depth_clear(f32 depth_clear);
 	void set_stencil_clear(u32 stencil_clear);
 
-	InternalShader* get_shader(const Handle handle);
+	InternalShader* get_shader(Shader shader);
 
 	// Draw commands
-	void begin_rendering(VkCommandBuffer cmd, Handle framebuffer_handle, const Rect2D& render_area);
-	void end_rendering(VkCommandBuffer cmd, Handle framebuffer_handle);
+	void begin_rendering(VkCommandBuffer cmd, Framebuffer framebuffer, const Rect2D& render_area);
+	void end_rendering(VkCommandBuffer cmd, Framebuffer framebuffer);
 
-	void bind_shader(VkCommandBuffer cmd, Shader const& shader);
-	void bind_buffer(VkCommandBuffer cmd, Buffer const& buffer);
+	void bind_shader(VkCommandBuffer cmd, Shader shader);
+	void bind_buffer(VkCommandBuffer cmd, Buffer buffer);
 	void draw(VkCommandBuffer cmd, u32 count);
 	void draw_indexed(VkCommandBuffer cmd, u32 count);
 	void draw_instanced(VkCommandBuffer cmd, u32 index_count, u32 instance_count = 1);

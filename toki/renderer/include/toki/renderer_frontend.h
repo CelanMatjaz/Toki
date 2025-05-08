@@ -42,7 +42,7 @@ public:
 	Texture texture_create(const TextureConfig& config);
 	void texture_destroy(Texture& texture);
 
-	Shader shader_create(const Framebuffer& framebuffer, const ShaderConfig& config);
+	Shader shader_create(Framebuffer framebuffer, const ShaderConfig& config);
 	void shader_destroy(Shader& shader);
 
 	void wait_for_resources();
