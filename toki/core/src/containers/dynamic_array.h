@@ -9,7 +9,7 @@ template <typename T>
 class DynamicArray {
 public:
 	DynamicArray() {}
-	DynamicArray(u64 count): m_capacity(count), m_data(memory_allocate(sizeof(T) * count)) {}
+	DynamicArray(u64 count): m_capacity(count), m_size(count), m_data(memory_allocate(sizeof(T) * count)) {}
 
 	DynamicArray(u64 size, T&& default_value): DynamicArray(size) {
 		for (u32 i = 0; i < size; i++) {
@@ -17,8 +17,9 @@ public:
 		}
 	}
 
-	DynamicArray(DynamicArray&& other): m_data(other.m_data), m_capacity(other.m_capacity) {
+	DynamicArray(DynamicArray&& other): m_data(other.m_data), m_size(other.m_size), m_capacity(other.m_capacity) {
 		other.m_data = nullptr;
+		other.m_size = 0;
 		other.m_capacity = 0;
 	}
 
@@ -32,27 +33,33 @@ public:
 
 	DynamicArray& operator=(DynamicArray&& other) {
 		if (this != &other) {
-			swap(move(other));
+			move(toki::move(other));
 		}
 		return *this;
 	}
 
-	// This function will NOT resize/reallocate a new
-	// buffer if new_size is less than mSize.
-	void resize(u32 new_capacity) {
-		if (new_capacity == m_capacity) {
+	void resize(u32 new_size) {
+		if (new_size <= m_capacity) {
+			m_size = new_size;
 			return;
 		}
 
-		if (new_capacity > m_capacity) {
-			m_data = memory_reallocate_array<T>(m_data, new_capacity);
+		m_data = memory_reallocate_array<T>(m_data, new_size);
+		m_capacity = m_size = new_size;
+	}
+
+	void reserve(u32 new_capacity) {
+		if (new_capacity <= m_capacity) {
+			return;
 		}
+
+		m_data = memory_reallocate_array<T>(m_data, new_capacity);
 		m_capacity = new_capacity;
 	}
 
-	inline void shrink_to_count(u32 new_size) {
+	inline void shrink_to_size(u32 new_size) {
 		TK_ASSERT(new_size <= m_capacity, "New size cannot be larger than old size when shrinking");
-		m_capacity = new_size;
+		m_size = new_size;
 	}
 
 	inline T& operator[](u64 index) const {
@@ -68,18 +75,20 @@ public:
 	}
 
 	inline u64 size() const {
-		return m_capacity;
+		return m_size;
 	}
 
-	inline void swap(DynamicArray&& other) {
+	inline void move(DynamicArray&& other) {
 		m_data = other.m_data;
+		m_size = other.m_size;
 		m_capacity = other.m_capacity;
 		other.m_data = nullptr;
+		other.m_size = 0;
 		other.m_capacity = 0;
 	}
 
 	inline T& last() const {
-		return m_data[m_capacity - 1];
+		return m_data[m_size - 1];
 	}
 
 	inline operator T*() const {
@@ -92,6 +101,7 @@ public:
 
 private:
 	T* m_data{};
+	u64 m_size{};
 	u64 m_capacity{};
 };
 

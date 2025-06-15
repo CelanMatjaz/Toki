@@ -9,17 +9,6 @@ struct Rect2D {
 	Vec2<u32> size;
 };
 
-template <typename T = f32>
-union Vec4 {
-	struct {
-		T x, y, z, w;
-	};
-
-	struct {
-		T r, g, b, a;
-	};
-};
-
 constexpr u64 MAX_VERTEX_BINDING_COUNT = 4;
 constexpr u64 MAX_VERTEX_ATTRIBUTE_COUNT = 8;
 

@@ -13,7 +13,7 @@ struct VulkanContext;
 
 constexpr u32 MAX_SWAPCHAIN_COUNT = TK_MAX_WINDOW_COUNT;
 
-constexpr u32 MAX_FRAMES_IN_FLIGHT = 2;
+constexpr u32 MAX_FRAMES_IN_FLIGHT = 3;
 
 constexpr u32 MAX_LOADED_BUFFER_COUNT = 128;
 constexpr u32 MAX_LOADED_IMAGE_COUNT = 128;
@@ -133,10 +133,10 @@ struct VulkanResources {
 	// Swapchain swapchain;
 	// HandleMap<Swapchain> swapchains;
 	DynamicArray<Swapchain> swapchains;
-	HandleMap<InternalBuffer> buffers;
-	HandleMap<InternalImage> images;
-	HandleMap<InternalShader> shaders;
-	HandleMap<InternalFramebuffer> framebuffers;
+	HandleMap<InternalBuffer> buffers{ 128 };
+	HandleMap<InternalImage> images{ 128 };
+	HandleMap<InternalShader> shaders{ 32 };
+	HandleMap<InternalFramebuffer> framebuffers{ 16 };
 
 	DynamicArray<VkCommandPool> command_pools;
 	DynamicArray<VkCommandPool> extra_command_pools;

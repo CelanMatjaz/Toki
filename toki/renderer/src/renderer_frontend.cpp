@@ -5,10 +5,10 @@
 namespace toki {
 
 // QoL macro
-#define backend reinterpret_cast<VulkanBackend*>(mBackend)
+#define backend reinterpret_cast<VulkanBackend*>(m_backend)
 
 RendererFrontend::RendererFrontend(const Config& config) {
-	mBackend = emplace<VulkanBackend>(memory_allocate_array<VulkanBackend>(1));
+	m_backend = emplace<VulkanBackend>(memory_allocate_array<VulkanBackend>(1));
 }
 
 RendererFrontend::~RendererFrontend() {

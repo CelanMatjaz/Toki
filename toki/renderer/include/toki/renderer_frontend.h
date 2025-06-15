@@ -51,7 +51,7 @@ public:
 	void set_depth_clear(f32 depth);
 
 protected:
-	void* mBackend;
+	void* m_backend;
 };
 
 }  // namespace toki

@@ -128,10 +128,13 @@ void VulkanBackend::find_physical_device(VkSurfaceKHR surface) {
 	Span physical_devices = mFrameAllocator->allocate_span<VkPhysicalDevice>(physical_device_count);
 	vkEnumeratePhysicalDevices(mContext.instance, &physical_device_count, physical_devices);
 
-	VkPhysicalDeviceProperties device_properties{};
-	VkPhysicalDeviceFeatures device_features{};
-
 	mContext.physical_device = physical_devices[0];
+
+	VkPhysicalDeviceProperties device_properties{};
+	vkGetPhysicalDeviceProperties(mContext.physical_device, &device_properties);
+
+	VkPhysicalDeviceFeatures device_features{};
+	vkGetPhysicalDeviceFeatures(mContext.physical_device, &device_features);
 
 	mContext.limits.max_framebuffer_width = device_properties.limits.maxFramebufferWidth;
 	mContext.limits.max_framebuffer_height = device_properties.limits.maxFramebufferHeight;
@@ -447,16 +450,16 @@ Framebuffer VulkanBackend::framebuffer_create(const FramebufferConfig& config) {
 		"Maximum %ul color attachments supported",
 		limits().max_color_attachments);
 
-	framebuffer.color_image = BasicRef<InternalImage>();
+	framebuffer.color_image.reset();
 
-	*framebuffer.color_image = image_internal_create(
+	*framebuffer.color_image.data() = toki::move(image_internal_create(
 		config.image_width,
 		config.image_height,
 		config.color_format_count,
 		get_format(config.color_format),
 		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		VK_IMAGE_ASPECT_COLOR_BIT);
+		VK_IMAGE_ASPECT_COLOR_BIT));
 
 	VkImageAspectFlags depthStenctilAspectFlags = 0;
 
@@ -519,7 +522,24 @@ void VulkanBackend::buffer_destroy(Buffer& buffer) {
 }
 
 void VulkanBackend::buffer_set_data(Buffer buffer, u32 size, void* data) {
-	ASSERT_BUFFER(buffer);
+	if (auto c = buffer.handle.valid() && mResources.buffers.contains(buffer.handle); !c) {
+		toki ::print(
+			"Assertion "
+			"buffer.handle.valid() && mResources.buffers.contains(buffer.handle)"
+			" failed in file "
+			"/shared/dev/toki/toki/renderer/src/vulkan/vulkan_backend.cpp"
+			":"
+			"525"
+			"\n");
+		toki ::println(
+			toki ::format_string(
+				"Handle is not associated with any Vulkan "
+				"buffer")
+				.data());
+		TK_UNREACHABLE();
+		;
+	};
+	;
 	InternalBuffer& internal_buffer = mResources.buffers[buffer.handle];
 
 	// Copy to staging buffer
@@ -1425,8 +1445,6 @@ b8 VulkanBackend::submit_frame_command_buffers() {
 	VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	VkSemaphore signal_semaphores[] = { frame->present_semaphore };
 	Span wait_semaphores = mFrameAllocator->allocate_span<VkSemaphore>(mResources.swapchains.size());
-
-	TK_LOG_INFO("CURRENT FRAME", mInFlightFrameIndex);
 
 	// TODO: make this dynamic when more than 1 swapchain is supported
 	for (u32 i = 0; i < wait_semaphores.size(); i++) {

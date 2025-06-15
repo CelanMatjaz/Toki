@@ -7,7 +7,7 @@
 
 namespace toki {
 
-constexpr u32 INVALID_HANDLE_ID = 0;
+constexpr u32 INVALID_HANDLE_ID = ~0UL;
 
 struct Handle {
 	Handle(): index(0), version(0), id(INVALID_HANDLE_ID) {};
@@ -38,7 +38,11 @@ template <typename ValueType>
 class HandleMap {
 public:
 	HandleMap() {}
-	HandleMap(u32 element_count, u32 free_list_element_count): m_element_capacity(element_count) {
+	HandleMap(u32 element_count, u32 free_list_element_count = 0): m_element_capacity(element_count) {
+		if (free_list_element_count == 0) {
+			free_list_element_count = element_count / 2;
+		}
+
 		u32 free_list_size = free_list_element_count * sizeof(u32);
 		u32 version_list_size = element_count * sizeof(u32);
 		u32 skip_field_size = element_count * sizeof(u32);

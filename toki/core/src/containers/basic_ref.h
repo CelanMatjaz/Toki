@@ -20,6 +20,10 @@ public:
 	}
 
 	~BasicRef() {
+		if (m_data == nullptr) {
+			return;
+		}
+
 		--(*reinterpret_cast<u64*>(m_data));
 		if (*reinterpret_cast<u64*>(m_data)) {
 			memory_free(m_data);
@@ -48,6 +52,14 @@ public:
 		}
 
 		return *this;
+	}
+
+	inline void reset(u32 element_count = 1) {
+		if (m_data != nullptr) {
+			free();
+		}
+
+		alloc(element_count);
 	}
 
 	// Count of items of type T that this ref can store
@@ -84,10 +96,27 @@ public:
 		return *data();
 	}
 
+	inline T& operator*() const {
+		return *data();
+	}
+
 private:
 	inline void swap(BasicRef<T>& other) {
 		toki::swap(m_data, other.m_data);
 		toki::swap(m_capacity, other.m_capacity);
+	}
+
+	void alloc(u32 element_count) {
+		m_capacity = element_count;
+		m_data = memory_allocate(element_count * sizeof(T) + sizeof(u64));
+		reinterpret_cast<u64*>(m_data)[0] = 1;
+	}
+
+	void free() {
+		--(*reinterpret_cast<u64*>(m_data));
+		if (*reinterpret_cast<u64*>(m_data)) {
+			memory_free(m_data);
+		}
 	}
 
 	void* m_data{};

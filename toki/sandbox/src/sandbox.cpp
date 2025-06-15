@@ -1,6 +1,8 @@
 #include <toki/core.h>
 #include <toki/engine.h>
 
+#include "test_layer.h"
+
 int main() {
 	toki::memory_initialize({ .total_size = toki::GB(1) });
 
@@ -15,6 +17,8 @@ int main() {
 	window_config.width = 600;
 	window_config.height = 600;
 	engine.window_add(window_config);
+
+	engine.layer_push<TestLayer>();
 
 	engine.run();
 
