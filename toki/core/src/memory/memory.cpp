@@ -20,8 +20,7 @@ struct Header {
 static MemoryState s_memory_state{};
 
 void memory_initialize(const MemoryConfig& config) {
-	Allocator allocator(config.total_size);
-	s_memory_state.allocator = move(allocator);
+	s_memory_state.allocator = Allocator(config.total_size);
 }
 
 void memory_shutdown() {}

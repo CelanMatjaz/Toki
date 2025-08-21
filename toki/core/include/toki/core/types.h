@@ -41,4 +41,7 @@ static_assert(sizeof(word) == 2);
 using wchar = u32;
 static_assert(sizeof(wchar) == 4);
 
+using ptr = u64;
+static_assert(sizeof(ptr) == 8);
+
 }  // namespace toki

@@ -29,7 +29,8 @@ void* Allocator::allocate(u64 size) {
 	// Last free block
 	if (next_free_block->next == nullptr) {
 		// Round up block to 16 bytes
-		void* next_block = reinterpret_cast<byte*>(next_free_block + 1) + size + (size & ~16);
+		toki::ptr next_block =
+			reinterpret_cast<toki::ptr>(next_free_block + 1) + size + 15 & static_cast<toki::ptr>(~15);
 		u32 asd = reinterpret_cast<toki::byte*>(next_block) - reinterpret_cast<toki::byte*>(next_free_block);
 		next_free_block->size = size;
 		next_free_block->next = reinterpret_cast<MemorySection*>(next_block);

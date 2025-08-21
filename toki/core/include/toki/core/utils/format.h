@@ -159,8 +159,9 @@ u32 _format(const char* fmt, char* buf_out, FirstArg&& arg, Args&&... args) {
 						start = i;
 
 						if constexpr (sizeof...(args) > 0) {
-							offset += _format(
-								static_cast<const char*>(&fmt[start]), &buf_out[offset], toki::forward(args)...);
+							return offset +
+								   _format(
+									   static_cast<const char*>(&fmt[start]), &buf_out[offset], toki::forward(args)...);
 						}
 						continue;
 					} break;
@@ -180,12 +181,12 @@ u32 _format(const char* fmt, char* buf_out, FirstArg&& arg, Args&&... args) {
 		}
 	}
 
-	if constexpr (sizeof...(args) == 0) {
-		if (u32 size = i - start; size > 0) {
-			toki::memcpy(&fmt[start], &buf_out[offset], size);
-			offset += size;
-		}
-	}
+	// if constexpr (sizeof...(args) == 0) {
+	// 	if (u32 size = i - start; size > 0) {
+	// 		toki::memcpy(&fmt[start], &buf_out[offset], size);
+	// 		offset += size;
+	// 	}
+	// }
 
 	return offset;
 }
