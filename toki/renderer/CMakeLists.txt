@@ -1,20 +1,10 @@
-add_library(${RENDERER_TARGET_NAME} STATIC
-	${CMAKE_CURRENT_SOURCE_DIR}/src/vulkan/vulkan_backend.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/vulkan/vulkan_commands.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/src/renderer_frontend.cpp
-)
+add_library_target(${RENDERER_TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_include_directories(${RENDERER_TARGET_NAME}
-	INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include
-	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
-	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/toki
-	PRIVATE ${VULKAN_SDK}/include)
 target_link_libraries(${RENDERER_TARGET_NAME}
 	PRIVATE ${CORE_TARGET_NAME} vulkan shaderc_shared)
+
 target_link_directories(${RENDERER_TARGET_NAME}
 	PRIVATE ${VULKAN_SDK}/lib)
-
-set_common_options(${RENDERER_TARGET_NAME})
 
 if(TOKI_USE_GLFW)
 	target_link_directories(${RENDERER_TARGET_NAME}

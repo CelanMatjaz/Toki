@@ -1,6 +1,10 @@
 {
     "C_Cpp.default.compileCommands": "compile_commands.json",
     "files.associations": {
-        "memory_resource": "cpp"
+        "memory_resource": "cpp",
+        "bitset": "cpp",
+        "string_view": "cpp",
+        "complex": "cpp",
+        "format": "cpp"
     }
 }

@@ -1,27 +1,22 @@
-#include <toki/core.h>
-#include <toki/engine.h>
+#include <toki/core/platform/memory.h>
+#include <toki/core/utils/bytes.h>
+#include <toki/core/utils/format.h>
+#include <toki/core/utils/print.h>
 
-#include "test_layer.h"
+#include <print>
 
 int main() {
-	toki::memory_initialize({ .total_size = toki::GB(1) });
+	{
+		toki::MemoryConfig memory_config{};
+		memory_config.total_size = toki::GB(1);
+		toki::memory_initialize(memory_config);
+	}
 
-	toki::Allocator alloc(toki::MB(64));
-	toki::platform_initialize();
+	char adwdaw[] = "Dawjio";
+	auto string = toki::format(
+		toki::StringView{ "djwao {} ijio {} tee hee\n{}\n{}" }, "koala", 123, true, static_cast<void*>(adwdaw));
+	std::println("{}", string.data());
+	std::println("{}", static_cast<void*>(adwdaw));
 
-	toki::Engine::Config engine_config{};
-	toki::Engine engine(engine_config);
-
-	toki::Window::Config window_config{};
-	window_config.title = "Test";
-	window_config.width = 600;
-	window_config.height = 600;
-	engine.window_add(window_config);
-
-	engine.layer_push<TestLayer>();
-
-	engine.run();
-
-	toki::platform_shutdown();
-	toki::memory_shutdown();
+	toki::print(string);
 }

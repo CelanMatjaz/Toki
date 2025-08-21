@@ -1,0 +1,25 @@
+#include "print.h"
+
+#include "core/assert.h"
+#include "format.h"
+#include "platform/platform.h"
+#include "string/string.h"
+
+namespace toki {
+
+void print(const StringView& view) {
+	write(STD_OUT, view.data(), view.size());
+}
+
+void println(const StringView& view) {
+	write(STD_OUT, view.data(), view.size());
+	write(STD_OUT, "\n", 1);
+}
+
+void print_i64(i64 value, u32 radix) {
+	char buf[20]{};
+	itoa(buf, value, radix);
+	println(buf);
+}
+
+}  // namespace toki

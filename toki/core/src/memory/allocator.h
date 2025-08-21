@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../core/assert.h"
-#include "../core/types.h"
-#include "../platform/platform.h"
+#include <toki/core/common/assert.h>
+#include <toki/core/platform/memory.h>
+#include <toki/core/types.h>
 
 namespace toki {
 
@@ -17,8 +17,8 @@ public:
 	Allocator(u64 size, u64 max_free_list_entries = MAX_FREELIST_ENTRY_COUNT):
 		m_total_free_list_entry_count(max_free_list_entries) {
 		m_total_size = size + max_free_list_entries * sizeof(FreeListEntry);
-		m_buffer_start = toki::allocate(m_total_size);
-		m_free_list = reinterpret_cast<FreeListEntry*>(m_buffer_start);
+		m_buffer = toki::allocate(m_total_size);
+		m_free_list = reinterpret_cast<FreeListEntry*>(m_buffer);
 		m_next_free_ptr = m_free_list + max_free_list_entries * sizeof(FreeListEntry);
 		m_last_free_entry = m_free_list;
 	}
@@ -30,20 +30,20 @@ public:
 		if (this != &other) {
 			m_total_free_list_entry_count = other.m_total_free_list_entry_count;
 			m_total_size = other.m_total_size;
-			m_buffer_start = other.m_buffer_start;
+			m_buffer = other.m_buffer;
 			m_free_list = other.m_free_list;
 			m_next_free_ptr = other.m_next_free_ptr;
 			m_last_free_entry = other.m_last_free_entry;
 
-			other.m_buffer_start = nullptr;
+			other.m_buffer = nullptr;
 		}
 
 		return *this;
 	}
 
 	~Allocator() {
-		if (m_buffer_start != nullptr) {
-			toki::deallocate(m_buffer_start);
+		if (m_buffer != nullptr) {
+			toki::deallocate(m_buffer);
 		}
 	}
 
@@ -76,7 +76,7 @@ public:
 		} else {
 ALLOCATE_NEW:
 			TK_ASSERT(
-				ptrdiff(m_next_free_ptr) + size <= ptrdiff(m_buffer_start) + m_total_size,
+				ptrdiff(m_next_free_ptr) + size <= ptrdiff(m_buffer) + m_total_size,
 				"Allocation would overflow buffer");
 
 			u64* allocation_start = reinterpret_cast<u64*>(m_next_free_ptr);
@@ -188,7 +188,7 @@ private:
 		return reinterpret_cast<char*>(ptr) + size;
 	}
 
-	void* m_buffer_start;
+	void* m_buffer;
 	void* m_next_free_ptr;
 	u64 m_total_size{};
 	FreeListEntry* m_free_list;
