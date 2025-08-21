@@ -13,10 +13,10 @@ int main() {
 	}
 
 	char adwdaw[] = "Dawjio";
-	auto string = toki::format(
-		toki::StringView{ "djwao {} ijio {} tee hee\n{}\n{}" }, "koala", 123, true, static_cast<void*>(adwdaw));
-	std::println("{}", string.data());
-	std::println("{}", static_cast<void*>(adwdaw));
+	// auto string = toki::format(
+	// 	toki::StringView{ "djwao {} ijio {} tee hee\n{}\n{}" }, "koala", 123, true, static_cast<void*>(adwdaw));
+	// std::println("{}", string.data());
+	// std::println("{}", static_cast<void*>(adwdaw));
 
-	toki::print(string);
+	toki::print("djwao {} ijio {{}} tee hee\n{{}}\n{{}}", "koala");
 }

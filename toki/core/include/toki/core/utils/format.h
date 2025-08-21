@@ -152,6 +152,8 @@ u32 _format(const char* fmt, char* buf_out, FirstArg&& arg, Args&&... args) {
 					} break;
 					case '{': {
 						buf_out[offset++] = '{';
+						i++;
+						start += 2;
 					} break;
 					case '}': {
 						offset += _dump_single_arg(&buf_out[offset], arg);
@@ -169,8 +171,10 @@ u32 _format(const char* fmt, char* buf_out, FirstArg&& arg, Args&&... args) {
 			} break;
 			case '}': {
 				switch (fmt[i + 1]) {
-					case '{': {
+					case '}': {
 						buf_out[offset++] = '}';
+						i++;
+						start += 2;
 					} break;
 					default:
 						TK_UNREACHABLE();
