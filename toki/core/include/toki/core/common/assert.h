@@ -7,11 +7,10 @@
 
 namespace toki {
 
-#define TK_ASSERT(condition, message, ...)                                                             \
-	if (auto c = condition; !c) {                                                                      \
-		toki::print("Assertion " #condition " failed in file " __FILE__ ":" AS_STRING(__LINE__) "\n"); \
-		/* toki::println(toki::format_string(message __VA_OPT__(, ) __VA_ARGS__).data()); */           \
-		TK_DEBUG_BREAK();                                                                              \
+#define TK_ASSERT(condition, message, ...)                                                               \
+	if (auto c = condition; !c) {                                                                        \
+		toki::print("Assertion '" #condition "' failed in file " __FILE__ ":" AS_STRING(__LINE__) "\n"); \
+		TK_DEBUG_BREAK();                                                                                \
 	}  // namespace toki
 
 }  // namespace toki

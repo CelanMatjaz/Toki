@@ -2,8 +2,7 @@
 #include <toki/core/utils/bytes.h>
 #include <toki/core/utils/format.h>
 #include <toki/core/utils/print.h>
-
-#include <print>
+#include "toki/core/common/assert.h"
 
 int main() {
 	{
@@ -18,5 +17,5 @@ int main() {
 	// std::println("{}", string.data());
 	// std::println("{}", static_cast<void*>(adwdaw));
 
-	toki::print("djwao {} ijio {{}} tee hee\n{{}}\n{{}}", "koala");
+	toki::print("djwao {} ijio {{}} tee hee\n{{}}\n{{}}", "koala", 123);
 }

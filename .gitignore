@@ -8,7 +8,6 @@ build/*
 .obj
 
 **.make
-**/Makefile
 **/*.vcxproj*
 **.sln
 
