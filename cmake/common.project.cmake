@@ -29,15 +29,13 @@ function(add_library_target target dir)
 		${dir}/include/**.h
 	)
 
-	list(FILTER SOURCES EXCLUDE REGEX ".*/src/platform/(win32|linux)/.*")
-
 	function(add_platform_sources target dir)
 		file(GLOB_RECURSE PLATFORM_SOURCES
 			${dir}/src/platform/**.cpp
 			${dir}/include/toki/${target}/platform/**.h
 		)
 		target_sources(${target} PRIVATE ${PLATFORM_SOURCES})
-
+		message( INFO ${PLATFORM_SOURCES})
 	endfunction()
 
 	add_library(${target} STATIC)
@@ -57,9 +55,9 @@ function(add_library_target target dir)
 
 	common_target_options(${target} dir)
 
-		# foreach(s ${SOURCES})
-		# 	message(source ${s})
-		# 	endforeach()
+	# foreach(s ${SOURCES})
+	# 	message(source ${s})
+	# 	endforeach()
 
 endfunction()
 

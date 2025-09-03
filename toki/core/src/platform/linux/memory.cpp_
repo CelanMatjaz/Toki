@@ -1,4 +1,4 @@
-#include "toki/core/platform/memory.h"
+#include "toki/platform/memory.h"
 
 #include <sys/mman.h>
 #include <toki/core/common/assert.h>

@@ -1,9 +1,6 @@
 #pragma once
 
-#include <toki/core.h>
-#include <toki/renderer.h>
-
-#include "layer.h"
+#include <toki/core/common/macros.h>
 
 namespace toki {
 

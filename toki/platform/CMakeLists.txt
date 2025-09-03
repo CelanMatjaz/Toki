@@ -1,9 +1,9 @@
-add_library_target(${CORE_TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR})
+add_library_target(${PLATFORM_TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(${CORE_TARGET_NAME} ${PLATFORM_TARGET_NAME})
+target_link_libraries(${PLATFORM_TARGET_NAME} PRIVATE ${CORE_TARGET_NAME})
 
 if(TOKI_USE_GLFW)
-    target_link_libraries(${CORE_TARGET_NAME} glfw)
+    # target_link_libraries(${PLATFORM_TARGET_NAME} glfw)
     # target_sources(${CORE_TARGET_NAME}
     #     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/platform/glfw_window.cpp)
 endif()
@@ -24,9 +24,9 @@ endif()
 # else()
 #     message(FATAL_ERROR "Platform not supported")
 # endif()
-
-add_pch(
-    ${CORE_TARGET_NAME}
-    ${CMAKE_CURRENT_SOURCE_DIR}/tkpch_core.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/tkpch_core.cpp
-)
+#
+# add_pch(
+#     ${CORE_TARGET_NAME}
+#     ${CMAKE_CURRENT_SOURCE_DIR}/tkpch_core.h
+#     ${CMAKE_CURRENT_SOURCE_DIR}/tkpch_core.cpp
+# )

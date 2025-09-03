@@ -1,7 +1,7 @@
 #include "toki/core/memory/allocator.h"
 
 #include <toki/core/memory/memory.h>
-#include <toki/core/platform/memory.h>
+#include <toki/platform/platform.h>
 
 namespace toki {
 

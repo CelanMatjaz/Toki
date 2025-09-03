@@ -16,6 +16,11 @@ inline T& remove_r_value_ref(T&& value) {
 }
 
 template <typename T>
+inline T& remove_ref(T& value) {
+	return static_cast<T>(value);
+}
+
+template <typename T>
 inline constexpr T&& move(T& v) {
 	return static_cast<T&&>(v);
 }

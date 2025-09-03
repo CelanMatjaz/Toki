@@ -1,7 +1,4 @@
-#include "toki/core/platform/platform.h"
-
-#include <toki/core/common/assert.h>
-#include <unistd.h>
+#include "toki/platform/types.h"
 
 namespace toki {
 

@@ -1,9 +1,7 @@
 #pragma once
 
-#include "core/common.h"
-#include "format.h"
-#include "platform/attributes.h"
-#include "string/string_view.h"
+#include <toki/core/attributes.h>
+#include <toki/core/string/string_view.h>
 
 namespace toki {
 

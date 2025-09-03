@@ -1,21 +1,21 @@
-#include <toki/core/platform/memory.h>
-#include <toki/core/utils/bytes.h>
-#include <toki/core/utils/format.h>
-#include <toki/core/utils/print.h>
-#include "toki/core/common/assert.h"
+#include <toki/core/core.h>
+
+#include "toki/platform/window.h"
 
 int main() {
-	{
-		toki::MemoryConfig memory_config{};
-		memory_config.total_size = toki::GB(1);
-		toki::memory_initialize(memory_config);
+	toki::window_system_initialize();
+
+	toki::WindowConfig window_config{};
+	window_config.title = "Test";
+	window_config.width = 400;
+	window_config.height = 400;
+	window_config.flags = toki::SHOW_ON_CREATE;
+	toki::Window window(window_config);
+
+	while (!window.should_close()) {
+		toki::print("test");
+		toki::window_system_poll_events();
 	}
 
-	char adwdaw[] = "Dawjio";
-	// auto string = toki::format(
-	// 	toki::StringView{ "djwao {} ijio {} tee hee\n{}\n{}" }, "koala", 123, true, static_cast<void*>(adwdaw));
-	// std::println("{}", string.data());
-	// std::println("{}", static_cast<void*>(adwdaw));
-
-	toki::print("djwao {} ijio {{}} tee hee\n{{}}\n{{}}", "koala", 123);
+	toki::window_system_shutdown();
 }
