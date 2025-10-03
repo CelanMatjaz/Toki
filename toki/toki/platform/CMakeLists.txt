@@ -1,0 +1,2 @@
+set(DEPS ${CORE_TARGET_NAME})
+add_library_target(${PLATFORM_TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR} "${DEPS}")

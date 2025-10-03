@@ -1,0 +1,3 @@
+set(DEPS
+	${RUNTIME_TARGET_NAME})
+add_executable_target(${SANDBOX_TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR} "${DEPS}")

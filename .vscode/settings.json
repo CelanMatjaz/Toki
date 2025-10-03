@@ -6,6 +6,20 @@
         "string_view": "cpp",
         "complex": "cpp",
         "format": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "sstream": "cpp",
+        "__hash_table": "cpp",
+        "__tree": "cpp",
+        "deque": "cpp",
+        "hash_map": "cpp",
+        "future": "cpp",
+        "map": "cpp",
+        "memory": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "valarray": "cpp",
+        "*.inc": "cpp",
+        "any": "cpp",
+        "__config": "cpp"
     }
 }
