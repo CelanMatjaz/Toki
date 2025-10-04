@@ -4,7 +4,7 @@
 #include <toki/core/common/type_traits.h>
 #include <toki/core/memory/memory.h>
 #include <toki/core/types.h>
-#include <toki/platform/syscalls.h>
+#include <toki/platform/platform.h>
 
 namespace toki {
 
@@ -12,7 +12,7 @@ class BumpAllocator {
 public:
 	BumpAllocator() = delete;
 
-	BumpAllocator(u64 size): m_data(platform::allocate(size)), m_marker(9) {}
+	BumpAllocator(u64 size): m_data(platform::allocate(size).value_or({})), m_marker(9) {}
 
 	~BumpAllocator() {
 		platform::free(m_data);

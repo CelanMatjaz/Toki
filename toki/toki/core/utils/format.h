@@ -2,8 +2,8 @@
 
 #include <toki/core/attributes.h>
 #include <toki/core/common/common.h>
-#include <toki/core/common/type_traits.h>
 #include <toki/core/common/defines.h>
+#include <toki/core/common/type_traits.h>
 #include <toki/core/string/basic_string.h>
 #include <toki/core/string/string_view.h>
 #include <toki/core/utils/memory.h>
@@ -28,7 +28,7 @@ u32 _format(const char* fmt, char* buf_out, FirstArg&& arg, Args&&... args) {
 		switch (fmt[i]) {
 			case '{': {
 				if ((i - start) > 0) {
-					toki::memcpy(&fmt[start], &buf_out[offset], i - start);
+					toki::memcpy(&buf_out[offset], &fmt[start], i - start);
 					offset += i - start;
 				}
 
@@ -75,7 +75,7 @@ u32 _format(const char* fmt, char* buf_out, FirstArg&& arg, Args&&... args) {
 
 	if constexpr (sizeof...(args) == 0) {
 		if (u32 size = i - start; size > 0) {
-			toki::memcpy(&fmt[start], &buf_out[offset], size);
+			toki::memcpy(&buf_out[offset], &fmt[start], size);
 			offset += size;
 		}
 	}

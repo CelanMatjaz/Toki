@@ -22,15 +22,15 @@ public:
 		derived.reset();
 	}
 
-	explicit UniquePtr(): m_ptr(nullptr) {}
+	constexpr UniquePtr(): m_ptr(nullptr) {}
 
-	explicit UniquePtr(const T*& obj): m_ptr(obj) {}
+	explicit constexpr UniquePtr(const T*& obj): m_ptr(obj) {}
 
-	explicit UniquePtr(T*& obj): m_ptr(obj) {}
+	explicit constexpr UniquePtr(T*& obj): m_ptr(obj) {}
 
-	explicit UniquePtr(T*&& obj): m_ptr(obj) {}
+	explicit constexpr UniquePtr(T*&& obj): m_ptr(obj) {}
 
-	explicit UniquePtr(UniquePtr&& other): m_ptr(other.m_ptr) {
+	explicit constexpr UniquePtr(UniquePtr&& other): m_ptr(other.m_ptr) {
 		other.m_ptr = nullptr;
 	}
 

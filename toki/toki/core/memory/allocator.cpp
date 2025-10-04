@@ -4,9 +4,6 @@
 #include <toki/core/memory/memory.h>
 #include <toki/platform/platform.h>
 
-#include "toki/core/utils/memory.h"
-#include "toki/platform/syscalls.h"
-
 namespace toki {
 
 Allocator::Allocator(u64 size, u64 max_free_list_entries): m_size(size) {
@@ -24,27 +21,42 @@ Allocator::~Allocator() {
 void* Allocator::allocate(u64 size) {
 	TK_ASSERT(m_size > 0);
 	MemorySection* next_free_block = m_firstFreePtr;
+	MemorySection* previous_free_block = next_free_block;
 
-	MemorySection* prev_free_block = next_free_block;
-	while (next_free_block->next != nullptr && next_free_block->size < size) {
-		prev_free_block = next_free_block;
+	// Find first block with required size
+	while (next_free_block->size < size && next_free_block->next != nullptr) {
+		previous_free_block = next_free_block;
 		next_free_block = next_free_block->next;
 	}
 
-	// Last free block
-	if (next_free_block->next == nullptr) {
-		// Round up block to 16 bytes
-		u64ptr next_block = reinterpret_cast<u64ptr>(next_free_block + 1) + size + 15 & static_cast<u64ptr>(~15);
-		u32 asd = reinterpret_cast<toki::byte*>(next_block) - reinterpret_cast<toki::byte*>(next_free_block);
-		next_free_block->size = size;
-		next_free_block->next = reinterpret_cast<MemorySection*>(next_block);
-		*next_free_block->next = {};
-	} else {
-		prev_free_block->next = next_free_block->next;
-	}
-	m_firstFreePtr = next_free_block->next;
+	// First free block has enough space
+	if (next_free_block == m_firstFreePtr) {
+		if (m_firstFreePtr->next == nullptr) {
+			m_firstFreePtr->next =
+				reinterpret_cast<MemorySection*>(reinterpret_cast<u64ptr>(m_firstFreePtr + 1) + size);
+		}
 
-	return reinterpret_cast<void*>(next_free_block + 1);
+		m_firstFreePtr = m_firstFreePtr->next;
+		next_free_block->next = nullptr;
+		return reinterpret_cast<void*>(next_free_block + 1);
+	}
+
+	// No block with required space exist
+	if (next_free_block->next == nullptr) {
+		next_free_block->size = size;
+
+		previous_free_block->next =
+			reinterpret_cast<MemorySection*>(reinterpret_cast<u64ptr>(next_free_block + 1) + size);
+		previous_free_block->next = {};
+
+		next_free_block->next = nullptr;
+		return next_free_block + 1;
+	}
+
+	// Found a block between first and last free block
+	previous_free_block->next = next_free_block->next;
+	next_free_block->next = nullptr;
+	return next_free_block + 1;
 }
 
 void* Allocator::allocate_aligned(u64 size, u64 alignment) {
@@ -68,21 +80,36 @@ void* Allocator::reallocate(void* old, u64 size) {
 	}
 
 	void* new_ptr = allocate(size);
-	toki::memcpy(old, new_ptr, size);
+	toki::memcpy(new_ptr, old, size);
 	free(old);
 	return new_ptr;
 }
 
 void Allocator::free(void* ptr) {
 	MemorySection* block = reinterpret_cast<MemorySection*>(ptr) - 1;
+
+	if (block < m_firstFreePtr) {
+		block->next = m_firstFreePtr;
+		m_firstFreePtr = block;
+		return;
+	}
+
 	MemorySection* free_block = m_firstFreePtr;
 
-	while ((reinterpret_cast<u64ptr>(free_block + 1) + free_block->size) < reinterpret_cast<u64ptr>(block)) {
-		if (free_block->next == nullptr) {
-			break;
-		}
+	// Find first free block before the block to deallocate
+	while (free_block->next != nullptr &&
+		   reinterpret_cast<u64ptr>(free_block) + free_block->size < reinterpret_cast<u64ptr>(block)) {
 		free_block = free_block->next;
 	}
+
+	// The block to deallocate is last in line free block
+	if (free_block->next == nullptr) {
+		block->next = nullptr;
+		free_block->next = block;
+		return;
+	}
+
+	// The block to deallocate is before last free block
 	block->next = free_block->next;
 	free_block->next = block;
 }

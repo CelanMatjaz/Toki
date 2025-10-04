@@ -10,7 +10,7 @@
             "cwd": "${workspaceFolder}",
             "args": ["${workspaceFolder}/toki_sandbox"],
             "linux": {
-                "program": "${workspaceFolder}/build/toki/sandbox/sandbox"
+                "program": "${workspaceFolder}/build/toki/toki/sandbox/sandbox"
             },
             "windows": {
                 "program": "${workspaceFolder}/build/build/bin/Windows-x86_64/Debug/Sandbox"

@@ -23,19 +23,19 @@ public:
 	constexpr BasicString(const T* str):
 		m_size(toki::strlen(str)),
 		m_ptr(static_cast<T*>(AllocatorType::allocate_aligned(m_size * sizeof(T), alignof(T)))) {
-		toki::memcpy(str, m_ptr, m_size * sizeof(T));
+		toki::memcpy(m_ptr, str, m_size * sizeof(T));
 	}
 
 	constexpr BasicString(const T* str, u64 size):
 		m_size(size),
 		m_ptr(static_cast<T*>(AllocatorType::allocate_aligned(m_size * sizeof(T), alignof(T)))) {
-		toki::memcpy(str, m_ptr, m_size * sizeof(T));
+		toki::memcpy(m_ptr, str, m_size * sizeof(T));
 	}
 
 	constexpr BasicString(T* str, u64 size):
 		m_size(size),
 		m_ptr(static_cast<T*>(AllocatorType::allocate_aligned(m_size * sizeof(T), alignof(T)))) {
-		toki::memcpy(str, m_ptr, m_size);
+		toki::memcpy(m_ptr, str, m_size);
 	}
 
 	constexpr BasicString(u64 size, T ch = 0):
@@ -47,7 +47,7 @@ public:
 	constexpr BasicString(const BasicString& other):
 		m_size(other.m_size),
 		m_ptr(static_cast<T*>(AllocatorType::allocate_aligned(other.m_size * sizeof(T), alignof(T)))) {
-		toki::memcpy(other.m_ptr, m_ptr, m_size);
+		toki::memcpy(m_ptr, other.m_ptr, m_size);
 	}
 
 	constexpr BasicString& operator=(const BasicString& other) {

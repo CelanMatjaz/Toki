@@ -23,9 +23,7 @@ Engine::Engine(const EngineConfig& config): m_running(true) {
 	renderer::ShaderLayoutConfig shader_layout_config{};
 	layout = m_renderer->create_shader_layout(shader_layout_config);
 
-	renderer::ColorFormat color_formats[1] {
-		renderer::ColorFormat::RGBA8
-	};
+	renderer::ColorFormat color_formats[1]{ renderer::ColorFormat::RGBA8 };
 
 	renderer::ShaderConfig shader_config{};
 	shader_config.color_formats = color_formats;
@@ -54,8 +52,6 @@ Engine::Engine(const EngineConfig& config): m_running(true) {
 		}
 	)";
 	shader = m_renderer->create_shader(shader_config);
-
-	// m_renderer->attach_window(m_window.get());
 }
 
 Engine::~Engine() {
@@ -69,12 +65,18 @@ void Engine::run() {
 	toki::println("Starting application");
 
 	while (m_running) {
-		++m_frameCount;
-
 		m_renderer->frame_prepare();
-		m_renderer->frame_cleanup();
 
-		return;
+		auto commands = m_renderer->get_commands();
+		commands->begin_pass();
+		commands->bind_shader(shader);
+		commands->draw(3);
+		commands->end_pass();
+
+		m_renderer->submit(commands);
+		m_renderer->present();
+
+		m_renderer->frame_cleanup();
 	}
 }
 

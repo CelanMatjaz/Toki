@@ -2,24 +2,29 @@
 
 #include <toki/renderer/commands.h>
 
+#include "toki/renderer/private/vulkan/vulkan_resources.h"
+#include "toki/renderer/private/vulkan/vulkan_state.h"
+#include "toki/renderer/private/vulkan/vulkan_types.h"
+
 namespace toki::renderer {
 
 class VulkanCommands : public Commands {
 	friend class VulkanBackend;
 
-private:
+public:
 	VulkanCommands() = delete;
-	VulkanCommands(VkCommandBuffer cmd): m_cmd(cmd) {}
+	VulkanCommands(const VulkanState* state, VulkanCommandBuffer cmd);
 
 public:
 	virtual void begin_pass() override;
 	virtual void end_pass() override;
 
-	virtual void bind_shader(const ShaderHandle& handle) override;
+	virtual void bind_shader(ShaderHandle handle) override;
 	virtual void draw(u32 vertex_count) override;
 
 private:
-	VkCommandBuffer m_cmd;
+	const VulkanState* m_state;
+	VulkanCommandBuffer m_cmd;
 };
 
 }  // namespace toki::renderer

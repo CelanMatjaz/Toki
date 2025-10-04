@@ -24,8 +24,9 @@ inline const char* LOG_LEVEL_STRINGS[] = {
 #undef X
 };
 
-#define _LOG_PRINT(level, ...) \
-	toki::println(toki::LOG_LEVEL_STRINGS[static_cast<toki::u32>(toki::LogLevel::level)] __VA_OPT__(, ) __VA_ARGS__)
+#define _LOG_PRINT(level, str, ...) \
+	toki::println(                  \
+		"{} " str, toki::LOG_LEVEL_STRINGS[static_cast<toki::u32>(toki::LogLevel::level)] __VA_OPT__(, ) __VA_ARGS__)
 
 #if defined(LOG_INFO_OFF) || defined(LOGGING_OFF)
 	#define TK_LOG_INFO(message, ...)

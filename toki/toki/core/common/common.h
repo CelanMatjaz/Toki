@@ -4,7 +4,7 @@
 
 namespace toki {
 
-#define ARRAY_SIZE(array) sizeof(array) / sizeof(array[0])
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
 template <typename T>
 inline T& remove_r_value_ref(T&& value) {

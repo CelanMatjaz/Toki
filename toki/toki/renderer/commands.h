@@ -9,7 +9,7 @@ public:
 	virtual void begin_pass() = 0;
 	virtual void end_pass() = 0;
 
-	virtual void bind_shader(const ShaderHandle& handle) = 0;
+	virtual void bind_shader(ShaderHandle handle) = 0;
 	virtual void draw(u32 vertex_count) = 0;
 };
 

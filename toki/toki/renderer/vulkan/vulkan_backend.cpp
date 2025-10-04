@@ -7,62 +7,98 @@
 #include <vulkan/vulkan_core.h>
 
 #include "toki/core/common/assert.h"
-#include "toki/core/utils/memory.h"
+#include "toki/core/utils/bytes.h"
+#include "toki/renderer/private/vulkan/vulkan_resources_utils.h"
+#include "toki/renderer/types.h"
 
 namespace toki::renderer {
 
-VulkanBackend* VulkanBackend::get() {
-	return s_ptr;
-}
-
 VulkanBackend::VulkanBackend(const RendererConfig& config): Renderer(config) {
-	TK_ASSERT(s_ptr == nullptr);
-	s_ptr = this;
-
-	initialize_instance();
-	initialize_device(config.window);
-	initialize_command_pool();
-	initialize_command_buffers();
-	initialize_frames();
+	initialize(config);
 }
 
 VulkanBackend::~VulkanBackend() {
 	cleanup();
+}
 
-	s_ptr = nullptr;
+void VulkanBackend::initialize(const RendererConfig& config) {
+	initialize_instance();
+	initialize_device(config.window);
+
+	// Important to query device speific data BEFORE creating resources
+	vkGetPhysicalDeviceMemoryProperties(m_state.physical_device, &m_state.physical_device_memory_properties);
+
+	m_state.frames = VulkanFrames::create(m_state);
+
+	VulkanSwapchainConfig swapchain_config{};
+	swapchain_config.window = config.window;
+	m_state.swapchain = VulkanSwapchain::create(swapchain_config, m_state);
+
+	VulkanCommandPoolConfig command_pool_config{};
+	m_state.command_pool = VulkanCommandPool::create(command_pool_config, m_state);
+	m_state.temporary_command_pool = VulkanCommandPool::create(command_pool_config, m_state);
+
+	StagingBufferConfig staging_buffer_config{};
+	staging_buffer_config.size = toki::MB(500);
+	m_state.staging_buffer = VulkanStagingBuffer::create(staging_buffer_config, m_state);
+
+	auto command_buffers = m_state.command_pool.allocate_command_buffers(m_state, 1);
+	m_tempCommands = make_unique<VulkanCommands>(&m_state, command_buffers[0]);
+	m_toSubmitCommands.resize(1);
 }
 
 void VulkanBackend::cleanup() {
-	vkDeviceWaitIdle(m_state.device);
+	vkDeviceWaitIdle(m_state.logical_device);
 
-	for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		vkDestroyFence(m_state.device, m_resources.frames.in_flight_fences[i], m_state.allocation_callbacks);
-		vkDestroySemaphore(
-			m_state.device, m_resources.frames.image_available_semaphores[i], m_state.allocation_callbacks);
-		vkDestroySemaphore(
-			m_state.device, m_resources.frames.render_finished_semaphores[i], m_state.allocation_callbacks);
-	}
+	m_state.staging_buffer.destroy(m_state);
+	m_state.command_pool.destroy(m_state);
+	m_state.temporary_command_pool.destroy(m_state);
+	m_state.frames.destroy(m_state);
+	m_state.swapchain.destroy(m_state);
 
-	vkDestroyCommandPool(m_state.device, m_resources.temporary_command_pool, m_state.allocation_callbacks);
-	vkDestroyCommandPool(m_state.device, m_resources.command_pool, m_state.allocation_callbacks);
-
-	for (u32 i = 0; i < m_windowStates.size(); ++i) {
-		m_windowStates[i].cleanup(m_state);
-	}
-
-	m_state.cleanup();
+	vkDestroyDevice(m_state.logical_device, m_state.allocation_callbacks);
+	vkDestroyInstance(m_state.instance, m_state.allocation_callbacks);
 }
 
-void VulkanBackend::attach_window(platform::Window* window) {
-	TK_ASSERT(window != nullptr);
+void VulkanBackend::frame_prepare() {
+	m_tempCommands->m_cmd.begin(m_state);
 
-	m_windowStates.emplace_back({});
-	window->set_renderer_pointer(reinterpret_cast<void*>(m_windowStates.size() - 1));
+	m_state.frames.frame_prepare(m_state);
 
-	SwapchainConfig swapchain_config{};
-	swapchain_config.window_state_index = m_windowStates.size() - 1;
-	swapchain_config.window = window;
-	create_swapchain(swapchain_config);
+	m_state.swapchain.get_current_image().transition_layout(
+		reinterpret_cast<VulkanCommands*>(get_commands())->m_cmd,
+		VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+}
+
+void VulkanBackend::frame_cleanup() {
+	m_state.frames.frame_cleanup(m_state);
+}
+
+void VulkanBackend::submit(Commands* commands) {
+	m_toSubmitCommands[0] = reinterpret_cast<VulkanCommands*>(commands);
+}
+
+void VulkanBackend::present() {
+	m_state.swapchain.get_current_image().transition_layout(
+		reinterpret_cast<VulkanCommands*>(get_commands())->m_cmd,
+		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+	m_toSubmitCommands[0]->m_cmd.end(m_state);
+	VulkanCommandBuffer command_buffers[] = { m_toSubmitCommands[0]->m_cmd };
+
+	m_state.frames.submit(m_state, command_buffers);
+
+	if (m_toSubmitCommands.size() == 0) {
+		return;
+	}
+
+	m_state.frames.frame_present(m_state);
+}
+
+Commands* VulkanBackend::get_commands() {
+	return m_tempCommands.get();
 }
 
 void VulkanBackend::initialize_instance() {
@@ -90,10 +126,10 @@ void VulkanBackend::initialize_instance() {
 
 #if defined(TK_WINDOW_SYSTEM_GLFW)
 	u32 glfw_extension_count{};
-	const char** glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+	const char* const* glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
 
 	TempDynamicArray<const char*> instance_extensions(glfw_extension_count);
-	toki::memcpy(glfw_extensions, instance_extensions.data(), instance_extensions.size() * sizeof(const char*));
+	toki::memcpy(instance_extensions.data(), glfw_extensions, instance_extensions.size() * sizeof(const char*));
 
 	instance_create_info.enabledExtensionCount = instance_extensions.size();
 	instance_create_info.ppEnabledExtensionNames = instance_extensions.data();
@@ -141,7 +177,8 @@ void VulkanBackend::initialize_instance() {
 }
 
 void VulkanBackend::initialize_device(platform::Window* window) {
-	VkSurfaceKHR surface = create_surface(window);
+	m_window = window;
+	VkSurfaceKHR surface = create_surface(m_state, window);
 
 	u32 physical_device_count;
 	vkEnumeratePhysicalDevices(m_state.instance, &physical_device_count, nullptr);
@@ -153,59 +190,59 @@ void VulkanBackend::initialize_device(platform::Window* window) {
 		vkGetPhysicalDeviceProperties(physical_devices[i], &physical_device_properties);
 	}
 
-	m_state.device.physical_device = physical_devices[0];
+	m_state.physical_device = physical_devices[0];
 
 	u32 queue_family_count;
-	vkGetPhysicalDeviceQueueFamilyProperties(m_state.device, &queue_family_count, nullptr);
+	vkGetPhysicalDeviceQueueFamilyProperties(m_state.physical_device, &queue_family_count, nullptr);
 	TempDynamicArray<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
-	vkGetPhysicalDeviceQueueFamilyProperties(m_state.device, &queue_family_count, queue_family_properties.data());
+	vkGetPhysicalDeviceQueueFamilyProperties(
+		m_state.physical_device, &queue_family_count, queue_family_properties.data());
 
 	VkBool32 supports_present = false;
 
-	m_state.device.indices[GRAPHICS_FAMILY_INDEX] = static_cast<u32>(-1);
-	m_state.device.indices[PRESENT_FAMILY_INDEX] = static_cast<u32>(-1);
+	m_state.indices[GRAPHICS_FAMILY_INDEX] = static_cast<u32>(-1);
+	m_state.indices[PRESENT_FAMILY_INDEX] = static_cast<u32>(-1);
 
 	for (u32 i = 0; i < queue_family_properties.size(); ++i) {
-		if (m_state.device.indices[PRESENT_FAMILY_INDEX] != static_cast<u32>(-1) &&
-			m_state.device.indices[GRAPHICS_FAMILY_INDEX] != static_cast<u32>(-1)) {
+		if (m_state.indices[PRESENT_FAMILY_INDEX] != static_cast<u32>(-1) &&
+			m_state.indices[GRAPHICS_FAMILY_INDEX] != static_cast<u32>(-1)) {
 			break;
 		}
 
 		if ((queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) &&
-			m_state.device.indices[PRESENT_FAMILY_INDEX] == static_cast<u32>(-1)) {
-			m_state.device.indices[GRAPHICS_FAMILY_INDEX] = i;
+			m_state.indices[PRESENT_FAMILY_INDEX] == static_cast<u32>(-1)) {
+			m_state.indices[GRAPHICS_FAMILY_INDEX] = i;
 			continue;
 		}
 
-		vkGetPhysicalDeviceSurfaceSupportKHR(m_state.device, i, surface, &supports_present);
-		if (supports_present && m_state.device.indices[PRESENT_FAMILY_INDEX] == static_cast<u32>(-1)) {
-			m_state.device.indices[PRESENT_FAMILY_INDEX] = i;
+		vkGetPhysicalDeviceSurfaceSupportKHR(m_state.physical_device, i, surface, &supports_present);
+		if (supports_present && m_state.indices[PRESENT_FAMILY_INDEX] == static_cast<u32>(-1)) {
+			m_state.indices[PRESENT_FAMILY_INDEX] = i;
 			continue;
 		}
 	}
 
 	TK_ASSERT(
-		m_state.device.indices[PRESENT_FAMILY_INDEX] != static_cast<u32>(-1) &&
-		m_state.device.indices[GRAPHICS_FAMILY_INDEX] != static_cast<u32>(-1));
+		m_state.indices[PRESENT_FAMILY_INDEX] != static_cast<u32>(-1) &&
+		m_state.indices[GRAPHICS_FAMILY_INDEX] != static_cast<u32>(-1));
 
-	b8 is_same_queue_family =
-		m_state.device.indices[GRAPHICS_FAMILY_INDEX] == m_state.device.indices[PRESENT_FAMILY_INDEX];
+	b8 is_same_queue_family = m_state.indices[GRAPHICS_FAMILY_INDEX] == m_state.indices[PRESENT_FAMILY_INDEX];
 
 	f32 queue_priority = 1.0f;
 
 	TempDynamicArray<VkDeviceQueueCreateInfo> queue_create_infos(2);
 	for (u32 i = 0; i < queue_create_infos.size(); i++) {
 		queue_create_infos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-		queue_create_infos[i].queueFamilyIndex = m_state.device.indices[i];
+		queue_create_infos[i].queueFamilyIndex = m_state.indices[i];
 		queue_create_infos[i].queueCount = 1;
 		queue_create_infos[i].pQueuePriorities = &queue_priority;
 	}
 
 	u32 device_extension_count;
-	vkEnumerateDeviceExtensionProperties(m_state.device, nullptr, &device_extension_count, nullptr);
+	vkEnumerateDeviceExtensionProperties(m_state.physical_device, nullptr, &device_extension_count, nullptr);
 	TempDynamicArray<VkExtensionProperties> queried_device_extensions(device_extension_count);
 	vkEnumerateDeviceExtensionProperties(
-		m_state.device, nullptr, &device_extension_count, queried_device_extensions.data());
+		m_state.physical_device, nullptr, &device_extension_count, queried_device_extensions.data());
 
 	TempStaticArray<const char*, 1> device_extensions(static_cast<const char*>(VK_KHR_SWAPCHAIN_EXTENSION_NAME));
 	// for (u32 i = 0; i < device_extensions.size(); i++) {
@@ -228,63 +265,30 @@ void VulkanBackend::initialize_device(platform::Window* window) {
 	device_create_info.ppEnabledExtensionNames = device_extensions.data();
 
 	VkResult result = vkCreateDevice(
-		m_state.device, &device_create_info, m_state.allocation_callbacks, &m_state.device.logical_device);
+		m_state.physical_device, &device_create_info, m_state.allocation_callbacks, &m_state.logical_device);
 	TK_ASSERT(result == VK_SUCCESS, "Could not create Vulkan device");
 
-	vkGetDeviceQueue(m_state.device, m_state.device.indices[GRAPHICS_FAMILY_INDEX], 0, &m_state.device.graphics_queue);
-	vkGetDeviceQueue(m_state.device, m_state.device.indices[PRESENT_FAMILY_INDEX], 0, &m_state.device.present_queue);
-
 	vkDestroySurfaceKHR(m_state.instance, surface, m_state.allocation_callbacks);
+
+	vkGetDeviceQueue(m_state.logical_device, m_state.indices[GRAPHICS_FAMILY_INDEX], 0, &m_state.graphics_queue);
+	vkGetDeviceQueue(m_state.logical_device, m_state.indices[PRESENT_FAMILY_INDEX], 0, &m_state.present_queue);
 }
 
-void VulkanBackend ::initialize_command_pool() {
-	VkCommandPoolCreateInfo command_pool_create_info{};
-	command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	command_pool_create_info.queueFamilyIndex = m_state.device.indices[GRAPHICS_FAMILY_INDEX];
-
-	VkResult result = vkCreateCommandPool(
-		m_state.device, &command_pool_create_info, m_state.allocation_callbacks, &m_resources.command_pool);
-	TK_ASSERT(result == VK_SUCCESS);
-
-	result = vkCreateCommandPool(
-		m_state.device, &command_pool_create_info, m_state.allocation_callbacks, &m_resources.temporary_command_pool);
-	TK_ASSERT(result == VK_SUCCESS);
+ShaderHandle VulkanBackend::create_shader(const ShaderConfig& config) {
+	return { m_state.shaders.emplace_at_first(VulkanShader::create(config, m_state)) };
 }
 
-void VulkanBackend::initialize_command_buffers() {
-	uint32_t count = 1;
-	m_resources.command_buffers = allocate_command_buffers(count, m_resources.command_pool);
+ShaderLayoutHandle VulkanBackend::create_shader_layout(const ShaderLayoutConfig& config) {
+	return { m_state.shader_layouts.emplace_at_first(VulkanShaderLayout::create(config, m_state)) };
 }
 
-void VulkanBackend::initialize_frames() {
-	VkFenceCreateInfo fence_create_info{};
-	fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-	fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+void VulkanBackend::destroy_handle(ShaderHandle shader_handle) {
+	TK_ASSERT(m_state.shaders.exists(shader_handle));
+	m_state.shaders.at(shader_handle).destroy(m_state);
+}
 
-	VkSemaphoreCreateInfo semaphore_create_info{};
-	semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-	VkResult result = VK_SUCCESS;
-	for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		result = vkCreateFence(
-			m_state.device, &fence_create_info, m_state.allocation_callbacks, &m_resources.frames.in_flight_fences[i]);
-		TK_ASSERT(result == VK_SUCCESS);
-
-		result = vkCreateSemaphore(
-			m_state.device,
-			&semaphore_create_info,
-			m_state.allocation_callbacks,
-			&m_resources.frames.image_available_semaphores[i]);
-		TK_ASSERT(result == VK_SUCCESS);
-
-		result = vkCreateSemaphore(
-			m_state.device,
-			&semaphore_create_info,
-			m_state.allocation_callbacks,
-			&m_resources.frames.render_finished_semaphores[i]);
-		TK_ASSERT(result == VK_SUCCESS);
-	}
+void VulkanBackend::destroy_handle(ShaderLayoutHandle shader_layout_handle) {
+	m_state.shaders.at(shader_layout_handle).destroy(m_state);
 }
 
 }  // namespace toki::renderer

@@ -61,8 +61,16 @@ public:
 		return m_data;
 	}
 
+	constexpr T* data() {
+		return const_cast<T*>(m_data);
+	}
+
 	const T& operator[](u64 index) const {
 		return m_data[index];
+	}
+
+	T& operator[](u64 index) {
+		return const_cast<T*>(m_data)[index];
 	}
 
 private:

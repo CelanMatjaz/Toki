@@ -2,7 +2,7 @@
 
 #include <toki/core/common/assert.h>
 #include <toki/core/utils/format.h>
-#include <toki/platform/platform.h>
+#include <toki/platform/syscalls.h>
 
 namespace toki {
 

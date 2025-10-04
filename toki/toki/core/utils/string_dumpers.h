@@ -15,7 +15,7 @@ template <>
 struct StringDumper<char*> {
 	static constexpr u32 dump_to_string(char* out, const char* arg) {
 		u64 length = toki::strlen(arg);
-		toki::memcpy(arg, out, toki::strlen(arg));
+		toki::memcpy(out, arg, toki::strlen(arg));
 		return length;
 	}
 };
@@ -36,10 +36,10 @@ template <>
 struct StringDumper<bool> {
 	static constexpr u32 dump_to_string(char* out, const bool arg) {
 		if (arg) {
-			toki::memcpy(TRUE_STR, out, strlen(TRUE_STR));
+			toki::memcpy(out, TRUE_STR, strlen(TRUE_STR));
 			return strlen(TRUE_STR);
 		} else {
-			toki::memcpy(FALSE_STR, out, strlen(FALSE_STR));
+			toki::memcpy(out, FALSE_STR, strlen(FALSE_STR));
 			return strlen(FALSE_STR);
 		}
 	}

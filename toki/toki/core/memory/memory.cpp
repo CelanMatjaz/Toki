@@ -42,7 +42,7 @@ void* DefaultAllocator::reallocate_aligned(void* ptr, u64 size, u64 alignment) {
 	if (ptr == nullptr) {
 		return new_ptr;
 	}
-	toki::memcpy(ptr, new_ptr, size);
+	toki::memcpy(new_ptr, ptr, size);
 	return new_ptr;
 }
 

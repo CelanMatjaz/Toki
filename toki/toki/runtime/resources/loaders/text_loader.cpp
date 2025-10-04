@@ -2,7 +2,8 @@
 
 namespace toki::resources {
 
-toki::String read_text_file(Path path) {
+template <>
+toki::String Loader<LoaderType::Text, toki::String, toki::Span<byte>>::read(const Path& path) {
 	return {};
 }
 

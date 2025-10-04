@@ -7,8 +7,9 @@
 namespace toki::renderer {
 
 struct ShaderHandle : public Handle {};
-
 struct ShaderLayoutHandle : public Handle {};
+struct BufferHandle : public Handle {};
+struct TextureHandle : public Handle {};
 
 enum struct ColorFormat : u16 {
 	NONE,
@@ -130,6 +131,13 @@ struct ShaderOptions {
 struct ShaderBindingConfig {
 	u32 binding;
 };
+
+struct BufferConfig {
+	u64 size;
+	BufferType type;
+};
+
+struct TextureConfig {};
 
 struct ShaderLayoutConfig {};
 

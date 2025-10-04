@@ -147,6 +147,16 @@ public:
 		return;
 	}
 
+	constexpr void clear() {
+		if constexpr (CHasDestructor<T>) {
+			for (u32 i = 0; i < m_size; i++) {
+				toki::destroy_at<T>(&m_data[i]);
+			}
+		}
+
+		m_size = 0;
+	}
+
 private:
 	constexpr void reallocate(u64 new_capacity) {
 		m_data = reinterpret_cast<T*>(AllocatorType::reallocate(m_data, new_capacity * sizeof(T)));
