@@ -128,7 +128,7 @@ public:
 	template <typename... Args>
 	constexpr void emplace_back(Args&&... args) {
 		if (m_size >= m_capacity) {
-			reallocate(growth_factor * m_capacity);
+			reallocate(toki::max<u64>(growth_factor * m_capacity, 1));
 		}
 
 		toki::construct_at<T>(&m_data[m_size], toki::forward<Args>(args)...);
@@ -140,7 +140,7 @@ public:
 
 	constexpr void emplace_back(T&& value) {
 		if (m_size >= m_capacity) {
-			reallocate(growth_factor * m_capacity);
+			reallocate(toki::max<u64>(growth_factor * m_capacity, 1));
 		}
 
 		m_data[m_size++] = toki::move(value);

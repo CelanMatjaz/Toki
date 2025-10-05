@@ -85,8 +85,8 @@ void VulkanBackend::present() {
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-	m_toSubmitCommands[0]->m_cmd.end(m_state);
-	VulkanCommandBuffer command_buffers[] = { m_toSubmitCommands[0]->m_cmd };
+	reinterpret_cast<VulkanCommands*>(get_commands())->m_cmd.end(m_state);
+	VulkanCommandBuffer command_buffers[] = { reinterpret_cast<VulkanCommands*>(get_commands())->m_cmd };
 
 	m_state.frames.submit(m_state, command_buffers);
 
@@ -288,7 +288,8 @@ void VulkanBackend::destroy_handle(ShaderHandle shader_handle) {
 }
 
 void VulkanBackend::destroy_handle(ShaderLayoutHandle shader_layout_handle) {
-	m_state.shaders.at(shader_layout_handle).destroy(m_state);
+	TK_ASSERT(m_state.shader_layouts.exists(shader_layout_handle));
+	m_state.shader_layouts.at(shader_layout_handle).destroy(m_state);
 }
 
 }  // namespace toki::renderer

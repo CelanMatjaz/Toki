@@ -11,6 +11,7 @@
 
 #include "toki/core/attributes.h"
 #include "toki/core/common/common.h"
+#include "toki/core/common/log.h"
 
 namespace toki::renderer {
 
@@ -26,6 +27,7 @@ VulkanSwapchain VulkanSwapchain::create(const VulkanSwapchainConfig& config, con
 	swapchain.m_presentModes = query_present_modes(state, swapchain.m_surface);
 	swapchain.m_surfaceFormat = query_surface_formats(state, swapchain.m_surface);
 	swapchain.m_extent = query_surface_extent(surface_capabilities);
+	swapchain.m_extent = { 800, 600 };
 
 	swapchain.recreate(state);
 
@@ -37,6 +39,7 @@ void VulkanSwapchain::destroy(const VulkanState& state) {
 		m_images[i].destroy(state);
 	}
 	vkDestroySwapchainKHR(state.logical_device, m_swapchain, state.allocation_callbacks);
+	vkDestroySurfaceKHR(state.instance, m_surface, state.allocation_callbacks);
 }
 
 void VulkanSwapchain::recreate(const VulkanState& state) {
@@ -342,7 +345,7 @@ VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState&
 	VkPipelineColorBlendAttachmentState color_blend_attachment_state{};
 	color_blend_attachment_state.colorWriteMask =
 		VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	color_blend_attachment_state.blendEnable = VK_TRUE;	 // TODO: enable blending
+	color_blend_attachment_state.blendEnable = VK_FALSE;
 	color_blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 	color_blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 	color_blend_attachment_state.colorBlendOp = VK_BLEND_OP_ADD;
@@ -351,7 +354,8 @@ VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState&
 	color_blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
 
 	TempDynamicArray<VkPipelineColorBlendAttachmentState> color_blend_attachment_states;
-	color_blend_attachment_states.emplace_back(color_blend_attachment_state);
+	color_blend_attachment_states.resize(1);
+	color_blend_attachment_states[0] = color_blend_attachment_state;
 
 	VkPipelineColorBlendStateCreateInfo color_blend_state_create_info{};
 	color_blend_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -387,6 +391,7 @@ VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState&
 	for (u32 i = 0; i < formats.size(); i++) {
 		formats[i] = map_color_format(config.color_formats[i]);
 	}
+	formats[0] = state.swapchain;
 
 	VkPipelineRenderingCreateInfoKHR pipeline_rendering_craete_info{};
 	pipeline_rendering_craete_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
@@ -397,6 +402,7 @@ VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState&
 
 	VkGraphicsPipelineCreateInfo graphics_pipeline_create_info{};
 	graphics_pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	graphics_pipeline_create_info.pNext = &pipeline_rendering_craete_info;
 	graphics_pipeline_create_info.stageCount = shader_stage_create_infos.size();
 	graphics_pipeline_create_info.pStages = shader_stage_create_infos;
 	graphics_pipeline_create_info.pVertexInputState = &vertex_input_state_create_info;
@@ -518,14 +524,19 @@ void VulkanTexture::transition_layout(VulkanCommandBuffer cmd, VkImageLayout old
 	VkPipelineStageFlags src_stage = 0;
 	VkPipelineStageFlags dst_stage = 0;
 
-	if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+	if (old_layout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR && new_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
 		barrier.srcAccessMask = 0;
 		barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		src_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		dst_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	} else if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		dst_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	} else if (
 		old_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
-		barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		barrier.dstAccessMask = 0;
 		src_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		dst_stage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
@@ -546,7 +557,7 @@ WrappedVulkanTexture::WrappedVulkanTexture(const VulkanState& state, VkImage ima
 }
 
 void WrappedVulkanTexture::destroy(const VulkanState& state) {
-	m_texture.destroy(state);
+	vkDestroyImageView(state.logical_device, m_texture.m_imageView, state.allocation_callbacks);
 }
 
 VulkanStagingBuffer VulkanStagingBuffer::create(const StagingBufferConfig& config, const VulkanState& state) {
@@ -724,29 +735,19 @@ VulkanFrames VulkanFrames::create(const VulkanState& state) {
 	return vulkan_frames;
 }
 
-void VulkanFrames::destroy(const VulkanState& state) {}
+void VulkanFrames::destroy(const VulkanState& state) {
+	for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		vkDestroySemaphore(state.logical_device, m_renderFinishedSemaphores[i], state.allocation_callbacks);
+		vkDestroySemaphore(state.logical_device, m_imageAvailableSemaphores[i], state.allocation_callbacks);
+		vkDestroyFence(state.logical_device, m_inFlightFences[i], state.allocation_callbacks);
+	}
+}
 
 void VulkanFrames::frame_prepare(VulkanState& state) {
 	vkWaitForFences(state.logical_device, 1, &m_inFlightFences[m_currentFrame], VK_TRUE, ~0);
 	vkResetFences(state.logical_device, 1, &m_inFlightFences[m_currentFrame]);
 
 	state.swapchain.acquire_next_image(state);
-}
-
-void VulkanFrames::frame_present(VulkanState& state) {
-	VkSemaphore signal_semaphores[] = { get_render_finished_semaphore() };
-	VkSwapchainKHR swapchains[] = { state.swapchain.m_swapchain };
-
-	VkPresentInfoKHR present_info{};
-	present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	present_info.waitSemaphoreCount = 1;
-	present_info.pWaitSemaphores = signal_semaphores;
-	present_info.swapchainCount = 1;
-	present_info.pSwapchains = swapchains;
-	present_info.pImageIndices = &state.swapchain.m_currentImageIndex;
-
-	VkResult result = vkQueuePresentKHR(state.present_queue, &present_info);
-	TK_ASSERT(result == VK_SUCCESS);
 }
 
 void VulkanFrames::frame_cleanup(VulkanState& state) {
@@ -799,6 +800,22 @@ b8 VulkanFrames::submit(const VulkanState& state, toki::Span<VulkanCommandBuffer
 	TK_ASSERT(result == VK_SUCCESS);
 
 	return true;
+}
+
+void VulkanFrames::frame_present(VulkanState& state) {
+	VkSemaphore signal_semaphores[] = { get_render_finished_semaphore() };
+	VkSwapchainKHR swapchains[] = { state.swapchain.m_swapchain };
+
+	VkPresentInfoKHR present_info{};
+	present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	present_info.waitSemaphoreCount = 1;
+	present_info.pWaitSemaphores = signal_semaphores;
+	present_info.swapchainCount = 1;
+	present_info.pSwapchains = swapchains;
+	present_info.pImageIndices = &state.swapchain.m_currentImageIndex;
+
+	VkResult result = vkQueuePresentKHR(state.present_queue, &present_info);
+	TK_ASSERT(result == VK_SUCCESS);
 }
 
 VkSemaphore VulkanFrames::get_image_available_semaphore() const {

@@ -25,6 +25,10 @@ public:
 
 	VulkanTexture& get_current_image() const;
 
+	operator VkFormat() const {
+		return m_surfaceFormat.format;
+	}
+
 private:
 	VkSwapchainKHR m_swapchain;
 	VkSwapchainKHR m_oldSwapchain;

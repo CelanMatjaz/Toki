@@ -16,25 +16,24 @@ void VulkanCommands::begin_pass() {
 	rendering_attachment_info.resolveMode = VK_RESOLVE_MODE_NONE;
 	rendering_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	rendering_attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	rendering_attachment_info.clearValue = {};
 
 	VkRenderingInfo rendering_info{};
 	rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
 	rendering_info.colorAttachmentCount = 1;
 	rendering_info.pColorAttachments = &rendering_attachment_info;
-	rendering_info.renderArea = VkRect2D{ { 0, 0 }, { 400, 400 } };
+	rendering_info.renderArea = VkRect2D{ { 0, 0 }, { 800, 600 } };
 	rendering_info.layerCount = 1;
 	vkCmdBeginRendering(m_cmd, &rendering_info);
 
 	VkViewport viewport{};
-	viewport.height = 400;
-	viewport.width = 400;
+	viewport.width = 800;
+	viewport.height = 600;
 	viewport.maxDepth = 1.0;
 	vkCmdSetViewport(m_cmd, 0, 1, &viewport);
 
 	VkRect2D scissor{};
 	scissor.offset = { 0, 0 };
-	scissor.extent = { 400, 400 };
+	scissor.extent = { 800, 600 };
 	vkCmdSetScissor(m_cmd, 0, 1, &scissor);
 }
 
