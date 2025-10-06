@@ -46,6 +46,7 @@ VkDeviceMemory allocate_device_memory(const MemoryAllocateConfig& config, const 
 
 	VkResult result =
 		vkAllocateMemory(state.logical_device, &memory_allocate_info, state.allocation_callbacks, &device_memory);
+	TK_ASSERT(result == VK_SUCCESS);
 
 	return device_memory;
 }
@@ -65,9 +66,9 @@ u32 find_memory_type(
 VkBufferUsageFlags get_buffer_usage_flags(BufferType type) {
 	switch (type) {
 		case BufferType::VERTEX:
-			return VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+			return VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 		case BufferType::INDEX:
-			return VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+			return VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 		case BufferType::UNIFORM:
 			return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 		default:
@@ -159,7 +160,7 @@ VkExtent2D query_surface_extent(VkSurfaceCapabilitiesKHR surface_capabilities) {
 		return surface_capabilities.currentExtent;
 	}
 
-	auto calculated_extent = convert_to<VkExtent2D>(Vec2u32{400, 400});
+	auto calculated_extent = convert_to<VkExtent2D>(Vec2u32{ 400, 400 });
 	calculated_extent.width = toki::clamp(
 		calculated_extent.width, surface_capabilities.minImageExtent.width, surface_capabilities.maxImageExtent.width);
 	calculated_extent.height = toki::clamp(

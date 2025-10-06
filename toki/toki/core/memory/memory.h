@@ -7,11 +7,8 @@
 
 #else
 
-inline void* operator new(unsigned long, void* p) noexcept {
-	return p;
-}
-
-inline void operator delete(void*, void*) noexcept {}
+void* operator new(unsigned long, void* p) noexcept;
+void operator delete(void*, void*);
 
 #endif
 

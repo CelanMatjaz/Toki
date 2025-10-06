@@ -4,11 +4,11 @@
 
 #include "toki/renderer/private/vulkan/vulkan_resources.h"
 #include "toki/renderer/private/vulkan/vulkan_state.h"
-#include "toki/renderer/private/vulkan/vulkan_types.h"
 
 namespace toki::renderer {
 
 class VulkanCommands : public Commands {
+	friend class Renderer;
 	friend class VulkanBackend;
 
 public:

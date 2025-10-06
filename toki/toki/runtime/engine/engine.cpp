@@ -1,9 +1,7 @@
 #include "toki/runtime/engine/engine.h"
+#include "toki/core/common/common.h"
 
 namespace toki::runtime {
-
-renderer::ShaderHandle shader;
-renderer::ShaderLayoutHandle layout;
 
 Engine::Engine(const EngineConfig& config): m_running(true) {
 	TK_ASSERT(s_runtime == nullptr);
@@ -19,59 +17,9 @@ Engine::Engine(const EngineConfig& config): m_running(true) {
 	renderer::RendererConfig renderer_config{};
 	renderer_config.window = m_window.get();
 	m_renderer = renderer::Renderer::create(renderer_config);
-
-	renderer::ShaderLayoutConfig shader_layout_config{};
-	layout = m_renderer->create_shader_layout(shader_layout_config);
-
-	renderer::ColorFormat color_formats[1]{ renderer::ColorFormat::RGBA8 };
-
-	renderer::ShaderConfig shader_config{};
-	shader_config.color_formats = color_formats;
-	shader_config.layout_handle = layout;
-	shader_config.options.front_face = renderer::FrontFace::CLOCKWISE;
-	shader_config.options.primitive_topology = renderer::PrimitiveTopology::TRIANGLE_LIST;
-	shader_config.options.polygon_mode = renderer::PolygonMode::FILL;
-	shader_config.options.cull_mode = renderer::CullMode::NONE;
-	shader_config.sources[renderer::ShaderStage::SHADER_STAGE_VERTEX] = R"(
-		#version 450
-
-		layout(location = 0) out vec3 fragColor;
-
-		vec2 positions[3] = vec2[](
-			vec2(0.0, -0.5),
-			vec2(0.5, 0.5),
-			vec2(-0.5, 0.5)
-		);
-
-		vec3 colors[3] = vec3[](
-			vec3(1.0, 0.0, 0.0),
-			vec3(0.0, 1.0, 0.0),
-			vec3(0.0, 0.0, 1.0)
-		);
-
-		void main() {
-			gl_Position = vec4(positions[gl_VertexIndex], 0.5, 1.0);
-			fragColor = colors[gl_VertexIndex];
-		}
-	)";
-	shader_config.sources[renderer::ShaderStage::SHADER_STAGE_FRAGMENT] = R"(
-		#version 450
-
-		layout(location = 0) in vec3 fragColor;
-
-		layout(location = 0) out vec4 outColor;
-
-		void main() {
-			outColor = vec4(fragColor, 1.0);
-		}
-	)";
-	shader = m_renderer->create_shader(shader_config);
 }
 
 Engine::~Engine() {
-	m_renderer->destroy_handle(shader);
-	m_renderer->destroy_handle(layout);
-
 	cleanup();
 }
 
@@ -82,10 +30,10 @@ void Engine::run() {
 		m_renderer->frame_prepare();
 
 		auto commands = m_renderer->get_commands();
-		commands->begin_pass();
-		commands->bind_shader(shader);
-		commands->draw(3);
-		commands->end_pass();
+
+		for (u32 i = 0; i < m_layers.size(); i++) {
+			m_layers[i]->on_render(*commands);
+		}
 
 		m_renderer->submit(commands);
 		m_renderer->present();
@@ -97,6 +45,13 @@ void Engine::run() {
 
 	toki::println("Stopping application");
 }
+
+void Engine::attach_layer(UniquePtr<Layer>&& layer) {
+	layer->m_renderer = m_renderer.get();
+	layer->on_attach();
+	m_layers.emplace_back(toki::move(layer));
+}
+
 
 const platform::Window* Engine::get_window(u32 index) const {
 	return m_window.get();

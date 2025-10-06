@@ -20,6 +20,7 @@
         "valarray": "cpp",
         "*.inc": "cpp",
         "any": "cpp",
-        "__config": "cpp"
+        "__config": "cpp",
+        "random": "cpp"
     }
 }

@@ -13,7 +13,10 @@
 
 namespace toki::renderer {
 
-VulkanBackend::VulkanBackend(const RendererConfig& config): Renderer(config) {
+#define RENDERER (reinterpret_cast<VulkanBackend*>(m_internalData))
+#define STATE (RENDERER->m_state)
+
+VulkanBackend::VulkanBackend(const RendererConfig& config) {
 	initialize(config);
 }
 
@@ -60,45 +63,50 @@ void VulkanBackend::cleanup() {
 	vkDestroyInstance(m_state.instance, m_state.allocation_callbacks);
 }
 
-void VulkanBackend::frame_prepare() {
-	m_tempCommands->m_cmd.begin(m_state);
+void Renderer::frame_prepare() {
+	RENDERER->m_tempCommands->m_cmd.begin(STATE);
 
-	m_state.frames.frame_prepare(m_state);
+	STATE.frames.frame_prepare(STATE);
 
-	m_state.swapchain.get_current_image().transition_layout(
+	STATE.swapchain.get_current_image().transition_layout(
 		reinterpret_cast<VulkanCommands*>(get_commands())->m_cmd,
 		VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 }
 
-void VulkanBackend::frame_cleanup() {
-	m_state.frames.frame_cleanup(m_state);
+void Renderer::frame_cleanup() {
+	STATE.frames.frame_cleanup(STATE);
 }
 
-void VulkanBackend::submit(Commands* commands) {
-	m_toSubmitCommands[0] = reinterpret_cast<VulkanCommands*>(commands);
+void Renderer::submit(Commands* commands) {
+	RENDERER->m_toSubmitCommands[0] = reinterpret_cast<VulkanCommands*>(commands);
 }
 
-void VulkanBackend::present() {
-	m_state.swapchain.get_current_image().transition_layout(
+void Renderer::present() {
+	STATE.swapchain.get_current_image().transition_layout(
 		reinterpret_cast<VulkanCommands*>(get_commands())->m_cmd,
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-	reinterpret_cast<VulkanCommands*>(get_commands())->m_cmd.end(m_state);
+	reinterpret_cast<VulkanCommands*>(get_commands())->m_cmd.end(STATE);
 	VulkanCommandBuffer command_buffers[] = { reinterpret_cast<VulkanCommands*>(get_commands())->m_cmd };
 
-	m_state.frames.submit(m_state, command_buffers);
+	STATE.frames.submit(STATE, command_buffers);
 
-	if (m_toSubmitCommands.size() == 0) {
+	if (RENDERER->m_toSubmitCommands.size() == 0) {
 		return;
 	}
 
-	m_state.frames.frame_present(m_state);
+	STATE.frames.frame_present(STATE);
 }
 
-Commands* VulkanBackend::get_commands() {
-	return m_tempCommands.get();
+Commands* Renderer::get_commands() {
+	return RENDERER->m_tempCommands.get();
+}
+
+void Renderer::set_buffer_data(BufferHandle handle, const void* data, u32 size) {
+	TK_ASSERT(STATE.buffers.exists(handle));
+	STATE.staging_buffer.set_data_for_buffer(STATE, STATE.buffers.at(handle), data, size);
 }
 
 void VulkanBackend::initialize_instance() {
@@ -274,22 +282,29 @@ void VulkanBackend::initialize_device(platform::Window* window) {
 	vkGetDeviceQueue(m_state.logical_device, m_state.indices[PRESENT_FAMILY_INDEX], 0, &m_state.present_queue);
 }
 
-ShaderHandle VulkanBackend::create_shader(const ShaderConfig& config) {
-	return { m_state.shaders.emplace_at_first(VulkanShader::create(config, m_state)) };
-}
+#define DEFINE_CREATE_RESOURCE(type, lowercase_type)                                              \
+	type##Handle Renderer::create_##lowercase_type(const type##Config& config) {                  \
+		return { STATE.lowercase_type##s.emplace_at_first(Vulkan##type::create(config, STATE)) }; \
+	}
 
-ShaderLayoutHandle VulkanBackend::create_shader_layout(const ShaderLayoutConfig& config) {
-	return { m_state.shader_layouts.emplace_at_first(VulkanShaderLayout::create(config, m_state)) };
-}
+DEFINE_CREATE_RESOURCE(Shader, shader)
+DEFINE_CREATE_RESOURCE(ShaderLayout, shader_layout)
+DEFINE_CREATE_RESOURCE(Buffer, buffer)
+DEFINE_CREATE_RESOURCE(Texture, texture)
 
-void VulkanBackend::destroy_handle(ShaderHandle shader_handle) {
-	TK_ASSERT(m_state.shaders.exists(shader_handle));
-	m_state.shaders.at(shader_handle).destroy(m_state);
-}
+#undef DEFINE_CREATE_RESOURCE
 
-void VulkanBackend::destroy_handle(ShaderLayoutHandle shader_layout_handle) {
-	TK_ASSERT(m_state.shader_layouts.exists(shader_layout_handle));
-	m_state.shader_layouts.at(shader_layout_handle).destroy(m_state);
-}
+#define DEFINE_DESTROY_HANDLE(type, arena)       \
+	void Renderer::destroy_handle(type handle) { \
+		TK_ASSERT(STATE.arena.exists(handle));   \
+		STATE.arena.at(handle).destroy(STATE);   \
+	}
+
+DEFINE_DESTROY_HANDLE(ShaderHandle, shaders);
+DEFINE_DESTROY_HANDLE(ShaderLayoutHandle, shader_layouts);
+DEFINE_DESTROY_HANDLE(BufferHandle, buffers);
+DEFINE_DESTROY_HANDLE(TextureHandle, textures);
+
+#undef DEFINE_DESTROY_HANDLE
 
 }  // namespace toki::renderer

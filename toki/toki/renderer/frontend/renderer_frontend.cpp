@@ -6,9 +6,12 @@
 namespace toki::renderer {
 
 toki::UniquePtr<Renderer> Renderer::create(const RendererConfig& config) {
-	return make_unique<VulkanBackend>(config);
+	return make_unique<Renderer>(config);
 }
 
-Renderer::Renderer(const RendererConfig& config) {}
+Renderer::Renderer(const RendererConfig& config) {
+	void* ptr = RendererPersistentAllocator::allocate_aligned(sizeof(VulkanBackend), alignof(VulkanBackend));
+	m_internalData = toki::construct_at<VulkanBackend>(ptr, config);
+}
 
 }  // namespace toki::renderer

@@ -18,9 +18,7 @@ public:
 	// }
 
 	template <typename Derived>
-	UniquePtr(UniquePtr<Derived>&& derived): m_ptr(derived.release()) {
-		derived.reset();
-	}
+	UniquePtr(UniquePtr<Derived>&& derived): m_ptr(derived.release()) {}
 
 	constexpr UniquePtr(): m_ptr(nullptr) {}
 
@@ -82,7 +80,8 @@ private:
 
 template <typename T, typename... Args>
 UniquePtr<T> make_unique(Args&&... args) {
-	return UniquePtr<T>(new T(toki::forward<Args>(args)...));
+	void* ptr = DefaultAllocator::allocate_aligned(sizeof(T), alignof(T));
+	return UniquePtr<T>(construct_at<T>(ptr, toki::forward<Args>(args)...));
 }
 
 }  // namespace toki

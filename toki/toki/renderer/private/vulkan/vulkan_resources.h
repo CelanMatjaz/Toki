@@ -77,6 +77,7 @@ struct VulkanBufferConfig {
 struct VulkanBufferCopyConfig {
 	VkBuffer buffer;
 	u64 offset;
+	u64 size;
 };
 
 class VulkanBuffer {

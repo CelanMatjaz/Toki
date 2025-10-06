@@ -5,6 +5,12 @@
 #include <toki/core/utils/memory.h>
 #include <toki/platform/syscalls.h>
 
+void* operator new(unsigned long size, void* p) noexcept {
+	return p;
+}
+
+void operator delete(void*, void*) {}
+
 namespace toki {
 
 static Allocator g_allocator;

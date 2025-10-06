@@ -14,7 +14,7 @@ public:
 	Optional(): m_hasValue(false) {}
 	Optional(NullOpt): m_hasValue(false) {}
 	Optional(OptionalType&& expected): m_hasValue(true) {
-		construct_at(&m_value, forward<OptionalType>(expected));
+		construct_at<OptionalType>(&m_value, forward<OptionalType>(expected));
 	}
 
 	~Optional() {

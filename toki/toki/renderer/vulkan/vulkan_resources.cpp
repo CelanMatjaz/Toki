@@ -9,10 +9,6 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
-#include "toki/core/attributes.h"
-#include "toki/core/common/common.h"
-#include "toki/core/common/log.h"
-
 namespace toki::renderer {
 
 VulkanSwapchain VulkanSwapchain::create(const VulkanSwapchainConfig& config, const VulkanState& state) {
@@ -354,8 +350,7 @@ VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState&
 	color_blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
 
 	TempDynamicArray<VkPipelineColorBlendAttachmentState> color_blend_attachment_states;
-	color_blend_attachment_states.resize(1);
-	color_blend_attachment_states[0] = color_blend_attachment_state;
+	color_blend_attachment_states.emplace_back(toki::move(color_blend_attachment_state));
 
 	VkPipelineColorBlendStateCreateInfo color_blend_state_create_info{};
 	color_blend_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -481,7 +476,8 @@ void VulkanBuffer::set_data(const VulkanState& state, const void* data, u64 size
 
 void* VulkanBuffer::map_memory(const VulkanState& state) {
 	void* data;
-	vkMapMemory(state.logical_device, m_deviceMemory, 0, m_size, 0, &data);
+	VkResult result = vkMapMemory(state.logical_device, m_deviceMemory, 0, m_size, 0, &data);
+	TK_ASSERT(result == VK_SUCCESS);
 	return data;
 }
 
@@ -492,7 +488,7 @@ void VulkanBuffer::unmap_memory(const VulkanState& state) {
 void VulkanBuffer::copy_to_buffer(
 	VulkanCommandBuffer cmd, const VulkanBufferCopyConfig& dst_buffer_copy_config, u64 self_offset) const {
 	VkBufferCopy buffer_copy{};
-	buffer_copy.size = m_size;
+	buffer_copy.size = dst_buffer_copy_config.size;
 	buffer_copy.dstOffset = dst_buffer_copy_config.offset;
 	buffer_copy.srcOffset = self_offset;
 	vkCmdCopyBuffer(cmd, m_buffer, dst_buffer_copy_config.buffer, 1, &buffer_copy);
@@ -589,8 +585,9 @@ void VulkanStagingBuffer::set_data_for_buffer(
 
 	// Copy just copied data to destination buffer
 	VulkanBufferCopyConfig dst_buffer_copy_config{};
-	dst_buffer_copy_config.buffer = m_buffer.m_buffer;
+	dst_buffer_copy_config.buffer = dst_buffer.m_buffer;
 	dst_buffer_copy_config.offset = 0;
+	dst_buffer_copy_config.size = size;
 
 	{
 		VulkanCommandBuffer cmd = state.temporary_command_pool.begin_single_time_submit_command_buffer(state);

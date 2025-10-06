@@ -2,6 +2,7 @@
 
 // Engine
 #include <toki/runtime/engine/engine.h>
+#include <toki/runtime/engine/layer.h>
 
 // Resources
 #include <toki/runtime/resources/loaders/text_loader.h>

@@ -12,30 +12,18 @@
 
 namespace toki::renderer {
 
-class VulkanBackend : public Renderer {
+class VulkanBackend {
+	friend class Renderer;
+
 public:
-	VulkanBackend() = delete;
 	VulkanBackend(const RendererConfig& config);
-	~VulkanBackend();
+	virtual ~VulkanBackend();
+
+private:
+	VulkanBackend() = delete;
 
 	DELETE_COPY(VulkanBackend);
 	DELETE_MOVE(VulkanBackend);
-
-	VulkanBackend* get();
-
-	void attach_window(platform::Window* window);
-
-	virtual void frame_prepare() override;
-	virtual void frame_cleanup() override;
-	virtual Commands* get_commands() override;
-	virtual void submit(Commands*) override;
-	virtual void present() override;
-
-	virtual ShaderHandle create_shader(const ShaderConfig& config) override;
-	virtual ShaderLayoutHandle create_shader_layout(const ShaderLayoutConfig& config) override;
-
-	virtual void destroy_handle(ShaderHandle) override;
-	virtual void destroy_handle(ShaderLayoutHandle) override;
 
 private:
 	void initialize(const RendererConfig& config);
@@ -43,8 +31,6 @@ private:
 
 	void initialize_instance();
 	void initialize_device(platform::Window* window);
-	void initialize_command_buffers();
-	void initialize_frames();
 
 private:
 	VulkanState m_state{};
