@@ -6,7 +6,7 @@
 
 namespace toki {
 
-Allocator::Allocator(u64 size, u64 max_free_list_entries): m_size(size) {
+Allocator::Allocator(u64 size): m_size(size) {
 	m_buffer = platform::allocate(m_size);
 	m_firstFreePtr = reinterpret_cast<MemorySection*>(m_buffer);
 	*m_firstFreePtr = {};
@@ -20,6 +20,20 @@ Allocator::~Allocator() {
 
 void* Allocator::allocate(u64 size) {
 	TK_ASSERT(m_size > 0);
+
+	if (size + sizeof(MemorySection) > m_size ||
+		reinterpret_cast<u64ptr>(m_firstFreePtr) >= reinterpret_cast<u64ptr>(m_buffer) + m_size) {
+		return nullptr;
+	}
+
+	// First free block was never set and is valid to overwrite
+	if (m_firstFreePtr->size == 0) {
+		m_firstFreePtr->size = size;
+		void* ptr = m_firstFreePtr + 1;
+		m_firstFreePtr = reinterpret_cast<MemorySection*>(reinterpret_cast<u64ptr>(m_firstFreePtr + 1) + size);
+		return ptr;
+	}
+
 	MemorySection* next_free_block = m_firstFreePtr;
 	MemorySection* previous_free_block = next_free_block;
 
@@ -38,10 +52,11 @@ void* Allocator::allocate(u64 size) {
 
 		m_firstFreePtr = m_firstFreePtr->next;
 		next_free_block->next = nullptr;
+
 		return reinterpret_cast<void*>(next_free_block + 1);
 	}
 
-	// No block with required space exist
+	// No block with required space exists
 	if (next_free_block->next == nullptr) {
 		next_free_block->size = size;
 
@@ -70,6 +85,7 @@ void* Allocator::allocate_aligned(u64 size, u64 alignment) {
 	u64ptr adjustment = alignment - misalignment;
 
 	u64ptr aligned_address = raw_address + adjustment;
+	(reinterpret_cast<byte*>(aligned_address))[-1] = adjustment;
 
 	return reinterpret_cast<void*>(aligned_address);
 }

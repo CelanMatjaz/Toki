@@ -10,5 +10,14 @@ generate-linux:
 build-linux: generate-linux
 	cmake --build build
 
+generate-tests:
+	cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DTOKI_USE_GLFW=ON -DTOKI_ENABLE_TESTING=ON -GNinja
+
+build-tests: generate-tests
+	cmake --build build
+
+test: build-tests
+	./build/tests/tests
+
 clean:
 	rm -r build

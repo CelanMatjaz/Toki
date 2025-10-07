@@ -9,7 +9,7 @@ public:
 	virtual void on_attach() override;
 	virtual void on_detach() override;
 	virtual void on_update(toki::f32 delta_time) override;
-	virtual void on_render(toki::renderer::Commands& commands) override;
+	virtual void on_render(toki::renderer::Commands* commands) override;
 
 private:
 	toki::renderer::ShaderHandle m_shader;

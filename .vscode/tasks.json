@@ -10,6 +10,16 @@
                 "command": "make",
                 "args": ["build-linux"]
             }
+        },
+        {
+            "label": "Build Tests - Debug",
+            "windows": {
+                "command": "run.bat"
+            },
+            "linux": {
+                "command": "make",
+                "args": ["build-tests"]
+            }
         }
     ]
 }

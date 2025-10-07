@@ -46,7 +46,8 @@ void VulkanBackend::initialize(const RendererConfig& config) {
 	m_state.staging_buffer = VulkanStagingBuffer::create(staging_buffer_config, m_state);
 
 	auto command_buffers = m_state.command_pool.allocate_command_buffers(m_state, 1);
-	m_tempCommands = make_unique<VulkanCommands>(&m_state, command_buffers[0]);
+	m_tempCommands = construct_at<VulkanCommands>(
+		RendererPersistentAllocator::allocate_aligned(sizeof(VulkanCommands), 8), &m_state, command_buffers[0]);
 	m_toSubmitCommands.resize(1);
 }
 
@@ -101,7 +102,7 @@ void Renderer::present() {
 }
 
 Commands* Renderer::get_commands() {
-	return RENDERER->m_tempCommands.get();
+	return RENDERER->m_tempCommands;
 }
 
 void Renderer::set_buffer_data(BufferHandle handle, const void* data, u32 size) {
@@ -287,7 +288,11 @@ void VulkanBackend::initialize_device(platform::Window* window) {
 		return { STATE.lowercase_type##s.emplace_at_first(Vulkan##type::create(config, STATE)) }; \
 	}
 
-DEFINE_CREATE_RESOURCE(Shader, shader)
+ShaderHandle Renderer ::create_shader(const ShaderConfig& config) {
+	return { ((reinterpret_cast<VulkanBackend*>(m_internalData))->m_state)
+				 .shaders.emplace_at_first(
+					 VulkanShader ::create(config, ((reinterpret_cast<VulkanBackend*>(m_internalData))->m_state))) };
+}
 DEFINE_CREATE_RESOURCE(ShaderLayout, shader_layout)
 DEFINE_CREATE_RESOURCE(Buffer, buffer)
 DEFINE_CREATE_RESOURCE(Texture, texture)

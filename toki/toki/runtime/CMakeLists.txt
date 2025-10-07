@@ -1,5 +1,2 @@
-set(DEPS
-	${CORE_TARGET_NAME}
-	${PLATFORM_TARGET_NAME}
-	${RENDERER_TARGET_NAME})
-add_library_target(${RUNTIME_TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR} "${DEPS}")
+set(DEPS core platform renderer)
+add_library_target(runtime ${CMAKE_CURRENT_SOURCE_DIR} "${DEPS}")

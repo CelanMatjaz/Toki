@@ -38,7 +38,7 @@ private:
 	platform::Window* m_window;
 	TempDynamicArray<VulkanCommands*> m_toSubmitCommands;
 	// TODO(Matjaž): remove
-	toki::UniquePtr<VulkanCommands, RendererPersistentAllocator> m_tempCommands;
+	VulkanCommands* m_tempCommands;
 };
 
 }  // namespace toki::renderer

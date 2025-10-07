@@ -94,11 +94,11 @@ void TestLayer::on_detach() {
 	m_renderer->destroy_handle(m_shaderLayout);
 }
 
-void TestLayer::on_render(toki::renderer::Commands& cmd) {
-	cmd.begin_pass();
-	cmd.bind_shader(m_shader);
-	cmd.draw(3);
-	cmd.end_pass();
+void TestLayer::on_render(toki::renderer::Commands* cmd) {
+	cmd->begin_pass();
+	cmd->bind_shader(m_shader);
+	cmd->draw(3);
+	cmd->end_pass();
 }
 
 void TestLayer::on_update(toki::f32 delta_time) {}

@@ -8,14 +8,10 @@ include("cmake/common.global.cmake")
 include("cmake/common.project.cmake")
 
 option(TOKI_USE_GLFW "Build and use GLFW submodule" OFF)
-
-if(TOKI_GLFW_SOURCE)
-	add_definitions(
-		-DGLFW_INCLUDE_VULKAN
-	)
-	add_subdirectory(vendor/glfw)
-endif()
+option(TOKI_ENABLE_TESTING "Build tests" OFF)
 
 add_subdirectory(toki)
 
-add_compile_definitions(-fconcepts-diagnostics-depth=10)
+if(TOKI_ENABLE_TESTING)
+	add_subdirectory(tests)
+endif()

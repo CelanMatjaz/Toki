@@ -36,7 +36,7 @@ private:
 	VkExtent2D m_extent;
 	VkSurfaceFormatKHR m_surfaceFormat;
 	VkSurfaceCapabilitiesKHR m_surfaceCapabilities;
-	toki::DynamicArray<WrappedVulkanTexture> m_images;
+	PersistentDynamicArray<WrappedVulkanTexture> m_images;
 	PresentModes m_presentModes;
 	u32 m_currentImageIndex;
 };

@@ -20,11 +20,10 @@ class Renderer {
 	friend toki::runtime::Engine;
 
 public:
+	static toki::UniquePtr<Renderer> create(const RendererConfig& config);
 	Renderer(const RendererConfig& config);
 
 private:
-	static toki::UniquePtr<Renderer> create(const RendererConfig& config);
-
 	Renderer() = delete;
 
 	DELETE_COPY(Renderer);

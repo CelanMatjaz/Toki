@@ -31,8 +31,8 @@ void Engine::run() {
 
 		auto commands = m_renderer->get_commands();
 
-		for (u32 i = 0; i < m_layers.size(); i++) {
-			m_layers[i]->on_render(*commands);
+		for (u32 i = m_layers.size() - 1; i >= 0; i--) {
+			m_layers[i]->on_render(commands);
 		}
 
 		m_renderer->submit(commands);

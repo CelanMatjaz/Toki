@@ -1,11 +1,11 @@
 set(DEPS
-	${CORE_TARGET_NAME}
-	${RUNTIME_TARGET_NAME}
-	${PLATFORM_TARGET_NAME})
-add_library_target(${RENDERER_TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR} "${DEPS}")
+	core
+	runtime
+	platform)
+add_library_target(renderer ${CMAKE_CURRENT_SOURCE_DIR} "${DEPS}")
 
-target_link_libraries(${RENDERER_TARGET_NAME}
+target_link_libraries(renderer
 	PUBLIC vulkan shaderc shaderc_combined)
 
-target_link_directories(${RENDERER_TARGET_NAME}
+target_link_directories(renderer
 	PUBLIC ${VULKAN_SDK}/lib)

@@ -9,12 +9,18 @@
             "MIMode": "gdb",
             "cwd": "${workspaceFolder}",
             "args": ["${workspaceFolder}/toki_sandbox"],
-            "linux": {
-                "program": "${workspaceFolder}/build/toki/toki/sandbox/sandbox"
-            },
-            "windows": {
-                "program": "${workspaceFolder}/build/build/bin/Windows-x86_64/Debug/Sandbox"
-            },
+            "program": "${workspaceFolder}/build/toki/toki/sandbox/sandbox",
+            "preLaunchTask": "Build Sandbox - Debug"
+        },
+        {
+            "name": "Test - Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "stopAtEntry": false,
+            "MIMode": "gdb",
+            "cwd": "${workspaceFolder}",
+            "args": ["${workspaceFolder}/toki_sandbox"],
+            "program": "${workspaceFolder}/build/tests/tests",
             "preLaunchTask": "Build Sandbox - Debug"
         }
     ]

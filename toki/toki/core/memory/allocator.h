@@ -3,17 +3,13 @@
 #include <toki/core/common/macros.h>
 #include <toki/core/types.h>
 
-#include "toki/core/common/type_traits.h"
-
 namespace toki {
-
-constexpr const u64 MAX_FREELIST_ENTRY_COUNT = 512;
 
 class Allocator {
 public:
 	Allocator() = default;
 
-	Allocator(u64 size, u64 max_free_list_entries = MAX_FREELIST_ENTRY_COUNT);
+	Allocator(u64 size);
 	~Allocator();
 
 	DELETE_COPY(Allocator);

@@ -14,6 +14,8 @@ int main() {
 		toki::runtime::Engine engine(runtime_config);
 
 		engine.attach_layer(toki::move(toki::make_unique<TestLayer>()));
+		engine.attach_layer(toki::move(toki::make_unique<TestLayer>()));
+		engine.attach_layer(toki::move(toki::make_unique<TestLayer>()));
 
 		engine.run();
 	}
