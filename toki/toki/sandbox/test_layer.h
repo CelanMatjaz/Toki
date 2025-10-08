@@ -4,7 +4,7 @@
 
 class TestLayer : public toki::runtime::Layer {
 public:
-	TestLayer() = default;
+	TestLayer() = delete;
 	TestLayer(toki::f32 offset);
 
 	virtual void on_attach() override;

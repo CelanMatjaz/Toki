@@ -44,8 +44,7 @@ public:
 
 	constexpr toki::Optional<u64> get_first_with_value(b8 value) const {
 		for (u32 i = 0; i < BYTE_CHUNK_COUNT; i++) {
-			u8 mask = (value ? 0 : ~static_cast<u8>(0));
-			if ((m_bits[i] == mask)) {
+			if ((m_bits[i] == (value ? 0 : ~(static_cast<u8>(0))))) {
 				continue;
 			}
 
@@ -65,8 +64,6 @@ private:
 	}
 
 	inline constexpr void set_value(u64 index, b8 value) {
-		auto inde = index >> 3;
-		auto subindex = (index & (sizeof(ByteChunk) * 8 - 1));
 		m_bits[index >> 3] |= ((value & 1) << (index & (sizeof(ByteChunk) * 8 - 1)));
 	}
 

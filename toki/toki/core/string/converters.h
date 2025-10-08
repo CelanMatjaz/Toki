@@ -1,8 +1,8 @@
 #pragma once
 
+#include <toki/core/attributes.h>
 #include <toki/core/common/type_traits.h>
 #include <toki/core/string/basic_string.h>
-#include <toki/core/attributes.h>
 
 namespace toki {
 
@@ -51,8 +51,8 @@ u32 itoa_pretty(char* buf_out, T value, u32 radix = 10) {
 
 	if constexpr (CIsPointer<T>) {
 		if (value == 0) {
-			constexpr char NULLPTR[] = "nullptr";
-			memcpy(NULLPTR, buf_out, sizeof(NULLPTR) - 1);
+			constexpr const char NULLPTR[] = "nullptr";
+			memcpy(buf_out, NULLPTR, sizeof(NULLPTR) - 1);
 			return sizeof(NULLPTR) - 1;
 		}
 	}

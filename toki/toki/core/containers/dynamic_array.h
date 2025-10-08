@@ -20,7 +20,7 @@ public:
 
 	DynamicArray(u64 count, T&& default_value): m_data(nullptr), m_size(count) {
 		reallocate(count);
-		for (u32 i = 0; i < count; i++) {
+		for (u64 i = 0; i < count; i++) {
 			m_data[i] = default_value;
 		}
 	}
@@ -102,6 +102,10 @@ public:
 		return m_size;
 	}
 
+	u32 size_u32() const {
+		return static_cast<u32>(m_size);
+	}
+
 	void move(DynamicArray&& other) {
 		m_data = other.m_data;
 		m_size = other.m_size;
@@ -125,7 +129,7 @@ public:
 
 	void push_back(const T& value) {
 		maybe_allocate_for_new_element();
-		toki::memcpy(m_data[m_size++], value);
+		toki::memcpy(&m_data[m_size++], &value, sizeof(T));
 	}
 
 	void push_back(T&& value) {
@@ -141,7 +145,7 @@ public:
 
 	void clear() {
 		if constexpr (CHasDestructor<T>) {
-			for (u32 i = 0; i < m_size; i++) {
+			for (u64 i = 0; i < m_size; i++) {
 				toki::destroy_at<T>(&m_data[i]);
 			}
 		}
@@ -152,12 +156,12 @@ public:
 private:
 	void maybe_allocate_for_new_element() {
 		if (m_size >= m_capacity) {
-			reallocate(toki::max<u64>(growth_factor * m_capacity, 1));
+			reallocate(toki::max<u64>(static_cast<u64>(growth_factor * static_cast<f32>(m_capacity)), 1));
 		}
 	}
 
 	void reallocate(u64 new_capacity) {
-		m_data = reinterpret_cast<T*>(AllocatorType::reallocate(m_data, new_capacity * sizeof(T)));
+		m_data = reinterpret_cast<T*>(AllocatorType::reallocate(m_data, static_cast<u64>(new_capacity * sizeof(T))));
 		m_capacity = new_capacity;
 	}
 

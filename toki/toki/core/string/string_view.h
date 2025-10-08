@@ -11,11 +11,11 @@ class BasicStringView {
 public:
 	BasicStringView() = default;
 
-	constexpr BasicStringView(const T* str): m_size(toki::strlen(str)), m_ptr(str) {}
+	constexpr BasicStringView(const T* str): m_ptr(str), m_size(toki::strlen(str)) {}
 
-	constexpr BasicStringView(const BasicString<T> str): m_size(str.size()), m_ptr(str.data()) {}
+	constexpr BasicStringView(const BasicString<T> str): m_ptr(str.data()), m_size(str.size()) {}
 
-	constexpr BasicStringView(const BasicStringView& other): m_size(other.m_size), m_ptr(other.m_ptr) {}
+	constexpr BasicStringView(const BasicStringView& other): m_ptr(other.m_ptr), m_size(other.m_size) {}
 
 	constexpr BasicStringView& operator=(const BasicStringView& other) {
 		if (other == this) {

@@ -8,9 +8,9 @@ struct NativeHandle {
 #if defined(TK_PLATFORM_LINUX)
 	static constexpr i64 INVALID_HANDLE_VALUE = -1;
 	NativeHandle(i64 value): handle(value) {}
-	i32 handle;
+	i64 handle;
 
-	operator i32() const {
+	operator i64() const {
 		return handle;
 	}
 #endif

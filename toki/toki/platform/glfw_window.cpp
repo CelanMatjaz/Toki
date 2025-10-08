@@ -9,7 +9,7 @@ namespace toki::platform {
 
 	#define HANDLE reinterpret_cast<GLFWwindow*>(m_handle)
 
-void window_system_initialize(const WindowSystemConfig& config) {
+void window_system_initialize([[maybe_unused]] const WindowSystemConfig& config) {
 	glfwInit();
 }
 
@@ -29,7 +29,8 @@ Window::Window(const WindowConfig& config) {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, config.flags & RESIZABLE);
 
-	GLFWwindow* window = glfwCreateWindow(config.width, config.height, config.title, nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(
+		static_cast<i32>(config.width), static_cast<i32>(config.height), config.title, nullptr, nullptr);
 	TK_ASSERT(window != nullptr, "Window was not created");
 	m_handle = window;
 

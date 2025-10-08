@@ -85,7 +85,7 @@ void* Allocator::allocate_aligned(u64 size, u64 alignment) {
 	u64ptr adjustment = alignment - misalignment;
 
 	u64ptr aligned_address = raw_address + adjustment;
-	(reinterpret_cast<byte*>(aligned_address))[-1] = adjustment;
+	(reinterpret_cast<byte*>(aligned_address))[-1] = static_cast<byte>(adjustment);
 
 	return reinterpret_cast<void*>(aligned_address);
 }

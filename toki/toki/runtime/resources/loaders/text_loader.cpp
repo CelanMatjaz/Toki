@@ -3,7 +3,7 @@
 namespace toki::resources {
 
 template <>
-toki::String Loader<LoaderType::Text, toki::String, toki::Span<byte>>::read(const Path& path) {
+toki::String Loader<LoaderType::Text, toki::String, toki::Span<byte>>::read([[maybe_unused]] const Path& path) {
 	return {};
 }
 

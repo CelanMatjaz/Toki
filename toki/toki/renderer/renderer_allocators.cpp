@@ -15,9 +15,9 @@ void* RendererBumpAllocator::allocate_aligned(u64 size, u64 alignment) {
 	return s_rendererBumpAllocator.allocate_aligned(size, alignment);
 }
 
-void RendererBumpAllocator::free(void* ptr) {}	// noop
+void RendererBumpAllocator::free([[maybe_unused]]void* ptr) {}	// noop
 
-void RendererBumpAllocator::free_aligned(void* ptr) {}	// noop
+void RendererBumpAllocator::free_aligned([[maybe_unused]]void* ptr) {}	// noop
 
 void* RendererBumpAllocator::reallocate(void* ptr, u64 size) {
 	if (ptr == nullptr) {

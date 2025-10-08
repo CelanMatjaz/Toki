@@ -8,7 +8,7 @@
 
 namespace toki {
 
-template <typename T, u32 N, CIsAllocator AllocatorType = DefaultAllocator>
+template <typename T, u64 N, CIsAllocator AllocatorType = DefaultAllocator>
 class StaticArray {
 public:
 	StaticArray(): m_data(reinterpret_cast<T*>(AllocatorType::allocate(N * sizeof(T)))) {
@@ -18,12 +18,12 @@ public:
 	// template <typename... Args>
 	// 	requires(Conjunction<IsSame<T, Args>...>::value && sizeof...(Args) == N)
 	// StaticArray(Args&&... args): StaticArray() {
-	// 	u32 i = 0;
+	// 	u64 i = 0;
 	// 	((m_data[i++] = toki::forward<Args>(args)), ...);
 	// }
 
 	StaticArray(T&& default_value): StaticArray() {
-		for (u32 i = 0; i < N; i++) {
+		for (u64 i = 0; i < N; i++) {
 			m_data[i] = default_value;
 		}
 	}
@@ -61,6 +61,10 @@ public:
 
 	inline u64 size() const {
 		return N;
+	}
+
+	inline u32 size_u32() const {
+		return static_cast<u32>(N);
 	}
 
 	inline void move(StaticArray&& other) {

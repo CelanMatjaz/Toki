@@ -12,7 +12,7 @@
 namespace toki {
 
 template <typename Arg>
-	requires CHasDumpToString<Arg>
+	requires CHasDumpToString<typename RemoveConst<Arg>::type>
 u32 _dump_single_arg(char* out, Arg&& arg) {
 	using RawT = RemoveRef<typename RemoveConst<Arg>::type>::type;
 	return StringDumper<RawT>::dump_to_string(out, toki::forward<Arg>(arg));
@@ -20,6 +20,8 @@ u32 _dump_single_arg(char* out, Arg&& arg) {
 
 template <typename FirstArg, typename... Args>
 u32 _format(const char* fmt, char* buf_out, FirstArg&& arg, Args&&... args) {
+
+
 	u32 offset = 0;
 	u32 start = 0;
 	u32 i = 0;

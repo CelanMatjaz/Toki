@@ -10,8 +10,8 @@ class Layer {
 public:
 	virtual void on_attach() {}
 	virtual void on_detach() {}
-	virtual void on_update(f32 delta_time) {}
-	virtual void on_render(renderer::Commands* commands) {}
+	virtual void on_update([[maybe_unused]] f32 delta_time) {}
+	virtual void on_render([[maybe_unused]] renderer::Commands* commands) {}
 
 protected:
 	renderer::Renderer* m_renderer;

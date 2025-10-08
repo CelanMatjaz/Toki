@@ -53,7 +53,7 @@ public:
 
 	void reset(T* ptr = nullptr) {
 		if (m_ptr != nullptr) {
-			static_cast<T*>(m_ptr)->~T();
+			static_cast<T*>(m_ptr)->T::~T();
 			AllocatorType::free(m_ptr);
 		}
 

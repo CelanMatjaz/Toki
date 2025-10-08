@@ -109,8 +109,8 @@ PresentModes query_present_modes(const VulkanState& state, VkSurfaceKHR surface)
 
 	u8 present_mode_indicies[VsyncStatus::VSYNC_STATUS_SIZE] = { static_cast<u8>(-1), static_cast<u8>(-1) };
 
-	for (u32 i = 0; i < queried_present_modes.size(); i++) {
-		for (u32 j = 0; j < CARRAY_SIZE(present_modes_with_vsync_priorities); j++) {
+	for (u8 i = 0; i < queried_present_modes.size(); i++) {
+		for (u8 j = 0; j < CARRAY_SIZE(present_modes_with_vsync_priorities); j++) {
 			if (queried_present_modes[i] == present_modes_with_vsync_priorities[j] &&
 				present_mode_indicies[VSYNC_STATUS_ENABLED] > j) {
 				present_mode_indicies[VSYNC_STATUS_ENABLED] = j;
@@ -118,7 +118,7 @@ PresentModes query_present_modes(const VulkanState& state, VkSurfaceKHR surface)
 			}
 		}
 
-		for (u32 j = 0; j < CARRAY_SIZE(present_modes_without_vsync_priorities); j++) {
+		for (u8 j = 0; j < CARRAY_SIZE(present_modes_without_vsync_priorities); j++) {
 			if (queried_present_modes[i] == present_modes_without_vsync_priorities[j] &&
 				present_mode_indicies[VSYNC_STATUS_DISABLED] > j) {
 				present_mode_indicies[VSYNC_STATUS_DISABLED] = j;

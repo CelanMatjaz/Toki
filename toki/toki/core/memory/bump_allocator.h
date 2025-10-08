@@ -42,7 +42,9 @@ public:
 		return m_marker;
 	}
 
-	void free_to_marker(u64 marker = 0) {}
+	void free_to_marker(u64 marker = 0) {
+		m_marker = marker;
+	}
 
 	void clear() {
 		free_to_marker();

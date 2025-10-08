@@ -5,7 +5,7 @@
 namespace toki {
 
 template <typename T>
-inline constexpr u32 strlen(const T* str) {
+inline constexpr u64 strlen(const T* str) {
 	u64 len = 0;
 	while (str[++len]) {}
 	return len;

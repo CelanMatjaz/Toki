@@ -65,7 +65,7 @@ void VulkanBackend::cleanup() {
 }
 
 void Renderer::frame_prepare() {
-	RENDERER->m_tempCommands->m_cmd.begin(STATE);
+	RENDERER->m_tempCommands->m_cmd.begin();
 
 	STATE.frames.frame_prepare(STATE);
 
@@ -89,7 +89,7 @@ void Renderer::present() {
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-	reinterpret_cast<VulkanCommands*>(get_commands())->m_cmd.end(STATE);
+	reinterpret_cast<VulkanCommands*>(get_commands())->m_cmd.end();
 	VulkanCommandBuffer command_buffers[] = { reinterpret_cast<VulkanCommands*>(get_commands())->m_cmd };
 
 	STATE.frames.submit(STATE, command_buffers);
@@ -140,7 +140,7 @@ void VulkanBackend::initialize_instance() {
 	TempDynamicArray<const char*> instance_extensions(glfw_extension_count);
 	toki::memcpy(instance_extensions.data(), glfw_extensions, instance_extensions.size() * sizeof(const char*));
 
-	instance_create_info.enabledExtensionCount = instance_extensions.size();
+	instance_create_info.enabledExtensionCount = instance_extensions.size_u32();
 	instance_create_info.ppEnabledExtensionNames = instance_extensions.data();
 #else
 	instance_create_info.enabledExtensionCount = 0;
@@ -235,8 +235,6 @@ void VulkanBackend::initialize_device(platform::Window* window) {
 		m_state.indices[PRESENT_FAMILY_INDEX] != static_cast<u32>(-1) &&
 		m_state.indices[GRAPHICS_FAMILY_INDEX] != static_cast<u32>(-1));
 
-	b8 is_same_queue_family = m_state.indices[GRAPHICS_FAMILY_INDEX] == m_state.indices[PRESENT_FAMILY_INDEX];
-
 	f32 queue_priority = 1.0f;
 
 	TempDynamicArray<VkDeviceQueueCreateInfo> queue_create_infos(2);
@@ -268,9 +266,9 @@ void VulkanBackend::initialize_device(platform::Window* window) {
 	device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	device_create_info.pNext = &dynamic_rendering_features;
 	device_create_info.pQueueCreateInfos = queue_create_infos.data();
-	device_create_info.queueCreateInfoCount = queue_create_infos.size();
+	device_create_info.queueCreateInfoCount = queue_create_infos.size_u32();
 	device_create_info.pEnabledFeatures = &physical_device_features;
-	device_create_info.enabledExtensionCount = device_extensions.size();
+	device_create_info.enabledExtensionCount = device_extensions.size_u32();
 	device_create_info.ppEnabledExtensionNames = device_extensions.data();
 
 	VkResult result = vkCreateDevice(

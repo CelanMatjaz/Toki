@@ -83,6 +83,19 @@ static_assert(IsSame<RemoveRef<u32&>::type, u32>::value);
 static_assert(IsSame<RemoveRef<u32&&>::type, u32>::value);
 
 template <typename T>
+struct RemovePointer {
+	using type = T;
+};
+
+template <typename T>
+struct RemovePointer<T*> {
+	using type = T;
+};
+
+static_assert(IsSame<RemovePointer<u32>::type, u32>::value);
+static_assert(IsSame<RemovePointer<u32*>::type, u32>::value);
+
+template <typename T>
 struct IsReference : FalseType {};
 
 template <typename T>
@@ -310,7 +323,7 @@ struct IsCArray : FalseType {};
 
 template <typename T>
 struct IsCArray<T[]> : TrueType {
-	static constexpr u64 COUNT = sizeof(T) / sizeof(T[0]);
+	static constexpr u64 COUNT = sizeof(T) / sizeof(RemovePointer<T>::type);
 };
 
 template <typename T, u64 N>
@@ -345,8 +358,8 @@ template <typename T>
 struct StringDumper;
 
 template <typename Type, typename Container = StringDumper<Type>>
-concept CHasDumpToString = requires(Container c, Type&& t, char* out) {
-	{ Container::dump_to_string(out, t) } -> CIsSame<u32>;
+concept CHasDumpToString = requires(Container c, const Type&& t, char* out) {
+	{ Container::dump_to_string(out, t) } -> CIsSame<u64>;
 };
 
 template <typename Container, typename FromType, typename ToType>

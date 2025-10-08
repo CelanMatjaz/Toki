@@ -1,7 +1,5 @@
 #include "test_layer.h"
 
-#include "toki/core/containers/dynamic_array.h"
-
 TestLayer::TestLayer(toki::f32 offset): m_offset(offset) {}
 
 void TestLayer::on_attach() {
@@ -66,7 +64,7 @@ void TestLayer::on_attach() {
 			toki::Vec3f32 pos;
 		};
 
-		toki::f32 offset = 0.5 + m_offset;
+		toki::f32 offset = 0.5f + m_offset;
 		Vertex vertices[] = {
 			{ { offset, -offset, 0.0f } },
 			{ { offset, offset, 0.0f } },
@@ -108,4 +106,4 @@ void TestLayer::on_render(toki::renderer::Commands* cmd) {
 	cmd->end_pass();
 }
 
-void TestLayer::on_update(toki::f32 delta_time) {}
+void TestLayer::on_update([[maybe_unused]] toki::f32 delta_time) {}

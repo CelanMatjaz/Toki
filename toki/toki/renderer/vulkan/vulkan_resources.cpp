@@ -93,7 +93,7 @@ void VulkanSwapchain::acquire_next_image(const VulkanState& state) {
 	VkResult result = vkAcquireNextImageKHR(
 		state.logical_device,
 		m_swapchain,
-		~0,
+		~static_cast<u64>(0),
 		state.frames.get_image_available_semaphore(),
 		VK_NULL_HANDLE,
 		&m_currentImageIndex);
@@ -104,7 +104,8 @@ VulkanTexture& VulkanSwapchain::get_current_image() const {
 	return m_images[m_currentImageIndex].m_texture;
 }
 
-VulkanShaderLayout VulkanShaderLayout::create(const ShaderLayoutConfig& config, const VulkanState& state) {
+VulkanShaderLayout VulkanShaderLayout::create(
+	[[maybe_unused]] const ShaderLayoutConfig& config, const VulkanState& state) {
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info{};
 	pipeline_layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipeline_layout_create_info.pushConstantRangeCount = 0;
@@ -200,9 +201,9 @@ VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState&
 
 	VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info{};
 	vertex_input_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertex_input_state_create_info.vertexBindingDescriptionCount = vertex_binding_descriptions.size();
+	vertex_input_state_create_info.vertexBindingDescriptionCount = vertex_binding_descriptions.size_u32();
 	vertex_input_state_create_info.pVertexBindingDescriptions = vertex_binding_descriptions.data();
-	vertex_input_state_create_info.vertexAttributeDescriptionCount = vertex_attribute_descriptions.size();
+	vertex_input_state_create_info.vertexAttributeDescriptionCount = vertex_attribute_descriptions.size_u32();
 	vertex_input_state_create_info.pVertexAttributeDescriptions = vertex_attribute_descriptions.data();
 
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info{};
@@ -350,13 +351,13 @@ VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState&
 	color_blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
 
 	TempDynamicArray<VkPipelineColorBlendAttachmentState> color_blend_attachment_states;
-	color_blend_attachment_states.push_back(toki::move(color_blend_attachment_state));
+	color_blend_attachment_states.push_back(color_blend_attachment_state);
 
 	VkPipelineColorBlendStateCreateInfo color_blend_state_create_info{};
 	color_blend_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	color_blend_state_create_info.logicOpEnable = VK_FALSE;
 	color_blend_state_create_info.logicOp = VK_LOGIC_OP_COPY;
-	color_blend_state_create_info.attachmentCount = color_blend_attachment_states.size();
+	color_blend_state_create_info.attachmentCount = color_blend_attachment_states.size_u32();
 	color_blend_state_create_info.pAttachments = color_blend_attachment_states.data();
 	color_blend_state_create_info.blendConstants[0] = 1.0f;
 	color_blend_state_create_info.blendConstants[1] = 1.0f;
@@ -420,6 +421,7 @@ VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState&
 		&graphics_pipeline_create_info,
 		state.allocation_callbacks,
 		&shader.m_pipeline);
+	TK_ASSERT(result == VK_SUCCESS);
 
 	for (u32 i = 0; i < shader_stage_create_infos.size(); i++) {
 		vkDestroyShaderModule(state.logical_device, shader_stage_create_infos[i].module, state.allocation_callbacks);
@@ -494,7 +496,8 @@ void VulkanBuffer::copy_to_buffer(
 	vkCmdCopyBuffer(cmd, m_buffer, dst_buffer_copy_config.buffer, 1, &buffer_copy);
 }
 
-VulkanTexture VulkanTexture::create(const TextureConfig& config, const VulkanState& state) {
+VulkanTexture VulkanTexture::create(
+	[[maybe_unused]] const TextureConfig& config, [[maybe_unused]] const VulkanState& state) {
 	return {};
 }
 
@@ -602,7 +605,7 @@ void VulkanStagingBuffer::reset() {
 	m_offset = 0;
 }
 
-void VulkanCommandBuffer::begin(const VulkanState& state, VkCommandBufferUsageFlags flags) {
+void VulkanCommandBuffer::begin(VkCommandBufferUsageFlags flags) {
 	VkCommandBufferBeginInfo command_buffer_begin_info{};
 	command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	command_buffer_begin_info.flags = flags;
@@ -611,19 +614,20 @@ void VulkanCommandBuffer::begin(const VulkanState& state, VkCommandBufferUsageFl
 	this->m_state = CommandBufferState::RECORDING;
 }
 
-void VulkanCommandBuffer::end(const VulkanState& state) {
+void VulkanCommandBuffer::end() {
 	VkResult result = vkEndCommandBuffer(m_commandBuffer);
 	TK_ASSERT(result == VK_SUCCESS);
 	this->m_state = CommandBufferState::EXECUTABLE;
 }
 
-void VulkanCommandBuffer::reset(const VulkanState& state) {
+void VulkanCommandBuffer::reset() {
 	VkResult result = vkResetCommandBuffer(m_commandBuffer, 0);
 	TK_ASSERT(result == VK_SUCCESS);
 	this->m_state = CommandBufferState::INITIAL;
 }
 
-VulkanCommandPool VulkanCommandPool::create(const VulkanCommandPoolConfig& config, const VulkanState& state) {
+VulkanCommandPool VulkanCommandPool::create(
+	[[maybe_unused]] const VulkanCommandPoolConfig& config, const VulkanState& state) {
 	VulkanCommandPool command_pool{};
 
 	VkCommandPoolCreateInfo command_pool_create_info{};
@@ -647,7 +651,7 @@ PersistentDynamicArray<VulkanCommandBuffer> VulkanCommandPool::allocate_command_
 	VkCommandBufferAllocateInfo command_buffer_allocate_info{};
 	command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	command_buffer_allocate_info.commandPool = m_commandPool;
-	command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	command_buffer_allocate_info.level = level;
 	command_buffer_allocate_info.commandBufferCount = count;
 
 	TempDynamicArray<VkCommandBuffer> command_buffers(count);
@@ -678,13 +682,13 @@ void VulkanCommandPool::free_command_buffers(
 
 VulkanCommandBuffer VulkanCommandPool::begin_single_time_submit_command_buffer(const VulkanState& state) const {
 	auto command_buffers = allocate_command_buffers(state, 1);
-	command_buffers[0].begin(state, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	command_buffers[0].begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 	return command_buffers[0];
 }
 
 void VulkanCommandPool::submit_single_time_submit_command_buffer(
 	const VulkanState& state, VulkanCommandBuffer command_buffer) const {
-	command_buffer.end(state);
+	command_buffer.end();
 
 	VkSubmitInfo submit_info{};
 	submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -741,7 +745,7 @@ void VulkanFrames::destroy(const VulkanState& state) {
 }
 
 void VulkanFrames::frame_prepare(VulkanState& state) {
-	vkWaitForFences(state.logical_device, 1, &m_inFlightFences[m_currentFrame], VK_TRUE, ~0);
+	vkWaitForFences(state.logical_device, 1, &m_inFlightFences[m_currentFrame], VK_TRUE, ~static_cast<u64>(0));
 	vkResetFences(state.logical_device, 1, &m_inFlightFences[m_currentFrame]);
 
 	state.swapchain.acquire_next_image(state);
@@ -761,7 +765,7 @@ b8 VulkanFrames::submit(const VulkanState& state, toki::Span<VulkanCommandBuffer
 		semaphore_wait_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
 		semaphore_wait_info.pSemaphores = wait_semaphores;
 		semaphore_wait_info.semaphoreCount = ARRAY_SIZE(wait_semaphores);
-		VkResult result = vkWaitSemaphores(state.logical_device, &semaphore_wait_info, ~0);
+		VkResult result = vkWaitSemaphores(state.logical_device, &semaphore_wait_info, ~static_cast<u64>(0));
 		TK_ASSERT(result == VK_SUCCESS);
 
 		VkSemaphoreSignalInfo semaphore_signal_info{};

@@ -1,9 +1,10 @@
 #include "toki/runtime/engine/engine.h"
+
 #include "toki/core/common/common.h"
 
 namespace toki::runtime {
 
-Engine::Engine(const EngineConfig& config): m_running(true) {
+Engine::Engine([[maybe_unused]] const EngineConfig& config): m_running(true) {
 	platform::WindowConfig window_config{};
 	window_config.title = "Window";
 	window_config.width = 800;
@@ -28,8 +29,8 @@ void Engine::run() {
 
 		auto commands = m_renderer->get_commands();
 
-		for (i32 i = m_layers.size() - 1; i >= 0; i--) {
-			m_layers[i]->on_render(commands);
+		for (i32 i = static_cast<i32>(m_layers.size() - 1); i >= 0; i--) {
+			m_layers[static_cast<u32>(i)]->on_render(commands);
 		}
 
 		m_renderer->submit(commands);
@@ -47,11 +48,6 @@ void Engine::attach_layer(UniquePtr<Layer>&& layer) {
 	layer->m_renderer = m_renderer.get();
 	layer->on_attach();
 	m_layers.push_back(toki::move(layer));
-}
-
-
-const platform::Window* Engine::get_window(u32 index) const {
-	return m_window.get();
 }
 
 void Engine::cleanup() {

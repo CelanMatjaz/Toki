@@ -7,23 +7,23 @@
 namespace toki::platform {
 
 toki::Expected<u64, PlatformError> write(NativeHandle handle, const void* data, u64 size) {
-	i64 result = ::write(handle, data, size);
+	i64 result = ::write(static_cast<i32>(handle), data, size);
 	if (result == -1) {
 		TK_ASSERT(false, "Need to handle error");
 		return PlatformError::Unknown;
 	}
 
-	return result;
+	return static_cast<u64>(result);
 }
 
 toki::Expected<u64, PlatformError> read(NativeHandle handle, void* data, u64 size) {
-	i64 result = ::read(handle, data, size);
+	i64 result = ::read(static_cast<i32>(handle), data, size);
 	if (result == -1) {
 		TK_ASSERT(false, "Need to handle error");
 		return PlatformError::Unknown;
 	}
 
-	return result;
+	return static_cast<u64>(result);
 }
 
 }  // namespace toki::platform

@@ -116,8 +116,8 @@ private:
 	u64 m_size;
 };
 
-class VulkanTexture {
-	friend class WrappedVulkanTexture;
+struct VulkanTexture {
+	friend struct WrappedVulkanTexture;
 
 public:
 	static VulkanTexture create(const TextureConfig& config, const VulkanState& state);
@@ -139,7 +139,7 @@ private:
 	VkDeviceMemory m_deviceMemory;
 };
 
-class WrappedVulkanTexture {
+struct WrappedVulkanTexture {
 	friend class VulkanSwapchain;
 
 public:
@@ -174,9 +174,9 @@ struct VulkanCommandBuffer {
 		return m_commandBuffer;
 	}
 
-	void begin(const VulkanState& state, VkCommandBufferUsageFlags flags = 0);
-	void end(const VulkanState& state);
-	void reset(const VulkanState& state);
+	void begin(VkCommandBufferUsageFlags flags = 0);
+	void end();
+	void reset();
 };
 
 class VulkanCommandPool {
