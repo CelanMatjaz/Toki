@@ -5,6 +5,9 @@
 namespace toki {
 
 struct Handle {
+	Handle(): value(0) {}
+	Handle(u64 value): value(value) {}
+
 	u64 value{};
 
 	operator const u64() const {

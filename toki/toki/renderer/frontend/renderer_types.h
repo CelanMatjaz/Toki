@@ -10,6 +10,7 @@ struct ShaderHandle : public Handle {};
 struct ShaderLayoutHandle : public Handle {};
 struct BufferHandle : public Handle {};
 struct TextureHandle : public Handle {};
+struct SamplerHandle : public Handle {};
 
 enum struct ColorFormat : u16 {
 	NONE,
@@ -26,9 +27,9 @@ enum struct ShaderType : u8 {
 	GRAPHICS
 };
 
-enum ShaderStage : u8 {
-	SHADER_STAGE_VERTEX,
-	SHADER_STAGE_FRAGMENT,
+enum ShaderStageFlags : u8 {
+	SHADER_STAGE_VERTEX = 1 << 0,
+	SHADER_STAGE_FRAGMENT = 1 << 1,
 	SHADER_STAGE_SIZE
 };
 
@@ -114,7 +115,7 @@ enum struct FrontFace : u8 {
 };
 
 struct ShaderSourceFile {
-	ShaderStage stage;
+	ShaderStageFlags stage;
 	StringView path;
 };
 
@@ -132,14 +133,59 @@ struct ShaderBindingConfig {
 	u32 binding;
 };
 
+enum struct SamplerFilter {
+	NEAREST,
+	LINEAR
+};
+
+enum struct SamplerAddressMode {
+	REPEAT,
+	MIRRORED_REPEAT,
+	CLAMP_TO_EDGE,
+	CLAMP_TO_BORDER,
+	MIRROR_CLAMP_TO_EDGE
+};
+
+enum struct UniformType {
+	UNIFORM_BUFFER,
+	TEXTURE,
+	SAMPLER,
+	TEXTURE_WITH_SAMPLER
+};
+
+struct UniformConfig {
+	u32 count = 1;
+	u32 binding;
+	UniformType type;
+	ShaderStageFlags shader_stage_flags;
+};
+
 struct BufferConfig {
 	u64 size;
 	BufferType type;
 };
 
-struct TextureConfig {};
+struct TextureConfig {
+	u64 width;
+	u64 height;
+};
 
-struct ShaderLayoutConfig {};
+struct SamplerConfig {
+	SamplerFilter mag_filter = SamplerFilter::LINEAR;
+	SamplerFilter min_filter = SamplerFilter::LINEAR;
+	SamplerAddressMode address_mode_u = SamplerAddressMode::CLAMP_TO_BORDER;
+	SamplerAddressMode address_mode_v = SamplerAddressMode::CLAMP_TO_BORDER;
+	SamplerAddressMode address_mode_w = SamplerAddressMode::CLAMP_TO_BORDER;
+	b8 use_normalized_coords = true;
+};
+
+struct ShaderLayoutConfig {
+	Span<UniformConfig> uniforms;
+};
+
+struct DescriptorSetLayoutConfig {
+	const Span<UniformConfig> uniforms;
+};
 
 struct ShaderConfig {
 	ShaderType type;

@@ -4,17 +4,17 @@
 #include <vulkan/vulkan_core.h>
 
 #include "toki/renderer/private/vulkan/vulkan_types.h"
+#include "toki/renderer/types.h"
 
 namespace toki::renderer {
 
 struct VulkanState;
 struct VulkanTexture;
 struct VulkanCommandBuffer;
-struct StagingBufferConfig;
 struct WrappedVulkanTexture;
 
-class VulkanSwapchain {
-	friend class VulkanFrames;
+struct VulkanSwapchain {
+	friend struct VulkanFrames;
 
 public:
 	static VulkanSwapchain create(const VulkanSwapchainConfig& config, const VulkanState& state);
@@ -41,18 +41,21 @@ private:
 	u32 m_currentImageIndex;
 };
 
-class VulkanShaderLayout {
-	friend class VulkanShader;
+struct VulkanShaderLayout {
+	friend struct VulkanShader;
 
 public:
 	static VulkanShaderLayout create(const ShaderLayoutConfig& config, const VulkanState& state);
 	void destroy(const VulkanState& state);
 
 private:
+	void create_descriptor_set_layout(const DescriptorSetLayoutConfig& config, const VulkanState& state);
+
 	VkPipelineLayout m_pipelineLayout;
+	PersistentDynamicArray<VkDescriptorSetLayout> m_descriptorSetLayouts;
 };
 
-class VulkanShader {
+struct VulkanShader {
 public:
 	static VulkanShader create(const ShaderConfig& config, const VulkanState& state);
 	void destroy(const VulkanState& state);
@@ -80,8 +83,8 @@ struct VulkanBufferCopyConfig {
 	u64 size;
 };
 
-class VulkanBuffer {
-	friend class VulkanStagingBuffer;
+struct VulkanBuffer {
+	friend struct VulkanStagingBuffer;
 
 public:
 	static VulkanBuffer create(const VulkanBufferConfig& config, const VulkanState& state);
@@ -140,7 +143,7 @@ private:
 };
 
 struct WrappedVulkanTexture {
-	friend class VulkanSwapchain;
+	friend struct VulkanSwapchain;
 
 public:
 	WrappedVulkanTexture(const VulkanState& state, VkImage image, VkFormat format);
@@ -152,7 +155,20 @@ private:
 	VulkanTexture m_texture;
 };
 
-class VulkanStagingBuffer {
+struct VulkanSampler {
+public:
+	static VulkanSampler create(const SamplerConfig& config, const VulkanState& state);
+	void destroy(const VulkanState& state);
+
+	operator VkSampler() const {
+		return m_sampler;
+	}
+
+private:
+	VkSampler m_sampler;
+};
+
+struct VulkanStagingBuffer {
 public:
 	static VulkanStagingBuffer create(const StagingBufferConfig& config, const VulkanState& state);
 	void destroy(const VulkanState& state);
@@ -179,9 +195,9 @@ struct VulkanCommandBuffer {
 	void reset();
 };
 
-class VulkanCommandPool {
+struct VulkanCommandPool {
 public:
-	static VulkanCommandPool create(const VulkanCommandPoolConfig& config, const VulkanState& state);
+	static VulkanCommandPool create(const CommandPoolConfig& config, const VulkanState& state);
 	void destroy(const VulkanState& state);
 
 	PersistentDynamicArray<VulkanCommandBuffer> allocate_command_buffers(
@@ -195,7 +211,7 @@ private:
 	VkCommandPool m_commandPool;
 };
 
-class VulkanFrames {
+struct VulkanFrames {
 public:
 	static VulkanFrames create(const VulkanState& state);
 	void destroy(const VulkanState& state);
@@ -217,6 +233,45 @@ private:
 	PersistentStaticArray<VkSemaphore, MAX_FRAMES_IN_FLIGHT> m_imageAvailableSemaphores;
 	PersistentStaticArray<VkSemaphore, MAX_FRAMES_IN_FLIGHT> m_renderFinishedSemaphores;
 	PersistentStaticArray<VkFence, MAX_FRAMES_IN_FLIGHT> m_inFlightFences;
+};
+
+struct VulkanDescriptorPool {
+public:
+	static VulkanDescriptorPool create(const DescriptorPoolConfig& config, const VulkanState& state);
+	void destroy(const VulkanState& state);
+
+	PersistentDynamicArray<VkDescriptorSet> allocate_descriptor_sets(
+		const DescriptorSetConfig& config, const VulkanState& state);
+
+private:
+	VkDescriptorPool m_descriptorPool;
+};
+
+struct SetUniform {
+	union {
+		BufferHandle buffer;
+		TextureHandle texture;
+		SamplerHandle sampler;
+		struct {
+			TextureHandle texture;
+			SamplerHandle sampler;
+		} texture_with_sampler;
+	} handle;
+	UniformType type;
+	u32 binding;
+	u32 array_element;
+};
+
+struct SetUniformConfig {};
+
+struct DescriptorSet {
+public:
+	static DescriptorSet create(const VulkanState& state);
+
+	void write_descriptors(const VulkanState& state, Span<SetUniform> uniforms);
+
+private:
+	VkDescriptorSet m_descriptorSet;
 };
 
 }  // namespace toki::renderer

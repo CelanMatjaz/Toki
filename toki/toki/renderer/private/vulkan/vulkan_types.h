@@ -53,7 +53,17 @@ struct MemoryAllocateConfig {
 	VkMemoryRequirements memory_requirements;
 };
 
-struct VulkanCommandPoolConfig {};
+struct CommandPoolConfig {};
+
+struct DescriptorPoolConfig {
+	Span<VkDescriptorPoolSize> pool_sizes;
+	u32 max_sets = 1;
+};
+
+struct DescriptorSetConfig {
+	u32 count;
+	VkDescriptorSetLayout layout;
+};
 
 struct VulkanSwapchainConfig {
 	platform::Window* window;

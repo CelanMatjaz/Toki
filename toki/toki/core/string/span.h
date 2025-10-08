@@ -27,7 +27,7 @@ public:
 
 	~Span() = default;
 
-	constexpr Span(const Span& other): m_size(other.m_size), m_data(other.m_data) {}
+	constexpr Span(const Span& other): m_data(other.m_data), m_size(other.m_size) {}
 
 	constexpr Span& operator=(const Span& other) {
 		if (other == this) {

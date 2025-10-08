@@ -16,7 +16,7 @@ inline VkExtent2D convert_to<VkExtent2D>(const Vec2u32& vec) {
 
 namespace renderer {
 
-toki::Expected<TempDynamicArray<toki::byte>, RendererErrors> compile_shader(ShaderStage stage, StringView source);
+toki::Expected<TempDynamicArray<toki::byte>, RendererErrors> compile_shader(ShaderStageFlags stage, StringView source);
 VkShaderModule create_shader_module(const VulkanState& state, Span<toki::byte> spirv);
 
 VkFormat map_color_format(ColorFormat format);

@@ -104,16 +104,19 @@ VulkanTexture& VulkanSwapchain::get_current_image() const {
 	return m_images[m_currentImageIndex].m_texture;
 }
 
-VulkanShaderLayout VulkanShaderLayout::create(
-	[[maybe_unused]] const ShaderLayoutConfig& config, const VulkanState& state) {
+VulkanShaderLayout VulkanShaderLayout::create(const ShaderLayoutConfig& config, const VulkanState& state) {
+	VulkanShaderLayout shader_layout{};
+
+	DescriptorSetLayoutConfig descriptor_set_layout_config{ .uniforms = config.uniforms };
+	shader_layout.create_descriptor_set_layout(descriptor_set_layout_config, state);
+
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info{};
 	pipeline_layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipeline_layout_create_info.pushConstantRangeCount = 0;
 	pipeline_layout_create_info.pPushConstantRanges = nullptr;
-	pipeline_layout_create_info.setLayoutCount = 0;
-	pipeline_layout_create_info.pSetLayouts = nullptr;
+	pipeline_layout_create_info.setLayoutCount = static_cast<u32>(shader_layout.m_descriptorSetLayouts.size());
+	pipeline_layout_create_info.pSetLayouts = shader_layout.m_descriptorSetLayouts.data();
 
-	VulkanShaderLayout shader_layout;
 	vkCreatePipelineLayout(
 		state.logical_device,
 		&pipeline_layout_create_info,
@@ -124,21 +127,50 @@ VulkanShaderLayout VulkanShaderLayout::create(
 }
 
 void VulkanShaderLayout::destroy(const VulkanState& state) {
+	for (u32 i = 0; i < m_descriptorSetLayouts.size(); i++) {
+		vkDestroyDescriptorSetLayout(state.logical_device, m_descriptorSetLayouts[i], state.allocation_callbacks);
+	}
 	vkDestroyPipelineLayout(state.logical_device, m_pipelineLayout, state.allocation_callbacks);
+}
+
+void VulkanShaderLayout::create_descriptor_set_layout(
+	const DescriptorSetLayoutConfig& config, const VulkanState& state) {
+	TempDynamicArray<VkDescriptorSetLayoutBinding> layout_bindinds(config.uniforms.size());
+
+	for (u32 i = 0; i < config.uniforms.size(); i++) {
+		VkDescriptorSetLayoutBinding descriptor_set_layout_binding{};
+		descriptor_set_layout_binding.binding = config.uniforms[i].binding;
+		descriptor_set_layout_binding.descriptorType = get_descriptor_type(config.uniforms[i].type);
+		descriptor_set_layout_binding.descriptorCount = config.uniforms[i].binding;
+		descriptor_set_layout_binding.stageFlags = get_shader_stage_flags(config.uniforms[i].shader_stage_flags);
+		descriptor_set_layout_binding.pImmutableSamplers = nullptr;
+	}
+
+	VkDescriptorSetLayoutCreateInfo layoutInfo{};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo.bindingCount = static_cast<u32>(layout_bindinds.size());
+	layoutInfo.pBindings = layout_bindinds.data();
+
+	VkDescriptorSetLayout descriptor_set_layout;
+	VkResult result = vkCreateDescriptorSetLayout(
+		state.logical_device, &layoutInfo, state.allocation_callbacks, &descriptor_set_layout);
+	TK_ASSERT(result == VK_SUCCESS);
+
+	m_descriptorSetLayouts.push_back(descriptor_set_layout);
 }
 
 VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState& state) {
 	TK_ASSERT(config.color_formats.size() > 0);
 
 	TempDynamicArray<VkPipelineShaderStageCreateInfo> shader_stage_create_infos;
-	shader_stage_create_infos.reserve(ShaderStage::SHADER_STAGE_SIZE);
+	shader_stage_create_infos.reserve(ShaderStageFlags::SHADER_STAGE_SIZE);
 
 	for (u32 i = 0; i < config.sources.size(); i++) {
 		if (config.sources[i].size() == 0) {
 			continue;
 		}
 
-		auto compile_shader_result = compile_shader(static_cast<ShaderStage>(i), config.sources[i]);
+		auto compile_shader_result = compile_shader(static_cast<ShaderStageFlags>(i), config.sources[i]);
 		TK_ASSERT(compile_shader_result);
 
 		shader_stage_create_infos.push_back({});
@@ -148,7 +180,7 @@ VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState&
 		shader_stage_create_info.module = create_shader_module(state, compile_shader_result.value());
 		shader_stage_create_info.pName = "main";
 
-		switch (static_cast<ShaderStage>(i)) {
+		switch (static_cast<ShaderStageFlags>(i)) {
 			case SHADER_STAGE_VERTEX:
 				shader_stage_create_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
 				break;
@@ -449,9 +481,6 @@ VulkanBuffer VulkanBuffer::create(const VulkanBufferConfig& config, const Vulkan
 	VkResult result = vkCreateBuffer(state.logical_device, &bufferInfo, state.allocation_callbacks, &buffer.m_buffer);
 	TK_ASSERT(result == VK_SUCCESS);
 
-	VkMemoryRequirements memory_requirements;
-	vkGetBufferMemoryRequirements(state.logical_device, buffer.m_buffer, &memory_requirements);
-
 	MemoryAllocateConfig device_allocate_config{};
 	device_allocate_config.memory_property_flags = config.override_memory_properties != 0
 													   ? config.override_memory_properties
@@ -496,14 +525,50 @@ void VulkanBuffer::copy_to_buffer(
 	vkCmdCopyBuffer(cmd, m_buffer, dst_buffer_copy_config.buffer, 1, &buffer_copy);
 }
 
-VulkanTexture VulkanTexture::create(
-	[[maybe_unused]] const TextureConfig& config, [[maybe_unused]] const VulkanState& state) {
-	return {};
+VulkanTexture VulkanTexture::create(const TextureConfig& config, const VulkanState& state) {
+	VulkanTexture texture{};
+
+	VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
+
+	VkImageCreateInfo image_create_info{};
+	image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	image_create_info.imageType = VK_IMAGE_TYPE_2D;
+	image_create_info.extent.width = static_cast<uint32_t>(config.width);
+	image_create_info.extent.height = static_cast<uint32_t>(config.height);
+	image_create_info.extent.depth = 1;
+	image_create_info.mipLevels = 1;
+	image_create_info.arrayLayers = 1;
+	image_create_info.format = format;
+	image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+	image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	image_create_info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
+
+	VkResult result =
+		vkCreateImage(state.logical_device, &image_create_info, state.allocation_callbacks, &texture.m_image);
+	TK_ASSERT(result == VK_SUCCESS);
+
+	MemoryAllocateConfig device_allocate_config{};
+	vkGetImageMemoryRequirements(state.logical_device, texture.m_image, &device_allocate_config.memory_requirements);
+	device_allocate_config.memory_property_flags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+	texture.m_deviceMemory = allocate_device_memory(device_allocate_config, state);
+
+	result = vkBindImageMemory(state.logical_device, texture.m_image, texture.m_deviceMemory, 0);
+	TK_ASSERT(result == VK_SUCCESS);
+
+	ImageViewConfig image_view_config{};
+	image_view_config.image = texture.m_image;
+	image_view_config.format = format;
+	create_image_view(image_view_config, state);
+
+	return texture;
 }
 
 void VulkanTexture::destroy(const VulkanState& state) {
 	vkDestroyImageView(state.logical_device, m_imageView, state.allocation_callbacks);
 	vkDestroyImage(state.logical_device, m_image, state.allocation_callbacks);
+	vkFreeMemory(state.logical_device, m_deviceMemory, state.allocation_callbacks);
 }
 
 void VulkanTexture::transition_layout(VulkanCommandBuffer cmd, VkImageLayout old_layout, VkImageLayout new_layout) {
@@ -557,6 +622,41 @@ WrappedVulkanTexture::WrappedVulkanTexture(const VulkanState& state, VkImage ima
 
 void WrappedVulkanTexture::destroy(const VulkanState& state) {
 	vkDestroyImageView(state.logical_device, m_texture.m_imageView, state.allocation_callbacks);
+}
+
+VulkanSampler VulkanSampler::create(const SamplerConfig& config, const VulkanState& state) {
+	VulkanSampler sampler{};
+
+	VkPhysicalDeviceProperties properties{};
+	vkGetPhysicalDeviceProperties(state.physical_device, &properties);
+
+	VkSamplerCreateInfo sampler_create_info{};
+	sampler_create_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	sampler_create_info.magFilter = get_filter(config.mag_filter);
+	sampler_create_info.minFilter = get_filter(config.mag_filter);
+	sampler_create_info.addressModeU = get_address_mode(config.address_mode_u);
+	sampler_create_info.addressModeV = get_address_mode(config.address_mode_v);
+	sampler_create_info.addressModeW = get_address_mode(config.address_mode_w);
+	sampler_create_info.compareEnable = VK_FALSE;
+	sampler_create_info.compareOp = VK_COMPARE_OP_ALWAYS;
+	sampler_create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler_create_info.mipLodBias = 0.0f;
+	sampler_create_info.minLod = 0.0f;
+	sampler_create_info.maxLod = 0.0f;
+	sampler_create_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	sampler_create_info.unnormalizedCoordinates = !config.use_normalized_coords;
+	sampler_create_info.anisotropyEnable = VK_TRUE;
+	sampler_create_info.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+
+	VkResult result =
+		vkCreateSampler(state.logical_device, &sampler_create_info, state.allocation_callbacks, &sampler.m_sampler);
+	TK_ASSERT(result == VK_SUCCESS);
+
+	return sampler;
+}
+
+void VulkanSampler::destroy(const VulkanState& state) {
+	vkDestroySampler(state.logical_device, m_sampler, state.allocation_callbacks);
 }
 
 VulkanStagingBuffer VulkanStagingBuffer::create(const StagingBufferConfig& config, const VulkanState& state) {
@@ -627,7 +727,7 @@ void VulkanCommandBuffer::reset() {
 }
 
 VulkanCommandPool VulkanCommandPool::create(
-	[[maybe_unused]] const VulkanCommandPoolConfig& config, const VulkanState& state) {
+	[[maybe_unused]] const CommandPoolConfig& config, const VulkanState& state) {
 	VulkanCommandPool command_pool{};
 
 	VkCommandPoolCreateInfo command_pool_create_info{};
@@ -833,6 +933,119 @@ VkFence VulkanFrames::get_in_flight_fence() const {
 
 void VulkanFrames::increment_frame() {
 	m_currentFrame = (m_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
+VulkanDescriptorPool VulkanDescriptorPool::create(const DescriptorPoolConfig& config, const VulkanState& state) {
+	VulkanDescriptorPool descriptor_pool{};
+
+	VkDescriptorPoolCreateInfo descriptor_pool_create_info{};
+	descriptor_pool_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	descriptor_pool_create_info.poolSizeCount = static_cast<u32>(config.pool_sizes.size());
+	descriptor_pool_create_info.pPoolSizes = config.pool_sizes.data();
+	descriptor_pool_create_info.maxSets = config.max_sets;
+
+	VkResult result = vkCreateDescriptorPool(
+		state.logical_device,
+		&descriptor_pool_create_info,
+		state.allocation_callbacks,
+		&descriptor_pool.m_descriptorPool);
+	TK_ASSERT(result == VK_SUCCESS);
+
+	return descriptor_pool;
+}
+
+void VulkanDescriptorPool::destroy(const VulkanState& state) {
+	vkDestroyDescriptorPool(state.logical_device, m_descriptorPool, state.allocation_callbacks);
+}
+
+PersistentDynamicArray<VkDescriptorSet> VulkanDescriptorPool::allocate_descriptor_sets(
+	const DescriptorSetConfig& config, const VulkanState& state) {
+	TempDynamicArray<VkDescriptorSetLayout> descriptor_set_layouts(config.count, config.layout);
+
+	VkDescriptorSetAllocateInfo descriptor_set_allocate_info{};
+	descriptor_set_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	descriptor_set_allocate_info.descriptorPool = m_descriptorPool;
+	descriptor_set_allocate_info.descriptorSetCount = static_cast<u32>(config.count);
+	descriptor_set_allocate_info.pSetLayouts = descriptor_set_layouts.data();
+
+	PersistentDynamicArray<VkDescriptorSet> descriptor_sets(config.count);
+
+	VkResult result =
+		vkAllocateDescriptorSets(state.logical_device, &descriptor_set_allocate_info, descriptor_sets.data());
+	TK_ASSERT(result == VK_SUCCESS);
+
+	return descriptor_sets;
+}
+
+void DescriptorSet::write_descriptors(const VulkanState& state, Span<SetUniform> uniforms) {
+	TempDynamicArray<VkWriteDescriptorSet> writes(uniforms.size());
+	TempDynamicArray<VkDescriptorBufferInfo> descriptor_buffer_infos;
+	descriptor_buffer_infos.reserve(uniforms.size());
+	TempDynamicArray<VkDescriptorImageInfo> descriptor_image_infos;
+	descriptor_image_infos.reserve(uniforms.size());
+
+	for (u32 i = 0; i < writes.size(); i++) {
+		writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writes[i].dstSet = m_descriptorSet;
+		writes[i].dstBinding = 0;
+		writes[i].dstArrayElement = 0;
+		writes[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		writes[i].descriptorCount = 1;
+
+		switch (uniforms[i].type) {
+			case UniformType::UNIFORM_BUFFER: {
+				TK_ASSERT(state.buffers.exists(uniforms[i].handle.buffer));
+				VulkanBuffer buffer = state.buffers.at(uniforms[i].handle.buffer);
+
+				VkDescriptorBufferInfo descriptor_buffer_info{};
+				descriptor_buffer_info.buffer = buffer.buffer();
+				descriptor_buffer_info.offset = 0;
+				descriptor_buffer_info.range = buffer.size();
+				descriptor_buffer_infos.push_back(descriptor_buffer_info);
+
+				writes[i].pBufferInfo = &descriptor_buffer_infos.last();
+			} break;
+
+			case UniformType::TEXTURE: {
+				TK_ASSERT(state.textures.exists(uniforms[i].handle.texture));
+				VulkanTexture texture = state.textures.at(uniforms[i].handle.texture);
+
+				VkDescriptorImageInfo descriptor_image_info{};
+				descriptor_image_info.imageView = texture;
+				descriptor_image_infos.push_back(descriptor_image_info);
+
+				writes[i].pImageInfo = &descriptor_image_infos.last();
+			} break;
+
+			case UniformType::SAMPLER: {
+				TK_ASSERT(state.samplers.exists(uniforms[i].handle.sampler));
+				VulkanSampler sampler = state.samplers.at(uniforms[i].handle.sampler);
+
+				VkDescriptorImageInfo descriptor_image_info{};
+				descriptor_image_info.sampler = sampler;
+				descriptor_image_infos.push_back(descriptor_image_info);
+
+				writes[i].pImageInfo = &descriptor_image_infos.last();
+			} break;
+
+			case UniformType::TEXTURE_WITH_SAMPLER: {
+				TK_ASSERT(state.textures.exists(uniforms[i].handle.texture));
+				VulkanTexture texture = state.textures.at(uniforms[i].handle.texture);
+				TK_ASSERT(state.samplers.exists(uniforms[i].handle.sampler));
+				VulkanSampler sampler = state.samplers.at(uniforms[i].handle.sampler);
+
+				VkDescriptorImageInfo descriptor_image_info{};
+				descriptor_image_info.imageView = texture;
+				descriptor_image_info.sampler = sampler;
+				descriptor_image_infos.push_back(descriptor_image_info);
+
+				writes[i].pImageInfo = &descriptor_image_infos.last();
+			} break;
+		}
+	}
+
+	vkUpdateDescriptorSets(state.logical_device, writes.size(), writes.data(), 0, nullptr);
 }
 
 }  // namespace toki::renderer

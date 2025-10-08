@@ -37,7 +37,7 @@ void VulkanBackend::initialize(const RendererConfig& config) {
 	swapchain_config.window = config.window;
 	m_state.swapchain = VulkanSwapchain::create(swapchain_config, m_state);
 
-	VulkanCommandPoolConfig command_pool_config{};
+	CommandPoolConfig command_pool_config{};
 	m_state.command_pool = VulkanCommandPool::create(command_pool_config, m_state);
 	m_state.temporary_command_pool = VulkanCommandPool::create(command_pool_config, m_state);
 
@@ -257,6 +257,7 @@ void VulkanBackend::initialize_device(platform::Window* window) {
 	// }
 
 	VkPhysicalDeviceFeatures physical_device_features{};
+	physical_device_features.samplerAnisotropy = VK_TRUE;
 
 	VkPhysicalDeviceDynamicRenderingFeatures dynamic_rendering_features{};
 	dynamic_rendering_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
@@ -286,14 +287,11 @@ void VulkanBackend::initialize_device(platform::Window* window) {
 		return { STATE.lowercase_type##s.emplace_at_first(Vulkan##type::create(config, STATE)) }; \
 	}
 
-ShaderHandle Renderer ::create_shader(const ShaderConfig& config) {
-	return { ((reinterpret_cast<VulkanBackend*>(m_internalData))->m_state)
-				 .shaders.emplace_at_first(
-					 VulkanShader ::create(config, ((reinterpret_cast<VulkanBackend*>(m_internalData))->m_state))) };
-}
+DEFINE_CREATE_RESOURCE(Shader, shader)
 DEFINE_CREATE_RESOURCE(ShaderLayout, shader_layout)
 DEFINE_CREATE_RESOURCE(Buffer, buffer)
 DEFINE_CREATE_RESOURCE(Texture, texture)
+DEFINE_CREATE_RESOURCE(Sampler, sampler)
 
 #undef DEFINE_CREATE_RESOURCE
 
@@ -307,6 +305,7 @@ DEFINE_DESTROY_HANDLE(ShaderHandle, shaders);
 DEFINE_DESTROY_HANDLE(ShaderLayoutHandle, shader_layouts);
 DEFINE_DESTROY_HANDLE(BufferHandle, buffers);
 DEFINE_DESTROY_HANDLE(TextureHandle, textures);
+DEFINE_DESTROY_HANDLE(SamplerHandle, samplers);
 
 #undef DEFINE_DESTROY_HANDLE
 

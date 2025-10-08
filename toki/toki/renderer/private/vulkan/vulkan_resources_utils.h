@@ -16,5 +16,9 @@ u32 find_memory_type(
 	VkPhysicalDeviceMemoryProperties memory_properties, u32 type_filter, VkMemoryPropertyFlags properties);
 
 VkBufferUsageFlags get_buffer_usage_flags(BufferType type);
+VkSamplerAddressMode get_address_mode(SamplerAddressMode address_mode);
+VkFilter get_filter(SamplerFilter filter);
+VkDescriptorType get_descriptor_type(UniformType type);
+VkShaderStageFlags get_shader_stage_flags(ShaderStageFlags flags);
 
 }  // namespace toki::renderer

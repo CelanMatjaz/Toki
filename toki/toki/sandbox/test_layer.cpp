@@ -27,7 +27,7 @@ void TestLayer::on_attach() {
 		shader_config.options.cull_mode = renderer::CullMode::NONE;
 		shader_config.bindings = bindings;
 		shader_config.attributes = attributes;
-		shader_config.sources[renderer::ShaderStage::SHADER_STAGE_VERTEX] = R"(
+		shader_config.sources[renderer::ShaderStageFlags::SHADER_STAGE_VERTEX] = R"(
 		#version 450
 
 		layout(location = 0) out vec3 out_color;
@@ -45,7 +45,7 @@ void TestLayer::on_attach() {
 			out_color = colors[gl_VertexIndex];
 		}
 	)";
-		shader_config.sources[renderer::ShaderStage::SHADER_STAGE_FRAGMENT] = R"(
+		shader_config.sources[renderer::ShaderStageFlags::SHADER_STAGE_FRAGMENT] = R"(
 		#version 450
 
 		layout(location = 0) in vec3 in_color;
@@ -88,6 +88,11 @@ void TestLayer::on_attach() {
 		m_indexBuffer = m_renderer->create_buffer(index_buffer_config);
 		m_renderer->set_buffer_data(m_indexBuffer, &indices, sizeof(indices));
 	}
+
+	{
+		SamplerConfig sampler_config{};
+		m_sampler = m_renderer->create_sampler(sampler_config);
+	}
 }
 
 void TestLayer::on_detach() {
@@ -95,6 +100,8 @@ void TestLayer::on_detach() {
 	m_renderer->destroy_handle(m_vertexBuffer);
 	m_renderer->destroy_handle(m_shader);
 	m_renderer->destroy_handle(m_shaderLayout);
+	m_renderer->destroy_handle(m_texture);
+	m_renderer->destroy_handle(m_sampler);
 }
 
 void TestLayer::on_render(toki::renderer::Commands* cmd) {

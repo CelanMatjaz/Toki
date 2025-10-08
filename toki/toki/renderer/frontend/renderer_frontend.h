@@ -37,11 +37,13 @@ public:
 	ShaderHandle create_shader(const ShaderConfig& config);
 	BufferHandle create_buffer(const BufferConfig& config);
 	TextureHandle create_texture(const TextureConfig& config);
+	SamplerHandle create_sampler(const SamplerConfig& config);
 
 	void destroy_handle(ShaderHandle);
 	void destroy_handle(ShaderLayoutHandle);
 	void destroy_handle(BufferHandle);
 	void destroy_handle(TextureHandle);
+	void destroy_handle(SamplerHandle);
 
 	// Buffer functions
 	void set_buffer_data(BufferHandle handle, const void* data, u32 size);

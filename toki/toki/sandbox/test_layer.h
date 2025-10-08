@@ -17,6 +17,8 @@ private:
 	toki::renderer::ShaderLayoutHandle m_shaderLayout;
 	toki::renderer::BufferHandle m_vertexBuffer;
 	toki::renderer::BufferHandle m_indexBuffer;
+	toki::renderer::TextureHandle m_texture;
+	toki::renderer::SamplerHandle m_sampler;
 
 	toki::f32 m_offset = 0;
 };

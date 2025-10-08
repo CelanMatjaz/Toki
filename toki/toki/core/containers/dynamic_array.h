@@ -18,7 +18,7 @@ public:
 		reallocate(count);
 	}
 
-	DynamicArray(u64 count, T&& default_value): m_data(nullptr), m_size(count) {
+	DynamicArray(u64 count, const T& default_value): m_data(nullptr), m_size(count) {
 		reallocate(count);
 		for (u64 i = 0; i < count; i++) {
 			m_data[i] = default_value;
@@ -73,8 +73,7 @@ public:
 			return;
 		}
 
-		m_data = reinterpret_cast<T*>(AllocatorType::reallocate(m_data, new_capacity * sizeof(T)));
-		m_capacity = new_capacity;
+		reallocate(new_capacity);
 	}
 
 	void shrink_to_size(u64 new_size) {

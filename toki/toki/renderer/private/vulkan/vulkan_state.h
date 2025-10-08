@@ -39,6 +39,7 @@ struct VulkanState {
 	PersistentArena<VulkanShader, 16> shaders;
 	PersistentArena<VulkanBuffer, 16> buffers;
 	PersistentArena<VulkanTexture, 4> textures;
+	PersistentArena<VulkanSampler, 4> samplers;
 };
 
 }  // namespace toki::renderer

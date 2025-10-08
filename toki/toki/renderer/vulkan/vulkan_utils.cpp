@@ -16,7 +16,7 @@ VkFormat map_color_format(ColorFormat format) {
 	}
 }
 
-toki::Expected<TempDynamicArray<toki::byte>, RendererErrors> compile_shader(ShaderStage stage, StringView source) {
+toki::Expected<TempDynamicArray<toki::byte>, RendererErrors> compile_shader(ShaderStageFlags stage, StringView source) {
 	shaderc_compiler_t compiler = shaderc_compiler_initialize();
 	TK_ASSERT(compiler != nullptr);
 
@@ -34,10 +34,10 @@ toki::Expected<TempDynamicArray<toki::byte>, RendererErrors> compile_shader(Shad
 
 	shaderc_shader_kind shader_kind{};
 	switch (stage) {
-		case renderer::ShaderStage::SHADER_STAGE_VERTEX:
+		case renderer::ShaderStageFlags::SHADER_STAGE_VERTEX:
 			shader_kind = shaderc_shader_kind::shaderc_vertex_shader;
 			break;
-		case renderer::ShaderStage::SHADER_STAGE_FRAGMENT:
+		case renderer::ShaderStageFlags::SHADER_STAGE_FRAGMENT:
 			shader_kind = shaderc_shader_kind::shaderc_fragment_shader;
 			break;
 		default:

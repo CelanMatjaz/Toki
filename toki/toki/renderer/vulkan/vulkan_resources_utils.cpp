@@ -71,8 +71,32 @@ VkBufferUsageFlags get_buffer_usage_flags(BufferType type) {
 			return VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 		case BufferType::UNIFORM:
 			return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-		default:
+		case BufferType::SIZE:
 			TK_UNREACHABLE();
+	}
+}
+
+VkSamplerAddressMode get_address_mode(SamplerAddressMode address_mode) {
+	switch (address_mode) {
+		case SamplerAddressMode::REPEAT:
+			return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		case SamplerAddressMode::MIRRORED_REPEAT:
+			return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+		case SamplerAddressMode::CLAMP_TO_EDGE:
+			return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		case SamplerAddressMode::CLAMP_TO_BORDER:
+			return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+		case SamplerAddressMode::MIRROR_CLAMP_TO_EDGE:
+			return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
+	}
+}
+
+VkFilter get_filter(SamplerFilter filter) {
+	switch (filter) {
+		case SamplerFilter::NEAREST:
+			return VK_FILTER_NEAREST;
+		case SamplerFilter::LINEAR:
+			return VK_FILTER_LINEAR;
 	}
 }
 
@@ -169,6 +193,30 @@ VkExtent2D query_surface_extent(VkSurfaceCapabilitiesKHR surface_capabilities) {
 		surface_capabilities.maxImageExtent.height);
 
 	return calculated_extent;
+}
+
+VkDescriptorType get_descriptor_type(UniformType type) {
+	switch (type) {
+		case UniformType::UNIFORM_BUFFER:
+			return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		case UniformType::TEXTURE:
+			return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+		case UniformType::SAMPLER:
+			return VK_DESCRIPTOR_TYPE_SAMPLER;
+		case UniformType::TEXTURE_WITH_SAMPLER:
+			return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+	}
+}
+
+VkShaderStageFlags get_shader_stage_flags(ShaderStageFlags flags) {
+	VkShaderStageFlags flags_out = 0;
+	if (flags & ShaderStageFlags::SHADER_STAGE_VERTEX) {
+		flags_out |= VK_SHADER_STAGE_VERTEX_BIT;
+	}
+	if (flags & ShaderStageFlags::SHADER_STAGE_FRAGMENT) {
+		flags_out |= VK_SHADER_STAGE_FRAGMENT_BIT;
+	}
+	return flags_out;
 }
 
 }  // namespace toki::renderer
