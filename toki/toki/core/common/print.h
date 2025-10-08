@@ -39,23 +39,20 @@ void print(const BasicString<T>& str, Args&&... args) {
 
 template <typename T>
 void println(const T* str) {
-	toki::String string(str, toki::strlen(str) + 1);
-	string[string.size() - 1] = '\n';
-	print(BasicStringView{ string });
+	print(BasicStringView{ str });
+	print("\n");
 }
 
 template <typename T, typename... Args>
 void println(const T* str, Args&&... args) {
-	toki::String string(str, toki::strlen(str) + 1);
-	string[string.size() - 1] = '\n';
-	print(BasicStringView{ string }, toki::forward<Args>(args)...);
+	print(BasicStringView{ str }, toki::forward<Args>(args)...);
+	print("\n");
 }
 
 template <typename T>
 void println(const BasicString<T>& str) {
-	toki::String string(str, toki::strlen(str) + 1);
-	string[string.size() - 1] = '\n';
-	print(BasicStringView{ string });
+	print(BasicStringView{ str });
+	print("\n");
 }
 
 template <typename T, typename... Args>

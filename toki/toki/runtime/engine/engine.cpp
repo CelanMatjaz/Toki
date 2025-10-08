@@ -4,9 +4,6 @@
 namespace toki::runtime {
 
 Engine::Engine(const EngineConfig& config): m_running(true) {
-	TK_ASSERT(s_runtime == nullptr);
-	s_runtime = this;
-
 	platform::WindowConfig window_config{};
 	window_config.title = "Window";
 	window_config.width = 800;
@@ -31,7 +28,7 @@ void Engine::run() {
 
 		auto commands = m_renderer->get_commands();
 
-		for (u32 i = m_layers.size() - 1; i >= 0; i--) {
+		for (i32 i = m_layers.size() - 1; i >= 0; i--) {
 			m_layers[i]->on_render(commands);
 		}
 
@@ -49,7 +46,7 @@ void Engine::run() {
 void Engine::attach_layer(UniquePtr<Layer>&& layer) {
 	layer->m_renderer = m_renderer.get();
 	layer->on_attach();
-	m_layers.emplace_back(toki::move(layer));
+	m_layers.push_back(toki::move(layer));
 }
 
 

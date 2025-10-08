@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan_core.h>
 
+#include "toki/core/attributes.h"
 #include "toki/core/common/assert.h"
 
 namespace toki::renderer {
@@ -14,7 +15,7 @@ void VulkanCommands::begin_pass() {
 	rendering_attachment_info.imageView = m_state->swapchain.get_current_image();
 	rendering_attachment_info.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	rendering_attachment_info.resolveMode = VK_RESOLVE_MODE_NONE;
-	rendering_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	rendering_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	rendering_attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
 	VkRenderingInfo rendering_info{};
@@ -48,6 +49,24 @@ void VulkanCommands::bind_shader(ShaderHandle handle) {
 
 void VulkanCommands::draw(u32 vertex_count) {
 	vkCmdDraw(m_cmd, vertex_count, 1, 0, 0);
+}
+
+void VulkanCommands::draw_indexed(u32 index_count) {
+	vkCmdDrawIndexed(m_cmd, index_count, 1, 0, 0, 0);
+}
+
+void VulkanCommands::bind_index_buffer(BufferHandle handle) {
+	TK_ASSERT(m_state->buffers.exists(handle));
+	VulkanBuffer& buf = m_state->buffers.at(handle);
+	vkCmdBindIndexBuffer(m_cmd, buf.buffer(), 0, VK_INDEX_TYPE_UINT32);
+}
+
+void VulkanCommands::bind_vertex_buffer(BufferHandle handle) {
+	TK_ASSERT(m_state->buffers.exists(handle));
+	VulkanBuffer& buffer = m_state->buffers.at(handle);
+	VkBuffer buffer_array[] = { buffer.buffer() };
+	VkDeviceSize offsets[] = { 0 };
+	vkCmdBindVertexBuffers(m_cmd, 0, 1, buffer_array, offsets);
 }
 
 }  // namespace toki::renderer

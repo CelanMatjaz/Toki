@@ -184,6 +184,7 @@ TK_TEST(Allocator, exhaust_and_reuse_buffer) {
 		if (ptrs[i])
 			allocator.free(ptrs[i]);
 	}
+
 	if (new_block)
 		allocator.free(new_block);
 	return true;

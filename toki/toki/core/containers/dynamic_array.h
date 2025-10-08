@@ -123,12 +123,12 @@ public:
 		return m_data;
 	}
 
-	void emplace_back(const T& value) {
+	void push_back(const T& value) {
 		maybe_allocate_for_new_element();
 		toki::memcpy(m_data[m_size++], value);
 	}
 
-	void emplace_back(T&& value) {
+	void push_back(T&& value) {
 		maybe_allocate_for_new_element();
 		m_data[m_size++] = toki::move(value);
 	}

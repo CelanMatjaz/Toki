@@ -140,7 +140,7 @@ VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState&
 		auto compile_shader_result = compile_shader(static_cast<ShaderStage>(i), config.sources[i]);
 		TK_ASSERT(compile_shader_result);
 
-		shader_stage_create_infos.emplace_back({});
+		shader_stage_create_infos.push_back({});
 		VkPipelineShaderStageCreateInfo& shader_stage_create_info = shader_stage_create_infos.last();
 
 		shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -350,7 +350,7 @@ VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState&
 	color_blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
 
 	TempDynamicArray<VkPipelineColorBlendAttachmentState> color_blend_attachment_states;
-	color_blend_attachment_states.emplace_back(toki::move(color_blend_attachment_state));
+	color_blend_attachment_states.push_back(toki::move(color_blend_attachment_state));
 
 	VkPipelineColorBlendStateCreateInfo color_blend_state_create_info{};
 	color_blend_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;

@@ -97,6 +97,18 @@ public:
 		return m_buffer;
 	}
 
+	VkBuffer buffer() const {
+		return m_buffer;
+	}
+
+	BufferType type() const {
+		return m_type;
+	}
+
+	u64 size() const {
+		return m_size;
+	}
+
 private:
 	BufferType m_type;
 	VkBuffer m_buffer;

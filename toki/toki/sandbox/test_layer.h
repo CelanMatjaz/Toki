@@ -5,6 +5,7 @@
 class TestLayer : public toki::runtime::Layer {
 public:
 	TestLayer() = default;
+	TestLayer(toki::f32 offset);
 
 	virtual void on_attach() override;
 	virtual void on_detach() override;
@@ -16,4 +17,6 @@ private:
 	toki::renderer::ShaderLayoutHandle m_shaderLayout;
 	toki::renderer::BufferHandle m_vertexBuffer;
 	toki::renderer::BufferHandle m_indexBuffer;
+
+	toki::f32 m_offset = 0;
 };

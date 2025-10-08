@@ -7,7 +7,10 @@ namespace toki {
 
 template <u64 N>
 class Bitset {
+	// NOTE(Matjaž): Changing the chunk type to a type with greater bit count that 8 will break this container!
 	using ByteChunk = u8;
+	static constexpr u64 BYTE_CHUNK_COUNT = (N - 1) / (sizeof(ByteChunk) * 8) + 1;
+	static constexpr u64 BYTE_CHUNK_BIT_COUNT = sizeof(ByteChunk) * 8;
 
 public:
 	constexpr Bitset() = default;
@@ -24,19 +27,31 @@ public:
 		return read_value(index);
 	}
 
+	// Flip every bit
+	constexpr void flip() {
+		for (u32 i = 0; i < BYTE_CHUNK_COUNT; i++) {
+			m_bits[i] = ~m_bits[i];
+		}
+	}
+
 	constexpr void flip(u64 index) {
-		return set_value(index, !read_value(index));
+		m_bits[index >> 3] ^= (1 << (index & (8 - 1)));
+	}
+
+	constexpr u64 size() const {
+		return N;
 	}
 
 	constexpr toki::Optional<u64> get_first_with_value(b8 value) const {
-		for (u32 i = 0; i < (N - 1) / sizeof(ByteChunk) + 1; i++) {
-			if (m_bits[i] & (value ? ~static_cast<u8>(0) : 0)) {
+		for (u32 i = 0; i < BYTE_CHUNK_COUNT; i++) {
+			u8 mask = (value ? 0 : ~static_cast<u8>(0));
+			if ((m_bits[i] == mask)) {
 				continue;
 			}
 
-			for (u32 shift = 0; shift < sizeof(ByteChunk) * 8; shift++) {
+			for (u32 shift = 0; shift < BYTE_CHUNK_BIT_COUNT; shift++) {
 				if (((m_bits[i] >> shift) & 1) == value) {
-					return i * sizeof(ByteChunk) + shift;
+					return i * sizeof(ByteChunk) * 8 + shift;
 				}
 			}
 		}
@@ -55,7 +70,7 @@ private:
 		m_bits[index >> 3] |= ((value & 1) << (index & (sizeof(ByteChunk) * 8 - 1)));
 	}
 
-	ByteChunk m_bits[(N - 1) / sizeof(ByteChunk) + 1]{};
+	ByteChunk m_bits[BYTE_CHUNK_COUNT]{};
 };
 
 }  // namespace toki

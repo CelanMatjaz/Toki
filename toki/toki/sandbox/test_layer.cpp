@@ -1,5 +1,9 @@
 #include "test_layer.h"
 
+#include "toki/core/containers/dynamic_array.h"
+
+TestLayer::TestLayer(toki::f32 offset): m_offset(offset) {}
+
 void TestLayer::on_attach() {
 	using namespace toki;
 	using namespace toki::runtime;
@@ -13,6 +17,9 @@ void TestLayer::on_attach() {
 	{
 		renderer::ColorFormat color_formats[1]{ renderer::ColorFormat::RGBA8 };
 
+		VertexBindingDescription bindings[] = { { 0, sizeof(f32) * 3, VertexInputRate::VERTEX } };
+		VertexAttributeDescription attributes[] = { { 0, 0, VertexFormat::FLOAT3, 0 } };
+
 		renderer::ShaderConfig shader_config{};
 		shader_config.color_formats = color_formats;
 		shader_config.layout_handle = m_shaderLayout;
@@ -20,16 +27,14 @@ void TestLayer::on_attach() {
 		shader_config.options.primitive_topology = renderer::PrimitiveTopology::TRIANGLE_LIST;
 		shader_config.options.polygon_mode = renderer::PolygonMode::FILL;
 		shader_config.options.cull_mode = renderer::CullMode::NONE;
+		shader_config.bindings = bindings;
+		shader_config.attributes = attributes;
 		shader_config.sources[renderer::ShaderStage::SHADER_STAGE_VERTEX] = R"(
 		#version 450
 
-		layout(location = 0) out vec3 fragColor;
+		layout(location = 0) out vec3 out_color;
 
-		vec2 positions[3] = vec2[](
-			vec2(0.0, -0.5),
-			vec2(0.5, 0.5),
-			vec2(-0.5, 0.5)
-		);
+		layout(location = 0) in vec3 in_position;
 
 		vec3 colors[3] = vec3[](
 			vec3(1.0, 0.0, 0.0),
@@ -38,19 +43,19 @@ void TestLayer::on_attach() {
 		);
 
 		void main() {
-			gl_Position = vec4(positions[gl_VertexIndex], 0.5, 1.0);
-			fragColor = colors[gl_VertexIndex];
+			gl_Position = vec4(in_position, 1.0);
+			out_color = colors[gl_VertexIndex];
 		}
 	)";
 		shader_config.sources[renderer::ShaderStage::SHADER_STAGE_FRAGMENT] = R"(
 		#version 450
 
-		layout(location = 0) in vec3 fragColor;
+		layout(location = 0) in vec3 in_color;
 
-		layout(location = 0) out vec4 outColor;
+		layout(location = 0) out vec4 out_color;
 
 		void main() {
-			outColor = vec4(fragColor, 1.0);
+			out_color = vec4(in_color, 1.0);
 		}
 	)";
 		m_shader = m_renderer->create_shader(shader_config);
@@ -61,7 +66,7 @@ void TestLayer::on_attach() {
 			toki::Vec3f32 pos;
 		};
 
-		toki::f32 offset = 0.5;
+		toki::f32 offset = 0.5 + m_offset;
 		Vertex vertices[] = {
 			{ { offset, -offset, 0.0f } },
 			{ { offset, offset, 0.0f } },
@@ -77,11 +82,11 @@ void TestLayer::on_attach() {
 	}
 
 	{
-		toki::u32 indices[] = { 0, 1, 2, 2, 3, 0 };
+		toki::u32 indices[] = { 0, 1, 2, 3, 1, 2 };
 
 		BufferConfig index_buffer_config{};
 		index_buffer_config.size = sizeof(indices);
-		index_buffer_config.type = BufferType::VERTEX;
+		index_buffer_config.type = BufferType::INDEX;
 		m_indexBuffer = m_renderer->create_buffer(index_buffer_config);
 		m_renderer->set_buffer_data(m_indexBuffer, &indices, sizeof(indices));
 	}
@@ -97,7 +102,9 @@ void TestLayer::on_detach() {
 void TestLayer::on_render(toki::renderer::Commands* cmd) {
 	cmd->begin_pass();
 	cmd->bind_shader(m_shader);
-	cmd->draw(3);
+	cmd->bind_index_buffer(m_indexBuffer);
+	cmd->bind_vertex_buffer(m_vertexBuffer);
+	cmd->draw_indexed(6);
 	cmd->end_pass();
 }
 

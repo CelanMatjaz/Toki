@@ -24,14 +24,6 @@ public:
 
 	const platform::Window* get_window(u32 index) const;
 
-	static Engine* get() {
-		return s_runtime;
-	}
-
-	static renderer::Renderer* renderer() {
-		return get()->m_renderer.get();
-	}
-
 private:
 	void cleanup();
 
@@ -41,8 +33,6 @@ private:
 	toki::b32 m_running{};
 
 	DynamicArray<UniquePtr<Layer>> m_layers;
-
-	static inline Engine* s_runtime;
 };
 
 }  // namespace toki::runtime
