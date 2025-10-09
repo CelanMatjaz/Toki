@@ -13,8 +13,7 @@ int main() {
 		toki::runtime::EngineConfig runtime_config{};
 		toki::runtime::Engine engine(runtime_config);
 
-		engine.attach_layer(toki::move(toki::make_unique<TestLayer>(0.0f)));
-
+		engine.attach_layer(toki::make_unique<TestLayer>(0.0f));
 		engine.run();
 	}
 

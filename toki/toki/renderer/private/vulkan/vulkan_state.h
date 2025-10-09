@@ -34,6 +34,7 @@ struct VulkanState {
 	// PersistentDynamicArray<CommandBuffer> command_buffers;
 
 	// Resources
+	VulkanDescriptorPool descriptor_pool;
 	VulkanStagingBuffer staging_buffer;
 	PersistentArena<VulkanShaderLayout, 4> shader_layouts;
 	PersistentArena<VulkanShader, 16> shaders;

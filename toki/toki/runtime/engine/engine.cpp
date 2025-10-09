@@ -30,6 +30,10 @@ void Engine::run() {
 		auto commands = m_renderer->get_commands();
 
 		for (i32 i = static_cast<i32>(m_layers.size() - 1); i >= 0; i--) {
+			m_layers[static_cast<u32>(i)]->on_update(0.00016);
+		}
+
+		for (i32 i = static_cast<i32>(m_layers.size() - 1); i >= 0; i--) {
 			m_layers[static_cast<u32>(i)]->on_render(commands);
 		}
 

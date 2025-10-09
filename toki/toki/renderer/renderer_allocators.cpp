@@ -2,6 +2,8 @@
 
 #include <toki/core/core.h>
 
+#include "toki/core/utils/memory.h"
+
 namespace toki::renderer {
 
 static BumpAllocator s_rendererBumpAllocator(toki::GB(1));
@@ -11,20 +13,22 @@ void* RendererBumpAllocator::allocate(u64 size) {
 	return s_rendererBumpAllocator.allocate(size);
 }
 
-void* RendererBumpAllocator::allocate_aligned(u64 size, u64 alignment) { 
+void* RendererBumpAllocator::allocate_aligned(u64 size, u64 alignment) {
 	return s_rendererBumpAllocator.allocate_aligned(size, alignment);
 }
 
-void RendererBumpAllocator::free([[maybe_unused]]void* ptr) {}	// noop
+void RendererBumpAllocator::free([[maybe_unused]] void* ptr) {}	 // noop
 
-void RendererBumpAllocator::free_aligned([[maybe_unused]]void* ptr) {}	// noop
+void RendererBumpAllocator::free_aligned([[maybe_unused]] void* ptr) {}	 // noop
 
 void* RendererBumpAllocator::reallocate(void* ptr, u64 size) {
+	void* new_ptr = allocate(size);
 	if (ptr == nullptr) {
-		return allocate(size);
+		return new_ptr;
 	}
 
-	return nullptr;
+	toki::memcpy(new_ptr, ptr, size);
+	return new_ptr;
 }
 
 void* RendererBumpAllocator::reallocate_aligned(void* ptr, u64 size, u64 alignment) {
@@ -40,8 +44,8 @@ void RendererBumpAllocator::free_to_marker(u64 marker) {
 	s_rendererBumpAllocator.free_to_marker(marker);
 }
 
-void RendererBumpAllocator::clear() {
-	s_rendererBumpAllocator.clear();
+void RendererBumpAllocator::reset() {
+	s_rendererBumpAllocator.reset();
 }
 
 void* RendererPersistentAllocator::allocate(u64 size) {

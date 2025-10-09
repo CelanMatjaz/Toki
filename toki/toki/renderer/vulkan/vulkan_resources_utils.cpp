@@ -70,7 +70,7 @@ VkBufferUsageFlags get_buffer_usage_flags(BufferType type) {
 		case BufferType::INDEX:
 			return VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 		case BufferType::UNIFORM:
-			return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+			return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 		case BufferType::SIZE:
 			TK_UNREACHABLE();
 	}
@@ -200,7 +200,7 @@ VkDescriptorType get_descriptor_type(UniformType type) {
 		case UniformType::UNIFORM_BUFFER:
 			return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		case UniformType::TEXTURE:
-			return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+			return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 		case UniformType::SAMPLER:
 			return VK_DESCRIPTOR_TYPE_SAMPLER;
 		case UniformType::TEXTURE_WITH_SAMPLER:

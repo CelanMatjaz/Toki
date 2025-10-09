@@ -48,6 +48,8 @@ public:
 	// Buffer functions
 	void set_buffer_data(BufferHandle handle, const void* data, u32 size);
 
+	void set_uniforms(const SetUniformConfig& config);
+
 private:
 	void frame_prepare();
 	void frame_cleanup();

@@ -107,8 +107,11 @@ VulkanTexture& VulkanSwapchain::get_current_image() const {
 VulkanShaderLayout VulkanShaderLayout::create(const ShaderLayoutConfig& config, const VulkanState& state) {
 	VulkanShaderLayout shader_layout{};
 
-	DescriptorSetLayoutConfig descriptor_set_layout_config{ .uniforms = config.uniforms };
-	shader_layout.create_descriptor_set_layout(descriptor_set_layout_config, state);
+	DescriptorSetLayoutConfig descriptor_set_layout_config{};
+	for (u32 i = 0; i < config.uniform_sets.size(); i++) {
+		descriptor_set_layout_config.uniforms = config.uniform_sets[0].uniform_configs;
+		shader_layout.create_descriptor_set_layout(state, descriptor_set_layout_config);
+	}
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info{};
 	pipeline_layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -123,6 +126,10 @@ VulkanShaderLayout VulkanShaderLayout::create(const ShaderLayoutConfig& config, 
 		state.allocation_callbacks,
 		&shader_layout.m_pipelineLayout);
 
+	AllocateDescriptorSetConfig allocate_descriptor_set_config{};
+	allocate_descriptor_set_config.descriptor_pool = state.descriptor_pool.descriptor_pool();
+	shader_layout.allocate_descriptor_sets(state, allocate_descriptor_set_config);
+
 	return shader_layout;
 }
 
@@ -134,14 +141,14 @@ void VulkanShaderLayout::destroy(const VulkanState& state) {
 }
 
 void VulkanShaderLayout::create_descriptor_set_layout(
-	const DescriptorSetLayoutConfig& config, const VulkanState& state) {
+	const VulkanState& state, const DescriptorSetLayoutConfig& config) {
 	TempDynamicArray<VkDescriptorSetLayoutBinding> layout_bindinds(config.uniforms.size());
 
 	for (u32 i = 0; i < config.uniforms.size(); i++) {
-		VkDescriptorSetLayoutBinding descriptor_set_layout_binding{};
+		VkDescriptorSetLayoutBinding& descriptor_set_layout_binding = layout_bindinds[i] = {};
 		descriptor_set_layout_binding.binding = config.uniforms[i].binding;
 		descriptor_set_layout_binding.descriptorType = get_descriptor_type(config.uniforms[i].type);
-		descriptor_set_layout_binding.descriptorCount = config.uniforms[i].binding;
+		descriptor_set_layout_binding.descriptorCount = config.uniforms[i].count;
 		descriptor_set_layout_binding.stageFlags = get_shader_stage_flags(config.uniforms[i].shader_stage_flags);
 		descriptor_set_layout_binding.pImmutableSamplers = nullptr;
 	}
@@ -157,6 +164,94 @@ void VulkanShaderLayout::create_descriptor_set_layout(
 	TK_ASSERT(result == VK_SUCCESS);
 
 	m_descriptorSetLayouts.push_back(descriptor_set_layout);
+}
+
+void VulkanShaderLayout::allocate_descriptor_sets(const VulkanState& state, const AllocateDescriptorSetConfig& config) {
+	m_descriptorSets.resize(m_descriptorSetLayouts.size());
+
+	VkDescriptorSetAllocateInfo descriptor_set_allocate_info{};
+	descriptor_set_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	descriptor_set_allocate_info.descriptorPool = config.descriptor_pool;
+	descriptor_set_allocate_info.descriptorSetCount = m_descriptorSetLayouts.size();
+	descriptor_set_allocate_info.pSetLayouts = m_descriptorSetLayouts.data();
+
+	VkResult result =
+		vkAllocateDescriptorSets(state.logical_device, &descriptor_set_allocate_info, m_descriptorSets.data());
+	TK_ASSERT(result == VK_SUCCESS);
+}
+
+void VulkanShaderLayout::set_descriptors(const VulkanState& state, const SetUniformConfig& config) {
+	TempDynamicArray<VkWriteDescriptorSet> writes(config.uniforms.size());
+	TempDynamicArray<VkDescriptorBufferInfo> descriptor_buffer_infos;
+	descriptor_buffer_infos.reserve(config.uniforms.size());
+	TempDynamicArray<VkDescriptorImageInfo> descriptor_image_infos;
+	descriptor_image_infos.reserve(config.uniforms.size());
+
+	for (u32 i = 0; i < writes.size(); i++) {
+		writes[i] = {};
+		writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writes[i].dstSet = m_descriptorSets[config.uniforms[i].set_index];
+		writes[i].dstBinding = config.uniforms[i].binding;
+		writes[i].dstArrayElement = config.uniforms[i].array_element;
+		writes[i].descriptorCount = 1;
+
+		switch (config.uniforms[i].type) {
+			case UniformType::UNIFORM_BUFFER: {
+				TK_ASSERT(state.buffers.exists(config.uniforms[i].handle.uniform_buffer));
+				VulkanBuffer buffer = state.buffers.at(config.uniforms[i].handle.uniform_buffer);
+
+				VkDescriptorBufferInfo descriptor_buffer_info{};
+				descriptor_buffer_info.buffer = buffer.buffer();
+				descriptor_buffer_info.offset = 0;
+				descriptor_buffer_info.range = buffer.size();
+				descriptor_buffer_infos.push_back(descriptor_buffer_info);
+
+				writes[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				writes[i].pBufferInfo = &descriptor_buffer_infos.last();
+			} break;
+
+			case UniformType::TEXTURE: {
+				TK_ASSERT(state.textures.exists(config.uniforms[i].handle.texture));
+				VulkanTexture texture = state.textures.at(config.uniforms[i].handle.texture);
+
+				VkDescriptorImageInfo descriptor_image_info{};
+				descriptor_image_info.imageView = texture;
+				descriptor_image_infos.push_back(descriptor_image_info);
+
+				writes[i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+				writes[i].pImageInfo = &descriptor_image_infos.last();
+			} break;
+
+			case UniformType::SAMPLER: {
+				TK_ASSERT(state.samplers.exists(config.uniforms[i].handle.sampler));
+				VulkanSampler sampler = state.samplers.at(config.uniforms[i].handle.sampler);
+
+				VkDescriptorImageInfo descriptor_image_info{};
+				descriptor_image_info.sampler = sampler;
+				descriptor_image_infos.push_back(descriptor_image_info);
+
+				writes[i].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+				writes[i].pImageInfo = &descriptor_image_infos.last();
+			} break;
+
+			case UniformType::TEXTURE_WITH_SAMPLER: {
+				TK_ASSERT(state.textures.exists(config.uniforms[i].handle.texture));
+				VulkanTexture texture = state.textures.at(config.uniforms[i].handle.texture);
+				TK_ASSERT(state.samplers.exists(config.uniforms[i].handle.sampler));
+				VulkanSampler sampler = state.samplers.at(config.uniforms[i].handle.sampler);
+
+				VkDescriptorImageInfo descriptor_image_info{};
+				descriptor_image_info.imageView = texture;
+				descriptor_image_info.sampler = sampler;
+				descriptor_image_infos.push_back(descriptor_image_info);
+
+				writes[i].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+				writes[i].pImageInfo = &descriptor_image_infos.last();
+			} break;
+		}
+	}
+
+	vkUpdateDescriptorSets(state.logical_device, writes.size(), writes.data(), 0, nullptr);
 }
 
 VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState& state) {
@@ -956,96 +1051,6 @@ VulkanDescriptorPool VulkanDescriptorPool::create(const DescriptorPoolConfig& co
 
 void VulkanDescriptorPool::destroy(const VulkanState& state) {
 	vkDestroyDescriptorPool(state.logical_device, m_descriptorPool, state.allocation_callbacks);
-}
-
-PersistentDynamicArray<VkDescriptorSet> VulkanDescriptorPool::allocate_descriptor_sets(
-	const DescriptorSetConfig& config, const VulkanState& state) {
-	TempDynamicArray<VkDescriptorSetLayout> descriptor_set_layouts(config.count, config.layout);
-
-	VkDescriptorSetAllocateInfo descriptor_set_allocate_info{};
-	descriptor_set_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	descriptor_set_allocate_info.descriptorPool = m_descriptorPool;
-	descriptor_set_allocate_info.descriptorSetCount = static_cast<u32>(config.count);
-	descriptor_set_allocate_info.pSetLayouts = descriptor_set_layouts.data();
-
-	PersistentDynamicArray<VkDescriptorSet> descriptor_sets(config.count);
-
-	VkResult result =
-		vkAllocateDescriptorSets(state.logical_device, &descriptor_set_allocate_info, descriptor_sets.data());
-	TK_ASSERT(result == VK_SUCCESS);
-
-	return descriptor_sets;
-}
-
-void DescriptorSet::write_descriptors(const VulkanState& state, Span<SetUniform> uniforms) {
-	TempDynamicArray<VkWriteDescriptorSet> writes(uniforms.size());
-	TempDynamicArray<VkDescriptorBufferInfo> descriptor_buffer_infos;
-	descriptor_buffer_infos.reserve(uniforms.size());
-	TempDynamicArray<VkDescriptorImageInfo> descriptor_image_infos;
-	descriptor_image_infos.reserve(uniforms.size());
-
-	for (u32 i = 0; i < writes.size(); i++) {
-		writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		writes[i].dstSet = m_descriptorSet;
-		writes[i].dstBinding = 0;
-		writes[i].dstArrayElement = 0;
-		writes[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		writes[i].descriptorCount = 1;
-
-		switch (uniforms[i].type) {
-			case UniformType::UNIFORM_BUFFER: {
-				TK_ASSERT(state.buffers.exists(uniforms[i].handle.buffer));
-				VulkanBuffer buffer = state.buffers.at(uniforms[i].handle.buffer);
-
-				VkDescriptorBufferInfo descriptor_buffer_info{};
-				descriptor_buffer_info.buffer = buffer.buffer();
-				descriptor_buffer_info.offset = 0;
-				descriptor_buffer_info.range = buffer.size();
-				descriptor_buffer_infos.push_back(descriptor_buffer_info);
-
-				writes[i].pBufferInfo = &descriptor_buffer_infos.last();
-			} break;
-
-			case UniformType::TEXTURE: {
-				TK_ASSERT(state.textures.exists(uniforms[i].handle.texture));
-				VulkanTexture texture = state.textures.at(uniforms[i].handle.texture);
-
-				VkDescriptorImageInfo descriptor_image_info{};
-				descriptor_image_info.imageView = texture;
-				descriptor_image_infos.push_back(descriptor_image_info);
-
-				writes[i].pImageInfo = &descriptor_image_infos.last();
-			} break;
-
-			case UniformType::SAMPLER: {
-				TK_ASSERT(state.samplers.exists(uniforms[i].handle.sampler));
-				VulkanSampler sampler = state.samplers.at(uniforms[i].handle.sampler);
-
-				VkDescriptorImageInfo descriptor_image_info{};
-				descriptor_image_info.sampler = sampler;
-				descriptor_image_infos.push_back(descriptor_image_info);
-
-				writes[i].pImageInfo = &descriptor_image_infos.last();
-			} break;
-
-			case UniformType::TEXTURE_WITH_SAMPLER: {
-				TK_ASSERT(state.textures.exists(uniforms[i].handle.texture));
-				VulkanTexture texture = state.textures.at(uniforms[i].handle.texture);
-				TK_ASSERT(state.samplers.exists(uniforms[i].handle.sampler));
-				VulkanSampler sampler = state.samplers.at(uniforms[i].handle.sampler);
-
-				VkDescriptorImageInfo descriptor_image_info{};
-				descriptor_image_info.imageView = texture;
-				descriptor_image_info.sampler = sampler;
-				descriptor_image_infos.push_back(descriptor_image_info);
-
-				writes[i].pImageInfo = &descriptor_image_infos.last();
-			} break;
-		}
-	}
-
-	vkUpdateDescriptorSets(state.logical_device, writes.size(), writes.data(), 0, nullptr);
 }
 
 }  // namespace toki::renderer

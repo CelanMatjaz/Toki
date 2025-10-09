@@ -2,9 +2,6 @@
 
 #include <vulkan/vulkan_core.h>
 
-#include "toki/core/attributes.h"
-#include "toki/core/common/assert.h"
-
 namespace toki::renderer {
 
 VulkanCommands::VulkanCommands(const VulkanState* state, VulkanCommandBuffer cmd): m_state(state), m_cmd(cmd) {}
@@ -67,6 +64,15 @@ void VulkanCommands::bind_vertex_buffer(BufferHandle handle) {
 	VkBuffer buffer_array[] = { buffer.buffer() };
 	VkDeviceSize offsets[] = { 0 };
 	vkCmdBindVertexBuffers(m_cmd, 0, 1, buffer_array, offsets);
+}
+
+void VulkanCommands::bind_uniforms(ShaderLayoutHandle handle) {
+	TK_ASSERT(m_state->shader_layouts.exists(handle));
+	VulkanShaderLayout& shader_layout = m_state->shader_layouts.at(handle);
+	Span sets = shader_layout.sets();
+
+	vkCmdBindDescriptorSets(
+		m_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, shader_layout.layout(), 0, sets.size(), sets.data(), 0, nullptr);
 }
 
 }  // namespace toki::renderer

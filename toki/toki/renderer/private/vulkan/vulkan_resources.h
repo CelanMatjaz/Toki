@@ -3,6 +3,7 @@
 #include <toki/renderer/frontend/renderer_types.h>
 #include <vulkan/vulkan_core.h>
 
+#include "toki/core/string/span.h"
 #include "toki/renderer/private/vulkan/vulkan_types.h"
 #include "toki/renderer/types.h"
 
@@ -48,11 +49,23 @@ public:
 	static VulkanShaderLayout create(const ShaderLayoutConfig& config, const VulkanState& state);
 	void destroy(const VulkanState& state);
 
+	VkPipelineLayout layout() const {
+		return m_pipelineLayout;
+	}
+
+	Span<VkDescriptorSet> sets() {
+		return m_descriptorSets;
+	}
+
+	void set_descriptors(const VulkanState& state, const SetUniformConfig& config);
+
 private:
-	void create_descriptor_set_layout(const DescriptorSetLayoutConfig& config, const VulkanState& state);
+	void allocate_descriptor_sets(const VulkanState& state, const AllocateDescriptorSetConfig& config);
+	void create_descriptor_set_layout(const VulkanState& state, const DescriptorSetLayoutConfig& config);
 
 	VkPipelineLayout m_pipelineLayout;
 	PersistentDynamicArray<VkDescriptorSetLayout> m_descriptorSetLayouts;
+	PersistentDynamicArray<VkDescriptorSet> m_descriptorSets;
 };
 
 struct VulkanShader {
@@ -240,38 +253,12 @@ public:
 	static VulkanDescriptorPool create(const DescriptorPoolConfig& config, const VulkanState& state);
 	void destroy(const VulkanState& state);
 
-	PersistentDynamicArray<VkDescriptorSet> allocate_descriptor_sets(
-		const DescriptorSetConfig& config, const VulkanState& state);
+	VkDescriptorPool descriptor_pool() const {
+		return m_descriptorPool;
+	}
 
 private:
 	VkDescriptorPool m_descriptorPool;
-};
-
-struct SetUniform {
-	union {
-		BufferHandle buffer;
-		TextureHandle texture;
-		SamplerHandle sampler;
-		struct {
-			TextureHandle texture;
-			SamplerHandle sampler;
-		} texture_with_sampler;
-	} handle;
-	UniformType type;
-	u32 binding;
-	u32 array_element;
-};
-
-struct SetUniformConfig {};
-
-struct DescriptorSet {
-public:
-	static DescriptorSet create(const VulkanState& state);
-
-	void write_descriptors(const VulkanState& state, Span<SetUniform> uniforms);
-
-private:
-	VkDescriptorSet m_descriptorSet;
 };
 
 }  // namespace toki::renderer

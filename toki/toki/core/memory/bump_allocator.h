@@ -46,7 +46,7 @@ public:
 		m_marker = marker;
 	}
 
-	void clear() {
+	void reset() {
 		free_to_marker();
 	}
 

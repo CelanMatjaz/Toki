@@ -14,7 +14,7 @@ struct RendererBumpAllocator {
 	static void* reallocate_aligned(void* ptr, u64 size, u64 alignment);
 
 	static void free_to_marker(u64 marker);
-	static void clear();
+	static void reset();
 };
 
 static_assert(CIsAllocator<RendererBumpAllocator>);

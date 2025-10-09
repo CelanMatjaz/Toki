@@ -22,6 +22,7 @@ public:
 	virtual void bind_shader(ShaderHandle handle) override;
 	virtual void bind_index_buffer(BufferHandle handle) override;
 	virtual void bind_vertex_buffer(BufferHandle handle) override;
+	virtual void bind_uniforms(ShaderLayoutHandle handle) override;
 
 	virtual void draw(u32 vertex_count) override;
 	virtual void draw_indexed(u32 index_count) override;

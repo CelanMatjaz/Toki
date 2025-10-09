@@ -9,6 +9,7 @@
 #include "toki/core/common/assert.h"
 #include "toki/core/utils/bytes.h"
 #include "toki/renderer/private/vulkan/vulkan_resources_utils.h"
+#include "toki/renderer/renderer_allocators.h"
 #include "toki/renderer/types.h"
 
 namespace toki::renderer {
@@ -45,10 +46,23 @@ void VulkanBackend::initialize(const RendererConfig& config) {
 	staging_buffer_config.size = toki::MB(500);
 	m_state.staging_buffer = VulkanStagingBuffer::create(staging_buffer_config, m_state);
 
+	TempDynamicArray<VkDescriptorPoolSize> pool_sizes;
+	pool_sizes.emplace_back(VK_DESCRIPTOR_TYPE_SAMPLER, 4);
+	pool_sizes.emplace_back(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4);
+	pool_sizes.emplace_back(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 4);
+	pool_sizes.emplace_back(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4);
+
+	DescriptorPoolConfig descriptor_pool_config{};
+	descriptor_pool_config.max_sets = 100;
+	descriptor_pool_config.pool_sizes = pool_sizes;
+	m_state.descriptor_pool = VulkanDescriptorPool::create(descriptor_pool_config, m_state);
+
 	auto command_buffers = m_state.command_pool.allocate_command_buffers(m_state, 1);
 	m_tempCommands = construct_at<VulkanCommands>(
 		RendererPersistentAllocator::allocate_aligned(sizeof(VulkanCommands), 8), &m_state, command_buffers[0]);
 	m_toSubmitCommands.resize(1);
+
+	RendererBumpAllocator::reset();
 }
 
 void VulkanBackend::cleanup() {
@@ -65,6 +79,8 @@ void VulkanBackend::cleanup() {
 }
 
 void Renderer::frame_prepare() {
+	RendererBumpAllocator::reset();
+
 	RENDERER->m_tempCommands->m_cmd.begin();
 
 	STATE.frames.frame_prepare(STATE);
@@ -108,6 +124,11 @@ Commands* Renderer::get_commands() {
 void Renderer::set_buffer_data(BufferHandle handle, const void* data, u32 size) {
 	TK_ASSERT(STATE.buffers.exists(handle));
 	STATE.staging_buffer.set_data_for_buffer(STATE, STATE.buffers.at(handle), data, size);
+}
+
+void Renderer::set_uniforms(const SetUniformConfig& config) {
+	TK_ASSERT(STATE.shader_layouts.exists(config.layout));
+	STATE.shader_layouts.at(config.layout).set_descriptors(STATE, config);
 }
 
 void VulkanBackend::initialize_instance() {

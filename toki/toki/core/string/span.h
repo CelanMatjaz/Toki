@@ -25,22 +25,29 @@ public:
 		requires(IsCArray<ContainerType>::value)
 	Span(const ContainerType& container): m_data(container), m_size(IsCArray<ContainerType>::COUNT) {}
 
+	template <typename ContainerType>
+		requires(IsCArray<ContainerType>::value)
+	Span(ContainerType& container): m_data(container), m_size(IsCArray<ContainerType>::COUNT) {}
+
 	~Span() = default;
 
 	constexpr Span(const Span& other): m_data(other.m_data), m_size(other.m_size) {}
 
 	constexpr Span& operator=(const Span& other) {
-		if (other == this) {
-			return this;
+		if (&other == this) {
+			return *this;
 		}
 
 		m_size = other.m_size;
 		m_data = other.m_data;
 
-		return this;
+		return *this;
 	}
 
-	constexpr Span(Span&& other): m_size(other.size), m_data(other.m_data) {}
+	constexpr Span(Span&& other): m_size(other.size), m_data(other.m_data) {
+		other.m_size = 0;
+		other.m_data = nullptr;
+	}
 
 	constexpr Span& operator=(Span&& other) {
 		if (&other == this) {
@@ -53,6 +60,14 @@ public:
 		return *this;
 	}
 
+	template <typename ContainerType>
+		requires CIsArrayContainer<T, ContainerType>
+	constexpr Span& operator=(ContainerType& container) {
+		m_data = container.data();
+		m_size = container.size();
+		return *this;
+	}
+
 	constexpr u64 size() const {
 		return m_size;
 	}
@@ -61,20 +76,16 @@ public:
 		return m_data;
 	}
 
-	constexpr T* data() {
-		return const_cast<T*>(m_data);
-	}
-
 	const T& operator[](u64 index) const {
 		return m_data[index];
 	}
 
-	T& operator[](u64 index) {
+	const T& operator[](u64 index) {
 		return const_cast<T*>(m_data)[index];
 	}
 
 private:
-	const T* m_data{};
+	T* m_data{};
 	u64 m_size{};
 };
 

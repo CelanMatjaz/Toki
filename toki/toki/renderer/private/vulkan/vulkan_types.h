@@ -65,6 +65,14 @@ struct DescriptorSetConfig {
 	VkDescriptorSetLayout layout;
 };
 
+struct AllocateDescriptorSetConfig {
+	VkDescriptorPool descriptor_pool;
+};
+
+struct DescriptorSetLayoutConfig {
+	Span<UniformConfig> uniforms;
+};
+
 struct VulkanSwapchainConfig {
 	platform::Window* window;
 };

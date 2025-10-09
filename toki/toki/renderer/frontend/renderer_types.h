@@ -160,6 +160,10 @@ struct UniformConfig {
 	ShaderStageFlags shader_stage_flags;
 };
 
+struct UniformSetConfig {
+	Span<UniformConfig> uniform_configs;
+};
+
 struct BufferConfig {
 	u64 size;
 	BufferType type;
@@ -180,11 +184,7 @@ struct SamplerConfig {
 };
 
 struct ShaderLayoutConfig {
-	Span<UniformConfig> uniforms;
-};
-
-struct DescriptorSetLayoutConfig {
-	const Span<UniformConfig> uniforms;
+	Span<UniformSetConfig> uniform_sets;
 };
 
 struct ShaderConfig {
@@ -196,6 +196,27 @@ struct ShaderConfig {
 	Span<ColorFormat> color_formats;
 	Optional<ColorFormat> depth_format;
 	ShaderLayoutHandle layout_handle;
+};
+
+struct SetUniform {
+	union {
+		BufferHandle uniform_buffer;
+		TextureHandle texture;
+		SamplerHandle sampler;
+		struct {
+			TextureHandle texture;
+			SamplerHandle sampler;
+		} texture_with_sampler;
+	} handle;
+	UniformType type : 4;
+	u32 binding : 20;
+	u32 array_element : 8;
+	u32 set_index;
+};
+
+struct SetUniformConfig {
+	ShaderLayoutHandle layout;
+	Span<SetUniform> uniforms;
 };
 
 }  // namespace toki::renderer
