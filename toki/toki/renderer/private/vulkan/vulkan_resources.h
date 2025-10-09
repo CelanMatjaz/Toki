@@ -243,9 +243,9 @@ private:
 
 	u32 m_currentFrame{};
 
-	PersistentStaticArray<VkSemaphore, MAX_FRAMES_IN_FLIGHT> m_imageAvailableSemaphores;
-	PersistentStaticArray<VkSemaphore, MAX_FRAMES_IN_FLIGHT> m_renderFinishedSemaphores;
-	PersistentStaticArray<VkFence, MAX_FRAMES_IN_FLIGHT> m_inFlightFences;
+	StaticArray<VkSemaphore, MAX_FRAMES_IN_FLIGHT> m_imageAvailableSemaphores;
+	StaticArray<VkSemaphore, MAX_FRAMES_IN_FLIGHT> m_renderFinishedSemaphores;
+	StaticArray<VkFence, MAX_FRAMES_IN_FLIGHT> m_inFlightFences;
 };
 
 struct VulkanDescriptorPool {

@@ -3,51 +3,57 @@
 #include <toki/core/common/assert.h>
 #include <toki/core/common/common.h>
 #include <toki/core/memory/memory.h>
-
-#include "toki/core/utils/memory.h"
+#include <toki/core/utils/memory.h>
 
 namespace toki {
 
 template <typename T, u64 N, CIsAllocator AllocatorType = DefaultAllocator>
 class StaticArray {
 public:
-	StaticArray(): m_data(reinterpret_cast<T*>(AllocatorType::allocate(N * sizeof(T)))) {
+	constexpr StaticArray() {
 		memset(m_data, N * sizeof(T), 0);
 	}
 
-	// template <typename... Args>
-	// 	requires(Conjunction<IsSame<T, Args>...>::value && sizeof...(Args) == N)
-	// StaticArray(Args&&... args): StaticArray() {
-	// 	u64 i = 0;
-	// 	((m_data[i++] = toki::forward<Args>(args)), ...);
-	// }
-
-	StaticArray(T&& default_value): StaticArray() {
+	constexpr StaticArray(T&& default_value): StaticArray() {
 		for (u64 i = 0; i < N; i++) {
 			m_data[i] = default_value;
 		}
 	}
 
-	StaticArray(StaticArray&& other): m_data(other.m_data) {
-		other.m_data = nullptr;
-	}
-
-	~StaticArray() {
-		if (m_data != nullptr) {
-			AllocatorType::free(m_data);
+	constexpr StaticArray(StaticArray&& other) {
+		for (u64 i = 0; i < N; i++) {
+			m_data[i] = toki::move(other.m_data[i]);
 		}
 	}
 
-	DELETE_COPY(StaticArray);
+	constexpr StaticArray(const StaticArray& other) {
+		toki::memcpy(m_data, other.m_data, N * sizeof(T));
+	}
 
-	StaticArray& operator=(StaticArray&& other) {
+	constexpr StaticArray& operator=(const StaticArray& other) {
+		if (&other != this) {
+			toki::memcpy(m_data, other.m_data, N * sizeof(T));
+		}
+
+		return *this;
+	}
+
+	constexpr StaticArray& operator=(StaticArray&& other) {
 		if (this != &other) {
-			move(toki::move(other));
+			for (u64 i = 0; i < N; i++) {
+				m_data[i] = toki::move(other.m_data[i]);
+			}
 		}
 		return *this;
 	}
 
-	inline T& operator[](u64 index) const {
+	constexpr ~StaticArray() {}
+
+	constexpr const T& operator[](u64 index) const {
+		return m_data[index];
+	}
+
+	constexpr T& operator[](u64 index) {
 		return m_data[index];
 	}
 
@@ -59,33 +65,24 @@ public:
 		return m_data;
 	}
 
-	inline u64 size() const {
+	constexpr u64 size() const {
 		return N;
 	}
 
-	inline u32 size_u32() const {
-		return static_cast<u32>(N);
-	}
-
-	inline void move(StaticArray&& other) {
-		m_data = other.m_data;
-		other.m_data = nullptr;
-	}
-
-	inline T& last() const {
+	constexpr T& last() const {
 		return m_data[N - 1];
 	}
 
-	inline operator T*() const {
+	constexpr operator T*() const {
 		return m_data;
 	}
 
-	inline operator const T*() const {
+	constexpr operator const T*() const {
 		return m_data;
 	}
 
 private:
-	T* m_data{};
+	T m_data[N];
 };
 
 }  // namespace toki

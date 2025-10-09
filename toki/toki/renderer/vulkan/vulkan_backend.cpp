@@ -272,7 +272,7 @@ void VulkanBackend::initialize_device(platform::Window* window) {
 	vkEnumerateDeviceExtensionProperties(
 		m_state.physical_device, nullptr, &device_extension_count, queried_device_extensions.data());
 
-	TempStaticArray<const char*, 1> device_extensions(static_cast<const char*>(VK_KHR_SWAPCHAIN_EXTENSION_NAME));
+	StaticArray<const char*, 1> device_extensions(static_cast<const char*>(VK_KHR_SWAPCHAIN_EXTENSION_NAME));
 	// for (u32 i = 0; i < device_extensions.size(); i++) {
 	// 	toki::println("{}", device_extensions[i]);
 	// }
@@ -288,9 +288,9 @@ void VulkanBackend::initialize_device(platform::Window* window) {
 	device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	device_create_info.pNext = &dynamic_rendering_features;
 	device_create_info.pQueueCreateInfos = queue_create_infos.data();
-	device_create_info.queueCreateInfoCount = queue_create_infos.size_u32();
+	device_create_info.queueCreateInfoCount = static_cast<u32>(queue_create_infos.size_u32());
 	device_create_info.pEnabledFeatures = &physical_device_features;
-	device_create_info.enabledExtensionCount = device_extensions.size_u32();
+	device_create_info.enabledExtensionCount = static_cast<u32>(device_extensions.size());
 	device_create_info.ppEnabledExtensionNames = device_extensions.data();
 
 	VkResult result = vkCreateDevice(
