@@ -190,7 +190,7 @@ struct ShaderLayoutConfig {
 struct ShaderConfig {
 	ShaderType type;
 	ShaderOptions options;
-	StaticArray<StringView, SHADER_STAGE_SIZE> sources;
+	Array<StringView, SHADER_STAGE_SIZE> sources;
 	Span<VertexBindingDescription> bindings;
 	Span<VertexAttributeDescription> attributes;
 	Span<ColorFormat> color_formats;

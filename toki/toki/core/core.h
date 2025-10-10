@@ -14,6 +14,7 @@
 #include <toki/core/common/macros.h>
 #include <toki/core/common/optional.h>
 #include <toki/core/common/print.h>
+#include <toki/core/common/time.h>
 #include <toki/core/common/type_traits.h>
 
 //
@@ -21,9 +22,9 @@
 
 //
 #include <toki/core/containers/arena.h>
+#include <toki/core/containers/array.h>
 #include <toki/core/containers/bitset.h>
 #include <toki/core/containers/dynamic_array.h>
-#include <toki/core/containers/static_array.h>
 
 //
 #include <toki/core/memory/allocator.h>

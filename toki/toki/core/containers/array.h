@@ -8,29 +8,30 @@
 namespace toki {
 
 template <typename T, u64 N, CIsAllocator AllocatorType = DefaultAllocator>
-class StaticArray {
+	requires (N > 0)
+class Array {
 public:
-	constexpr StaticArray() {
+	constexpr Array() {
 		memset(m_data, N * sizeof(T), 0);
 	}
 
-	constexpr StaticArray(T&& default_value): StaticArray() {
+	constexpr Array(T&& default_value): Array() {
 		for (u64 i = 0; i < N; i++) {
 			m_data[i] = default_value;
 		}
 	}
 
-	constexpr StaticArray(StaticArray&& other) {
+	constexpr Array(Array&& other) {
 		for (u64 i = 0; i < N; i++) {
 			m_data[i] = toki::move(other.m_data[i]);
 		}
 	}
 
-	constexpr StaticArray(const StaticArray& other) {
+	constexpr Array(const Array& other) {
 		toki::memcpy(m_data, other.m_data, N * sizeof(T));
 	}
 
-	constexpr StaticArray& operator=(const StaticArray& other) {
+	constexpr Array& operator=(const Array& other) {
 		if (&other != this) {
 			toki::memcpy(m_data, other.m_data, N * sizeof(T));
 		}
@@ -38,7 +39,7 @@ public:
 		return *this;
 	}
 
-	constexpr StaticArray& operator=(StaticArray&& other) {
+	constexpr Array& operator=(Array&& other) {
 		if (this != &other) {
 			for (u64 i = 0; i < N; i++) {
 				m_data[i] = toki::move(other.m_data[i]);
@@ -47,7 +48,7 @@ public:
 		return *this;
 	}
 
-	constexpr ~StaticArray() {}
+	constexpr ~Array() {}
 
 	constexpr const T& operator[](u64 index) const {
 		return m_data[index];
@@ -69,7 +70,11 @@ public:
 		return N;
 	}
 
-	constexpr T& last() const {
+	constexpr T& front() const {
+		return m_data[0];
+	}
+
+	constexpr T& back() const {
 		return m_data[N - 1];
 	}
 

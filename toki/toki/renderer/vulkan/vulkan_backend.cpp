@@ -272,7 +272,7 @@ void VulkanBackend::initialize_device(platform::Window* window) {
 	vkEnumerateDeviceExtensionProperties(
 		m_state.physical_device, nullptr, &device_extension_count, queried_device_extensions.data());
 
-	StaticArray<const char*, 1> device_extensions(static_cast<const char*>(VK_KHR_SWAPCHAIN_EXTENSION_NAME));
+	Array<const char*, 1> device_extensions(static_cast<const char*>(VK_KHR_SWAPCHAIN_EXTENSION_NAME));
 	// for (u32 i = 0; i < device_extensions.size(); i++) {
 	// 	toki::println("{}", device_extensions[i]);
 	// }
