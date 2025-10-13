@@ -3,6 +3,8 @@
 //
 #include <toki/core/math/math.h>
 #include <toki/core/math/math_types.h>
+#include <toki/core/math/matrix4.h>
+#include <toki/core/math/vector3.h>
 
 //
 #include <toki/core/common/assert.h>

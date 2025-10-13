@@ -40,7 +40,7 @@ void print(const BasicString<T>& str, Args&&... args) {
 template <typename T>
 void println(const T* str) {
 	print(BasicStringView{ str });
-	print("\n");
+	print("\n\0");
 }
 
 template <typename T, typename... Args>

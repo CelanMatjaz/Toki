@@ -577,9 +577,10 @@ VulkanBuffer VulkanBuffer::create(const VulkanBufferConfig& config, const Vulkan
 	TK_ASSERT(result == VK_SUCCESS);
 
 	MemoryAllocateConfig device_allocate_config{};
-	device_allocate_config.memory_property_flags = config.override_memory_properties != 0
-													   ? config.override_memory_properties
-													   : VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+	device_allocate_config.memory_property_flags =
+		config.override_memory_properties != 0
+			? config.override_memory_properties
+			: static_cast<VkMemoryPropertyFlags>(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	vkGetBufferMemoryRequirements(state.logical_device, buffer.m_buffer, &device_allocate_config.memory_requirements);
 	buffer.m_deviceMemory = allocate_device_memory(device_allocate_config, state);
 

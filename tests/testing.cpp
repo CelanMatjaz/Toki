@@ -1,33 +1,36 @@
 #include "testing.h"
 
-#include <print>
+#include <toki/core/core.h>
 
 int main() {
-	uint32_t passed = 0;
-	uint32_t failed = 0;
+	using namespace toki;
 
-	std::println("==== Running {} test(s) ====", test_cases.size());
-	for (uint32_t i = 0; i < test_cases.size(); i++) {
+	toki::memory_initialize({ .total_size = toki::MB(10) });
+	u32 passed = 0;
+	u32 failed = 0;
+
+	toki::println("==== Running {} test(s) ====", test_cases.size());
+	for (u32 i = 0; i < test_cases.size(); i++) {
 		TestCase& tc = test_cases[i];
 		bool ok = tc.fn(tc);
 
 		if (ok) {
-			std::print("{}[{}] PASSED ", green, i + 1);
+			toki::print("{}[{}] PASSED ", green, i + 1);
 			passed++;
 		} else {
-			std::print("{}[{}] FAILED ", red, i + 1);
+			toki::print("{}[{}] FAILED ", red, i + 1);
 			failed++;
 		}
-		std::print("[Test] {} - {}", tc.scope, tc.name);
+		toki::print("[Test] {} - {}", tc.scope.data(), tc.name.data());
 
 		if (!ok) {
-			std::println("\n\t{}", tc.failed_file_line);
+			toki::println("\n\t{}", tc.failed_file_line.data());
 		}
 
-		std::println("{}", reset);
+		toki::println("{}", reset);
 	}
 
-	std::println("\n==== Results ====");
-	std::println("passed: {}", passed);
-	std::println("failed: {}", failed);
+	toki::println("\n==== Results ====");
+	toki::println("passed: {}", passed);
+	toki::println("failed: {}", failed);
 }

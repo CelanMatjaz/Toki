@@ -9,10 +9,10 @@
 	#define private private
 #endif
 
+#include <toki/core/core.h>
 
-
-#include <string>
 #include <csignal>
+#include <string>
 #include <vector>
 
 constexpr const char* reset = "\033[0m";
@@ -36,13 +36,13 @@ inline std::vector<TestCase> test_cases;
 			test_cases.emplace_back(#scope, #name, tk_test_##scope##_##name##_fn, ""); \
 		}                                                                              \
 	} static inline tk_test_##scope##_##name##_register_instance;                      \
-	inline bool tk_test_##scope##_##name##_fn(TestCase& tc)
+	inline bool tk_test_##scope##_##name##_fn([[maybe_unused]] TestCase& tc)
 
 #define TK_TEST_ASSERT(condition)                                   \
 	{                                                               \
 		if (!(condition)) {                                         \
 			tc.failed_file_line = __FILE__ ":" AS_STRING(__LINE__); \
-			std::raise(5);                                    \
+			std::raise(5);                                          \
 			return false;                                           \
 		}                                                           \
 	}

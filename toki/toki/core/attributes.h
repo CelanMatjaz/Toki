@@ -2,12 +2,12 @@
 
 namespace toki {
 
-#if (defined(__GNUC__) || defined(__clang__)) && __cplusplus >= 202302L
+#if (defined(__GNUC__) || defined(__clang__))
 	#define TK_UNREACHABLE() __builtin_unreachable()
 #elif defined(_MSC_VER)
 	#define TK_UNREACHABLE() _STL_UNREACHABLE;
 #else
-	#error "unreachable compiler function not found, only Clang, GCC and MSVC supported"
+	#error "builtin unreachable compiler function not found, only Clang, GCC and MSVC supported"
 #endif
 
 #if defined(__has_builtin)

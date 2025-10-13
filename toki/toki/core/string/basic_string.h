@@ -66,7 +66,10 @@ public:
 
 	constexpr BasicString& operator=(BasicString&& other) {
 		if (&other != this) {
-			_swap(other);
+			m_ptr = other.m_ptr;
+			m_size = other.m_size;
+			other.m_ptr = nullptr;
+			other.m_size = 0;
 		}
 
 		return *this;

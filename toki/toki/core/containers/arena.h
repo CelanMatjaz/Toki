@@ -20,18 +20,18 @@ public:
 	}
 
 	T& at(const Handle handle) const {
-		TK_ASSERT((handle.value - 1) < N);
-		return m_data[handle.value - 1];
+		TK_ASSERT((handle.m_value - 1) < N);
+		return m_data[handle.m_value - 1];
 	}
 
 	b8 exists(const Handle handle) const {
-		return m_bits[handle.value - 1];
+		return m_bits[handle.m_value - 1];
 	}
 
 	void clear(Handle handle) {
-		m_bits.set(handle.value - 1, false);
+		m_bits.set(handle.m_value - 1, false);
 		if constexpr (CHasDestructor<T>) {
-			m_data[handle.value - 1]->~T();
+			m_data[handle.m_value - 1]->~T();
 		}
 	}
 
@@ -49,7 +49,7 @@ public:
 	}
 
 	void invalidate(Handle handle) {
-		invalidate_at_index(handle.value - 1);
+		invalidate_at_index(handle.m_value - 1);
 	}
 
 	void clear() {

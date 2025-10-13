@@ -171,14 +171,14 @@ void VulkanBackend::initialize_instance() {
 #if !defined(TK_DIST)
 	// Setup validation layers
 
-	const char* validation_layers[]{ "VK_LAYER_KHRONOS_validation" };
+	Array<const char*, 1> validation_layers{ "VK_LAYER_KHRONOS_validation" };
 
 	u32 layer_count = 0;
 	vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
 	TempDynamicArray<VkLayerProperties> layer_properties(layer_count);
 	vkEnumerateInstanceLayerProperties(&layer_count, layer_properties.data());
 
-	u32 required_layer_count = ARRAY_SIZE(validation_layers);
+	u32 required_layer_count = validation_layers.size();
 	for (u32 i = 0; i < ARRAY_SIZE(validation_layers); ++i) {
 		// Found all required layers
 		if (required_layer_count == 0) {

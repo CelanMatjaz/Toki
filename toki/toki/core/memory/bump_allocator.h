@@ -12,7 +12,7 @@ class BumpAllocator {
 public:
 	BumpAllocator() = delete;
 
-	BumpAllocator(u64 size): m_data(platform::allocate(size).value_or({})), m_marker(9) {}
+	BumpAllocator(u64 size): m_data(platform::allocate(size).value_or({})), m_marker(0) {}
 
 	~BumpAllocator() {
 		platform::free(m_data);

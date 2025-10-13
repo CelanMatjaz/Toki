@@ -5,17 +5,17 @@
 namespace toki {
 
 struct Handle {
-	Handle(): value(0) {}
-	Handle(u64 value): value(value) {}
+	Handle(): m_value(0) {}
+	Handle(u64 value): m_value(value) {}
 
-	u64 value{};
+	u64 m_value{};
 
-	operator const u64() const {
-		return value;
+	operator u64() const {
+		return m_value;
 	}
 
 	operator b8() const {
-		return value != 0;
+		return m_value != 0;
 	}
 };
 

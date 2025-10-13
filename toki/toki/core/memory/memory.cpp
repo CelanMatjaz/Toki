@@ -5,6 +5,8 @@
 #include <toki/core/utils/memory.h>
 #include <toki/platform/syscalls.h>
 
+#include "toki/core/utils/bytes.h"
+
 void* operator new([[maybe_unused]] unsigned long size, void* p) noexcept {
 	return p;
 }

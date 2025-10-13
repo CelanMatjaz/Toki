@@ -17,6 +17,7 @@ toki::Expected<u64, PlatformError> write(NativeHandle handle, const void* data, 
 
 toki::Expected<u64, PlatformError> read(NativeHandle handle, void* data, u64 size);
 
-toki::Expected<toki::Path, PlatformError> getcwd();
+// Current time in nanoseconds since epoch
+toki::u64 get_current_time();
 
 }  // namespace toki::platform

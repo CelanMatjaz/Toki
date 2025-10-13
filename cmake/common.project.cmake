@@ -1,3 +1,14 @@
+set(COMMON_WARNINGS
+	-Wall
+	-Wextra
+	-Wpedantic
+	-Wshadow
+	-Wundef
+	-Wnull-dereference
+	-Wuninitialized
+	-Wmissing-field-initializers
+)
+
 function(common_target_options target dir deps)
 	target_link_libraries(${target} PUBLIC ${deps})
 
@@ -51,7 +62,7 @@ function(common_target_options target dir deps)
 	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
 					CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 		target_compile_options(${target}
-				PRIVATE -ftrivial-auto-var-init=pattern -fno-exceptions -Wuninitialized)
+				PRIVATE -ftrivial-auto-var-init=pattern -fno-exceptions ${COMMON_WARNINGS})
 	endif()
 
 	if(TOKI_USE_GLFW)

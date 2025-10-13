@@ -87,4 +87,36 @@ u32 itoa_pretty(char* buf_out, T value, u32 radix = 10) {
 	return offset + start;
 }
 
+template <typename T>
+	requires(CIsFloatingPoint<T>)
+u32 ftoa(char* buf_out, T value, u32 precision = 6) {
+	u32 length = 0;
+	if (value < 0) {
+		buf_out[length++] = '-';
+		value *= -1;
+	}
+
+	char buf[30]{};
+	i32 int_value = value;
+	u32 buf_len = 0;
+	do {
+		u32 digit = int_value % 10;
+		buf[buf_len++] = digit + '0';
+		int_value /= 10;
+	} while (int_value > 0);
+
+	for (u32 i = 0; i < buf_len; i++) {
+		buf_out[length++] = buf[buf_len - i - 1];
+	}
+
+	buf_out[length++] = '.';
+	value -= static_cast<u64>(value);
+	for (u32 i = 0; i < precision; i++) {
+		value *= 10;
+		buf_out[length++] = static_cast<u32>(value) % 10 + '0';
+	}
+
+	return length;
+}
+
 }  // namespace toki

@@ -83,7 +83,7 @@ private:
 
 struct VulkanBufferConfig {
 	VulkanBufferConfig() = default;
-	VulkanBufferConfig(const BufferConfig& buffer_config): buffer_config(buffer_config) {}
+	VulkanBufferConfig(const BufferConfig& config): buffer_config(config) {}
 
 	BufferConfig buffer_config;
 	VkBufferUsageFlags override_usage = 0;

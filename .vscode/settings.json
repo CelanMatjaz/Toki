@@ -21,6 +21,23 @@
         "*.inc": "cpp",
         "any": "cpp",
         "__config": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "regex": "cpp",
+        "__locale": "cpp",
+        "charconv": "cpp",
+        "optional": "cpp",
+        "ranges": "cpp",
+        "ratio": "cpp",
+        "system_error": "cpp",
+        "array": "cpp",
+        "functional": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp",
+        "__bit_reference": "cpp",
+        "__node_handle": "cpp",
+        "limits": "cpp",
+        "locale": "cpp",
+        "vector": "cpp"
     }
 }

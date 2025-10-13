@@ -72,8 +72,10 @@ VkBufferUsageFlags get_buffer_usage_flags(BufferType type) {
 		case BufferType::UNIFORM:
 			return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 		case BufferType::SIZE:
-			TK_UNREACHABLE();
+			break;
 	}
+
+	TK_UNREACHABLE();
 }
 
 VkSamplerAddressMode get_address_mode(SamplerAddressMode address_mode) {
@@ -89,6 +91,8 @@ VkSamplerAddressMode get_address_mode(SamplerAddressMode address_mode) {
 		case SamplerAddressMode::MIRROR_CLAMP_TO_EDGE:
 			return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
 	}
+
+	TK_UNREACHABLE();
 }
 
 VkFilter get_filter(SamplerFilter filter) {
@@ -98,6 +102,8 @@ VkFilter get_filter(SamplerFilter filter) {
 		case SamplerFilter::LINEAR:
 			return VK_FILTER_LINEAR;
 	}
+
+	TK_UNREACHABLE();
 }
 
 VkSurfaceKHR create_surface(const VulkanState& state, platform::Window* window) {
@@ -206,6 +212,8 @@ VkDescriptorType get_descriptor_type(UniformType type) {
 		case UniformType::TEXTURE_WITH_SAMPLER:
 			return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 	}
+
+	TK_UNREACHABLE();
 }
 
 VkShaderStageFlags get_shader_stage_flags(ShaderStageFlags flags) {

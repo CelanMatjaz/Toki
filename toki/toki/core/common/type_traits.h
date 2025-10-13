@@ -197,12 +197,10 @@ static_assert(IsSame<u64, Conditional<false, u32, u64>::type>::value);
 static_assert(!Conditional<false, u32, u64>::value);
 
 template <typename From, typename To>
-	struct IsConvertible : BoolConstant < requires(From from, To to) {
-	static_cast<To>(from);
-}>{};
+concept CIsConvertible = requires(From from, To to) { static_cast<To>(from); };
 
 template <typename From, typename To>
-concept CIsConvertible = IsConvertible<From, To>::value;
+struct IsConvertible : BoolConstant<CIsConvertible<From, To>> {};
 
 static_assert(IsConvertible<char*, void*>::value);
 static_assert(!IsConvertible<char, void*>::value);
@@ -358,7 +356,7 @@ template <typename T>
 struct StringDumper;
 
 template <typename Type, typename Container = StringDumper<Type>>
-concept CHasDumpToString = requires(Container c, const Type&& t, char* out) {
+concept CHasDumpToString = requires(Container c, const Type t, char* out) {
 	{ Container::dump_to_string(out, t) } -> CIsSame<u64>;
 };
 

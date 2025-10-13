@@ -56,31 +56,34 @@ struct StringDumper<T> {
 };
 
 static_assert(CHasDumpToString<u8>);
+static_assert(CHasDumpToString<i8>);
+static_assert(CHasDumpToString<u16>);
+static_assert(CHasDumpToString<i16>);
+static_assert(CHasDumpToString<u32>);
+static_assert(CHasDumpToString<i32>);
+static_assert(CHasDumpToString<u64>);
+static_assert(CHasDumpToString<i64>);
 
-// template <typename T, typename C>
-// 	requires CHasToString<C, T>
-// struct StringDumper<T> {
-// 	static constexpr u32 dump_to_string(char* out, T&& arg) {
-// 		return itoa(out, remove_ref(arg));
-// 	}
-// };
-//
-// template <typename T>
-// 	requires CIsConvertible<T, i64>
-// struct StringDumper<T> {
-// 	static constexpr u32 dump_to_string(char* out, T&& arg) {
-// 		return itoa(out, remove_r_value_ref(arg));
-// 	}
-// };
+template <typename T>
+	requires CIsFloatingPoint<T>
+struct StringDumper<T> {
+	static constexpr u64 dump_to_string(char* out, const T arg) {
+		return ftoa(out, arg, 6);
+	}
+};
+
+static_assert(CHasDumpToString<f32>);
+static_assert(CHasDumpToString<f64>);
+static_assert(CHasDumpToString<f128>);
 
 template <typename T>
 	requires CIsPointer<T>
 struct StringDumper<T> {
-	static constexpr u32 dump_to_string(char* out, const T arg) {
+	static constexpr u64 dump_to_string(char* out, const T arg) {
 		return itoa_pretty(out, arg, 16);
 	}
 };
 
-static_assert(CHasDumpToString<u8>);
+static_assert(CHasDumpToString<void*>);
 
 }  // namespace toki

@@ -11,8 +11,13 @@ inline constexpr u64 strlen(const T* str) {
 	return len;
 }
 
-inline constexpr b8 strcmp(const char* s1, const char* s2, u64 length = 0) {
-	for (; *s1 && (*(s1++) == *(s2++)) && (length >= 0); --length) {}
+inline constexpr b8 strcmp(const char* s1, const char* s2) {
+	while (*s1 && (*(s1++) == *(s2++))) {}
+	return (*s1 == 0 && *s2 == 0);
+}
+
+inline constexpr b8 strncmp(const char* s1, const char* s2, u32 length) {
+	for (; *s1 && (*(s1++) == *(s2++)) && length > 0; length--) {}
 	return (*s1 == 0 && *s2 == 0);
 }
 
