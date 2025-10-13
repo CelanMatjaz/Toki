@@ -210,7 +210,7 @@ VkDescriptorType get_descriptor_type(UniformType type) {
 		case UniformType::SAMPLER:
 			return VK_DESCRIPTOR_TYPE_SAMPLER;
 		case UniformType::TEXTURE_WITH_SAMPLER:
-			return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+			return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	}
 
 	TK_UNREACHABLE();

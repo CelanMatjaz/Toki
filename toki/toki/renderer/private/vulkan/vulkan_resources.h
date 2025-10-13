@@ -96,6 +96,12 @@ struct VulkanBufferCopyConfig {
 	u64 size;
 };
 
+struct VulkanBufferImageCopyConfig {
+	VkImage image;
+	u32 width;
+	u32 height;
+};
+
 struct VulkanBuffer {
 	friend struct VulkanStagingBuffer;
 
@@ -108,6 +114,7 @@ public:
 	void unmap_memory(const VulkanState& state);
 	void copy_to_buffer(
 		VulkanCommandBuffer cmd, const VulkanBufferCopyConfig& dst_buffer_copy_config = {}, u64 self_offset = 0) const;
+	void copy_to_image(VulkanCommandBuffer cmd, const VulkanBufferImageCopyConfig& dst_buffer_copy_config = {}, u32 self_offset= 0 ) const;
 
 	operator VkBuffer() const {
 		return m_buffer;
@@ -141,18 +148,27 @@ public:
 
 	void transition_layout(VulkanCommandBuffer cmd, VkImageLayout old_layout, VkImageLayout new_layout);
 
-	operator VkImage() const {
+	VkImage image() const {
 		return m_image;
 	}
 
-	operator VkImageView() const {
+	VkImageView image_view() const {
 		return m_imageView;
+	}
+
+	u32 width() const {
+		return m_width;
+	}
+
+	u32 height() const {
+		return m_height;
 	}
 
 private:
 	VkImage m_image;
 	VkImageView m_imageView;
 	VkDeviceMemory m_deviceMemory;
+	u32 m_width, m_height;
 };
 
 struct WrappedVulkanTexture {
@@ -187,6 +203,7 @@ public:
 	void destroy(const VulkanState& state);
 
 	void set_data_for_buffer(const VulkanState& state, VulkanBuffer& dst_buffer, const void* data, u64 size);
+	void set_data_for_image(const VulkanState& state, VulkanTexture& dst_texture, const void* data, u64 size);
 	void reset();
 
 private:

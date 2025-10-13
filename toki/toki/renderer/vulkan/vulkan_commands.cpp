@@ -9,7 +9,7 @@ VulkanCommands::VulkanCommands(const VulkanState* state, VulkanCommandBuffer cmd
 void VulkanCommands::begin_pass() {
 	VkRenderingAttachmentInfoKHR rendering_attachment_info{};
 	rendering_attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-	rendering_attachment_info.imageView = m_state->swapchain.get_current_image();
+	rendering_attachment_info.imageView = m_state->swapchain.get_current_image().image_view();
 	rendering_attachment_info.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	rendering_attachment_info.resolveMode = VK_RESOLVE_MODE_NONE;
 	rendering_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;

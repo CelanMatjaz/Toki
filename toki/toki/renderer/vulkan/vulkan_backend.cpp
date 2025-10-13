@@ -49,7 +49,7 @@ void VulkanBackend::initialize(const RendererConfig& config) {
 	TempDynamicArray<VkDescriptorPoolSize> pool_sizes;
 	pool_sizes.emplace_back(VK_DESCRIPTOR_TYPE_SAMPLER, 4);
 	pool_sizes.emplace_back(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4);
-	pool_sizes.emplace_back(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 4);
+	pool_sizes.emplace_back(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4);
 	pool_sizes.emplace_back(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4);
 
 	DescriptorPoolConfig descriptor_pool_config{};
@@ -124,6 +124,11 @@ Commands* Renderer::get_commands() {
 void Renderer::set_buffer_data(BufferHandle handle, const void* data, u32 size) {
 	TK_ASSERT(STATE.buffers.exists(handle));
 	STATE.staging_buffer.set_data_for_buffer(STATE, STATE.buffers.at(handle), data, size);
+}
+
+void Renderer::set_texture_data(TextureHandle handle, const void* data, u32 size) {
+	TK_ASSERT(STATE.textures.exists(handle));
+	STATE.staging_buffer.set_data_for_image(STATE, STATE.textures.at(handle), data, size);
 }
 
 void Renderer::set_uniforms(const SetUniformConfig& config) {
