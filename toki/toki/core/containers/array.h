@@ -12,9 +12,7 @@ template <typename T, u64 N, CIsAllocator AllocatorType = DefaultAllocator>
 	requires(N > 0)
 class Array {
 public:
-	constexpr Array() {
-		memset(m_data, N * sizeof(T), 0);
-	}
+	constexpr Array() = default;
 
 	template <typename... Args>
 		requires(sizeof...(Args) == N && (CIsConvertible<Args, T> && ...))
@@ -101,7 +99,7 @@ public:
 	}
 
 private:
-	T m_data[N];
+	T m_data[N]{};
 };
 
 template <class T, u64 N>

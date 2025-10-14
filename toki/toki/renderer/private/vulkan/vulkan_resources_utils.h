@@ -19,6 +19,6 @@ VkBufferUsageFlags get_buffer_usage_flags(BufferType type);
 VkSamplerAddressMode get_address_mode(SamplerAddressMode address_mode);
 VkFilter get_filter(SamplerFilter filter);
 VkDescriptorType get_descriptor_type(UniformType type);
-VkShaderStageFlags get_shader_stage_flags(ShaderStageFlags flags);
+VkShaderStageFlags get_shader_stage_flags(u32 flags);
 
 }  // namespace toki::renderer

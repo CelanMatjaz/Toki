@@ -18,10 +18,10 @@ public:
 
 	constexpr b8 operator==(const _vector2&) const = default;
 
-	friend constexpr _vector2& operator+=(_vector2& lhs, const _vector2& rhs);
+	constexpr _vector2& operator+=(const _vector2& rhs);
 	constexpr _vector2 operator+(const _vector2& rhs) const;
 
-	friend constexpr _vector2& operator-=(_vector2& lhs, const _vector2& rhs);
+	constexpr _vector2& operator-=(const _vector2& rhs);
 	constexpr _vector2 operator-(const _vector2& rhs) const;
 
 	constexpr f32 length_squared() const;
@@ -33,11 +33,11 @@ public:
 };
 
 template <typename T>
-constexpr _vector2<T>& operator+=(_vector2<T>& lhs, const _vector2<T>& rhs) {
-	lhs.x += rhs.x;
-	lhs.y += rhs.y;
+constexpr _vector2<T>& _vector2<T>::operator+=(const _vector2<T>& rhs) {
+	x += rhs.x;
+	y += rhs.y;
 
-	return lhs;
+	return *this;
 }
 
 template <typename T>
@@ -47,11 +47,11 @@ inline constexpr _vector2<T> _vector2<T>::operator+(const _vector2<T>& rhs) cons
 }
 
 template <typename T>
-constexpr _vector2<T>& operator-=(_vector2<T>& lhs, const _vector2<T>& rhs) {
-	lhs.x -= rhs.x;
-	lhs.y -= rhs.y;
+constexpr _vector2<T>& _vector2<T>::operator-=(const _vector2<T>& rhs) {
+	x -= rhs.x;
+	y -= rhs.y;
 
-	return lhs;
+	return *this;
 }
 
 template <typename T>

@@ -19,8 +19,12 @@ public:
 
 	static Time now();
 
+	Time operator-(const Time& other) {
+		return { m_time - other.m_time };
+	}
+
 	template <TimePrecision>
-	u64 as() const;
+	f64 as() const;
 
 private:
 	// Time in microseconds since epoch

@@ -24,13 +24,19 @@ Engine::~Engine() {
 void Engine::run() {
 	toki::println("Starting application");
 
+	Time now = Time::now();
+	Time previous_time = now;
 	while (m_running) {
+		now = Time::now();
+		f64 delta_time = (now - previous_time).as<TimePrecision::Seconds>();
+		previous_time = now;
+
 		m_renderer->frame_prepare();
 
 		auto commands = m_renderer->get_commands();
 
 		for (i32 i = static_cast<i32>(m_layers.size() - 1); i >= 0; i--) {
-			m_layers[static_cast<u32>(i)]->on_update(0.00016);
+			m_layers[static_cast<u32>(i)]->on_update(delta_time);
 		}
 
 		for (i32 i = static_cast<i32>(m_layers.size() - 1); i >= 0; i--) {

@@ -5,8 +5,6 @@
 #include <toki/renderer/private/vulkan/vulkan_utils.h>
 #include <vulkan/vulkan_core.h>
 
-#include "toki/core/common/assert.h"
-
 namespace toki::renderer {
 
 VkImageView create_image_view(const ImageViewConfig& config, const VulkanState& state) {
@@ -216,7 +214,7 @@ VkDescriptorType get_descriptor_type(UniformType type) {
 	TK_UNREACHABLE();
 }
 
-VkShaderStageFlags get_shader_stage_flags(ShaderStageFlags flags) {
+VkShaderStageFlags get_shader_stage_flags(u32 flags) {
 	VkShaderStageFlags flags_out = 0;
 	if (flags & ShaderStageFlags::SHADER_STAGE_VERTEX) {
 		flags_out |= VK_SHADER_STAGE_VERTEX_BIT;

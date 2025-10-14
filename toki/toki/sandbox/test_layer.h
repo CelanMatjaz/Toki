@@ -21,6 +21,6 @@ private:
 	toki::renderer::TextureHandle m_texture;
 	toki::renderer::SamplerHandle m_sampler;
 
-	toki::f32 m_offset = 0;
+	toki::f32 m_offset = 1;
 	toki::f32 m_color = 0;
 };

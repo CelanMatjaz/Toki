@@ -1,8 +1,11 @@
 #include "test_layer.h"
 
-#include "toki/core/common/common.h"
-#include "toki/core/containers/dynamic_array.h"
-#include "toki/core/string/span.h"
+struct Uniform {
+	toki::Matrix4 model;
+	toki::Matrix4 view;
+	toki::Matrix4 projection;
+	toki::Vector3 color;
+};
 
 TestLayer::TestLayer(toki::f32 offset): m_offset(offset) {}
 
@@ -14,7 +17,7 @@ void TestLayer::on_attach() {
 	{
 		DynamicArray<UniformConfig> set0_uniforms;
 		// count, binding, type shader_stage_flags
-		set0_uniforms.emplace_back(1, 0, UniformType::UNIFORM_BUFFER, ShaderStageFlags::SHADER_STAGE_FRAGMENT);
+		set0_uniforms.emplace_back(1, 0, UniformType::UNIFORM_BUFFER, ShaderStageFlags::SHADER_STAGE_VERTEX);
 
 		DynamicArray<UniformConfig> set1_uniforms;
 		set1_uniforms.emplace_back(1, 0, UniformType::TEXTURE_WITH_SAMPLER, ShaderStageFlags::SHADER_STAGE_FRAGMENT);
@@ -55,15 +58,16 @@ void TestLayer::on_attach() {
 		layout(location = 0) in vec3 in_position;
 		layout(location = 1) in vec2 in_uv;
 
-		vec3 colors[3] = vec3[](
-			vec3(1.0, 0.0, 0.0),
-			vec3(0.0, 1.0, 0.0),
-			vec3(0.0, 0.0, 1.0)
-		);
+		layout(set = 0, binding = 0) uniform MyUniform {
+			mat4 model;
+			mat4 view;
+			mat4 projection;
+			vec3 color;
+		} ubo;
 
 		void main() {
-			gl_Position = vec4(in_position, 1.0);
-			out_color = colors[gl_VertexIndex];
+			gl_Position = ubo.projection * ubo.view * ubo.model * vec4(in_position, 1.0);
+			out_color = ubo.color;
 			out_uv = in_uv;
 		}
 	)";
@@ -77,13 +81,8 @@ void TestLayer::on_attach() {
 
 		layout(set = 1, binding = 0) uniform sampler2D tex_sampler;
 
-		layout(set = 0, binding = 0) uniform MyUniform {
-			vec3 color;
-		} ubo;
-
 		void main() {
-			// out_color = vec4(in_uv, 0.0, 1.0) * vec4(ubo.color, 1.0);
-			out_color = texture(tex_sampler, in_uv);
+			out_color = texture(tex_sampler, in_uv) * vec4(in_color, 1.0);
 		}
 	)";
 		m_shader = m_renderer->create_shader(shader_config);
@@ -95,7 +94,7 @@ void TestLayer::on_attach() {
 			toki::Vector2 uv;
 		};
 
-		toki::f32 offset = 0.5f + m_offset;
+		toki::f32 offset = 200 * m_offset;
 		Vertex vertices[] = {
 			{ { offset, -offset, 0.0f }, { 1.0f, 0.0f } },	 // bottom-right
 			{ { offset, offset, 0.0f }, { 1.0f, 1.0f } },	 // top-right
@@ -121,17 +120,13 @@ void TestLayer::on_attach() {
 	}
 
 	{
-		struct Color {
-			f32 r, g, b;
-		};
-
-		Color color{ 1.0, 1.0, 1.0 };
+		Uniform uniform{ {}, {}, {}, { 1.0, 1.0, 1.0 } };
 
 		BufferConfig uniform_buffer_config{};
-		uniform_buffer_config.size = sizeof(Color);
+		uniform_buffer_config.size = sizeof(uniform);
 		uniform_buffer_config.type = BufferType::UNIFORM;
 		m_uniformBuffer = m_renderer->create_buffer(uniform_buffer_config);
-		m_renderer->set_buffer_data(m_uniformBuffer, &color, sizeof(Color));
+		m_renderer->set_buffer_data(m_uniformBuffer, &uniform, sizeof(uniform));
 
 		SetUniform set_uniform{};
 		set_uniform.handle.uniform_buffer = m_uniformBuffer;
@@ -149,7 +144,7 @@ void TestLayer::on_attach() {
 	}
 
 	{
-		uint8_t pixels[] = { 10, 10, 10, 255, 255, 0, 255, 255, 255, 0, 255, 255, 10, 10, 10, 255 };
+		uint8_t pixels[] = { 80, 80, 80, 255, 255, 0, 255, 255, 255, 0, 255, 255, 80, 80, 80, 255 };
 
 		TextureConfig texture_config{};
 		texture_config.width = 2;
@@ -208,16 +203,19 @@ void TestLayer::on_update(toki::f32 delta_time) {
 
 	m_color += delta_time * 0.2;
 	if (m_color > 1.0f) {
-		m_color -= 1.0f;
+		m_color = 0.0f;
 	}
 
-	struct Color {
-		f32 r, g, b;
-	};
+	Camera camera;
+	camera.set_view(look_at({ 0, 0, -5 }, { 0, 0, 0 }, { 0, 1, 0 }));
+	camera.set_projection(ortho(-200, 200, -200, 200, 0.01, 100.0));
 
-	Color color{ m_color, m_color, m_color };
+	constexpr Matrix4 model = Matrix4();
+	Matrix4 a = model.rotate(Vector3(0.0f, 0.0f, 1.0f), m_color * TWO_PI);
 
-	m_renderer->set_buffer_data(m_uniformBuffer, &color, sizeof(Color));
+	Uniform uniform{ a, camera.get_view(), camera.get_projection(), { m_color, m_color, m_color } };
+
+	m_renderer->set_buffer_data(m_uniformBuffer, &uniform, sizeof(Uniform));
 
 	SetUniform set_uniform{};
 	set_uniform.handle.uniform_buffer = m_uniformBuffer;

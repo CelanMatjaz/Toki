@@ -9,39 +9,40 @@ constexpr f64 TWO_PI = PI * 2;
 constexpr const int TERMS = 10;
 
 template <typename T>
-inline constexpr T min(T v1, T v2) {
+constexpr T min(T v1, T v2) {
 	return v1 < v2 ? v1 : v2;
 }
 
 template <typename T>
-inline constexpr T max(T v1, T v2) {
+constexpr T max(T v1, T v2) {
 	return v1 > v2 ? v1 : v2;
 }
 
 template <typename T>
-inline constexpr T clamp(T value, T min_value, T max_value) {
+constexpr T clamp(T value, T min_value, T max_value) {
 	return min(max(value, min_value), max_value);
 }
 
 template <typename T>
-inline constexpr T pow(T value, u32 exp) {
+constexpr T pow(T value, u32 exp) {
 	if (exp == 0) {
 		return 1;
 	}
 
-	while (--exp > 0) {
-		value *= value;
+	T result = 1;
+	for (u32 i = 0; i < exp; ++i) {
+		result *= value;
 	}
 
-	return value;
+	return result;
 }
 
 template <typename T>
-inline constexpr T abs(T value) {
+constexpr T abs(T value) {
 	return value < 0 ? -value : value;
 }
 
-constexpr f32 sqrt(f32 value) {
+constexpr f64 sqrt(f64 value) {
 	if (value < 0) {
 		return -1;
 	}
@@ -49,10 +50,10 @@ constexpr f32 sqrt(f32 value) {
 		return 0;
 	}
 
-#if 0 && defined(__has_builtin) && __has_builtin(__builtin_sqrt) 
+#if defined(__has_builtin) && __has_builtin(__builtin_sqrt)
 	return __builtin_sqrt(value);
 #else
-	f32 guess = value;
+	f64 guess = value;
 	constexpr u32 ITERATIONS = 10;
 
 	for (u32 i = 0; i < ITERATIONS; i++) {
@@ -64,7 +65,7 @@ constexpr f32 sqrt(f32 value) {
 }
 
 template <typename T>
-inline constexpr T hypot(const T& value1, const T& value2) {
+constexpr T hypot(const T& value1, const T& value2) {
 	return sqrt(value1 * value1 + value2 * value2);
 }
 
@@ -74,23 +75,23 @@ enum class AngleUnits {
 };
 
 template <AngleUnits = AngleUnits::Radians>
-constexpr f32 normalize_angle(f32 angle);
+constexpr f64 normalize_angle(f64 angle);
 
 template <>
-constexpr f32 normalize_angle<AngleUnits::Radians>(f32 angle) {
-	while (angle < PI) {
-		angle += TWO_PI;
-	}
-
+constexpr f64 normalize_angle<AngleUnits::Radians>(f64 angle) {
 	while (angle > PI) {
 		angle -= TWO_PI;
+	}
+
+	while (angle < -PI) {
+		angle += TWO_PI;
 	}
 
 	return angle;
 }
 
 template <>
-constexpr f32 normalize_angle<AngleUnits::Degrees>(f32 angle) {
+constexpr f64 normalize_angle<AngleUnits::Degrees>(f64 angle) {
 	while (angle < 360.0f) {
 		angle += 360.0f;
 	}
@@ -103,31 +104,32 @@ constexpr f32 normalize_angle<AngleUnits::Degrees>(f32 angle) {
 }
 
 template <AngleUnits = AngleUnits::Radians>
-constexpr f32 convert_angle_to(f32 angle);
+constexpr f64 convert_angle_to(f64 angle);
 
 template <>
-constexpr f32 convert_angle_to<AngleUnits::Radians>(f32 angle) {
-	f32 normalized = normalize_angle<AngleUnits::Degrees>(angle);
+constexpr f64 convert_angle_to<AngleUnits::Radians>(f64 angle) {
+	f64 normalized = normalize_angle<AngleUnits::Degrees>(angle);
 	return normalized * (PI / 180.0f);
 }
 
 template <>
-constexpr f32 convert_angle_to<AngleUnits::Degrees>(f32 angle) {
-	f32 normalized = normalize_angle<AngleUnits::Radians>(angle);
+constexpr f64 convert_angle_to<AngleUnits::Degrees>(f64 angle) {
+	f64 normalized = normalize_angle<AngleUnits::Radians>(angle);
 	return normalized * (180.0f / PI);
 }
 
-constexpr f32 factorial(u32 n) {
-	f32 f = 1.0f;
-	for (u32 i = 2; i <= n; i++)
+constexpr f64 factorial(u64 n) {
+	f64 f = 1.0f;
+	for (u64 i = 2; i <= n; i++) {
 		f *= i;
+	}
 	return f;
 }
 
 // x - Angle in radians
-constexpr f32 sin(f32 x) {
+constexpr f64 sin(f64 x) {
 	x = normalize_angle(x);
-	f32 result = 0.0f;
+	f64 result = 0.0f;
 	for (int n = 0; n < TERMS; n++) {
 		int sign = (n % 2 == 0) ? 1 : -1;
 		result += sign * pow(x, 2 * n + 1) / factorial(2 * n + 1);
@@ -136,9 +138,9 @@ constexpr f32 sin(f32 x) {
 }
 
 // x - Angle in radians
-constexpr f32 cos(f32 x) {
+constexpr f64 cos(f64 x) {
 	x = normalize_angle(x);
-	f32 result = 0.0f;
+	f64 result = 0.0f;
 	for (int n = 0; n < TERMS; n++) {
 		int sign = (n % 2 == 0) ? 1 : -1;
 		result += sign * pow(x, 2 * n) / factorial(2 * n);

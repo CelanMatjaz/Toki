@@ -157,7 +157,7 @@ struct UniformConfig {
 	u32 count = 1;
 	u32 binding;
 	UniformType type;
-	ShaderStageFlags shader_stage_flags;
+	u32 shader_stage_flags;
 };
 
 struct UniformSetConfig {

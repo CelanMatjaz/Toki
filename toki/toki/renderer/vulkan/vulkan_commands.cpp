@@ -12,7 +12,7 @@ void VulkanCommands::begin_pass() {
 	rendering_attachment_info.imageView = m_state->swapchain.get_current_image().image_view();
 	rendering_attachment_info.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	rendering_attachment_info.resolveMode = VK_RESOLVE_MODE_NONE;
-	rendering_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	rendering_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	rendering_attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
 	VkRenderingInfo rendering_info{};

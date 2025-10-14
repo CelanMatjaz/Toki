@@ -4,18 +4,18 @@
 namespace toki {
 
 Time Time::now() {
-	return {};
+	return platform::get_current_time();
 }
 
 #define TIME_AS(precision, divider)                    \
 	template <>                                        \
-	u64 Time::as<TimePrecision::precision>() const {   \
-		return platform::get_current_time() / divider; \
+	f64 Time::as<TimePrecision::precision>() const {   \
+		return m_time / divider; \
 	}
 
-TIME_AS(Nanos, 1);
-TIME_AS(Micros, 1'000);
-TIME_AS(Millis, 1'000'000);
-TIME_AS(Seconds, 1'000'000'000);
+TIME_AS(Nanos, 1.0);
+TIME_AS(Micros, 1'000.0);
+TIME_AS(Millis, 1'000'000.0);
+TIME_AS(Seconds, 1'000'000'000.0);
 
 }  // namespace toki

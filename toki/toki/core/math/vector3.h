@@ -10,6 +10,7 @@ namespace toki {
 
 class Vector3 {
 public:
+	constexpr Vector3() = default;
 	constexpr Vector3(f32 value): x(value), y(value), z(value) {}
 	constexpr Vector3(f32 x_value, f32 y_value, f32 z_value): x(x_value), y(y_value), z(z_value) {}
 	constexpr Vector3(const Vector3&) = default;
@@ -23,13 +24,16 @@ public:
 	friend constexpr Vector3& operator-=(Vector3& lhs, const Vector3& rhs);
 	constexpr Vector3 operator-(const Vector3& rhs) const;
 
+	constexpr Vector3 operator-() const;
+
 	constexpr f32 length_squared() const;
 	constexpr f32 length() const;
 	constexpr Vector3 normalize() const;
 	constexpr Vector3 cross(const Vector3& v) const;
+	constexpr f32 dot(const Vector3& v) const;
 
 public:
-	f32 x, y, z;
+	f32 x{}, y{}, z{};
 };
 
 constexpr Vector3& operator+=(Vector3& lhs, const Vector3& rhs) {
@@ -58,6 +62,10 @@ inline constexpr Vector3 Vector3::operator-(const Vector3& rhs) const {
 	return (temp -= rhs);
 }
 
+constexpr Vector3 Vector3::operator-() const {
+	return Vector3(-x, -y, -z);
+}
+
 constexpr f32 Vector3::length_squared() const {
 	return x * x + y * y + z * z;
 }
@@ -78,6 +86,10 @@ constexpr Vector3 Vector3::normalize() const {
 
 constexpr Vector3 Vector3::cross(const Vector3& other) const {
 	return Vector3(y * other.z - z * other.y, z * other.x - x * other.z, x * other.y - y * other.x);
+}
+
+constexpr f32 Vector3::dot(const Vector3& other) const {
+	return (x * other.x + y * other.y + z * other.z);
 }
 
 template <>
