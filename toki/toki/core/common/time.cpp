@@ -1,16 +1,16 @@
 #include <toki/core/common/time.h>
-#include <toki/platform/syscalls.h>
+#include <toki/core/platform/syscalls.h>
 
 namespace toki {
 
 Time Time::now() {
-	return platform::get_current_time();
+	return get_current_time();
 }
 
-#define TIME_AS(precision, divider)                    \
-	template <>                                        \
-	f64 Time::as<TimePrecision::precision>() const {   \
-		return m_time / divider; \
+#define TIME_AS(precision, divider)                  \
+	template <>                                      \
+	f64 Time::as<TimePrecision::precision>() const { \
+		return m_time / divider;                     \
 	}
 
 TIME_AS(Nanos, 1.0);

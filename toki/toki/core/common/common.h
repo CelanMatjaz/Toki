@@ -40,19 +40,14 @@ inline constexpr void swap(T&& t1, T&& t2) {
 }
 
 template <typename T, typename... Args>
-inline T* construct_at(void* dst, Args&&... args) {
-	return new (dst) T(toki::forward<Args>(args)...);
-}
-
-template <typename T, typename... Args>
 inline T* construct_at(T* dst, Args&&... args) {
-	return new (dst) T(toki::forward<Args>(args)...);
+	return ::new (static_cast<void*>(dst)) T(toki::forward<Args>(args)...);
 }
 
 template <typename T>
 	requires(!CIsCArray<T> && CHasDestructor<T>)
 inline constexpr void destroy_at(T* t) {
-	t->~T();
+	t->T::~T();
 }
 
 template <typename To, typename From>

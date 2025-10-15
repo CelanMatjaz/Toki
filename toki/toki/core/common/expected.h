@@ -24,13 +24,13 @@ template <typename ExpectedType, typename UnexpectedType>
 class Expected {
 public:
 	Expected(ExpectedType&& expected): m_isError(false) {
-		construct_at(&m_values.expected, forward<ExpectedType>(expected));
+		m_values.expected = toki::move(expected);
 	}
 	Expected(UnexpectedType&& unexpected): m_isError(true) {
-		construct_at(&m_values.unexpected, forward<UnexpectedType>(unexpected));
+		m_values.unexpected = toki::move(unexpected);
 	}
 	Expected(Unexpected<UnexpectedType>&& unexpected): m_isError(true) {
-		construct_at(&m_values.unexpected, forward<UnexpectedType>(unexpected.m_value));
+		m_values.unexpected = toki::move(unexpected.m_value);
 	}
 
 	~Expected() {

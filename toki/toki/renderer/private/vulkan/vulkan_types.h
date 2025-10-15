@@ -1,7 +1,6 @@
 #pragma once
 
 #include <toki/core/core.h>
-#include <toki/platform/window.h>
 #include <toki/renderer/frontend/renderer_types.h>
 #include <toki/renderer/types.h>
 #include <vulkan/vulkan.h>
@@ -74,7 +73,7 @@ struct DescriptorSetLayoutConfig {
 };
 
 struct VulkanSwapchainConfig {
-	platform::Window* window;
+	Window* window;
 };
 
 struct StagingBufferConfig {

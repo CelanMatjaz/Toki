@@ -5,7 +5,7 @@
 
 namespace toki::renderer {
 
-VkSurfaceKHR create_surface(const VulkanState& state, platform::Window* window);
+VkSurfaceKHR create_surface(const VulkanState& state, Window* window);
 PresentModes query_present_modes(const VulkanState& state, VkSurfaceKHR surface);
 VkSurfaceFormatKHR query_surface_formats(const VulkanState& state, VkSurfaceKHR surface);
 VkExtent2D query_surface_extent(VkSurfaceCapabilitiesKHR surface_capabilities);

@@ -30,6 +30,7 @@
 #include <toki/core/containers/array.h>
 #include <toki/core/containers/bitset.h>
 #include <toki/core/containers/dynamic_array.h>
+#include <toki/core/containers/ring_buffer.h>
 
 //
 #include <toki/core/memory/allocator.h>
@@ -46,3 +47,6 @@
 //
 #include <toki/core/utils/bytes.h>
 #include <toki/core/utils/path.h>
+
+//
+#include <toki/core/platform/window/window.h>

@@ -2,7 +2,6 @@
 
 #include <GLFW/glfw3.h>
 #include <toki/core/core.h>
-#include <toki/platform/platform.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
@@ -59,7 +58,9 @@ void VulkanBackend::initialize(const RendererConfig& config) {
 
 	auto command_buffers = m_state.command_pool.allocate_command_buffers(m_state, 1);
 	m_tempCommands = construct_at<VulkanCommands>(
-		RendererPersistentAllocator::allocate_aligned(sizeof(VulkanCommands), 8), &m_state, command_buffers[0]);
+		reinterpret_cast<VulkanCommands*>(RendererPersistentAllocator::allocate_aligned(sizeof(VulkanCommands), 8)),
+		&m_state,
+		command_buffers[0]);
 	m_toSubmitCommands.resize(1);
 
 	RendererBumpAllocator::reset();
@@ -211,7 +212,7 @@ void VulkanBackend::initialize_instance() {
 	TK_ASSERT(result == VK_SUCCESS);
 }
 
-void VulkanBackend::initialize_device(platform::Window* window) {
+void VulkanBackend::initialize_device(Window* window) {
 	m_window = window;
 	VkSurfaceKHR surface = create_surface(m_state, window);
 

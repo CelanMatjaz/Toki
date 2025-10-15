@@ -80,7 +80,7 @@ private:
 
 template <typename T, typename... Args>
 UniquePtr<T> make_unique(Args&&... args) {
-	void* ptr = DefaultAllocator::allocate_aligned(sizeof(T), alignof(T));
+	T* ptr = reinterpret_cast<T*>(DefaultAllocator::allocate_aligned(sizeof(T), alignof(T)));
 	return UniquePtr<T>(construct_at<T>(ptr, toki::forward<Args>(args)...));
 }
 

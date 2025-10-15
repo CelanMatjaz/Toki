@@ -12,6 +12,8 @@ namespace toki {
 
 template <typename T, u64 N, CIsAllocator AllocatorType = DefaultAllocator>
 class Arena {
+	friend struct Iterator;
+
 public:
 	Arena(): m_data(reinterpret_cast<T*>(AllocatorType::allocate_aligned(sizeof(T) * (N + 1), alignof(T)))) {}
 
@@ -39,12 +41,12 @@ public:
 	Handle emplace_at_first(Args&&... args) {
 		const Optional<u64> index = m_bits.get_first_with_value(false);
 		if (!index.has_value()) {
-			construct_at(&m_data[0], forward<Args>(args)...);
+			construct_at<T>(&m_data[0], forward<Args>(args)...);
 			return Handle{};
 		}
 
 		m_bits.set(index.value(), true);
-		construct_at(&m_data[index.value()], forward<Args>(args)...);
+		construct_at<T>(&m_data[index.value()], forward<Args>(args)...);
 		return Handle{ index.value() + 1 };
 	}
 
@@ -56,6 +58,44 @@ public:
 		for (u32 i = 0; i < N; i++) {
 			invalidate_at_index(i);
 		}
+	}
+
+	struct Iterator {
+		Arena* arena;
+		i64 index;
+
+		Iterator(Arena* a, u64 i): arena(a), index(i) {
+			get_first_existing_after_own_index();
+		}
+
+		void get_first_existing_after_own_index() {
+			auto result = arena->m_bits.get_first_with_value_from(index + 1, true);
+			if (result) {
+				index = result;
+			} else {
+				index = N;
+			}
+		}
+
+		T& operator*() {
+			return arena->at(index);
+		}
+
+		Iterator& operator++() {
+			get_first_existing_after_own_index();
+			return *this;
+		}
+
+		bool operator!=(const Iterator& other) const {
+			return index != other.index;
+		}
+	};
+
+	Iterator begin() {
+		return Iterator(this, 0);
+	}
+	Iterator end() {
+		return Iterator(this, N);
 	}
 
 private:

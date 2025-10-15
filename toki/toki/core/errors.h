@@ -2,9 +2,11 @@
 
 namespace toki {
 
-enum class CoreErorrs {
+enum class CoreError {
 	NoError,
-	Unknown
+	Unknown,
+
+	MEMORY_ALLOCATION_FAILED,
 };
 
 }  // namespace toki

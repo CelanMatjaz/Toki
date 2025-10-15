@@ -1,7 +1,7 @@
 #pragma once
 
 #include <toki/core/core.h>
-#include <toki/platform/errors.h>
+#include <toki/core/platform/errors.h>
 
 namespace toki::platform {
 

@@ -1,8 +1,10 @@
 #pragma once
 
-#include <toki/core/core.h>
+#include <toki/core/math/vector2.h>
+#include <toki/core/platform/event/event_handler.h>
+#include <toki/core/types.h>
 
-namespace toki::platform {
+namespace toki {
 
 struct WindowSystemConfig {};
 
@@ -11,8 +13,8 @@ void window_system_shutdown();
 void window_system_poll_events();
 
 enum WindowFlags : u32 {
-	RESIZABLE = 1 << 0,
-	SHOW_ON_CREATE = 1 << 0,
+	WINDOW_FLAG_RESIZABLE = 1 << 0,
+	WINDOW_FLAG_SHOW_ON_CREATE = 1 << 0,
 };
 
 struct WindowConfig {
@@ -22,7 +24,11 @@ struct WindowConfig {
 	WindowFlags flags;
 };
 
+struct StaticWindowFunctions;
+
 class Window {
+	friend StaticWindowFunctions;
+
 public:
 	Window() = delete;
 	Window(const WindowConfig& config);
@@ -37,17 +43,19 @@ public:
 	void set_renderer_pointer(void* ptr);
 	void* get_renderer_pointer() const;
 
-	Vec2u32 get_dimensions() const;
+	Vector2u32 get_dimensions() const;
 
-	static u32 window_count() {
-		return s_windowCount;
+	void clear_events() {
+		m_eventQueue.clear();
 	}
 
-private:
-	inline static u32 s_windowCount = 0;
+	bool poll_event(Event& event);
 
-	void* m_handle;
-	void* m_rendererData;
+private:
+	void* m_handle{};
+	void* m_rendererData{};
+	EventQueue m_eventQueue{};
+	EventHandler m_eventHandler{};
 };
 
 }  // namespace toki

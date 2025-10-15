@@ -1,7 +1,7 @@
 #pragma once
 
-#include "toki/core/math/matrix4.h"
-#include "toki/core/math/vector3.h"
+#include <toki/core/math/matrix4.h>
+#include <toki/core/math/vector3.h>
 
 namespace toki {
 
@@ -52,6 +52,5 @@ constexpr Matrix4 ortho(f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 
 		0.0f,
 		1.0f);
 }
-
 
 }  // namespace toki

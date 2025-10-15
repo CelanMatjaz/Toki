@@ -1,19 +1,18 @@
 #pragma once
 
 #include <toki/core/common/assert.h>
+#include <toki/core/platform/syscalls.h>
 #include <toki/core/utils/format.h>
-#include <toki/platform/syscalls.h>
 
 namespace toki {
 
 template <typename T, typename... Args>
-
 void print(const toki::BasicStringView<T>& str, Args&&... args) {
 	if constexpr (sizeof...(args) == 0) {
-		platform::write(toki::STD_OUT, str.data(), str.size());
+		toki::write(toki::STD_OUT, str.data(), str.size());
 	} else {
 		toki::String formatted = toki::format(str, toki::forward<Args>(args)...);
-		platform::write(toki::STD_OUT, formatted.data(), formatted.size());
+		toki::write(toki::STD_OUT, formatted.data(), formatted.size());
 	}
 }
 

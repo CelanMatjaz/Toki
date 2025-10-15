@@ -1,6 +1,6 @@
 #pragma once
 
-#include <toki/platform/platform.h>
+#include <toki/core/core.h>
 
 namespace toki::resources {
 
@@ -15,4 +15,4 @@ public:
 	static void write(const Path& path, const DataTypeOut& data);
 };
 
-}  // namespace toki::loaders
+}  // namespace toki::resources

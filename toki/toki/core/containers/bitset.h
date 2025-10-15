@@ -43,12 +43,18 @@ public:
 	}
 
 	constexpr toki::Optional<u64> get_first_with_value(b8 value) const {
-		for (u32 i = 0; i < BYTE_CHUNK_COUNT; i++) {
+		return get_first_with_value_from(0, value);
+	}
+
+	constexpr toki::Optional<u64> get_first_with_value_from(u64 index, b8 value) const {
+		u32 i = index >> 3;
+		u32 shift = index & 0b111;
+		for (; i < BYTE_CHUNK_COUNT; i++) {
 			if ((m_bits[i] == (value ? 0 : ~(static_cast<u8>(0))))) {
 				continue;
 			}
 
-			for (u32 shift = 0; shift < BYTE_CHUNK_BIT_COUNT; shift++) {
+			for (; shift < BYTE_CHUNK_BIT_COUNT; shift++) {
 				if (((m_bits[i] >> shift) & 1) == value) {
 					return i * sizeof(ByteChunk) * 8 + shift;
 				}

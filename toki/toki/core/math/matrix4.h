@@ -1,9 +1,8 @@
 #pragma once
 
+#include <toki/core/common/type_traits.h>
 #include <toki/core/containers/array.h>
 #include <toki/core/math/vector3.h>
-
-#include "toki/core/common/type_traits.h"
 
 namespace toki {
 

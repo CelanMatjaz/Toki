@@ -1,7 +1,6 @@
 #pragma once
 
 #include <toki/core/core.h>
-#include <toki/platform/platform.h>
 #include <toki/renderer/commands.h>
 #include <toki/renderer/frontend/renderer_types.h>
 #include <toki/renderer/types.h>
@@ -13,7 +12,7 @@ class Engine;
 namespace toki::renderer {
 
 struct RendererConfig {
-	platform::Window* window;
+	Window* window;
 };
 
 class Renderer {

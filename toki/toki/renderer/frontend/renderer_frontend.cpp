@@ -10,7 +10,8 @@ toki::UniquePtr<Renderer> Renderer::create(const RendererConfig& config) {
 }
 
 Renderer::Renderer(const RendererConfig& config) {
-	void* ptr = RendererPersistentAllocator::allocate_aligned(sizeof(VulkanBackend), alignof(VulkanBackend));
+	VulkanBackend* ptr = reinterpret_cast<VulkanBackend*>(
+		RendererPersistentAllocator::allocate_aligned(sizeof(VulkanBackend), alignof(VulkanBackend)));
 	m_internalData = toki::construct_at<VulkanBackend>(ptr, config);
 }
 

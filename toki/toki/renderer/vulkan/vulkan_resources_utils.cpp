@@ -104,7 +104,7 @@ VkFilter get_filter(SamplerFilter filter) {
 	TK_UNREACHABLE();
 }
 
-VkSurfaceKHR create_surface(const VulkanState& state, platform::Window* window) {
+VkSurfaceKHR create_surface(const VulkanState& state, Window* window) {
 	VkSurfaceKHR surface;
 	VkResult result = VK_RESULT_MAX_ENUM;
 

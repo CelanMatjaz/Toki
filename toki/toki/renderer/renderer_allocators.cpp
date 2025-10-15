@@ -22,7 +22,7 @@ void RendererBumpAllocator::free([[maybe_unused]] void* ptr) {}	 // noop
 void RendererBumpAllocator::free_aligned([[maybe_unused]] void* ptr) {}	 // noop
 
 void* RendererBumpAllocator::reallocate(void* ptr, u64 size) {
-	void* new_ptr = allocate(size);
+	void* new_ptr = s_rendererBumpAllocator.allocate(size);
 	if (ptr == nullptr) {
 		return new_ptr;
 	}

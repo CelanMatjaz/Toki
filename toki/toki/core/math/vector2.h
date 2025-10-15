@@ -11,8 +11,8 @@ namespace toki {
 template <typename T>
 class _vector2 {
 public:
-	constexpr _vector2(f32 value): x(value), y(value) {}
-	constexpr _vector2(f32 x_value, f32 y_value): x(x_value), y(y_value) {}
+	constexpr _vector2(T value): x(value), y(value) {}
+	constexpr _vector2(T x_value, T y_value): x(x_value), y(y_value) {}
 	constexpr _vector2(const _vector2&) = default;
 	constexpr _vector2(_vector2&&) = default;
 

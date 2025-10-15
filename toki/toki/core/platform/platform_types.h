@@ -2,7 +2,7 @@
 
 #include <toki/core/types.h>
 
-namespace toki::platform {
+namespace toki {
 
 struct NativeHandle {
 #if defined(TK_PLATFORM_LINUX)

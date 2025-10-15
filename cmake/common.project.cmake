@@ -17,10 +17,10 @@ function(common_target_options target dir deps)
 		${dir}/**.h
 	)
 
-	list(FILTER SOURCES EXCLUDE REGEX "${dir}/platform/.*")
+	# list(FILTER SOURCES EXCLUDE REGEX "${dir}/platform/.*")
 
 	# message(${dir})
-	# foreach(var ${deps})
+	# foreach(var ${SOURCES})
 	# 	message(${var})
 	# endforeach()
 

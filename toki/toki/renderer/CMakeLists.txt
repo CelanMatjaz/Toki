@@ -1,7 +1,4 @@
-set(DEPS
-	core
-	runtime
-	platform)
+set(DEPS core)
 add_library_target(renderer ${CMAKE_CURRENT_SOURCE_DIR} "${DEPS}")
 
 target_link_libraries(renderer

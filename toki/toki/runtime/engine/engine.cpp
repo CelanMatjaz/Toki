@@ -1,16 +1,14 @@
 #include "toki/runtime/engine/engine.h"
 
-#include "toki/core/common/common.h"
-
 namespace toki::runtime {
 
 Engine::Engine([[maybe_unused]] const EngineConfig& config): m_running(true) {
-	platform::WindowConfig window_config{};
+	WindowConfig window_config{};
 	window_config.title = "Window";
 	window_config.width = 800;
 	window_config.height = 600;
-	window_config.flags = platform::SHOW_ON_CREATE;
-	m_window = toki::make_unique<platform::Window>(window_config);
+	window_config.flags = WINDOW_FLAG_SHOW_ON_CREATE;
+	m_window = toki::make_unique<Window>(window_config);
 
 	renderer::RendererConfig renderer_config{};
 	renderer_config.window = m_window.get();
@@ -27,6 +25,15 @@ void Engine::run() {
 	Time now = Time::now();
 	Time previous_time = now;
 	while (m_running) {
+		window_system_poll_events();
+
+		Event event;
+		while (m_window->poll_event(event)) {
+			if (event.type() == EventType::MOUSE_MOVE) {
+				toki::println("{} {}", event.data().window.x, event.data().window.y);
+			}
+		}
+
 		now = Time::now();
 		f64 delta_time = (now - previous_time).as<TimePrecision::Seconds>();
 		previous_time = now;

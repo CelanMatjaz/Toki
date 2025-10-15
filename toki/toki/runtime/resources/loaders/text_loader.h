@@ -1,6 +1,6 @@
 #pragma once
 
-#include <toki/platform/platform.h>
+#include <toki/core/core.h>
 #include <toki/runtime/resources/loaders/loader.h>
 
 namespace toki::resources {

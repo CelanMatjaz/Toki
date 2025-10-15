@@ -10,7 +10,6 @@
 namespace toki {
 
 template <typename T, typename... Args>
-
 void platform_print(BasicStringView<T> str, Args&&... args) {
 	if constexpr (sizeof...(args) == 0) {
 		toki::write(toki::STD_OUT, str.data(), str.size());

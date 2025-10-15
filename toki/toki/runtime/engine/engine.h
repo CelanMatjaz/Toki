@@ -1,7 +1,6 @@
 #pragma once
 
 #include <toki/core/core.h>
-#include <toki/platform/platform.h>
 #include <toki/renderer/renderer.h>
 #include <toki/runtime/engine/layer.h>
 
@@ -23,7 +22,7 @@ private:
 	void cleanup();
 
 	toki::UniquePtr<renderer::Renderer> m_renderer{};
-	toki::UniquePtr<platform::Window> m_window{};
+	toki::UniquePtr<Window> m_window{};
 	toki::b32 m_running{};
 
 	DynamicArray<UniquePtr<Layer>> m_layers;

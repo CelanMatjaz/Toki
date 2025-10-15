@@ -2,19 +2,20 @@
 
 #include <toki/core/common/assert.h>
 #include <toki/core/memory/memory.h>
-#include <toki/platform/platform.h>
+#include <toki/core/utils/memory.h>
+#include <toki/core/platform/syscalls.h>
 
 namespace toki {
 
 Allocator::Allocator(u64 size): m_size(size) {
-	m_buffer = platform::allocate(m_size);
+	m_buffer = toki::allocate(size);
 	m_firstFreePtr = reinterpret_cast<MemorySection*>(m_buffer);
 	*m_firstFreePtr = {};
 }
 
 Allocator::~Allocator() {
 	if (m_buffer != nullptr) {
-		platform::free(m_buffer);
+		toki::free(m_buffer);
 	}
 }
 

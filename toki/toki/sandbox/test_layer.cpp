@@ -208,10 +208,10 @@ void TestLayer::on_update(toki::f32 delta_time) {
 
 	Camera camera;
 	camera.set_view(look_at({ 0, 0, -5 }, { 0, 0, 0 }, { 0, 1, 0 }));
-	camera.set_projection(ortho(-200, 200, -200, 200, 0.01, 100.0));
+	camera.set_projection(ortho(-400, 400, -300, 300, 0.01, 100.0));
 
 	constexpr Matrix4 model = Matrix4();
-	Matrix4 a = model.rotate(Vector3(0.0f, 0.0f, 1.0f), m_color * TWO_PI);
+	Matrix4 a = model.rotate(Vector3(0.0f, 0.0f, 1.0f), -m_color * TWO_PI);
 
 	Uniform uniform{ a, camera.get_view(), camera.get_projection(), { m_color, m_color, m_color } };
 

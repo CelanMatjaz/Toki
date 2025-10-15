@@ -30,12 +30,12 @@ private:
 	void cleanup();
 
 	void initialize_instance();
-	void initialize_device(platform::Window* window);
+	void initialize_device(Window* window);
 
 private:
 	VulkanState m_state{};
 	VulkanSettings m_settings{};
-	platform::Window* m_window;
+	Window* m_window;
 	TempDynamicArray<VulkanCommands*> m_toSubmitCommands;
 	// TODO(Matjaž): remove
 	VulkanCommands* m_tempCommands;
