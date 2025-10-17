@@ -14,13 +14,9 @@ inline VkExtent2D convert_to<VkExtent2D>(const Vector2u32& vec) {
 	return VkExtent2D{ vec.x, vec.y };
 }
 
-namespace renderer {
-
 toki::Expected<TempDynamicArray<toki::byte>, RendererErrors> compile_shader(ShaderStageFlags stage, StringView source);
 VkShaderModule create_shader_module(const VulkanState& state, Span<toki::byte> spirv);
 
 VkFormat map_color_format(ColorFormat format);
-
-}  // namespace renderer
 
 }  // namespace toki

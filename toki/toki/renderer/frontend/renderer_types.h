@@ -4,7 +4,7 @@
 #include <toki/renderer/types.h>
 #include <vulkan/vulkan.h>
 
-namespace toki::renderer {
+namespace toki {
 
 struct ShaderHandle : public Handle {};
 struct ShaderLayoutHandle : public Handle {};
@@ -241,4 +241,4 @@ struct BeginPassConfig {
 	Vector2u32 render_area_size;
 };
 
-}  // namespace toki::renderer
+}  // namespace toki

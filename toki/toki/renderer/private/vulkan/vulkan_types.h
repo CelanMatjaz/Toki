@@ -5,7 +5,7 @@
 #include <toki/renderer/types.h>
 #include <vulkan/vulkan.h>
 
-namespace toki::renderer {
+namespace toki {
 
 constexpr const u32 MAX_FRAMES_IN_FLIGHT = 3;
 
@@ -87,4 +87,4 @@ struct VulkanSettings {
 template <typename T>
 concept CommandBufferFunction = requires(T fn, VkCommandBuffer cmd) { fn(cmd); };
 
-}  // namespace toki::renderer
+}  // namespace toki

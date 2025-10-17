@@ -3,7 +3,7 @@
 #include <toki/core/common/type_traits.h>
 #include <toki/core/types.h>
 
-namespace toki::renderer {
+namespace toki {
 
 struct RendererBumpAllocator {
 	static void* allocate(u64 size);
@@ -30,4 +30,4 @@ struct RendererPersistentAllocator {
 
 static_assert(CIsAllocator<RendererPersistentAllocator>);
 
-}  // namespace toki::renderer
+}  // namespace toki

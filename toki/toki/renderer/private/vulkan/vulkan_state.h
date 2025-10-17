@@ -3,7 +3,7 @@
 #include <toki/renderer/private/vulkan/vulkan_resources.h>
 #include <toki/renderer/private/vulkan/vulkan_types.h>
 
-namespace toki::renderer {
+namespace toki {
 
 struct VulkanState {
 	VkInstance instance;
@@ -43,4 +43,4 @@ struct VulkanState {
 	PersistentArena<VulkanSampler, 4> samplers;
 };
 
-}  // namespace toki::renderer
+}  // namespace toki

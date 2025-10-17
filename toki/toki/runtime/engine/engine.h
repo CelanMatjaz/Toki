@@ -21,7 +21,7 @@ public:
 private:
 	void cleanup();
 
-	toki::UniquePtr<renderer::Renderer> m_renderer{};
+	toki::UniquePtr<Renderer> m_renderer{};
 	toki::UniquePtr<Window> m_window{};
 	toki::b32 m_running{};
 

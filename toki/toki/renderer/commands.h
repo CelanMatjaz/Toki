@@ -2,7 +2,7 @@
 
 #include "toki/renderer/frontend/renderer_types.h"
 
-namespace toki::renderer {
+namespace toki {
 
 class Commands {
 public:
@@ -18,4 +18,4 @@ public:
 	virtual void draw_indexed(u32 index_count) = 0;
 };
 
-}  // namespace toki::renderer
+}  // namespace toki

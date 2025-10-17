@@ -3,7 +3,7 @@
 #include <shaderc/shaderc.h>
 #include <toki/core/attributes.h>
 
-namespace toki::renderer {
+namespace toki {
 
 VkFormat map_color_format(ColorFormat format) {
 	switch (format) {
@@ -34,10 +34,10 @@ toki::Expected<TempDynamicArray<toki::byte>, RendererErrors> compile_shader(Shad
 
 	shaderc_shader_kind shader_kind{};
 	switch (stage) {
-		case renderer::ShaderStageFlags::SHADER_STAGE_VERTEX:
+		case ShaderStageFlags::SHADER_STAGE_VERTEX:
 			shader_kind = shaderc_shader_kind::shaderc_vertex_shader;
 			break;
-		case renderer::ShaderStageFlags::SHADER_STAGE_FRAGMENT:
+		case ShaderStageFlags::SHADER_STAGE_FRAGMENT:
 			shader_kind = shaderc_shader_kind::shaderc_fragment_shader;
 			break;
 		default:
@@ -93,4 +93,4 @@ u32 find_memory_properties(u32 type_filter, VkMemoryPropertyFlags properties) {
 	TK_UNREACHABLE();
 }
 
-}  // namespace toki::renderer
+}  // namespace toki

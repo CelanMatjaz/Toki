@@ -1,6 +1,6 @@
 #pragma once
 
-namespace toki::renderer {
+namespace toki {
 
 enum class RendererErrors {
 	NoError,
@@ -8,4 +8,4 @@ enum class RendererErrors {
 	ShaderCompileError
 };
 
-}  // namespace toki::renderer
+}  // namespace toki

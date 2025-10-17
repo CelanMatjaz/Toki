@@ -11,7 +11,7 @@ TestLayer::TestLayer(toki::f32 offset): m_offset(offset) {}
 
 void TestLayer::on_attach() {
 	using namespace toki;
-	using namespace toki::renderer;
+	using namespace toki;
 
 	{
 		DynamicArray<UniformConfig> set0_uniforms;
@@ -25,13 +25,13 @@ void TestLayer::on_attach() {
 		uniform_set_configs.emplace_back(set0_uniforms);
 		uniform_set_configs.emplace_back(set1_uniforms);
 
-		renderer::ShaderLayoutConfig shader_layout_config{};
+		ShaderLayoutConfig shader_layout_config{};
 		shader_layout_config.uniform_sets = uniform_set_configs;
 		m_shaderLayout = m_renderer->create_shader_layout(shader_layout_config);
 	}
 
 	{
-		renderer::ColorFormat color_formats[1]{ renderer::ColorFormat::RGBA8 };
+		ColorFormat color_formats[1]{ ColorFormat::RGBA8 };
 
 		VertexBindingDescription bindings[] = { { 0, sizeof(f32) * 5, VertexInputRate::VERTEX } };
 		VertexAttributeDescription attributes[] = {
@@ -39,16 +39,16 @@ void TestLayer::on_attach() {
 			{ 1, 0, VertexFormat::FLOAT2, sizeof(toki::Vector3) },
 		};
 
-		renderer::ShaderConfig shader_config{};
+		ShaderConfig shader_config{};
 		shader_config.color_formats = color_formats;
 		shader_config.layout_handle = m_shaderLayout;
-		shader_config.options.front_face = renderer::FrontFace::CLOCKWISE;
-		shader_config.options.primitive_topology = renderer::PrimitiveTopology::TRIANGLE_LIST;
-		shader_config.options.polygon_mode = renderer::PolygonMode::FILL;
-		shader_config.options.cull_mode = renderer::CullMode::NONE;
+		shader_config.options.front_face = FrontFace::CLOCKWISE;
+		shader_config.options.primitive_topology = PrimitiveTopology::TRIANGLE_LIST;
+		shader_config.options.polygon_mode = PolygonMode::FILL;
+		shader_config.options.cull_mode = CullMode::NONE;
 		shader_config.bindings = bindings;
 		shader_config.attributes = attributes;
-		shader_config.sources[renderer::ShaderStageFlags::SHADER_STAGE_VERTEX] = R"(
+		shader_config.sources[ShaderStageFlags::SHADER_STAGE_VERTEX] = R"(
 		#version 450
 
 		layout(location = 0) out vec3 out_color;
@@ -70,7 +70,7 @@ void TestLayer::on_attach() {
 			out_uv = in_uv;
 		}
 	)";
-		shader_config.sources[renderer::ShaderStageFlags::SHADER_STAGE_FRAGMENT] = R"(
+		shader_config.sources[ShaderStageFlags::SHADER_STAGE_FRAGMENT] = R"(
 		#version 450
 
 		layout(location = 0) in vec3 in_color;
@@ -187,8 +187,8 @@ void TestLayer::on_detach() {
 	m_renderer->destroy_handle(m_sampler);
 }
 
-void TestLayer::on_render(toki::renderer::Commands* cmd) {
-	toki::renderer::BeginPassConfig begin_pass_config{};
+void TestLayer::on_render(toki::Commands* cmd) {
+	toki::BeginPassConfig begin_pass_config{};
 	begin_pass_config.render_area_size = m_window->get_dimensions();
 
 	cmd->begin_pass(begin_pass_config);
@@ -202,7 +202,7 @@ void TestLayer::on_render(toki::renderer::Commands* cmd) {
 
 void TestLayer::on_update(toki::f32 delta_time) {
 	using namespace toki;
-	using namespace toki::renderer;
+	using namespace toki;
 
 	if (m_window->is_key_down(toki::Key::A)) {
 		m_directions[0] = 1.0;

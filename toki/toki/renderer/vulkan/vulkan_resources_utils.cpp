@@ -5,7 +5,7 @@
 #include <toki/renderer/private/vulkan/vulkan_utils.h>
 #include <vulkan/vulkan_core.h>
 
-namespace toki::renderer {
+namespace toki {
 
 VkImageView create_image_view(const ImageViewConfig& config, const VulkanState& state) {
 	VkImageViewCreateInfo image_view_create_info{};
@@ -251,4 +251,4 @@ VkShaderStageFlags get_shader_stage_flags(u32 flags) {
 	return flags_out;
 }
 
-}  // namespace toki::renderer
+}  // namespace toki

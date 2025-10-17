@@ -11,7 +11,7 @@
 #include "toki/renderer/renderer_allocators.h"
 #include "toki/renderer/types.h"
 
-namespace toki::renderer {
+namespace toki {
 
 #define RENDERER (reinterpret_cast<VulkanBackend*>(m_internalData))
 #define STATE (RENDERER->m_state)
@@ -337,4 +337,4 @@ DEFINE_DESTROY_HANDLE(SamplerHandle, samplers);
 
 #undef DEFINE_DESTROY_HANDLE
 
-}  // namespace toki::renderer
+}  // namespace toki

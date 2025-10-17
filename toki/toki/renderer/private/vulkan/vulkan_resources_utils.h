@@ -3,7 +3,7 @@
 #include <toki/renderer/private/vulkan/vulkan_state.h>
 #include <toki/renderer/private/vulkan/vulkan_types.h>
 
-namespace toki::renderer {
+namespace toki {
 
 VkSurfaceKHR create_surface(const VulkanState& state, Window* window);
 PresentModes query_present_modes(const VulkanState& state, VkSurfaceKHR surface);
@@ -22,4 +22,4 @@ VkFilter get_filter(SamplerFilter filter);
 VkDescriptorType get_descriptor_type(UniformType type);
 VkShaderStageFlags get_shader_stage_flags(u32 flags);
 
-}  // namespace toki::renderer
+}  // namespace toki

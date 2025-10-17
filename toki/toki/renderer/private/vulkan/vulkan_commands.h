@@ -5,7 +5,7 @@
 #include "toki/renderer/private/vulkan/vulkan_resources.h"
 #include "toki/renderer/private/vulkan/vulkan_state.h"
 
-namespace toki::renderer {
+namespace toki {
 
 class VulkanCommands : public Commands {
 	friend class Renderer;
@@ -32,4 +32,4 @@ private:
 	VulkanCommandBuffer m_cmd;
 };
 
-}  // namespace toki::renderer
+}  // namespace toki

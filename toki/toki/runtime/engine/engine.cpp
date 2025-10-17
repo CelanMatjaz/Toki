@@ -10,9 +10,9 @@ Engine::Engine([[maybe_unused]] const EngineConfig& config): m_running(true) {
 	window_config.flags = WINDOW_FLAG_SHOW_ON_CREATE;
 	m_window = toki::make_unique<Window>(window_config);
 
-	renderer::RendererConfig renderer_config{};
+	RendererConfig renderer_config{};
 	renderer_config.window = m_window.get();
-	m_renderer = renderer::Renderer::create(renderer_config);
+	m_renderer = Renderer::create(renderer_config);
 }
 
 Engine::~Engine() {

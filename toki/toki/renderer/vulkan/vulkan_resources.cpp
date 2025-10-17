@@ -9,7 +9,7 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
-namespace toki::renderer {
+namespace toki {
 
 VulkanSwapchain VulkanSwapchain::create(const VulkanSwapchainConfig& config, const VulkanState& state) {
 	VulkanSwapchain swapchain{};
@@ -1140,4 +1140,4 @@ void VulkanDescriptorPool::destroy(const VulkanState& state) {
 	vkDestroyDescriptorPool(state.logical_device, m_descriptorPool, state.allocation_callbacks);
 }
 
-}  // namespace toki::renderer
+}  // namespace toki

@@ -11,7 +11,7 @@ class Engine;
 
 }
 
-namespace toki::renderer {
+namespace toki {
 
 struct RendererConfig {
 	Window* window;
@@ -64,4 +64,4 @@ private:
 	void* m_internalData{};
 };
 
-}  // namespace toki::renderer
+}  // namespace toki

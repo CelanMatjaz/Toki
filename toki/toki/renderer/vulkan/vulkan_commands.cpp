@@ -2,7 +2,7 @@
 
 #include <vulkan/vulkan_core.h>
 
-namespace toki::renderer {
+namespace toki {
 
 VulkanCommands::VulkanCommands(const VulkanState* state, VulkanCommandBuffer cmd): m_state(state), m_cmd(cmd) {}
 
@@ -75,4 +75,4 @@ void VulkanCommands::bind_uniforms(ShaderLayoutHandle handle) {
 		m_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, shader_layout.layout(), 0, sets.size(), sets.data(), 0, nullptr);
 }
 
-}  // namespace toki::renderer
+}  // namespace toki

@@ -7,7 +7,7 @@
 #include "toki/renderer/private/vulkan/vulkan_types.h"
 #include "toki/renderer/types.h"
 
-namespace toki::renderer {
+namespace toki {
 
 struct VulkanState;
 struct VulkanTexture;
@@ -285,4 +285,4 @@ private:
 	VkDescriptorPool m_descriptorPool;
 };
 
-}  // namespace toki::renderer
+}  // namespace toki

@@ -4,7 +4,7 @@
 
 #include "toki/core/utils/memory.h"
 
-namespace toki::renderer {
+namespace toki {
 
 static BumpAllocator s_rendererBumpAllocator(toki::GB(1));
 static Allocator s_rendererPersistentAllocator(toki::GB(1));
@@ -77,4 +77,4 @@ void* RendererPersistentAllocator::reallocate_aligned(void* ptr, u64 size, u64 a
 	return new_ptr;
 }
 
-}  // namespace toki::renderer
+}  // namespace toki

@@ -10,7 +10,7 @@
 #include <toki/renderer/private/vulkan/vulkan_utils.h>
 #include <toki/renderer/types.h>
 
-namespace toki::renderer {
+namespace toki {
 
 class VulkanBackend {
 	friend class Renderer;
@@ -41,4 +41,4 @@ private:
 	VulkanCommands* m_tempCommands;
 };
 
-}  // namespace toki::renderer
+}  // namespace toki

@@ -3,7 +3,7 @@
 #include <toki/core/core.h>
 #include <toki/renderer/private/vulkan/vulkan_backend.h>
 
-namespace toki::renderer {
+namespace toki {
 
 toki::UniquePtr<Renderer> Renderer::create(const RendererConfig& config) {
 	return make_unique<Renderer>(config);
@@ -15,4 +15,4 @@ Renderer::Renderer(const RendererConfig& config) {
 	m_internalData = toki::construct_at<VulkanBackend>(ptr, config);
 }
 
-}  // namespace toki::renderer
+}  // namespace toki
