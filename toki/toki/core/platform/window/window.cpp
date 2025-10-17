@@ -6,6 +6,14 @@ void* Window::native_handle() const {
 	return m_handle;
 }
 
+void Window::register_listener(void* listener, EventFunction fn) {
+	m_input.event_handler.register_listener(listener, fn);
+}
+
+void Window::unregister_listener(void* listener) {
+	m_input.event_handler.unregister_listener(listener);
+}
+
 b8 Window::poll_event(Event& event) {
 	return m_input.event_queue.pop(event);
 }

@@ -114,6 +114,23 @@ enum struct FrontFace : u8 {
 	CLOCKWISE,
 };
 
+enum TextureFlags : u32 {
+	// CPU can upload texture to GPU
+	WRITABLE = 1 << 0,
+
+	// CPU can read texture from GPU
+	READABLE = 1 << 1,
+
+	// Shader can sample texture
+	SAMPLED = 1 << 2,
+
+	// Texture is color attachment
+	COLOR_ATTACHMENT = 1 << 3,
+
+	// Texture is depth/stencil attachment
+	DEPTH_STENCIL_ATTACHMENT = 1 << 4,
+};
+
 struct ShaderSourceFile {
 	ShaderStageFlags stage;
 	StringView path;
@@ -170,8 +187,9 @@ struct BufferConfig {
 };
 
 struct TextureConfig {
-	u64 width;
-	u64 height;
+	u32 flags;
+	u32 width;
+	u32 height;
 };
 
 struct SamplerConfig {
@@ -217,6 +235,10 @@ struct SetUniform {
 struct SetUniformConfig {
 	ShaderLayoutHandle layout;
 	Span<SetUniform> uniforms;
+};
+
+struct BeginPassConfig {
+	Vector2u32 render_area_size;
 };
 
 }  // namespace toki::renderer

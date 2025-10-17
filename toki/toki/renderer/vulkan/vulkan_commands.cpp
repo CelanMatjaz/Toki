@@ -6,7 +6,7 @@ namespace toki::renderer {
 
 VulkanCommands::VulkanCommands(const VulkanState* state, VulkanCommandBuffer cmd): m_state(state), m_cmd(cmd) {}
 
-void VulkanCommands::begin_pass() {
+void VulkanCommands::begin_pass(const BeginPassConfig& config) {
 	VkRenderingAttachmentInfoKHR rendering_attachment_info{};
 	rendering_attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 	rendering_attachment_info.imageView = m_state->swapchain.get_current_image().image_view();
@@ -19,7 +19,7 @@ void VulkanCommands::begin_pass() {
 	rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
 	rendering_info.colorAttachmentCount = 1;
 	rendering_info.pColorAttachments = &rendering_attachment_info;
-	rendering_info.renderArea = VkRect2D{ { 0, 0 }, { 800, 600 } };
+	rendering_info.renderArea = VkRect2D{ { 0, 0 }, convert_to<VkExtent2D>(config.render_area_size) };
 	rendering_info.layerCount = 1;
 	vkCmdBeginRendering(m_cmd, &rendering_info);
 

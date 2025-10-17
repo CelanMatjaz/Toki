@@ -10,7 +10,7 @@
 namespace toki {
 
 template <>
-inline VkExtent2D convert_to<VkExtent2D>(const Vec2u32& vec) {
+inline VkExtent2D convert_to<VkExtent2D>(const Vector2u32& vec) {
 	return VkExtent2D{ vec.x, vec.y };
 }
 

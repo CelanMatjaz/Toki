@@ -5,8 +5,8 @@ namespace toki {
 Engine::Engine([[maybe_unused]] const EngineConfig& config): m_running(true) {
 	WindowConfig window_config{};
 	window_config.title = "Window";
-	window_config.width = 800;
-	window_config.height = 600;
+	window_config.dimensions = { 800, 600 };
+	window_config.min_dimensions = { 400, 300 };
 	window_config.flags = WINDOW_FLAG_SHOW_ON_CREATE;
 	m_window = toki::make_unique<Window>(window_config);
 

@@ -24,18 +24,21 @@ void window_system_poll_events() {
 
 struct StaticWindowFunctions {
 	static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
-	static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-	static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+	static void mouse_button_callback(GLFWwindow* window, i32 button, i32 action, i32 mods);
+	static void key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods);
+	static void framebuffer_size_callback(GLFWwindow* window, i32 width, i32 height);
 };
 
 Window::Window(const WindowConfig& config) {
-	TK_ASSERT(config.width > 0 && config.height > 0, "Invalid window dimensions");
+	TK_ASSERT(config.dimensions.x > 0 && config.dimensions.y > 0, "Invalid window dimensions");
+
+	m_currentSize = { config.dimensions.x, config.dimensions.y };
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, config.flags & WINDOW_FLAG_RESIZABLE);
 
 	GLFWwindow* window = glfwCreateWindow(
-		static_cast<i32>(config.width), static_cast<i32>(config.height), config.title, nullptr, nullptr);
+		static_cast<i32>(config.dimensions.x), static_cast<i32>(config.dimensions.y), config.title, nullptr, nullptr);
 	TK_ASSERT(window != nullptr, "Window was not created");
 	m_handle = window;
 
@@ -43,9 +46,14 @@ Window::Window(const WindowConfig& config) {
 		glfwShowWindow(window);
 	}
 
+	if (config.min_dimensions.length() > 0) {
+		glfwSetWindowSizeLimits(window, config.min_dimensions.x, config.min_dimensions.y, GLFW_DONT_CARE, GLFW_DONT_CARE);
+	}
+
 	glfwSetCursorPosCallback(HANDLE, StaticWindowFunctions::cursor_position_callback);
 	glfwSetMouseButtonCallback(HANDLE, StaticWindowFunctions::mouse_button_callback);
 	glfwSetKeyCallback(HANDLE, StaticWindowFunctions::key_callback);
+	glfwSetFramebufferSizeCallback(HANDLE, StaticWindowFunctions::framebuffer_size_callback);
 
 	glfwSetWindowUserPointer(window, this);
 }
@@ -102,7 +110,7 @@ void StaticWindowFunctions::mouse_button_callback(
 }
 
 void StaticWindowFunctions::key_callback(
-	GLFWwindow* window, int key, int scancode, int action, [[maybe_unused]] int mods) {
+	GLFWwindow* window, i32 key, i32 scancode, i32 action, [[maybe_unused]] i32 mods) {
 	toki::Window* w = reinterpret_cast<toki::Window*>(glfwGetWindowUserPointer(window));
 
 	Key mapped_key = map_glfw_key(key);
@@ -126,6 +134,16 @@ void StaticWindowFunctions::key_callback(
 
 	w->m_input.event_queue.emplace_back(
 		type, EventData{ .key = { .scan = static_cast<u32>(scancode), .key = mapped_key } });
+}
+
+void StaticWindowFunctions::framebuffer_size_callback(GLFWwindow* window, i32 width, i32 height) {
+	toki::Window* w = reinterpret_cast<toki::Window*>(glfwGetWindowUserPointer(window));
+
+	w->m_currentSize = { width, height };
+
+	Event event(toki::EventType::WINDOW_RESIZE, { .window = { .x = width, .y = height } });
+	w->m_input.event_handler.dispatch_event(event, w);
+	w->m_input.event_queue.emplace_back(event);
 }
 
 static void handle_mods(Mods& mods, i32 button, i32 action) {

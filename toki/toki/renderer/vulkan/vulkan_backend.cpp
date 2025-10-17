@@ -36,6 +36,7 @@ void VulkanBackend::initialize(const RendererConfig& config) {
 	VulkanSwapchainConfig swapchain_config{};
 	swapchain_config.window = config.window;
 	m_state.swapchain = VulkanSwapchain::create(swapchain_config, m_state);
+	config.window->register_listener(&m_state.swapchain, VulkanSwapchain::window_listen_function);
 
 	CommandPoolConfig command_pool_config{};
 	m_state.command_pool = VulkanCommandPool::create(command_pool_config, m_state);

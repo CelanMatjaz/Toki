@@ -39,6 +39,15 @@ void VulkanSwapchain::destroy(const VulkanState& state) {
 }
 
 void VulkanSwapchain::recreate(const VulkanState& state) {
+	VkSurfaceCapabilitiesKHR surface_properties;
+	VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(state.physical_device, m_surface, &surface_properties);
+	TK_ASSERT(result == VK_SUCCESS);
+
+	if (surface_properties.currentExtent.width == m_extent.width &&
+		surface_properties.currentExtent.height == m_extent.height) {
+		return;
+	}
+
 	m_images.clear();
 
 	VkSwapchainCreateInfoKHR swapchain_create_info{};
@@ -67,7 +76,7 @@ void VulkanSwapchain::recreate(const VulkanState& state) {
 		swapchain_create_info.pQueueFamilyIndices = nullptr;
 	}
 
-	VkResult result =
+	result =
 		vkCreateSwapchainKHR(state.logical_device, &swapchain_create_info, state.allocation_callbacks, &m_swapchain);
 	TK_ASSERT(result == VK_SUCCESS);
 
@@ -90,6 +99,11 @@ void VulkanSwapchain::recreate(const VulkanState& state) {
 }
 
 void VulkanSwapchain::acquire_next_image(const VulkanState& state) {
+	if (m_resized) {
+		recreate(state);
+		m_resized = false;
+	}
+
 	VkResult result = vkAcquireNextImageKHR(
 		state.logical_device,
 		m_swapchain,
@@ -97,11 +111,26 @@ void VulkanSwapchain::acquire_next_image(const VulkanState& state) {
 		state.frames.get_image_available_semaphore(),
 		VK_NULL_HANDLE,
 		&m_currentImageIndex);
-	TK_ASSERT(result == VK_SUCCESS);
+
+	if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR || m_resized) {
+		recreate(state);
+		acquire_next_image(state);
+		m_resized = false;
+	} else {
+		TK_ASSERT(result == VK_SUCCESS);
+	}
 }
 
 VulkanTexture& VulkanSwapchain::get_current_image() const {
 	return m_images[m_currentImageIndex].m_texture;
+}
+
+void VulkanSwapchain::window_listen_function(void*, void* listener, const Event& event) {
+	VulkanSwapchain* swapchain = reinterpret_cast<VulkanSwapchain*>(listener);
+	if (event.type() == EventType::WINDOW_RESIZE) {
+		swapchain->m_resized = true;
+		swapchain->m_extent = { static_cast<u32>(event.data().window.x), static_cast<u32>(event.data().window.y) };
+	}
 }
 
 VulkanShaderLayout VulkanShaderLayout::create(const ShaderLayoutConfig& config, const VulkanState& state) {
@@ -642,6 +671,7 @@ void VulkanBuffer::copy_to_image(
 VulkanTexture VulkanTexture::create(const TextureConfig& config, const VulkanState& state) {
 	VulkanTexture texture{};
 
+	texture.m_flags = config.flags;
 	texture.m_width = config.width;
 	texture.m_height = config.height;
 
@@ -658,7 +688,7 @@ VulkanTexture VulkanTexture::create(const TextureConfig& config, const VulkanSta
 	image_create_info.format = format;
 	image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
 	image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	image_create_info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	image_create_info.usage = get_image_usage_flags(config.flags);
 	image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
 

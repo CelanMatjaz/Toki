@@ -19,8 +19,8 @@ enum WindowFlags : u32 {
 };
 
 struct WindowConfig {
-	u32 width;
-	u32 height;
+	Vector2u32 dimensions{};
+	Vector2u32 min_dimensions{};
 	const char* title;
 	WindowFlags flags;
 };
@@ -44,6 +44,8 @@ public:
 	b8 is_mouse_button_pressed(MouseButton mouse_button) const;
 
 	void* native_handle() const;
+	void register_listener(void* listener, EventFunction fn);
+	void unregister_listener(void* listener);
 
 private:
 	b8 should_close() const;
@@ -53,6 +55,7 @@ private:
 private:
 	void* m_handle{};
 	Input m_input{};
+	Vector2u32 m_currentSize{};
 };
 
 }  // namespace toki

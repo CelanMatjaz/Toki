@@ -16,6 +16,7 @@ u32 find_memory_type(
 	VkPhysicalDeviceMemoryProperties memory_properties, u32 type_filter, VkMemoryPropertyFlags properties);
 
 VkBufferUsageFlags get_buffer_usage_flags(BufferType type);
+VkImageUsageFlags get_image_usage_flags(u32 texture_flags);
 VkSamplerAddressMode get_address_mode(SamplerAddressMode address_mode);
 VkFilter get_filter(SamplerFilter filter);
 VkDescriptorType get_descriptor_type(UniformType type);

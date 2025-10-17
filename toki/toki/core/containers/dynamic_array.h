@@ -81,6 +81,15 @@ public:
 		m_size = new_size;
 	}
 
+	void remove_at(u64 index) {
+		if constexpr (CHasDestructor<T>) {
+			destroy_at<T>(&m_data[index]);
+		}
+
+		toki::memcpy(&m_data[index], &m_data[index], m_size - index - 1);
+		--m_size;
+	}
+
 	T& operator[](u64 index) const {
 		return m_data[index];
 	}

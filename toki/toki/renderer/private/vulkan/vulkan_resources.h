@@ -30,6 +30,8 @@ public:
 		return m_surfaceFormat.format;
 	}
 
+	static void window_listen_function(void* sender, void* listener, const Event& event);
+
 private:
 	VkSwapchainKHR m_swapchain;
 	VkSwapchainKHR m_oldSwapchain;
@@ -40,6 +42,7 @@ private:
 	PersistentDynamicArray<WrappedVulkanTexture> m_images;
 	PresentModes m_presentModes;
 	u32 m_currentImageIndex;
+	b32 m_resized;
 };
 
 struct VulkanShaderLayout {
@@ -114,7 +117,10 @@ public:
 	void unmap_memory(const VulkanState& state);
 	void copy_to_buffer(
 		VulkanCommandBuffer cmd, const VulkanBufferCopyConfig& dst_buffer_copy_config = {}, u64 self_offset = 0) const;
-	void copy_to_image(VulkanCommandBuffer cmd, const VulkanBufferImageCopyConfig& dst_buffer_copy_config = {}, u32 self_offset= 0 ) const;
+	void copy_to_image(
+		VulkanCommandBuffer cmd,
+		const VulkanBufferImageCopyConfig& dst_buffer_copy_config = {},
+		u32 self_offset = 0) const;
 
 	operator VkBuffer() const {
 		return m_buffer;
@@ -169,6 +175,7 @@ private:
 	VkImageView m_imageView;
 	VkDeviceMemory m_deviceMemory;
 	u32 m_width, m_height;
+	u32 m_flags;
 };
 
 struct WrappedVulkanTexture {

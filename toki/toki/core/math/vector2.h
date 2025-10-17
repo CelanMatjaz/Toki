@@ -17,6 +17,9 @@ public:
 	constexpr _vector2(const _vector2&) = default;
 	constexpr _vector2(_vector2&&) = default;
 
+	constexpr _vector2& operator=(const _vector2&) = default;
+	constexpr _vector2& operator=(_vector2&&) = default;
+
 	constexpr b8 operator==(const _vector2&) const = default;
 
 	constexpr _vector2& operator+=(const _vector2& rhs);

@@ -24,6 +24,6 @@ private:
 
 	toki::f32 m_offset = 1;
 	toki::f32 m_color = 0;
-	toki::Vector3 m_direction{};
+	toki::Vector3 m_position{};
 	toki::f32 m_directions[4];
 };

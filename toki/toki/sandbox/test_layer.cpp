@@ -146,6 +146,7 @@ void TestLayer::on_attach() {
 		uint8_t pixels[] = { 80, 80, 80, 255, 255, 0, 255, 255, 255, 0, 255, 255, 80, 80, 80, 255 };
 
 		TextureConfig texture_config{};
+		texture_config.flags = TextureFlags::SAMPLED | TextureFlags::WRITABLE;
 		texture_config.width = 2;
 		texture_config.height = 2;
 		m_texture = m_renderer->create_texture(texture_config);
@@ -187,7 +188,10 @@ void TestLayer::on_detach() {
 }
 
 void TestLayer::on_render(toki::renderer::Commands* cmd) {
-	cmd->begin_pass();
+	toki::renderer::BeginPassConfig begin_pass_config{};
+	begin_pass_config.render_area_size = m_window->get_dimensions();
+
+	cmd->begin_pass(begin_pass_config);
 	cmd->bind_shader(m_shader);
 	cmd->bind_index_buffer(m_indexBuffer);
 	cmd->bind_vertex_buffer(m_vertexBuffer);
@@ -224,8 +228,9 @@ void TestLayer::on_update(toki::f32 delta_time) {
 		m_directions[3] = 0.0;
 	}
 
-	m_direction.x = m_directions[0] + m_directions[1];
-	m_direction.y = m_directions[2] + m_directions[3];
+	Vector3 direction{};
+	direction.x = m_directions[0] + m_directions[1];
+	direction.y = m_directions[2] + m_directions[3];
 
 	m_color += delta_time * 0.2;
 	if (m_color > 1.0f) {
@@ -236,11 +241,10 @@ void TestLayer::on_update(toki::f32 delta_time) {
 	camera.set_view(look_at({ 0, 0, -5 }, { 0, 0, 0 }, { 0, 1, 0 }));
 	camera.set_projection(ortho(-400, 400, -300, 300, 0.01, 100.0));
 
-	static Vector3 position{};
-	position += (m_direction * delta_time * 1000);
+	m_position += (direction * delta_time * 1000);
 
 	constexpr Matrix4 model = Matrix4();
-	Matrix4 a = model.translate(position).rotate(Vector3(0.0f, 0.0f, 1.0f), -m_color * TWO_PI);
+	Matrix4 a = model.translate(m_position).rotate(Vector3(0.0f, 0.0f, 1.0f), -m_color * TWO_PI);
 
 	Uniform uniform{ a, camera.get_view(), camera.get_projection(), { m_color, m_color, m_color } };
 
@@ -261,4 +265,8 @@ void TestLayer::on_update(toki::f32 delta_time) {
 	m_renderer->set_uniforms(set_uniform_config);
 }
 
-void TestLayer::on_event([[maybe_unused]] toki::Window* window, [[maybe_unused]] toki::Event& event) {}
+void TestLayer::on_event([[maybe_unused]] toki::Window* window, [[maybe_unused]] toki::Event& event) {
+	if (event.type() == toki::EventType::KEY_PRESS && event.data().key.key == toki::Key::SPACE) {
+		m_position = {};
+	}
+}

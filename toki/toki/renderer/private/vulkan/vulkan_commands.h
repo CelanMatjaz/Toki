@@ -16,7 +16,7 @@ public:
 	VulkanCommands(const VulkanState* state, VulkanCommandBuffer cmd);
 
 public:
-	virtual void begin_pass() override;
+	virtual void begin_pass(const BeginPassConfig& config) override;
 	virtual void end_pass() override;
 
 	virtual void bind_shader(ShaderHandle handle) override;

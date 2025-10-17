@@ -135,7 +135,7 @@ struct MouseEventData {
 };
 
 struct WindowEventData {
-	i16 x, y;
+	i32 x, y;
 };
 
 union EventData {

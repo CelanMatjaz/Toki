@@ -16,6 +16,9 @@ public:
 	constexpr Vector3(const Vector3&) = default;
 	constexpr Vector3(Vector3&&) = default;
 
+	constexpr Vector3& operator=(const Vector3&) = default;
+	constexpr Vector3& operator=(Vector3&&) = default;
+
 	constexpr b8 operator==(const Vector3&) const = default;
 
 	friend constexpr Vector3& operator+=(Vector3& lhs, const Vector3& rhs);

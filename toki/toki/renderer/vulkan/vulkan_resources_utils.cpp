@@ -76,6 +76,32 @@ VkBufferUsageFlags get_buffer_usage_flags(BufferType type) {
 	TK_UNREACHABLE();
 }
 
+VkImageUsageFlags get_image_usage_flags(u32 texture_flags) {
+	VkImageUsageFlags usage_flags = 0;
+
+	if (texture_flags & TextureFlags::WRITABLE) {
+		usage_flags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	}
+
+	if (texture_flags & TextureFlags::READABLE) {
+		usage_flags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+	}
+
+	if (texture_flags & TextureFlags::SAMPLED) {
+		usage_flags |= VK_IMAGE_USAGE_SAMPLED_BIT;
+	}
+
+	if (texture_flags & TextureFlags::COLOR_ATTACHMENT) {
+		usage_flags |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	}
+
+	if (texture_flags & TextureFlags::DEPTH_STENCIL_ATTACHMENT) {
+		usage_flags |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+	}
+
+	return usage_flags;
+}
+
 VkSamplerAddressMode get_address_mode(SamplerAddressMode address_mode) {
 	switch (address_mode) {
 		case SamplerAddressMode::REPEAT:
@@ -188,7 +214,7 @@ VkExtent2D query_surface_extent(VkSurfaceCapabilitiesKHR surface_capabilities) {
 		return surface_capabilities.currentExtent;
 	}
 
-	auto calculated_extent = convert_to<VkExtent2D>(Vec2u32{ 400, 400 });
+	auto calculated_extent = convert_to<VkExtent2D>(Vector2u32{ 400, 400 });
 	calculated_extent.width = toki::clamp(
 		calculated_extent.width, surface_capabilities.minImageExtent.width, surface_capabilities.maxImageExtent.width);
 	calculated_extent.height = toki::clamp(
