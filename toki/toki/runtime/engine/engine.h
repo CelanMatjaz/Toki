@@ -4,7 +4,7 @@
 #include <toki/renderer/renderer.h>
 #include <toki/runtime/engine/layer.h>
 
-namespace toki::runtime {
+namespace toki {
 
 struct EngineConfig {};
 
@@ -28,4 +28,4 @@ private:
 	DynamicArray<UniquePtr<Layer>> m_layers;
 };
 
-}  // namespace toki::runtime
+}  // namespace toki

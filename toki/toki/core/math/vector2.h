@@ -11,6 +11,7 @@ namespace toki {
 template <typename T>
 class _vector2 {
 public:
+	constexpr _vector2() = default;
 	constexpr _vector2(T value): x(value), y(value) {}
 	constexpr _vector2(T x_value, T y_value): x(x_value), y(y_value) {}
 	constexpr _vector2(const _vector2&) = default;
@@ -23,6 +24,9 @@ public:
 
 	constexpr _vector2& operator-=(const _vector2& rhs);
 	constexpr _vector2 operator-(const _vector2& rhs) const;
+
+	constexpr _vector2& operator*=(const _vector2& rhs);
+	constexpr _vector2 operator*(const _vector2& rhs) const;
 
 	constexpr f32 length_squared() const;
 	constexpr f32 length() const;
@@ -61,6 +65,20 @@ inline constexpr _vector2<T> _vector2<T>::operator-(const _vector2& rhs) const {
 }
 
 template <typename T>
+constexpr _vector2<T>& _vector2<T>::operator*=(const _vector2<T>& rhs) {
+	x *= rhs.x;
+	y *= rhs.y;
+
+	return *this;
+}
+
+template <typename T>
+inline constexpr _vector2<T> _vector2<T>::operator*(const _vector2& rhs) const {
+	_vector2 temp(*this);
+	return (temp *= rhs);
+}
+
+template <typename T>
 constexpr f32 _vector2<T>::length_squared() const {
 	return x * x + y * y;
 }
@@ -89,5 +107,6 @@ struct Formatter<_vector2<T>> {
 
 using Vector2 = _vector2<f32>;
 using Vector2u32 = _vector2<u32>;
+using Vector2i32 = _vector2<i32>;
 
 }  // namespace toki

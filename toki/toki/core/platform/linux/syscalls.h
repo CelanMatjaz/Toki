@@ -3,7 +3,7 @@
 #include <toki/core/core.h>
 #include <toki/core/platform/errors.h>
 
-namespace toki::platform {
+namespace toki {
 
 // enum class Syscall : i64 {
 // 	SYS_READ = 0,
@@ -15,4 +15,4 @@ namespace toki::platform {
 // 	SYS_MUNMAP = 11,
 // };
 
-}  // namespace toki::platform
+}  // namespace toki

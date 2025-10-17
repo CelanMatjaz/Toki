@@ -1,6 +1,6 @@
 #include "toki/runtime/engine/engine.h"
 
-namespace toki::runtime {
+namespace toki {
 
 Engine::Engine([[maybe_unused]] const EngineConfig& config): m_running(true) {
 	WindowConfig window_config{};
@@ -27,12 +27,19 @@ void Engine::run() {
 	while (m_running) {
 		window_system_poll_events();
 
-		Event event;
-		while (m_window->poll_event(event)) {
-			if (event.type() == EventType::MOUSE_MOVE) {
-				toki::println("{} {}", event.data().window.x, event.data().window.y);
+		EventQueue& event_queue = m_window->get_event_queue();
+		for (Event& event : event_queue) {
+			if (event.type() == EventType::NONE) {
+				continue;
+			}
+			for (i32 i = static_cast<i32>(m_layers.size() - 1); i >= 0; i--) {
+				m_layers[static_cast<u32>(i)]->on_event(m_window.get(), event);
+				if (event.handled()) {
+					break;
+				}
 			}
 		}
+		event_queue.clear();
 
 		now = Time::now();
 		f64 delta_time = (now - previous_time).as<TimePrecision::Seconds>();
@@ -63,6 +70,7 @@ void Engine::run() {
 
 void Engine::attach_layer(UniquePtr<Layer>&& layer) {
 	layer->m_renderer = m_renderer.get();
+	layer->m_window = m_window.get();
 	layer->on_attach();
 	m_layers.push_back(toki::move(layer));
 }
@@ -72,4 +80,4 @@ void Engine::cleanup() {
 	m_window.reset();
 }
 
-}  // namespace toki::runtime
+}  // namespace toki

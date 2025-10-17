@@ -24,6 +24,10 @@ public:
 	friend constexpr Vector3& operator-=(Vector3& lhs, const Vector3& rhs);
 	constexpr Vector3 operator-(const Vector3& rhs) const;
 
+	friend constexpr Vector3& operator*=(Vector3& lhs, const Vector3& rhs);
+	constexpr Vector3 operator*(const Vector3& rhs) const;
+	constexpr Vector3 operator*(f32 value) const;
+
 	constexpr Vector3 operator-() const;
 
 	constexpr f32 length_squared() const;
@@ -60,6 +64,27 @@ constexpr Vector3& operator-=(Vector3& lhs, const Vector3& rhs) {
 inline constexpr Vector3 Vector3::operator-(const Vector3& rhs) const {
 	Vector3 temp(*this);
 	return (temp -= rhs);
+}
+
+constexpr Vector3& operator*=(Vector3& lhs, const Vector3& rhs) {
+	lhs.x *= rhs.x;
+	lhs.y *= rhs.y;
+	lhs.z *= rhs.z;
+
+	return lhs;
+}
+
+inline constexpr Vector3 Vector3::operator*(const Vector3& rhs) const {
+	Vector3 temp(*this);
+	return (temp *= rhs);
+}
+
+constexpr Vector3 Vector3::operator*(f32 value) const {
+	Vector3 temp(*this);
+	temp.x *= value;
+	temp.y *= value;
+	temp.z *= value;
+	return temp;
 }
 
 constexpr Vector3 Vector3::operator-() const {

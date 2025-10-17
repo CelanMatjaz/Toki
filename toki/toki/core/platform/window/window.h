@@ -1,8 +1,9 @@
 #pragma once
 
 #include <toki/core/math/vector2.h>
-#include <toki/core/platform/event/event_handler.h>
 #include <toki/core/types.h>
+
+#include "toki/core/platform/input/input.h"
 
 namespace toki {
 
@@ -27,6 +28,7 @@ struct WindowConfig {
 struct StaticWindowFunctions;
 
 class Window {
+	friend class Engine;
 	friend StaticWindowFunctions;
 
 public:
@@ -34,28 +36,23 @@ public:
 	Window(const WindowConfig& config);
 	~Window();
 
-	b8 should_close() const;
-
-	void* native_handle() const {
-		return m_handle;
-	}
-
-	void set_renderer_pointer(void* ptr);
-	void* get_renderer_pointer() const;
-
 	Vector2u32 get_dimensions() const;
+	Vector2 get_mouse_position() const;
+	Vector2 get_mouse_delta() const;
+	Mods get_mods() const;
+	b8 is_key_down(Key key) const;
+	b8 is_mouse_button_pressed(MouseButton mouse_button) const;
 
-	void clear_events() {
-		m_eventQueue.clear();
-	}
+	void* native_handle() const;
 
-	bool poll_event(Event& event);
+private:
+	b8 should_close() const;
+	b8 poll_event(Event& event);
+	EventQueue& get_event_queue();
 
 private:
 	void* m_handle{};
-	void* m_rendererData{};
-	EventQueue m_eventQueue{};
-	EventHandler m_eventHandler{};
+	Input m_input{};
 };
 
 }  // namespace toki

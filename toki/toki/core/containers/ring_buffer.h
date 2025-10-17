@@ -44,7 +44,7 @@ public:
 			return false;
 		}
 
-		toki::construct_at<T>(&m_data[m_size], toki::forward<Args>(args)...);
+		toki::construct_at<T>(&m_data[m_tail], toki::forward<Args>(args)...);
 		m_tail = (m_tail + 1) % N;
 		m_size++;
 		return true;
@@ -60,8 +60,7 @@ public:
 
 	void clear() {
 		if constexpr (CHasDestructor<T>) {
-			u32 end = (m_tail + 1) % N;
-			for (u32 i = m_head; i != end; i++) {
+			for (u32 i = m_head; i != m_tail; i++) {
 				if (i == N) {
 					i -= N;
 				}
@@ -69,6 +68,9 @@ public:
 				toki::destroy_at<T>(&m_data[i]);
 			}
 		}
+
+		m_size = 0;
+		m_head = m_tail;
 	}
 
 	struct Iterator {
@@ -96,7 +98,7 @@ public:
 	}
 
 	Iterator end() {
-		return Iterator(this, m_tail + 1);
+		return Iterator(this, m_tail);
 	}
 
 private:

@@ -2,7 +2,7 @@
 
 #include <toki/runtime/runtime.h>
 
-class TestLayer : public toki::runtime::Layer {
+class TestLayer : public toki::Layer {
 public:
 	TestLayer() = delete;
 	TestLayer(toki::f32 offset);
@@ -11,6 +11,7 @@ public:
 	virtual void on_detach() override;
 	virtual void on_update(toki::f32 delta_time) override;
 	virtual void on_render(toki::renderer::Commands* commands) override;
+	virtual void on_event(toki::Window* window, toki::Event& event) override;
 
 private:
 	toki::renderer::ShaderHandle m_shader;
@@ -23,4 +24,6 @@ private:
 
 	toki::f32 m_offset = 1;
 	toki::f32 m_color = 0;
+	toki::Vector3 m_direction{};
+	toki::f32 m_directions[4];
 };

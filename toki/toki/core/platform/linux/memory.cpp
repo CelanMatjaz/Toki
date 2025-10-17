@@ -20,4 +20,4 @@ void free(void* ptr) {
 	munmap(ptr, size);
 }
 
-}  // namespace toki::platform
+}  // namespace toki

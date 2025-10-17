@@ -69,7 +69,7 @@ constexpr T hypot(const T& value1, const T& value2) {
 	return sqrt(value1 * value1 + value2 * value2);
 }
 
-enum class AngleUnits {
+enum struct AngleUnits {
 	Degrees,
 	Radians
 };

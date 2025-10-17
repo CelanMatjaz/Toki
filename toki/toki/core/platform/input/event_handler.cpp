@@ -1,4 +1,4 @@
-#include <toki/core/platform/event/event_handler.h>
+#include <toki/core/platform/input/event_handler.h>
 
 namespace toki {
 
@@ -14,4 +14,4 @@ void EventHandler::dispatch_events(EventQueue events, void* sender) {
 	}
 }
 
-}  // namespace toki::platform
+}  // namespace toki

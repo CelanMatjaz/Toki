@@ -2,7 +2,7 @@
 
 #include <toki/renderer/renderer.h>
 
-namespace toki::runtime {
+namespace toki {
 
 class Layer {
 	friend class Engine;
@@ -16,6 +16,7 @@ public:
 
 protected:
 	renderer::Renderer* m_renderer;
+	toki::Window* m_window;
 };
 
-}  // namespace toki::runtime
+}  // namespace toki

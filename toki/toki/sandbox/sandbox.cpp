@@ -9,8 +9,8 @@ int main() {
 	toki::memory_initialize({ .total_size = toki::GB(1) });
 
 	{
-		toki::runtime::EngineConfig runtime_config{};
-		toki::runtime::Engine engine(runtime_config);
+		toki::EngineConfig runtime_config{};
+		toki::Engine engine(runtime_config);
 
 		engine.attach_layer(toki::make_unique<TestLayer>(1.0f));
 		engine.run();

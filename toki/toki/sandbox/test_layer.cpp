@@ -11,7 +11,6 @@ TestLayer::TestLayer(toki::f32 offset): m_offset(offset) {}
 
 void TestLayer::on_attach() {
 	using namespace toki;
-	using namespace toki::runtime;
 	using namespace toki::renderer;
 
 	{
@@ -201,6 +200,33 @@ void TestLayer::on_update(toki::f32 delta_time) {
 	using namespace toki;
 	using namespace toki::renderer;
 
+	if (m_window->is_key_down(toki::Key::A)) {
+		m_directions[0] = 1.0;
+	} else {
+		m_directions[0] = 0.0;
+	}
+
+	if (m_window->is_key_down(toki::Key::D)) {
+		m_directions[1] = -1.0;
+	} else {
+		m_directions[1] = 0.0;
+	}
+
+	if (m_window->is_key_down(toki::Key::W)) {
+		m_directions[2] = -1.0;
+	} else {
+		m_directions[2] = 0.0;
+	}
+
+	if (m_window->is_key_down(toki::Key::S)) {
+		m_directions[3] = 1.0;
+	} else {
+		m_directions[3] = 0.0;
+	}
+
+	m_direction.x = m_directions[0] + m_directions[1];
+	m_direction.y = m_directions[2] + m_directions[3];
+
 	m_color += delta_time * 0.2;
 	if (m_color > 1.0f) {
 		m_color = 0.0f;
@@ -210,8 +236,11 @@ void TestLayer::on_update(toki::f32 delta_time) {
 	camera.set_view(look_at({ 0, 0, -5 }, { 0, 0, 0 }, { 0, 1, 0 }));
 	camera.set_projection(ortho(-400, 400, -300, 300, 0.01, 100.0));
 
+	static Vector3 position{};
+	position += (m_direction * delta_time * 1000);
+
 	constexpr Matrix4 model = Matrix4();
-	Matrix4 a = model.rotate(Vector3(0.0f, 0.0f, 1.0f), -m_color * TWO_PI);
+	Matrix4 a = model.translate(position).rotate(Vector3(0.0f, 0.0f, 1.0f), -m_color * TWO_PI);
 
 	Uniform uniform{ a, camera.get_view(), camera.get_projection(), { m_color, m_color, m_color } };
 
@@ -231,3 +260,5 @@ void TestLayer::on_update(toki::f32 delta_time) {
 	set_uniform_config.uniforms = uniforms_to_set;
 	m_renderer->set_uniforms(set_uniform_config);
 }
+
+void TestLayer::on_event([[maybe_unused]] toki::Window* window, [[maybe_unused]] toki::Event& event) {}

@@ -5,8 +5,10 @@
 #include <toki/renderer/frontend/renderer_types.h>
 #include <toki/renderer/types.h>
 
-namespace toki::runtime {
+namespace toki {
+
 class Engine;
+
 }
 
 namespace toki::renderer {
@@ -16,7 +18,7 @@ struct RendererConfig {
 };
 
 class Renderer {
-	friend toki::runtime::Engine;
+	friend Engine;
 
 public:
 	static toki::UniquePtr<Renderer> create(const RendererConfig& config);

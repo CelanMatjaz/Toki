@@ -2,7 +2,7 @@
 
 namespace toki {
 
-enum class CoreError {
+enum struct CoreError {
 	NoError,
 	Unknown,
 

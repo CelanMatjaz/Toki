@@ -1,6 +1,6 @@
 #pragma once
 
-#include <toki/core/platform/event/event_defines.h>
+#include <toki/core/platform/input/event_defines.h>
 
 namespace toki {
 
@@ -11,7 +11,6 @@ public:
 
 	EventType type() const;
 	EventData data() const;
-	Mod mod() const;
 
 	b8 handled() const;
 
@@ -21,7 +20,6 @@ private:
 	EventType m_type : 7;
 	b8 m_handled{};
 	EventData m_data;
-	Mod m_mod;
 };
 
 }  // namespace toki

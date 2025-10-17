@@ -1,4 +1,4 @@
-#include <toki/core/platform/event/event.h>
+#include <toki/core/platform/input/event.h>
 
 namespace toki {
 
@@ -10,10 +10,6 @@ EventType Event::type() const {
 
 EventData Event::data() const {
 	return m_data;
-}
-
-Mod Event::mod() const {
-	return m_mod;
 }
 
 b8 Event::handled() const {
