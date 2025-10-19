@@ -37,7 +37,11 @@ public:
 	}
 
 	constexpr Array(const Array& other) {
-		toki::memcpy(m_data, other.m_data, N * sizeof(T));
+		if (*this != other) {
+			for (u32 i = 0; i < 16; ++i) {
+				m_data[i] = other.m_data[i];
+			}
+		}
 	}
 
 	constexpr Array& operator=(const Array& other) {

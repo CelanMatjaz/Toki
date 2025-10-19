@@ -7,9 +7,14 @@ namespace toki {
 
 class Path {
 public:
-	Path();
-	Path(const toki::StringView str): m_internalPath(str.to_string()) {}
+	Path() = default;
+	Path(toki::StringView str): m_internalPath(str.to_string()) {}
 	~Path() = default;
+
+	Path& operator=(toki::StringView str) {
+		m_internalPath = str.to_string();
+		return *this;
+	}
 
 	const char* c_str() const {
 		return m_internalPath.data();

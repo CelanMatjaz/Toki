@@ -117,6 +117,8 @@ void Renderer::present() {
 	}
 
 	STATE.frames.frame_present(STATE);
+
+	RENDERER->m_state.staging_buffer.reset();
 }
 
 Commands* Renderer::get_commands() {
@@ -167,8 +169,9 @@ void VulkanBackend::initialize_instance() {
 
 	TempDynamicArray<const char*> instance_extensions(glfw_extension_count);
 	toki::memcpy(instance_extensions.data(), glfw_extensions, instance_extensions.size() * sizeof(const char*));
+	// instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
-	instance_create_info.enabledExtensionCount = instance_extensions.size_u32();
+	instance_create_info.enabledExtensionCount = instance_extensions.size();
 	instance_create_info.ppEnabledExtensionNames = instance_extensions.data();
 #else
 	instance_create_info.enabledExtensionCount = 0;
@@ -186,7 +189,7 @@ void VulkanBackend::initialize_instance() {
 	vkEnumerateInstanceLayerProperties(&layer_count, layer_properties.data());
 
 	u32 required_layer_count = validation_layers.size();
-	for (u32 i = 0; i < ARRAY_SIZE(validation_layers); ++i) {
+	for (u32 i = 0; i < validation_layers.size(); ++i) {
 		// Found all required layers
 		if (required_layer_count == 0) {
 			break;
@@ -202,8 +205,8 @@ void VulkanBackend::initialize_instance() {
 
 	TK_ASSERT(required_layer_count == 0, "Not all required Vulkan instance layers found");
 
-	instance_create_info.enabledLayerCount = ARRAY_SIZE(validation_layers);
-	instance_create_info.ppEnabledLayerNames = validation_layers;
+	instance_create_info.enabledLayerCount = validation_layers.size();
+	instance_create_info.ppEnabledLayerNames = validation_layers.data();
 #else
 	instance_create_info.enabledLayerCount = 0;
 	instance_create_info.ppEnabledLayerNames = nullptr;
@@ -295,9 +298,9 @@ void VulkanBackend::initialize_device(Window* window) {
 	device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	device_create_info.pNext = &dynamic_rendering_features;
 	device_create_info.pQueueCreateInfos = queue_create_infos.data();
-	device_create_info.queueCreateInfoCount = static_cast<u32>(queue_create_infos.size_u32());
+	device_create_info.queueCreateInfoCount = queue_create_infos.size();
 	device_create_info.pEnabledFeatures = &physical_device_features;
-	device_create_info.enabledExtensionCount = static_cast<u32>(device_extensions.size());
+	device_create_info.enabledExtensionCount = device_extensions.size();
 	device_create_info.ppEnabledExtensionNames = device_extensions.data();
 
 	VkResult result = vkCreateDevice(

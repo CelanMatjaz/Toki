@@ -1,10 +1,18 @@
 #pragma once
 
-namespace toki::resources {
+#include <toki/core/types.h>
+
+namespace toki {
 
 enum class ResourceType {
-	Binary,
-	Text
+	NONE,
+	BINARY,
+	TEXT
+};
+
+struct ResourceData {
+	void* data;
+	u64 size;
 };
 
 }  // namespace toki

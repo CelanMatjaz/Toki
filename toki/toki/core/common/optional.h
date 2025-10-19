@@ -13,8 +13,11 @@ class Optional {
 public:
 	Optional(): m_hasValue(false) {}
 	Optional(NullOpt): m_hasValue(false) {}
-	Optional(OptionalType&& expected): m_hasValue(true) {
+	Optional(const OptionalType& expected): m_hasValue(true) {
 		construct_at<OptionalType>(&m_value, forward<OptionalType>(expected));
+	}
+	Optional(OptionalType&& expected): m_hasValue(true) {
+		m_value = toki::move(expected);
 	}
 
 	~Optional() {

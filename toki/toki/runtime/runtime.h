@@ -5,7 +5,7 @@
 #include <toki/runtime/engine/layer.h>
 
 // Resources
-#include <toki/runtime/resources/loaders/text_loader.h>
+#include <toki/runtime/resources/resource.h>
 #include <toki/runtime/resources/resources.h>
 
 // Rendering

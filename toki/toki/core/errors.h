@@ -2,9 +2,11 @@
 
 namespace toki {
 
-enum struct CoreError {
+enum struct TokiError {
 	NoError,
 	Unknown,
+
+	FileOpen,
 
 	MEMORY_ALLOCATION_FAILED,
 };

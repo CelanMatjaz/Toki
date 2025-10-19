@@ -11,7 +11,6 @@ TestLayer::TestLayer(toki::f32 offset): m_offset(offset) {}
 
 void TestLayer::on_attach() {
 	using namespace toki;
-	using namespace toki;
 
 	{
 		DynamicArray<UniformConfig> set0_uniforms;
@@ -176,6 +175,8 @@ void TestLayer::on_attach() {
 	set_uniform_config.layout = m_shaderLayout;
 	set_uniform_config.uniforms = uniforms_to_set;
 	m_renderer->set_uniforms(set_uniform_config);
+
+	m_camera.set_view(look_at({ 0, 0, 5 }, { 0, 0, 0 }, { 0, 1, 0 }));
 }
 
 void TestLayer::on_detach() {
@@ -201,7 +202,6 @@ void TestLayer::on_render(toki::Commands* cmd) {
 }
 
 void TestLayer::on_update(toki::f32 delta_time) {
-	using namespace toki;
 	using namespace toki;
 
 	if (m_window->is_key_down(toki::Key::A)) {
@@ -237,16 +237,12 @@ void TestLayer::on_update(toki::f32 delta_time) {
 		m_color = 0.0f;
 	}
 
-	Camera camera;
-	camera.set_view(look_at({ 0, 0, -5 }, { 0, 0, 0 }, { 0, 1, 0 }));
-	camera.set_projection(ortho(-400, 400, -300, 300, 0.01, 100.0));
-
 	m_position += (direction * delta_time * 1000);
 
 	constexpr Matrix4 model = Matrix4();
 	Matrix4 a = model.translate(m_position).rotate(Vector3(0.0f, 0.0f, 1.0f), -m_color * TWO_PI);
 
-	Uniform uniform{ a, camera.get_view(), camera.get_projection(), { m_color, m_color, m_color } };
+	Uniform uniform{ a, m_camera.get_view(), m_camera.get_projection(), { m_color, m_color, m_color } };
 
 	m_renderer->set_buffer_data(m_uniformBuffer, &uniform, sizeof(Uniform));
 
@@ -266,7 +262,17 @@ void TestLayer::on_update(toki::f32 delta_time) {
 }
 
 void TestLayer::on_event([[maybe_unused]] toki::Window* window, [[maybe_unused]] toki::Event& event) {
-	if (event.type() == toki::EventType::KEY_PRESS && event.data().key.key == toki::Key::SPACE) {
+	using namespace toki;
+
+	if (event.has_type(EventType::KEY_PRESS) && event.data().key.key == Key::SPACE) {
 		m_position = {};
+	}
+
+	if (event.has_type(EventType::WINDOW_RESIZE)) {
+		auto dimensions = event.data().window;
+		toki::f32 half_width = dimensions.x / 2.0f;
+		toki::f32 half_height = dimensions.y / 2.0f;
+
+		m_camera.set_projection(ortho(half_width, -half_width, -half_height, half_height, 0.01, 100.0));
 	}
 }

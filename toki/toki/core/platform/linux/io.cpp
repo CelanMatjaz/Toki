@@ -6,21 +6,21 @@
 
 namespace toki {
 
-toki::Expected<u64, CoreError> write(NativeHandle handle, const void* data, u64 size) {
+toki::Expected<u64, TokiError> write(NativeHandle handle, const void* data, u64 size) {
 	i64 result = ::write(static_cast<i32>(handle), data, size);
 	if (result == -1) {
 		TK_ASSERT(false, "Need to handle error");
-		return toki::Unexpected(CoreError::Unknown);
+		return toki::Unexpected(TokiError::Unknown);
 	}
 
 	return static_cast<u64>(result);
 }
 
-toki::Expected<u64, CoreError> read(NativeHandle handle, void* data, u64 size) {
+toki::Expected<u64, TokiError> read(NativeHandle handle, void* data, u64 size) {
 	i64 result = ::read(static_cast<i32>(handle), data, size);
 	if (result == -1) {
 		TK_ASSERT(false, "Need to handle error");
-		return toki::Unexpected(CoreError::Unknown);
+		return toki::Unexpected(TokiError::Unknown);
 	}
 
 	return static_cast<u64>(result);

@@ -6,14 +6,20 @@ namespace toki {
 
 struct NativeHandle {
 #if defined(TK_PLATFORM_LINUX)
-	static constexpr i64 INVALID_HANDLE_VALUE = -1;
-	NativeHandle(i64 value): handle(value) {}
-	i64 handle;
+	using NativeHandleType = i32;
+	static constexpr NativeHandleType INVALID_HANDLE_VALUE = -1;
+#endif
+	NativeHandle(NativeHandleType value): handle(value) {}
+	NativeHandleType handle;
 
-	operator i64() const {
+	operator NativeHandleType() const {
 		return handle;
 	}
-#endif
+
+	b8 valid() const {
+		return handle != INVALID_HANDLE_VALUE;
+	}
+
 	NativeHandle(): handle(INVALID_HANDLE_VALUE) {}
 };
 

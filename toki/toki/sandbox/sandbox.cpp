@@ -8,6 +8,9 @@ int main() {
 	toki::window_system_initialize();
 	toki::memory_initialize({ .total_size = toki::GB(1) });
 
+	toki::Resource resource;
+	resource.load_as(toki::StringView{ "dile.txt" }, toki::ResourceType::TEXT);
+
 	{
 		toki::EngineConfig runtime_config{};
 		toki::Engine engine(runtime_config);

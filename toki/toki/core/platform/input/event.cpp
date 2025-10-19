@@ -16,6 +16,10 @@ b8 Event::handled() const {
 	return m_handled;
 }
 
+b8 Event::has_type(EventType type) const {
+	return m_type == type;
+}
+
 void Event::set_handled() {
 	m_handled = true;
 }

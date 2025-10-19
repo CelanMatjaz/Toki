@@ -1,6 +1,7 @@
 #pragma once
 
 #include <toki/core/attributes.h>
+#include <toki/core/common/assert.h>
 #include <toki/core/common/common.h>
 #include <toki/core/common/macros.h>
 #include <toki/core/common/type_traits.h>
@@ -60,6 +61,15 @@ public:
 			return value;
 		}
 		return m_values.expected;
+	}
+
+	ExpectedType& assert_ok_and_value() {
+		assert_ok();
+		return m_values.expected;
+	}
+
+	void assert_ok() {
+		TK_ASSERT(!m_isError);
 	}
 
 	ExpectedType& value_or(ExpectedType&& value = {}) {

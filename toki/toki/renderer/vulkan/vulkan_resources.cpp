@@ -358,9 +358,9 @@ VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState&
 
 	VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info{};
 	vertex_input_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertex_input_state_create_info.vertexBindingDescriptionCount = vertex_binding_descriptions.size_u32();
+	vertex_input_state_create_info.vertexBindingDescriptionCount = vertex_binding_descriptions.size();
 	vertex_input_state_create_info.pVertexBindingDescriptions = vertex_binding_descriptions.data();
-	vertex_input_state_create_info.vertexAttributeDescriptionCount = vertex_attribute_descriptions.size_u32();
+	vertex_input_state_create_info.vertexAttributeDescriptionCount = vertex_attribute_descriptions.size();
 	vertex_input_state_create_info.pVertexAttributeDescriptions = vertex_attribute_descriptions.data();
 
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info{};
@@ -514,7 +514,7 @@ VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState&
 	color_blend_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	color_blend_state_create_info.logicOpEnable = VK_FALSE;
 	color_blend_state_create_info.logicOp = VK_LOGIC_OP_COPY;
-	color_blend_state_create_info.attachmentCount = color_blend_attachment_states.size_u32();
+	color_blend_state_create_info.attachmentCount = color_blend_attachment_states.size();
 	color_blend_state_create_info.pAttachments = color_blend_attachment_states.data();
 	color_blend_state_create_info.blendConstants[0] = 1.0f;
 	color_blend_state_create_info.blendConstants[1] = 1.0f;

@@ -47,7 +47,8 @@ Window::Window(const WindowConfig& config) {
 	}
 
 	if (config.min_dimensions.length() > 0) {
-		glfwSetWindowSizeLimits(window, config.min_dimensions.x, config.min_dimensions.y, GLFW_DONT_CARE, GLFW_DONT_CARE);
+		glfwSetWindowSizeLimits(
+			window, config.min_dimensions.x, config.min_dimensions.y, GLFW_DONT_CARE, GLFW_DONT_CARE);
 	}
 
 	glfwSetCursorPosCallback(HANDLE, StaticWindowFunctions::cursor_position_callback);
@@ -139,7 +140,7 @@ void StaticWindowFunctions::key_callback(
 void StaticWindowFunctions::framebuffer_size_callback(GLFWwindow* window, i32 width, i32 height) {
 	toki::Window* w = reinterpret_cast<toki::Window*>(glfwGetWindowUserPointer(window));
 
-	w->m_currentSize = { width, height };
+	w->m_currentSize = { static_cast<u32>(width), static_cast<u32>(height) };
 
 	Event event(toki::EventType::WINDOW_RESIZE, { .window = { .x = width, .y = height } });
 	w->m_input.event_handler.dispatch_event(event, w);

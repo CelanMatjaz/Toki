@@ -110,10 +110,6 @@ public:
 		return m_size;
 	}
 
-	u32 size_u32() const {
-		return static_cast<u32>(m_size);
-	}
-
 	void move(DynamicArray&& other) {
 		m_data = other.m_data;
 		m_size = other.m_size;

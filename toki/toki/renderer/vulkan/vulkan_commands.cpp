@@ -24,14 +24,14 @@ void VulkanCommands::begin_pass(const BeginPassConfig& config) {
 	vkCmdBeginRendering(m_cmd, &rendering_info);
 
 	VkViewport viewport{};
-	viewport.width = 800;
-	viewport.height = 600;
+	viewport.width = config.render_area_size.x;
+	viewport.height = config.render_area_size.y;
 	viewport.maxDepth = 1.0;
 	vkCmdSetViewport(m_cmd, 0, 1, &viewport);
 
 	VkRect2D scissor{};
 	scissor.offset = { 0, 0 };
-	scissor.extent = { 800, 600 };
+	scissor.extent = convert_to<VkExtent2D>(config.render_area_size);
 	vkCmdSetScissor(m_cmd, 0, 1, &scissor);
 }
 

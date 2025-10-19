@@ -4,12 +4,12 @@
 
 namespace toki {
 
-toki::Expected<void*, CoreError> allocate(u64 size) {
+toki::Expected<void*, TokiError> allocate(u64 size) {
 	void* ptr = mmap(0, size + sizeof(u64), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	*reinterpret_cast<u64*>(ptr) = size;
 
 	if (ptr == nullptr) {
-		return CoreError::MEMORY_ALLOCATION_FAILED;
+		return TokiError::MEMORY_ALLOCATION_FAILED;
 	}
 
 	return reinterpret_cast<u64*>(ptr) + 1;

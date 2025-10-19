@@ -21,8 +21,8 @@ public:
 
 	constexpr Matrix4(const Vector3& position);
 
-	constexpr Matrix4(const Matrix4&);
-	constexpr Matrix4& operator=(const Matrix4&);
+	constexpr Matrix4(const Matrix4&) = default;
+	constexpr Matrix4& operator=(const Matrix4&) = default;
 
 	constexpr b8 operator==(const Matrix4&) const = default;
 
@@ -51,22 +51,6 @@ constexpr Matrix4::Matrix4(const Vector3& position): Matrix4() {
 	m[12] = position.x;
 	m[13] = position.y;
 	m[14] = position.z;
-}
-
-constexpr Matrix4::Matrix4(const Matrix4& other) {
-	for (u32 i = 0; i < 16; ++i) {
-		m[i] = other.m[i];
-	}
-}
-
-constexpr Matrix4& Matrix4::operator=(const Matrix4& other) {
-	if (*this != other) {
-		for (u32 i = 0; i < 16; ++i) {
-			m[i] = other.m[i];
-		}
-	}
-
-	return *this;
 }
 
 constexpr Matrix4& Matrix4::operator*=(const Matrix4& other) {

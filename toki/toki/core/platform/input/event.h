@@ -13,6 +13,7 @@ public:
 	EventData data() const;
 
 	b8 handled() const;
+	b8 has_type(EventType type) const;
 
 	void set_handled();
 
