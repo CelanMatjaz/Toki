@@ -6,3 +6,6 @@ target_link_libraries(renderer
 
 target_link_directories(renderer
 	PUBLIC ${VULKAN_SDK}/lib)
+
+target_include_directories(renderer
+	PUBLIC ${VULKAN_SDK}/include)

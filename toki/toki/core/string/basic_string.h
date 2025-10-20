@@ -11,108 +11,128 @@ namespace toki {
 template <typename T, CIsAllocator AllocatorType = DefaultAllocator>
 	requires Disjunction<IsSame<T, char>, IsSame<T, wchar>>::value
 class BasicString {
+	static constexpr u32 STACK_SPACE = 24;
+	static constexpr u32 STACK_VS_HEAP_CUTOFF = STACK_SPACE / sizeof(T);
+
 public:
-	constexpr BasicString(): m_size(0), m_ptr(nullptr) {}
+	constexpr BasicString(): m_data({}) {}
 
 	constexpr ~BasicString() {
-		if (m_ptr != nullptr) {
-			AllocatorType::free(m_ptr);
+		if (is_on_heap(m_size)) {
+			AllocatorType::free(m_data.heap);
 		}
 	}
 
-	constexpr BasicString(const T* str):
-		m_size(toki::strlen(str)),
-		m_ptr(static_cast<T*>(AllocatorType::allocate_aligned(m_size * sizeof(T), alignof(T)))) {
-		toki::memcpy(m_ptr, str, m_size * sizeof(T));
+	constexpr BasicString(const T* str) {
+		u64 len = toki::strlen(str);
+		initialize_based_on_size(len);
+		toki::memcpy(m_data.heap.m_ptr, str, len * sizeof(T));
 	}
 
-	constexpr BasicString(const T* str, u64 size):
-		m_size(size),
-		m_ptr(static_cast<T*>(AllocatorType::allocate_aligned(m_size * sizeof(T), alignof(T)))) {
-		toki::memcpy(m_ptr, str, m_size * sizeof(T));
+	constexpr BasicString(const T* str, u64 size) {
+		initialize_based_on_size(size);
+		toki::memcpy(m_data.stack, str, size * sizeof(T));
 	}
 
-	constexpr BasicString(T* str, u64 size):
-		m_size(size),
-		m_ptr(static_cast<T*>(AllocatorType::allocate_aligned(m_size * sizeof(T), alignof(T)))) {
-		toki::memcpy(m_ptr, str, m_size);
+	constexpr BasicString(T* str, u64 size) {
+		initialize_based_on_size(size);
+		toki::memcpy(m_data.stack, str, size * sizeof(T));
 	}
 
-	constexpr BasicString(u64 size, T ch = 0):
-		m_size(size),
-		m_ptr(static_cast<T*>(AllocatorType::allocate_aligned(size * sizeof(T), alignof(T)))) {
-		toki::memset(m_ptr, size, ch);
+	constexpr BasicString(u64 size, T ch = 0) {
+		initialize_based_on_size(size);
+		// Stack and heap pointers are the same memory address
+		toki::memset(m_data.stack, size, ch);
 	}
 
-	constexpr BasicString(const BasicString& other):
-		m_size(other.m_size),
-		m_ptr(static_cast<T*>(AllocatorType::allocate_aligned(other.m_size * sizeof(T), alignof(T)))) {
-		toki::memcpy(m_ptr, other.m_ptr, m_size);
+	constexpr BasicString(const BasicString& other) {
+		initialize_based_on_size(other.size());
+		toki::memcpy(m_data.heap, other.m_data.heap, other.size() * sizeof(T));
 	}
 
 	constexpr BasicString& operator=(const BasicString& other) {
-		if (other == this) {
-			return this;
+		if (&other != this) {
+			_copy(other);
 		}
 
-		_copy(other);
-		return this;
+		return *this;
 	}
 
-	constexpr BasicString(BasicString&& other): m_size(other.m_size), m_ptr(other.m_ptr) {
-		other.m_size = 0;
-		other.m_ptr = nullptr;
+	constexpr BasicString(BasicString&& other) {
+		toki::swap(*this, other);
 	}
 
 	constexpr BasicString& operator=(BasicString&& other) {
 		if (&other != this) {
-			m_ptr = other.m_ptr;
-			m_size = other.m_size;
-			other.m_ptr = nullptr;
-			other.m_size = 0;
+			_copy(other);
 		}
 
 		return *this;
 	}
 
 	constexpr void resize(u64 new_size) {
-		m_ptr = AllocatorType::reallocate_aligned(m_ptr, new_size * sizeof(T), alignof(T));
+		initialize_based_on_size(new_size);
 	}
 
 	constexpr u64 size() const {
 		return m_size;
 	}
 
-	constexpr T* data() const {
-		return m_ptr;
+	constexpr const T* data() const {
+		return m_data.stack;
+	}
+
+	constexpr T* data() {
+		return m_data.stack;
 	}
 
 	T& operator[](u64 pos) {
-		return m_ptr[pos];
+		return m_data[pos];
 	}
 
 	operator T*() {
-		return m_ptr;
+		return m_data;
 	}
 
 	operator void*() {
-		return m_ptr;
+		return m_data;
 	}
 
 private:
 	constexpr void _copy(const BasicString& other) {
-		m_ptr = AllocatorType::allocate_aligned(m_size = (other.m_size * sizeof(T)), alignof(T));
-		memcpy(other.m_ptr, m_ptr, other.m_size * sizeof(T));
+		initialize_based_on_size(other.size());
+		toki::memcpy(m_data.heap, other.m_data.heap, other.m_size * sizeof(T));
 	}
 
 	constexpr void _swap(BasicString&& other) {
-		toki::swap(m_size, other.m_size);
-		toki::swap(m_ptr, other.m_ptr);
+		toki::swap(m_data, other.m_data);
 	}
 
 private:
-	u64 m_size = 0;
-	T* m_ptr = nullptr;
+	void initialize_based_on_size(u64 len) {
+		if (is_on_heap(m_size)) {
+			AllocatorType::free_aligned(m_data.heap);
+		}
+
+		if (is_on_heap(len)) {
+			m_data.heap = static_cast<T*>(AllocatorType::allocate_aligned(len * sizeof(T), alignof(T)));
+		} else {
+			memset(m_data.stack, len * sizeof(T), 0);
+		}
+
+		m_size = len;
+	}
+
+	b8 is_on_heap(u64 len) {
+		return len > STACK_VS_HEAP_CUTOFF;
+	}
+
+	b8 is_stack : 1 {};
+	u64 m_size : 63 {};
+	union {
+		T* heap;
+		T stack[STACK_VS_HEAP_CUTOFF]{};
+	} m_data{};
 };
 
 using String = BasicString<char>;
