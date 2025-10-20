@@ -190,6 +190,7 @@ struct TextureConfig {
 	u32 flags;
 	u32 width;
 	u32 height;
+	u32 channels;
 };
 
 struct SamplerConfig {

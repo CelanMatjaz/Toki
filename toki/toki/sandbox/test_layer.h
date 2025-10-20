@@ -22,6 +22,7 @@ private:
 	toki::TextureHandle m_texture;
 	toki::SamplerHandle m_sampler;
 
+	toki::f32 m_imageScale = 1.0;
 	toki::f32 m_offset = 1;
 	toki::f32 m_color = 0;
 	toki::Vector3 m_position{};

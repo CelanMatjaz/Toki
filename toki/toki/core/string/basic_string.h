@@ -26,7 +26,7 @@ public:
 	constexpr BasicString(const T* str) {
 		u64 len = toki::strlen(str);
 		initialize_based_on_size(len);
-		toki::memcpy(m_data.heap.m_ptr, str, len * sizeof(T));
+		toki::memcpy(m_data.stack, str, len * sizeof(T));
 	}
 
 	constexpr BasicString(const T* str, u64 size) {
@@ -59,7 +59,7 @@ public:
 	}
 
 	constexpr BasicString(BasicString&& other) {
-		toki::swap(*this, other);
+		_swap(*this, other);
 	}
 
 	constexpr BasicString& operator=(BasicString&& other) {

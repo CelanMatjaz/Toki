@@ -7,12 +7,22 @@ namespace toki {
 enum class ResourceType {
 	NONE,
 	BINARY,
-	TEXT
+	TEXT,
+	TEXTURE
+};
+
+union ResourceMetadata {
+	struct {
+		i32 width, height, channels;
+	} texture;
+	struct {
+	} binary, text;
 };
 
 struct ResourceData {
 	void* data;
 	u64 size;
+	ResourceMetadata metadata;
 };
 
 }  // namespace toki

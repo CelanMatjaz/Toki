@@ -142,15 +142,19 @@ void TestLayer::on_attach() {
 	}
 
 	{
-		uint8_t pixels[] = { 80, 80, 80, 255, 255, 0, 255, 255, 255, 0, 255, 255, 80, 80, 80, 255 };
+		// uint8_t pixels[] = { 80, 80, 80, 255, 255, 0, 255, 255, 255, 0, 255, 255, 80, 80, 80, 255 };
+
+		Resource texture_resource("pepe.jpg", ResourceType::TEXTURE);
+		auto& metadata = texture_resource.metadata().texture;
 
 		TextureConfig texture_config{};
 		texture_config.flags = TextureFlags::SAMPLED | TextureFlags::WRITABLE;
-		texture_config.width = 2;
-		texture_config.height = 2;
+		texture_config.width = metadata.width;
+		texture_config.height = metadata.height;
+		texture_config.channels = metadata.channels;
 		m_texture = m_renderer->create_texture(texture_config);
 
-		m_renderer->set_texture_data(m_texture, pixels, sizeof(pixels));
+		m_renderer->set_texture_data(m_texture, texture_resource.data(), texture_resource.size());
 	}
 
 	{
@@ -240,7 +244,7 @@ void TestLayer::on_update(toki::f32 delta_time) {
 	m_position += (direction * delta_time * 1000);
 
 	constexpr Matrix4 model = Matrix4();
-	Matrix4 a = model.translate(m_position).rotate(Vector3(0.0f, 0.0f, 1.0f), -m_color * TWO_PI);
+	Matrix4 a = model.translate(m_position).rotate(Vector3(0.0f, 0.0f, 1.0f), -m_color * TWO_PI).scale(m_imageScale);
 
 	Uniform uniform{ a, m_camera.get_view(), m_camera.get_projection(), { m_color, m_color, m_color } };
 
@@ -268,11 +272,15 @@ void TestLayer::on_event([[maybe_unused]] toki::Window* window, [[maybe_unused]]
 		m_position = {};
 	}
 
-	if (event.has_type(EventType::WINDOW_RESIZE)) {
+	else if (event.has_type(EventType::WINDOW_RESIZE)) {
 		auto dimensions = event.data().window;
 		toki::f32 half_width = dimensions.x / 2.0f;
 		toki::f32 half_height = dimensions.y / 2.0f;
 
 		m_camera.set_projection(ortho(half_width, -half_width, -half_height, half_height, 0.01, 100.0));
+	}
+
+	else if (event.has_type(EventType::MOUSE_SCROLL)) {
+		m_imageScale += event.data().mouse.y * 0.2f;
 	}
 }

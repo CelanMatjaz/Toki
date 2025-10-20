@@ -671,9 +671,7 @@ void VulkanBuffer::copy_to_image(
 VulkanTexture VulkanTexture::create(const TextureConfig& config, const VulkanState& state) {
 	VulkanTexture texture{};
 
-	texture.m_flags = config.flags;
-	texture.m_width = config.width;
-	texture.m_height = config.height;
+	texture.m_metadata = config;
 
 	VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
 

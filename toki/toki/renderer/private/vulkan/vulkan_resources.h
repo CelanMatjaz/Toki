@@ -163,19 +163,22 @@ public:
 	}
 
 	u32 width() const {
-		return m_width;
+		return m_metadata.width;
 	}
 
 	u32 height() const {
-		return m_height;
+		return m_metadata.height;
+	}
+
+	u32 channels() const {
+		return m_metadata.channels;
 	}
 
 private:
 	VkImage m_image;
 	VkImageView m_imageView;
 	VkDeviceMemory m_deviceMemory;
-	u32 m_width, m_height;
-	u32 m_flags;
+	TextureConfig m_metadata;
 };
 
 struct WrappedVulkanTexture {

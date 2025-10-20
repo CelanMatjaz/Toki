@@ -5,7 +5,7 @@
 
 namespace toki {
 
-ResourceData load_text(const Path& path);
-void unload_text(ResourceData& resource_data);
+ResourceData load_texture(const Path& path);
+void unload_texture(ResourceData& resource_data);
 
 }  // namespace toki

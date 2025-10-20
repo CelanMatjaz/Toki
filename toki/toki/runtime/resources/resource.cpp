@@ -1,6 +1,8 @@
-#include <toki/runtime/resources/resource.h>
+#include "toki/runtime/resources/resource.h"
 
-#include "toki/runtime/resources/loaders/text_loader.h"
+#include <toki/runtime/allocators.h>
+#include <toki/runtime/resources/loaders/text_loader.h>
+#include <toki/runtime/resources/loaders/texture_loader.h>
 
 namespace toki {
 
@@ -9,7 +11,7 @@ Resource::Resource(const Path& path, ResourceType type) {
 }
 
 Resource::~Resource() {
-	if (m_data.data != nullptr && m_data.size > 0 && m_type != ResourceType::NONE) {
+	if (m_data.resource_data.data != nullptr && m_data.resource_data.size > 0 && m_data.type != ResourceType::NONE) {
 		unload();
 	}
 }
@@ -17,28 +19,35 @@ Resource::~Resource() {
 void Resource::load_as(const Path& path, ResourceType type) {
 	switch (type) {
 		case ResourceType::BINARY:
+			break;
 		case ResourceType::TEXT:
-			m_data = load_text<DefaultAllocator>(path);
+			m_data.resource_data = load_text(path);
 			break;
 		case toki::ResourceType::NONE:
 			break;
+		case ResourceType::TEXTURE:
+			m_data.resource_data = load_texture(path);
+			break;
 	}
 
-	m_type = type;
+	m_data.type = type;
 }
 
 void Resource::unload() {
-	switch (m_type) {
+	switch (m_data.type) {
 		case ResourceType::BINARY:
 			break;
 		case ResourceType::TEXT:
-			m_data = unload_text<DefaultAllocator>(m_data);
+			unload_text(m_data.resource_data);
 			break;
 		case toki::ResourceType::NONE:
 			break;
+		case ResourceType::TEXTURE:
+			unload_texture(m_data.resource_data);
+			break;
 	}
 
-	m_type = ResourceType::NONE;
+	m_data.type = ResourceType::NONE;
 }
 
 }  // namespace toki

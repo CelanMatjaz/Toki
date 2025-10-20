@@ -27,6 +27,7 @@ struct StaticWindowFunctions {
 	static void mouse_button_callback(GLFWwindow* window, i32 button, i32 action, i32 mods);
 	static void key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods);
 	static void framebuffer_size_callback(GLFWwindow* window, i32 width, i32 height);
+	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 };
 
 Window::Window(const WindowConfig& config) {
@@ -55,6 +56,7 @@ Window::Window(const WindowConfig& config) {
 	glfwSetMouseButtonCallback(HANDLE, StaticWindowFunctions::mouse_button_callback);
 	glfwSetKeyCallback(HANDLE, StaticWindowFunctions::key_callback);
 	glfwSetFramebufferSizeCallback(HANDLE, StaticWindowFunctions::framebuffer_size_callback);
+	glfwSetScrollCallback(HANDLE, StaticWindowFunctions::scroll_callback);
 
 	glfwSetWindowUserPointer(window, this);
 }
@@ -145,6 +147,13 @@ void StaticWindowFunctions::framebuffer_size_callback(GLFWwindow* window, i32 wi
 	Event event(toki::EventType::WINDOW_RESIZE, { .window = { .x = width, .y = height } });
 	w->m_input.event_handler.dispatch_event(event, w);
 	w->m_input.event_queue.emplace_back(event);
+}
+
+void StaticWindowFunctions::scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+	toki::Window* w = reinterpret_cast<toki::Window*>(glfwGetWindowUserPointer(window));
+	w->m_input.event_queue.emplace_back(
+		EventType::MOUSE_SCROLL,
+		EventData{ .mouse = { .x = static_cast<i16>(xoffset), .y = static_cast<i16>(yoffset), .button = {} } });
 }
 
 static void handle_mods(Mods& mods, i32 button, i32 action) {

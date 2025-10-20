@@ -35,7 +35,6 @@ toki::Expected<NativeHandle, TokiError> open(const char* filename, FileMode mode
 
 	i64 result = ::open(filename, linux_flags, 0777);  // All permissions for now
 	if (result == -1) {
-		int a = errno;
 		TK_ASSERT(false, "Need to handle error");
 		return toki::Unexpected(TokiError::FileOpen);
 	}
