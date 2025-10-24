@@ -10,7 +10,7 @@ include("cmake/common.project.cmake")
 option(TOKI_USE_GLFW "Build and use GLFW submodule" OFF)
 option(TOKI_ENABLE_TESTING "Build tests" OFF)
 
-add_subdirectory(toki)
+add_subdirectory(src)
 
 if(TOKI_ENABLE_TESTING)
 	add_subdirectory(tests)

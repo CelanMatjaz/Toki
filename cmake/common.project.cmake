@@ -10,6 +10,18 @@ set(COMMON_WARNINGS
 )
 
 function(common_target_options target dir deps)
+	set_target_properties(${target} PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+		LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+		ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+
+		OBJECT_DIR "${CMAKE_BINARY_DIR}/${target}"
+	)
+
+	set_target_properties(${target} PROPERTIES
+		OBJECT_OUTPUTS "${CMAKE_BINARY_DIR}/obj"
+	)
+
 	target_link_libraries(${target} PUBLIC ${deps})
 
 	file(GLOB_RECURSE SOURCES
@@ -29,7 +41,7 @@ function(common_target_options target dir deps)
 	)
 
 	target_include_directories(${target}
-		PUBLIC ${CMAKE_SOURCE_DIR}/toki
+		PUBLIC ${CMAKE_SOURCE_DIR}/src
 	)
 
 	target_compile_definitions(${target} PRIVATE

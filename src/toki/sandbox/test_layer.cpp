@@ -96,23 +96,13 @@ void TestLayer::on_attach() {
 		vec3 object_color = vec3(1.0, 1.0, 1.0);
 
 		void main() {
-			// out_color = vec4(in_color, 1.0);
-			// out_color = texture(tex_sampler, in_uv) * vec4(in_color, 1.0);
-
-		   // Vector from fragment to light
 			vec3 light_dir = normalize(light_pos - in_position);
 
-			// Diffuse shading (Lambert)
 			float diff = max(dot(normalize(in_normals), light_dir), 0.0);
-
 			vec3 diffuse = diff * light_color;
+			vec3 color = diffuse * vec3(texture(tex_sampler, in_uv));
 
-			// Final color
-			vec3 color = diffuse * object_color;
-
-			out_color = vec4(color, 1.0); // Only write once
-
-			// out_color = vec4(1.0);
+			out_color = vec4(color, 1.0);
 		}
 	)";
 		m_shader = m_renderer->create_shader(shader_config);
