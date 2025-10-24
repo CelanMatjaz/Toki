@@ -1,8 +1,7 @@
 #pragma once
 
 #include <toki/core/string/basic_string.h>
-
-#include "toki/core/utils/memory.h"
+#include <toki/core/utils/memory.h>
 
 namespace toki {
 
@@ -12,6 +11,8 @@ public:
 	BasicStringView() = default;
 
 	constexpr BasicStringView(const T* str): m_ptr(str), m_size(toki::strlen(str)) {}
+
+	constexpr BasicStringView(const T* str, u64 length): m_ptr(str), m_size(length) {}
 
 	constexpr BasicStringView(const BasicString<T> str): m_ptr(str.data()), m_size(str.size()) {}
 

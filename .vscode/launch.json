@@ -21,7 +21,7 @@
             "cwd": "${workspaceFolder}",
             "args": ["${workspaceFolder}/toki_sandbox"],
             "program": "${workspaceFolder}/build/tests/tests",
-            "preLaunchTask": "Build Sandbox - Debug"
+            "preLaunchTask": "Build Tests - Debug"
         }
     ]
 }

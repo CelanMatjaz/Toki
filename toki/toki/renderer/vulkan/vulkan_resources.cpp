@@ -43,7 +43,7 @@ void VulkanSwapchain::recreate(const VulkanState& state) {
 	VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(state.physical_device, m_surface, &surface_properties);
 	TK_ASSERT(result == VK_SUCCESS);
 
-	if (surface_properties.currentExtent.width == m_extent.width &&
+	if (m_swapchain != VK_NULL_HANDLE && surface_properties.currentExtent.width == m_extent.width &&
 		surface_properties.currentExtent.height == m_extent.height) {
 		return;
 	}
@@ -546,16 +546,17 @@ VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState&
 	}
 	formats[0] = state.swapchain;
 
-	VkPipelineRenderingCreateInfoKHR pipeline_rendering_craete_info{};
-	pipeline_rendering_craete_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
-	pipeline_rendering_craete_info.colorAttachmentCount = formats.size();
-	pipeline_rendering_craete_info.pColorAttachmentFormats = formats.data();
-	pipeline_rendering_craete_info.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
-	pipeline_rendering_craete_info.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
+	VkPipelineRenderingCreateInfoKHR pipeline_rendering_create_info{};
+	pipeline_rendering_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
+	pipeline_rendering_create_info.colorAttachmentCount = formats.size();
+	pipeline_rendering_create_info.pColorAttachmentFormats = formats.data();
+	pipeline_rendering_create_info.depthAttachmentFormat =
+		map_color_format(config.depth_format.value_or(ColorFormat::NONE));
+	pipeline_rendering_create_info.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
 
 	VkGraphicsPipelineCreateInfo graphics_pipeline_create_info{};
 	graphics_pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	graphics_pipeline_create_info.pNext = &pipeline_rendering_craete_info;
+	graphics_pipeline_create_info.pNext = &pipeline_rendering_create_info;
 	graphics_pipeline_create_info.stageCount = shader_stage_create_infos.size();
 	graphics_pipeline_create_info.pStages = shader_stage_create_infos;
 	graphics_pipeline_create_info.pVertexInputState = &vertex_input_state_create_info;
@@ -674,6 +675,20 @@ VulkanTexture VulkanTexture::create(const TextureConfig& config, const VulkanSta
 	texture.m_metadata = config;
 
 	VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
+	switch (config.format) {
+		case ColorFormat::R8:
+			format = VK_FORMAT_R8_SRGB;
+			break;
+		case ColorFormat::RGBA8:
+			format = VK_FORMAT_R8G8B8A8_SRGB;
+			break;
+		case ColorFormat::DEPTH_STENCIL:
+			format = VK_FORMAT_D32_SFLOAT_S8_UINT;
+			break;
+		case ColorFormat::COLOR_FORMAT_COUNT:
+		case ColorFormat::NONE:
+			TK_UNREACHABLE();
+	}
 
 	VkImageCreateInfo image_create_info{};
 	image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

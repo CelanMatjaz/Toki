@@ -2,10 +2,14 @@
 
 #include <toki/core/common/assert.h>
 #include <toki/core/memory/memory.h>
-#include <toki/core/utils/memory.h>
 #include <toki/core/platform/syscalls.h>
+#include <toki/core/utils/memory.h>
 
 namespace toki {
+
+#define PTR(x) reinterpret_cast<u64ptr>(x)
+#define PTR_TO(x, type) reinterpret_cast<type*>(reinterpret_cast<void*>(x))
+#define BLOCK_AFTER(x) reinterpret_cast<MemorySection*>(PTR(x + 1) + x->size)
 
 Allocator::Allocator(u64 size): m_size(size) {
 	m_buffer = toki::allocate(size);
@@ -22,57 +26,66 @@ Allocator::~Allocator() {
 void* Allocator::allocate(u64 size) {
 	TK_ASSERT(m_size > 0);
 
-	if (size + sizeof(MemorySection) > m_size ||
-		reinterpret_cast<u64ptr>(m_firstFreePtr) >= reinterpret_cast<u64ptr>(m_buffer) + m_size) {
+	MemorySection* previous_free_block = nullptr;
+	MemorySection* current_free_block = m_firstFreePtr;
+
+	while (current_free_block->size < size && current_free_block->next != nullptr) {
+		previous_free_block = current_free_block;
+		current_free_block = current_free_block->next;
+	}
+
+	// Last free block
+	if (current_free_block->size == 0) {
+		current_free_block->size = size;
+		if (previous_free_block != nullptr) {
+			previous_free_block->next = BLOCK_AFTER(current_free_block);
+		} else {
+			m_firstFreePtr = BLOCK_AFTER(current_free_block);
+		}
+		current_free_block->next = nullptr;
+
+		if (PTR(current_free_block + 1) + size > PTR(m_buffer) + m_size) {
+			return nullptr;
+		}
+
+		return current_free_block + 1;
+	}
+
+	// Free block is big enough to split
+	if (static_cast<i64>(current_free_block->size) - size > BLOCK_SPLIT_CUTOFF + sizeof(MemorySection)) {
+		u64 original_size = current_free_block->size;
+		current_free_block->size = size + size % alignof(MemorySection);
+		MemorySection* split_block = BLOCK_AFTER(current_free_block);
+		split_block->size = original_size - (size + sizeof(MemorySection));
+
+		if (previous_free_block != nullptr) {
+			previous_free_block->next = current_free_block->next;
+		} else {
+			m_firstFreePtr = split_block;
+		}
+
+		current_free_block->next = nullptr;
+
+		if (PTR(current_free_block + 1) + size > PTR(m_buffer) + m_size) {
+			return nullptr;
+		}
+
+		return current_free_block + 1;
+	}
+
+	// Handle free block from middle of chain
+	if (previous_free_block != nullptr) {
+		previous_free_block->next = current_free_block->next;
+	} else {
+		m_firstFreePtr = current_free_block->next;
+	}
+
+	// Check if allocated block is inside buffer
+	if (PTR(current_free_block + 1) + size > PTR(m_buffer) + m_size) {
 		return nullptr;
 	}
 
-	// First free block was never set and is valid to overwrite
-	if (m_firstFreePtr->size == 0) {
-		m_firstFreePtr->size = size;
-		void* ptr = m_firstFreePtr + 1;
-		m_firstFreePtr = reinterpret_cast<MemorySection*>(reinterpret_cast<u64ptr>(m_firstFreePtr + 1) + size);
-		return ptr;
-	}
-
-	MemorySection* next_free_block = m_firstFreePtr;
-	MemorySection* previous_free_block = next_free_block;
-
-	// Find first block with required size
-	while (next_free_block->size < size && next_free_block->next != nullptr) {
-		previous_free_block = next_free_block;
-		next_free_block = next_free_block->next;
-	}
-
-	// First free block has enough space
-	if (next_free_block == m_firstFreePtr) {
-		if (m_firstFreePtr->next == nullptr) {
-			m_firstFreePtr->next =
-				reinterpret_cast<MemorySection*>(reinterpret_cast<u64ptr>(m_firstFreePtr + 1) + size);
-		}
-
-		m_firstFreePtr = m_firstFreePtr->next;
-		next_free_block->next = nullptr;
-
-		return reinterpret_cast<void*>(next_free_block + 1);
-	}
-
-	// No block with required space exists
-	if (next_free_block->next == nullptr) {
-		next_free_block->size = size;
-
-		previous_free_block->next =
-			reinterpret_cast<MemorySection*>(reinterpret_cast<u64ptr>(next_free_block + 1) + size);
-		previous_free_block->next = {};
-
-		next_free_block->next = nullptr;
-		return next_free_block + 1;
-	}
-
-	// Found a block between first and last free block
-	previous_free_block->next = next_free_block->next;
-	next_free_block->next = nullptr;
-	return next_free_block + 1;
+	return current_free_block + 1;
 }
 
 void* Allocator::allocate_aligned(u64 size, u64 alignment) {
@@ -105,30 +118,41 @@ void* Allocator::reallocate(void* old, u64 size) {
 void Allocator::free(void* ptr) {
 	MemorySection* block = reinterpret_cast<MemorySection*>(ptr) - 1;
 
+	// Block is before first free ptr
 	if (block < m_firstFreePtr) {
-		block->next = m_firstFreePtr;
+		// If current block and first free block
+		// are one after another, join them
+		if (BLOCK_AFTER(block) == m_firstFreePtr) {
+			block->next = m_firstFreePtr->next;
+			if (m_firstFreePtr->size == 0) {
+				block->size = 0;
+
+			} else {
+				block->size += sizeof(MemorySection) + m_firstFreePtr->size;
+			}
+		} else {
+			block->next = m_firstFreePtr;
+		}
+
 		m_firstFreePtr = block;
 		return;
 	}
 
-	MemorySection* free_block = m_firstFreePtr;
-
-	// Find first free block before the block to deallocate
-	while (free_block->next != nullptr &&
-		   reinterpret_cast<u64ptr>(free_block) + free_block->size < reinterpret_cast<u64ptr>(block)) {
-		free_block = free_block->next;
+	MemorySection* current_free_block = m_firstFreePtr;
+	while (current_free_block < block) {
+		current_free_block = current_free_block->next;
 	}
 
-	// The block to deallocate is last in line free block
-	if (free_block->next == nullptr) {
-		block->next = nullptr;
-		free_block->next = block;
-		return;
+	// Join block before block to be freed
+	if (BLOCK_AFTER(current_free_block) == block) {
+		current_free_block->size += sizeof(MemorySection) + block->size;
 	}
 
-	// The block to deallocate is before last free block
-	block->next = free_block->next;
-	free_block->next = block;
+	// Join block after block to be freed
+	if (BLOCK_AFTER(current_free_block) == current_free_block->next) {
+		current_free_block->size += sizeof(MemorySection) + current_free_block->next->size;
+		current_free_block->next = current_free_block->next->next;
+	}
 }
 
 void Allocator::free_aligned(void* ptr) {

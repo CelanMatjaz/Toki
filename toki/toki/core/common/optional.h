@@ -13,12 +13,8 @@ class Optional {
 public:
 	Optional(): m_hasValue(false) {}
 	Optional(NullOpt): m_hasValue(false) {}
-	Optional(const OptionalType& expected): m_hasValue(true) {
-		construct_at<OptionalType>(&m_value, forward<OptionalType>(expected));
-	}
-	Optional(OptionalType&& expected): m_hasValue(true) {
-		m_value = toki::move(expected);
-	}
+	Optional(const OptionalType& value): m_value(value), m_hasValue(true) {}
+	Optional(OptionalType&& value): m_value(toki::move(value)), m_hasValue(true) {}
 
 	~Optional() {
 		if (m_hasValue) {
@@ -40,15 +36,15 @@ public:
 		return m_value;
 	}
 
-	OptionalType& value_or(const OptionalType& value = {}) {
-		if (m_hasValue) {
+	const OptionalType& value_or(const OptionalType& value = {}) const {
+		if (!m_hasValue) {
 			return value;
 		}
 		return m_value;
 	}
 
-	OptionalType& value_or(OptionalType&& value = {}) {
-		if (m_hasValue) {
+	const OptionalType& value_or(OptionalType&& value = {}) const {
+		if (!m_hasValue) {
 			return toki::remove_r_value_ref(const_cast<OptionalType&&>(value));
 		}
 		return m_value;

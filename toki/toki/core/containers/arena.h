@@ -26,7 +26,7 @@ public:
 		return m_data[handle.m_value - 1];
 	}
 
-	b8 exists(const Handle handle) const {
+	b8 exists(const Handle& handle) const {
 		return m_bits[handle.m_value - 1];
 	}
 

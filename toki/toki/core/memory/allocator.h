@@ -39,6 +39,10 @@ private:
 		MemorySection* next;
 	};
 
+	// If splitting a block, require the 2nd block to
+	// be at least `BLOCK_SPLIT_CUTOFF` bytes in size
+	constexpr static u64 BLOCK_SPLIT_CUTOFF = 64;
+
 	void* m_buffer{};
 	u64 m_size{};
 	MemorySection* m_firstFreePtr{};

@@ -381,8 +381,8 @@ concept CIsAllocator = requires(u64 size, void* ptr, u64 alignment) {
 };
 
 template <typename T, typename Container>
-concept CIsArrayContainer = requires(Container container, T value) {
-	{ container.data() } -> CIsSame<T*>;
+concept CIsArrayContainer = requires(const Container container) {
+	{ container.data() } -> CIsSame<const T*>;
 	{ container.size() } -> CIsSame<u64>;
 };
 

@@ -70,7 +70,8 @@ TK_TEST(Vector3, fromatter) {
 	Vector3 vec(1, 2, 3);
 
 	toki::String string = Formatter<Vector3>::format(vec);
-	TK_TEST_ASSERT(toki::strncmp(string.data(), "Vector3 [1.000000 2.000000 3.000000]", string.size()));
+	b8 compare_ok = toki::strncmp(string.data(), "Vector3 [1.000000 2.000000 3.000000]", string.size()) == 0;
+	TK_TEST_ASSERT(compare_ok);
 
 	Matrix4 mat{vec};
 	toki::String string1 = Formatter<Matrix4>::format(mat);

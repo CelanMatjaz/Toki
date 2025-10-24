@@ -7,20 +7,51 @@ namespace toki {
 VulkanCommands::VulkanCommands(const VulkanState* state, VulkanCommandBuffer cmd): m_state(state), m_cmd(cmd) {}
 
 void VulkanCommands::begin_pass(const BeginPassConfig& config) {
-	VkRenderingAttachmentInfoKHR rendering_attachment_info{};
-	rendering_attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-	rendering_attachment_info.imageView = m_state->swapchain.get_current_image().image_view();
-	rendering_attachment_info.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	rendering_attachment_info.resolveMode = VK_RESOLVE_MODE_NONE;
-	rendering_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	rendering_attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	if (config.render_targets.size() == 0) {
+		TK_ASSERT(
+			config.swapchain_target_index.has_value(),
+			"0 render targets not supported if swapchain target index is not provided");
+	}
 
 	VkRenderingInfo rendering_info{};
 	rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-	rendering_info.colorAttachmentCount = 1;
-	rendering_info.pColorAttachments = &rendering_attachment_info;
 	rendering_info.renderArea = VkRect2D{ { 0, 0 }, convert_to<VkExtent2D>(config.render_area_size) };
 	rendering_info.layerCount = 1;
+
+	u32 attachment_count = config.render_targets.size() > 0 ? config.render_targets.size() : 1;
+	TempDynamicArray<VkRenderingAttachmentInfoKHR> rendering_attachments(attachment_count);
+	for (u32 i = 0; i < rendering_attachments.size(); i++) {
+		TK_ASSERT(
+			i == config.swapchain_target_index.value_or(~static_cast<u32>(0)) ||
+			m_state->textures.exists(config.render_targets[i]));
+		VkRenderingAttachmentInfoKHR& rendering_attachment_info = rendering_attachments[i] = {};
+		rendering_attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		rendering_attachment_info.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		rendering_attachment_info.resolveMode = VK_RESOLVE_MODE_NONE;
+		rendering_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		rendering_attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		if (config.swapchain_target_index.has_value()) {
+			rendering_attachment_info.imageView = m_state->swapchain.get_current_image().image_view();
+		} else {
+			rendering_attachment_info.imageView = m_state->textures.at(config.render_targets[i]).image_view();
+		}
+	}
+
+	VkRenderingAttachmentInfoKHR depth_buffer_attachment_info{};
+	if (config.depth_buffer.has_value()) {
+		TK_ASSERT(m_state->textures.exists(config.depth_buffer.value()));
+		depth_buffer_attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		depth_buffer_attachment_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+		depth_buffer_attachment_info.resolveMode = VK_RESOLVE_MODE_NONE;
+		depth_buffer_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depth_buffer_attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		depth_buffer_attachment_info.imageView = m_state->textures.at(config.depth_buffer.value()).image_view();
+		depth_buffer_attachment_info.clearValue.depthStencil = { 1.0f, 0 };
+		rendering_info.pDepthAttachment = &depth_buffer_attachment_info;
+	}
+
+	rendering_info.colorAttachmentCount = rendering_attachments.size();
+	rendering_info.pColorAttachments = rendering_attachments.data();
 	vkCmdBeginRendering(m_cmd, &rendering_info);
 
 	VkViewport viewport{};

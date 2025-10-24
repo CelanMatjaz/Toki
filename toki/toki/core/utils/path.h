@@ -9,6 +9,7 @@ class Path {
 public:
 	Path() = default;
 	Path(const char* str): m_internalPath(str) {}
+	Path(char* str): m_internalPath(str) {}
 	Path(toki::StringView str): m_internalPath(str.to_string()) {}
 	~Path() = default;
 
@@ -24,7 +25,5 @@ public:
 private:
 	toki::String m_internalPath;
 };
-
-Path current_path();
 
 }  // namespace toki

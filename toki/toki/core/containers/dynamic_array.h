@@ -25,12 +25,12 @@ public:
 		}
 	}
 
-	template <typename... Args>
-		requires(Conjunction<IsSame<T, Args>...>::value && Conjunction<IsConvertible<Args, T>...>::value)
-	DynamicArray(Args&&... args): DynamicArray(sizeof...(Args)) {
-		u64 i = 0;
-		((m_data[i++] = toki::forward<Args>(args)), ...);
-	}
+	// template <typename... Args>
+	// 	requires(Conjunction<IsSame<T, Args>...>::value && Conjunction<IsConvertible<Args, T>...>::value)
+	// DynamicArray(Args&&... args): DynamicArray(sizeof...(Args)) {
+	// 	u64 i = 0;
+	// 	((m_data[i++] = toki::forward<Args>(args)), ...);
+	// }
 
 	DynamicArray(DynamicArray&& other): m_data(other.m_data), m_size(other.m_size), m_capacity(other.m_capacity) {
 		other.m_data = nullptr;

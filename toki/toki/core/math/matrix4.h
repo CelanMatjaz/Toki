@@ -33,8 +33,13 @@ public:
 	constexpr Matrix4 scale(f32 uniform_scale) const;
 	constexpr Matrix4 scale(const Vector3& scale) const;
 	constexpr Matrix4 rotate(const Vector3& axis, f32 angle) const;
+	constexpr Matrix4 inverse() const;
 
 	friend Formatter<Matrix4>;
+
+	f32& operator[](u64 index) {
+		return m[index];
+	}
 
 private:
 	Array<f32, 16> m{};
@@ -125,6 +130,69 @@ constexpr Matrix4 Matrix4::rotate(const Vector3& axis, f32 angle) const {
 					   0.0f,
 					   0.0f,
 					   1.0f);
+}
+constexpr Matrix4 Matrix4::inverse() const {
+	Matrix4 inv;
+
+	inv.m[0] = m[5] * m[10] * m[15] - m[5] * m[11] * m[14] - m[9] * m[6] * m[15] + m[9] * m[7] * m[14] +
+			   m[13] * m[6] * m[11] - m[13] * m[7] * m[10];
+
+	inv.m[4] = -m[4] * m[10] * m[15] + m[4] * m[11] * m[14] + m[8] * m[6] * m[15] - m[8] * m[7] * m[14] -
+			   m[12] * m[6] * m[11] + m[12] * m[7] * m[10];
+
+	inv.m[8] = m[4] * m[9] * m[15] - m[4] * m[11] * m[13] - m[8] * m[5] * m[15] + m[8] * m[7] * m[13] +
+			   m[12] * m[5] * m[11] - m[12] * m[7] * m[9];
+
+	inv.m[12] = -m[4] * m[9] * m[14] + m[4] * m[10] * m[13] + m[8] * m[5] * m[14] - m[8] * m[6] * m[13] -
+				m[12] * m[5] * m[10] + m[12] * m[6] * m[9];
+
+	inv.m[1] = -m[1] * m[10] * m[15] + m[1] * m[11] * m[14] + m[9] * m[2] * m[15] - m[9] * m[3] * m[14] -
+			   m[13] * m[2] * m[11] + m[13] * m[3] * m[10];
+
+	inv.m[5] = m[0] * m[10] * m[15] - m[0] * m[11] * m[14] - m[8] * m[2] * m[15] + m[8] * m[3] * m[14] +
+			   m[12] * m[2] * m[11] - m[12] * m[3] * m[10];
+
+	inv.m[9] = -m[0] * m[9] * m[15] + m[0] * m[11] * m[13] + m[8] * m[1] * m[15] - m[8] * m[3] * m[13] -
+			   m[12] * m[1] * m[11] + m[12] * m[3] * m[9];
+
+	inv.m[13] = m[0] * m[9] * m[14] - m[0] * m[10] * m[13] - m[8] * m[1] * m[14] + m[8] * m[2] * m[13] +
+				m[12] * m[1] * m[10] - m[12] * m[2] * m[9];
+
+	inv.m[2] = m[1] * m[6] * m[15] - m[1] * m[7] * m[14] - m[5] * m[2] * m[15] + m[5] * m[3] * m[14] +
+			   m[13] * m[2] * m[7] - m[13] * m[3] * m[6];
+
+	inv.m[6] = -m[0] * m[6] * m[15] + m[0] * m[7] * m[14] + m[4] * m[2] * m[15] - m[4] * m[3] * m[14] -
+			   m[12] * m[2] * m[7] + m[12] * m[3] * m[6];
+
+	inv.m[10] = m[0] * m[5] * m[15] - m[0] * m[7] * m[13] - m[4] * m[1] * m[15] + m[4] * m[3] * m[13] +
+				m[12] * m[1] * m[7] - m[12] * m[3] * m[5];
+
+	inv.m[14] = -m[0] * m[5] * m[14] + m[0] * m[6] * m[13] + m[4] * m[1] * m[14] - m[4] * m[2] * m[13] -
+				m[12] * m[1] * m[6] + m[12] * m[2] * m[5];
+
+	inv.m[3] = -m[1] * m[6] * m[11] + m[1] * m[7] * m[10] + m[5] * m[2] * m[11] - m[5] * m[3] * m[10] -
+			   m[9] * m[2] * m[7] + m[9] * m[3] * m[6];
+
+	inv.m[7] = m[0] * m[6] * m[11] - m[0] * m[7] * m[10] - m[4] * m[2] * m[11] + m[4] * m[3] * m[10] +
+			   m[8] * m[2] * m[7] - m[8] * m[3] * m[6];
+
+	inv.m[11] = -m[0] * m[5] * m[11] + m[0] * m[7] * m[9] + m[4] * m[1] * m[11] - m[4] * m[3] * m[9] -
+				m[8] * m[1] * m[7] + m[8] * m[3] * m[5];
+
+	inv.m[15] = m[0] * m[5] * m[10] - m[0] * m[6] * m[9] - m[4] * m[1] * m[10] + m[4] * m[2] * m[9] +
+				m[8] * m[1] * m[6] - m[8] * m[2] * m[5];
+
+	f64 det = m[0] * inv.m[0] + m[1] * inv.m[4] + m[2] * inv.m[8] + m[3] * inv.m[12];
+
+	if (det == 0.0)
+		return Matrix4{};
+
+	f64 inv_det = 1.0 / det;
+
+	for (int i = 0; i < 16; i++)
+		inv.m[i] *= inv_det;
+
+	return inv;
 }
 
 template <>

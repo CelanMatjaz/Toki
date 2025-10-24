@@ -5,6 +5,8 @@
 
 namespace toki {
 
+b8 is_depth_format(VkFormat format);
+
 VkSurfaceKHR create_surface(const VulkanState& state, Window* window);
 PresentModes query_present_modes(const VulkanState& state, VkSurfaceKHR surface);
 VkSurfaceFormatKHR query_surface_formats(const VulkanState& state, VkSurfaceKHR surface);

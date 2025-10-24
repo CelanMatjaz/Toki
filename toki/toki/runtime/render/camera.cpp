@@ -4,6 +4,7 @@ namespace toki {
 
 void Camera::set_projection(const Matrix4& projection) {
 	m_projection = projection;
+	m_projection[5] *= -1;
 	m_dirty = true;
 }
 

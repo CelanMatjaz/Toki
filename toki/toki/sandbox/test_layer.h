@@ -20,13 +20,15 @@ private:
 	toki::BufferHandle m_indexBuffer;
 	toki::BufferHandle m_uniformBuffer;
 	toki::TextureHandle m_texture;
+	toki::TextureHandle m_depthBuffer;
 	toki::SamplerHandle m_sampler;
 
+	toki::u32 m_vertexCount = 0;
 	toki::f32 m_imageScale = 1.0;
 	toki::f32 m_offset = 1;
 	toki::f32 m_color = 0;
-	toki::Vector3 m_position{};
-	toki::f32 m_directions[4];
+	toki::Vector3 m_position{ 0, 0, 1.0 };
+	toki::f32 m_directions[6];
 
 	toki::Camera m_camera;
 };

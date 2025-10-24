@@ -18,7 +18,7 @@ enum struct ColorFormat : u16 {
 	RGBA8,
 	// DEPTH,
 	// STENCIL,
-	// DEPTH_STENCIL,
+	DEPTH_STENCIL,
 
 	COLOR_FORMAT_COUNT
 };
@@ -191,6 +191,7 @@ struct TextureConfig {
 	u32 width;
 	u32 height;
 	u32 channels;
+	ColorFormat format;
 };
 
 struct SamplerConfig {
@@ -240,6 +241,9 @@ struct SetUniformConfig {
 
 struct BeginPassConfig {
 	Vector2u32 render_area_size;
+	toki::Span<TextureHandle> render_targets;
+	toki::Optional<TextureHandle> depth_buffer;
+	toki::Optional<u32> swapchain_target_index;
 };
 
 }  // namespace toki

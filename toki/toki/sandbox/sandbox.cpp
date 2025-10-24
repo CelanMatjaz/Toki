@@ -6,7 +6,9 @@
 
 int main() {
 	toki::window_system_initialize();
-	toki::memory_initialize({ .total_size = toki::GB(1) });
+	toki::memory_initialize({ .total_size = toki::GB(4) });
+
+	// auto model_data = toki::load_obj("zajecMatjazTrikotniki.obj");
 
 	{
 		toki::EngineConfig runtime_config{};

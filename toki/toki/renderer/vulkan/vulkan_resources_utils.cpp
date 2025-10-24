@@ -7,6 +7,15 @@
 
 namespace toki {
 
+b8 is_depth_format(VkFormat format) {
+	return any_of<
+		VK_FORMAT_D32_SFLOAT,
+		VK_FORMAT_S8_UINT,
+		VK_FORMAT_D16_UNORM_S8_UINT,
+		VK_FORMAT_D24_UNORM_S8_UINT,
+		VK_FORMAT_D32_SFLOAT_S8_UINT>(format);
+}
+
 VkImageView create_image_view(const ImageViewConfig& config, const VulkanState& state) {
 	VkImageViewCreateInfo image_view_create_info{};
 	image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -17,11 +26,16 @@ VkImageView create_image_view(const ImageViewConfig& config, const VulkanState& 
 	image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
 	image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
 	image_view_create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-	image_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	image_view_create_info.subresourceRange.baseMipLevel = 0;
 	image_view_create_info.subresourceRange.levelCount = 1;
 	image_view_create_info.subresourceRange.baseArrayLayer = 0;
 	image_view_create_info.subresourceRange.layerCount = 1;
+
+	if (is_depth_format(config.format)) {
+		image_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+	} else {
+		image_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	}
 
 	VkImageView image_view;
 	VkResult result =

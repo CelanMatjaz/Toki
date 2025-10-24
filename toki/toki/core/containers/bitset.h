@@ -51,7 +51,7 @@ public:
 		u32 i = index >> 3;
 		u32 shift = index & 0b111;
 		for (; i < BYTE_CHUNK_COUNT; i++) {
-			if ((m_bits[i] == (value ? 0 : ~(static_cast<u8>(0))))) {
+			if ((m_bits[i] == (value ? 0 : (static_cast<ByteChunk>(-1))))) {
 				continue;
 			}
 

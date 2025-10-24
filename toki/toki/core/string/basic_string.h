@@ -19,35 +19,29 @@ public:
 
 	constexpr ~BasicString() {
 		if (is_on_heap(m_size)) {
-			AllocatorType::free(m_data.heap);
+			AllocatorType::free_aligned(m_data.heap);
 		}
 	}
 
 	constexpr BasicString(const T* str) {
 		u64 len = toki::strlen(str);
 		initialize_based_on_size(len);
-		toki::memcpy(m_data.stack, str, len * sizeof(T));
+		copy_to_buffer(str, len);
 	}
 
 	constexpr BasicString(const T* str, u64 size) {
 		initialize_based_on_size(size);
-		toki::memcpy(m_data.stack, str, size * sizeof(T));
-	}
-
-	constexpr BasicString(T* str, u64 size) {
-		initialize_based_on_size(size);
-		toki::memcpy(m_data.stack, str, size * sizeof(T));
+		copy_to_buffer(str, size);
 	}
 
 	constexpr BasicString(u64 size, T ch = 0) {
 		initialize_based_on_size(size);
-		// Stack and heap pointers are the same memory address
-		toki::memset(m_data.stack, size, ch);
+		toki::memset(get_ptr(), size, ch);
 	}
 
 	constexpr BasicString(const BasicString& other) {
 		initialize_based_on_size(other.size());
-		toki::memcpy(m_data.heap, other.m_data.heap, other.size() * sizeof(T));
+		copy_to_buffer(other.get_ptr(), other.m_size);
 	}
 
 	constexpr BasicString& operator=(const BasicString& other) {
@@ -79,11 +73,11 @@ public:
 	}
 
 	constexpr const T* data() const {
-		return m_data.stack;
+		return get_ptr();
 	}
 
 	constexpr T* data() {
-		return m_data.stack;
+		return get_ptr();
 	}
 
 	T& operator[](u64 pos) {
@@ -101,7 +95,7 @@ public:
 private:
 	constexpr void _copy(const BasicString& other) {
 		initialize_based_on_size(other.size());
-		toki::memcpy(m_data.heap, other.m_data.heap, other.m_size * sizeof(T));
+		toki::memcpy(get_ptr(), other.m_data.heap, other.m_size * sizeof(T));
 	}
 
 	constexpr void _swap(BasicString&& other) {
@@ -114,17 +108,30 @@ private:
 			AllocatorType::free_aligned(m_data.heap);
 		}
 
-		if (is_on_heap(len)) {
-			m_data.heap = static_cast<T*>(AllocatorType::allocate_aligned(len * sizeof(T), alignof(T)));
+		if (is_on_heap(len + 1)) {
+			m_data.heap = static_cast<T*>(AllocatorType::allocate_aligned((len + 1) * sizeof(T), alignof(T)));
 		} else {
 			memset(m_data.stack, len * sizeof(T), 0);
 		}
 
-		m_size = len;
+		m_size = len + 1;
 	}
 
-	b8 is_on_heap(u64 len) {
-		return len > STACK_VS_HEAP_CUTOFF;
+	b8 is_on_heap(u64 len) const {
+		return len > STACK_VS_HEAP_CUTOFF - 1;
+	}
+
+	const T* get_ptr() const {
+		return is_on_heap(m_size) ? m_data.heap : m_data.stack;
+	}
+
+	void copy_to_buffer(const T* str, u64 length) {
+		toki::memcpy(get_ptr(), str, (length + 1) * sizeof(T));
+		get_ptr()[length] = 0;
+	}
+
+	T* get_ptr() {
+		return is_on_heap(m_size) ? m_data.heap : m_data.stack;
 	}
 
 	b8 is_stack : 1 {};

@@ -2,6 +2,7 @@
 
 #include <toki/core/attributes.h>
 #include <toki/core/common/type_traits.h>
+#include <toki/core/math/math.h>
 #include <toki/core/string/basic_string.h>
 
 namespace toki {
@@ -117,6 +118,71 @@ u32 ftoa(char* buf_out, T value, u32 precision = 6) {
 	}
 
 	return length;
+}
+
+template <CIsIntegral T>
+u32 atoi(const char* buf, T& out_value) {
+	i32 sign = 1;
+	out_value = 0;
+	const char* temp = buf;
+
+	while (is_space(*temp)) {
+		++temp;
+	}
+
+	if (*temp == '+' || *temp == '-') {
+		if (*temp == '+') {
+			sign = -1;
+		}
+		++temp;
+	}
+
+	while (is_digit(*temp)) {
+		out_value = out_value * 10.0 + static_cast<T>(*temp - '0');
+		++temp;
+	}
+
+	if constexpr (CIsSigned<T>) {
+		out_value *= sign;
+	}
+
+	return temp - buf;
+}
+
+inline f64 atof(const char* buf, f64& out_value) {
+	const char* temp = buf;
+	i32 sign = 1;
+	out_value = 0;
+
+	while (is_space(*temp)) {
+		++temp;
+	}
+
+	if (*temp == '+' || *temp == '-') {
+		if (*temp == '-') {
+			sign = -1;
+		}
+		++temp;
+	}
+
+	while (is_digit(*temp)) {
+		out_value = out_value * 10.0 + static_cast<f64>(*temp - '0');
+		++temp;
+	}
+
+	if (*temp == '.') {
+		++temp;
+		f64 place = 1.0;
+		while (is_digit(*temp)) {
+			place *= 0.1;
+			out_value += (*temp - '0') * place;
+			++temp;
+		}
+	}
+
+	out_value *= sign;
+
+	return temp - buf + 1;
 }
 
 }  // namespace toki

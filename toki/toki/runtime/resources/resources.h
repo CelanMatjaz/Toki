@@ -16,6 +16,8 @@ union ResourceMetadata {
 		i32 width, height, channels;
 	} texture;
 	struct {
+	} model;
+	struct {
 	} binary, text;
 };
 

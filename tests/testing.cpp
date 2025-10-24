@@ -9,8 +9,8 @@ int main() {
 	u32 passed = 0;
 	u32 failed = 0;
 
-	toki::println("==== Running {} test(s) ====", test_cases.size());
-	for (u32 i = 0; i < test_cases.size(); i++) {
+	toki::println("==== Running {} test(s) ====", total_test_count);
+	for (u32 i = 0; i < total_test_count; i++) {
 		TestCase& tc = test_cases[i];
 		bool ok = tc.fn(tc);
 
@@ -21,10 +21,10 @@ int main() {
 			toki::print("{}[{}] FAILED ", red, i + 1);
 			failed++;
 		}
-		toki::print("[Test] {} - {}", tc.scope.data(), tc.name.data());
+		toki::print("[Test] {} - {}", tc.scope, tc.name);
 
 		if (!ok) {
-			toki::println("\n\t{}", tc.failed_file_line.data());
+			toki::println("\n\t{}", tc.failed_file_line);
 		}
 
 		toki::println("{}", reset);

@@ -1,7 +1,6 @@
 #include "toki/renderer/private/vulkan/vulkan_utils.h"
 
 #include <shaderc/shaderc.h>
-#include <toki/core/attributes.h>
 
 namespace toki {
 
@@ -11,9 +10,15 @@ VkFormat map_color_format(ColorFormat format) {
 			return VK_FORMAT_R8_UNORM;
 		case ColorFormat::RGBA8:
 			return VK_FORMAT_R8G8B8A8_UNORM;
-		default:
-			TK_UNREACHABLE();
+		case ColorFormat::DEPTH_STENCIL:
+			return VK_FORMAT_D32_SFLOAT_S8_UINT;
+		case ColorFormat::COLOR_FORMAT_COUNT:
+		case ColorFormat::NONE:
+			return VK_FORMAT_UNDEFINED;
+			break;
 	}
+
+	TK_UNREACHABLE();
 }
 
 toki::Expected<TempDynamicArray<toki::byte>, RendererErrors> compile_shader(ShaderStageFlags stage, StringView source) {
@@ -52,6 +57,7 @@ toki::Expected<TempDynamicArray<toki::byte>, RendererErrors> compile_shader(Shad
 		shaderc_result_release(result);
 		shaderc_compile_options_release(options);
 		shaderc_compiler_release(compiler);
+		dump_to_file("shader.glsl", source);
 		return RendererErrors::ShaderCompileError;
 	}
 
@@ -75,8 +81,8 @@ VkShaderModule create_shader_module(const VulkanState& state, Span<toki::byte> s
 	shader_module_create_info.pCode = reinterpret_cast<const u32*>(spirv.data());
 
 	VkShaderModule shader_module;
-	VkResult result =
-		vkCreateShaderModule(state.logical_device, &shader_module_create_info, state.allocation_callbacks, &shader_module);
+	VkResult result = vkCreateShaderModule(
+		state.logical_device, &shader_module_create_info, state.allocation_callbacks, &shader_module);
 	TK_ASSERT(result == VK_SUCCESS);
 
 	return shader_module;

@@ -22,6 +22,8 @@ public:
 	void open(const Path& path, FileMode mode, u32 flags = 0);
 	void close();
 
+	u64 read_line(char* data, u64 count, byte delim = '\n');
+
 private:
 	u64 m_cursor{};
 	NativeHandle m_handle{};

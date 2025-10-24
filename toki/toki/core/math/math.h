@@ -1,6 +1,7 @@
 #pragma once
 
 #include <toki/core/types.h>
+#include <toki/core/common/assert.h>
 
 namespace toki {
 
@@ -146,6 +147,20 @@ constexpr f64 cos(f64 x) {
 		result += sign * pow(x, 2 * n) / factorial(2 * n);
 	}
 	return result;
+}
+
+// x - Angle in radians
+constexpr f64 tan(f64 x) {
+	f64 cos_value = cos(x);
+	TK_ASSERT(cos_value != 0.0f);
+	return sin(x) / cos_value;
+}
+
+// x - Angle in radians
+constexpr f64 atan(f64 x) {
+	f64 sin_value = sin(x);
+	TK_ASSERT(sin_value != 0.0f);
+	return cos(x) / sin_value;
 }
 
 }  // namespace toki

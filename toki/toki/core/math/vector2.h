@@ -20,8 +20,6 @@ public:
 	constexpr _vector2& operator=(const _vector2&) = default;
 	constexpr _vector2& operator=(_vector2&&) = default;
 
-	constexpr b8 operator==(const _vector2&) const = default;
-
 	constexpr _vector2& operator+=(const _vector2& rhs);
 	constexpr _vector2 operator+(const _vector2& rhs) const;
 
@@ -30,6 +28,8 @@ public:
 
 	constexpr _vector2& operator*=(const _vector2& rhs);
 	constexpr _vector2 operator*(const _vector2& rhs) const;
+
+	b8 operator<=>(const _vector2&) const = default;
 
 	constexpr f32 length_squared() const;
 	constexpr f32 length() const;

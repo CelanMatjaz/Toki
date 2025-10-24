@@ -19,8 +19,6 @@ public:
 	constexpr Vector3& operator=(const Vector3&) = default;
 	constexpr Vector3& operator=(Vector3&&) = default;
 
-	constexpr b8 operator==(const Vector3&) const = default;
-
 	friend constexpr Vector3& operator+=(Vector3& lhs, const Vector3& rhs);
 	constexpr Vector3 operator+(const Vector3& rhs) const;
 
@@ -30,6 +28,8 @@ public:
 	friend constexpr Vector3& operator*=(Vector3& lhs, const Vector3& rhs);
 	constexpr Vector3 operator*(const Vector3& rhs) const;
 	constexpr Vector3 operator*(f32 value) const;
+
+	b8 operator<=>(const Vector3&) const = default;
 
 	constexpr Vector3 operator-() const;
 

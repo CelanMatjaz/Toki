@@ -7,6 +7,7 @@
 // Resources
 #include <toki/runtime/resources/resource.h>
 #include <toki/runtime/resources/resources.h>
+#include <toki/runtime/resources/loaders/obj_loader.h>
 
 // Rendering
 #include <toki/runtime/render/camera.h>

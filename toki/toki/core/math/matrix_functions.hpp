@@ -14,19 +14,19 @@ constexpr Matrix4 look_at(Vector3 position, Vector3 direction, Vector3 up) {
 		r.x,
 		u.x,
 		-f.x,
-		0.0f,
+		0.0,
 		r.y,
 		u.y,
 		-f.y,
-		0.0f,
+		0.0,
 		r.z,
 		u.z,
 		-f.z,
-		0.0f,
+		0.0,
 		-r.dot(position),
 		-u.dot(position),
 		f.dot(position),
-		1.0f);
+		1.0);
 }
 
 constexpr Matrix4 ortho(f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 far) {
@@ -51,6 +51,28 @@ constexpr Matrix4 ortho(f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 
 		0.0f,
 		0.0f,
 		1.0f);
+}
+
+constexpr Matrix4 perspective(f64 fov_radians, f64 aspect, f64 z_near, f64 z_far) {
+	const f64 f = 1.0 / tan(fov_radians * 0.5);
+
+	return Matrix4(
+		f / aspect,
+		0,
+		0,
+		0,
+		0,
+		f,
+		0,
+		0,
+		0,
+		0,
+		z_far / (z_near - z_far),
+		-1,
+		0,
+		0,
+		(z_near * z_far) / (z_near - z_far),
+		0);
 }
 
 }  // namespace toki
