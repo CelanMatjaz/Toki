@@ -10,8 +10,19 @@ namespace toki {
 #define PTR(x) reinterpret_cast<u64ptr>(x)
 #define PTR_TO(x, type) reinterpret_cast<type*>(reinterpret_cast<void*>(x))
 #define BLOCK_AFTER(x) reinterpret_cast<MemorySection*>(PTR(x + 1) + x->size)
+#define ASSERT_CORRECTLY_ALIGNED(x) TK_ASSERT(PTR(x) % alignof(MemorySection) == 0)
+#define ASSERT_ALLOCATOR_POINTERS                                                                \
+	TK_ASSERT(m_firstFreePtr != nullptr);                                                        \
+	TK_ASSERT(m_firstFreePtr >= m_buffer);                                                       \
+	TK_ASSERT(m_firstFreePtr->size < m_size);                                                    \
+	TK_ASSERT((PTR(m_firstFreePtr->next) + m_firstFreePtr->size) % alignof(MemorySection) == 0); \
+	TK_ASSERT(PTR(m_firstFreePtr) != 0x11);
 
 Allocator::Allocator(u64 size): m_size(size) {
+	if (size == 0) {
+		*this = {};
+		return;
+	}
 	m_buffer = toki::allocate(size);
 	m_firstFreePtr = reinterpret_cast<MemorySection*>(m_buffer);
 	*m_firstFreePtr = {};
@@ -25,6 +36,10 @@ Allocator::~Allocator() {
 
 void* Allocator::allocate(u64 size) {
 	TK_ASSERT(m_size > 0);
+	TK_ASSERT(size > 0);
+	ASSERT_ALLOCATOR_POINTERS;
+
+	size += (alignof(MemorySection) - (size & (alignof(MemorySection) - 1))) % alignof(MemorySection);
 
 	MemorySection* previous_free_block = nullptr;
 	MemorySection* current_free_block = m_firstFreePtr;
@@ -34,20 +49,29 @@ void* Allocator::allocate(u64 size) {
 		current_free_block = current_free_block->next;
 	}
 
+	ASSERT_ALLOCATOR_POINTERS;
+
 	// Last free block
 	if (current_free_block->size == 0) {
+		ASSERT_ALLOCATOR_POINTERS;
 		current_free_block->size = size;
+		ASSERT_CORRECTLY_ALIGNED(BLOCK_AFTER(current_free_block));
 		if (previous_free_block != nullptr) {
 			previous_free_block->next = BLOCK_AFTER(current_free_block);
+			ASSERT_CORRECTLY_ALIGNED(BLOCK_AFTER(previous_free_block->next));
 		} else {
 			m_firstFreePtr = BLOCK_AFTER(current_free_block);
+			*m_firstFreePtr = {};
+			ASSERT_CORRECTLY_ALIGNED(BLOCK_AFTER(m_firstFreePtr));
 		}
+		ASSERT_CORRECTLY_ALIGNED(m_firstFreePtr);
 		current_free_block->next = nullptr;
 
 		if (PTR(current_free_block + 1) + size > PTR(m_buffer) + m_size) {
 			return nullptr;
 		}
 
+		ASSERT_ALLOCATOR_POINTERS;
 		return current_free_block + 1;
 	}
 
@@ -70,6 +94,7 @@ void* Allocator::allocate(u64 size) {
 			return nullptr;
 		}
 
+		ASSERT_ALLOCATOR_POINTERS;
 		return current_free_block + 1;
 	}
 
@@ -82,14 +107,17 @@ void* Allocator::allocate(u64 size) {
 
 	// Check if allocated block is inside buffer
 	if (PTR(current_free_block + 1) + size > PTR(m_buffer) + m_size) {
+		ASSERT_ALLOCATOR_POINTERS;
 		return nullptr;
 	}
 
+	ASSERT_ALLOCATOR_POINTERS;
 	return current_free_block + 1;
 }
 
 void* Allocator::allocate_aligned(u64 size, u64 alignment) {
 	TK_ASSERT((alignment & (alignment - 1)) == 0);
+	ASSERT_ALLOCATOR_POINTERS;
 
 	u64 total_size = size + alignment;
 	u64ptr raw_address = reinterpret_cast<u64ptr>(allocate(total_size));
@@ -97,14 +125,18 @@ void* Allocator::allocate_aligned(u64 size, u64 alignment) {
 	u64 mask = alignment - 1;
 	u64ptr misalignment = raw_address & mask;
 	u64ptr adjustment = alignment - misalignment;
+	TK_ASSERT(adjustment > 0);
 
 	u64ptr aligned_address = raw_address + adjustment;
 	(reinterpret_cast<byte*>(aligned_address))[-1] = static_cast<byte>(adjustment);
 
+	ASSERT_ALLOCATOR_POINTERS;
 	return reinterpret_cast<void*>(aligned_address);
 }
 
 void* Allocator::reallocate(void* old, u64 size) {
+	ASSERT_ALLOCATOR_POINTERS;
+
 	if (old == nullptr) {
 		return allocate(size);
 	}
@@ -112,6 +144,8 @@ void* Allocator::reallocate(void* old, u64 size) {
 	void* new_ptr = allocate(size);
 	toki::memcpy(new_ptr, old, size);
 	free(old);
+
+	ASSERT_ALLOCATOR_POINTERS;
 	return new_ptr;
 }
 
@@ -135,6 +169,7 @@ void Allocator::free(void* ptr) {
 		}
 
 		m_firstFreePtr = block;
+		ASSERT_ALLOCATOR_POINTERS;
 		return;
 	}
 
@@ -153,14 +188,18 @@ void Allocator::free(void* ptr) {
 		current_free_block->size += sizeof(MemorySection) + current_free_block->next->size;
 		current_free_block->next = current_free_block->next->next;
 	}
+
+	ASSERT_ALLOCATOR_POINTERS;
 }
 
 void Allocator::free_aligned(void* ptr) {
+	ASSERT_ALLOCATOR_POINTERS;
 	toki::byte* aligned = reinterpret_cast<toki::byte*>(ptr);
 	u64ptr aligned_address = reinterpret_cast<u64ptr>(ptr);
 	u64ptr adjustment = static_cast<u64ptr>(aligned[-1]);
 	u64ptr raw_address = aligned_address - adjustment;
 	free(reinterpret_cast<void*>(raw_address));
+	ASSERT_ALLOCATOR_POINTERS;
 }
 
 }  // namespace toki

@@ -13,6 +13,11 @@ public:
 	virtual void on_render(toki::Commands* commands) override;
 	virtual void on_event(toki::Window* window, toki::Event& event) override;
 
+	void create_shader();
+	void create_model();
+	void setup_uniforms();
+	void setup_textures();
+
 private:
 	toki::ShaderHandle m_shader;
 	toki::ShaderLayoutHandle m_shaderLayout;
@@ -27,8 +32,10 @@ private:
 	toki::f32 m_imageScale = 1.0;
 	toki::f32 m_offset = 1;
 	toki::f32 m_color = 0;
+	toki::f32 m_strafeDirection = 0;
 	toki::Vector3 m_position{ 0, 0, 1.0 };
-	toki::f32 m_directions[6];
+	toki::Vector3 m_cameraRotation{ 0, 0, 0 };
+	toki::b8 m_mouseDown = false;
 
 	toki::Camera m_camera;
 };

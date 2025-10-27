@@ -101,9 +101,9 @@ constexpr _vector2<T> _vector2<T>::normalize() const {
 	return vector;
 }
 
-template <typename T>
-struct Formatter<_vector2<T>> {
-	static constexpr toki::String format(const _vector2<T>& vector) {
+template <typename T, CIsAllocator AllocatorType>
+struct Formatter<_vector2<T>, AllocatorType> {
+	static constexpr toki::String<AllocatorType> format(const _vector2<T>& vector) {
 		return toki::format("Vector2 [{} {} {}]", vector.x, vector.y, vector.z);
 	}
 };

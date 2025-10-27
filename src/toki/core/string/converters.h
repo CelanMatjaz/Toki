@@ -35,9 +35,9 @@ u32 itoa(char* buf_out, T value, u32 radix = 10) {
 	return offset;
 }
 
-template <typename T>
+template <typename T, CIsAllocator AllocatorType = DefaultAllocator>
 	requires(CIsIntegral<T>)
-toki::String itoa(T value, u32 radix = 10) {
+toki::String<AllocatorType> itoa(T value, u32 radix = 10) {
 	char buffer[32]{};
 	u32 length = itoa(buffer, value, radix);
 	return toki::String{ buffer, length };

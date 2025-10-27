@@ -97,8 +97,8 @@ u32 _format(const char* fmt, char* buf_out, FirstArg&& arg, Args&&... args) {
 }
 
 // TODO(Matjaž): add support for format properties in {}
-template <typename... Args>
-toki::String format(const toki::StringView& str, Args... args) {
+template <typename... Args, CIsAllocator AllocatorType = DefaultAllocator>
+toki::String<AllocatorType> format(const toki::StringView& str, Args... args) {
 	if constexpr (sizeof...(args) == 0) {
 		return String{ str.data(), str.size() };
 	}

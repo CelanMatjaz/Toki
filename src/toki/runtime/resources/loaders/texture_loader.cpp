@@ -17,7 +17,7 @@ ResourceData load_texture(const Path& path) {
 		&resource_data.metadata.texture.channels,
 		STBI_rgb_alpha);
 
-		resource_data.metadata.texture.channels = 4;
+	resource_data.metadata.texture.channels = 4;
 
 	resource_data.size = resource_data.metadata.texture.width * resource_data.metadata.texture.height *
 						 resource_data.metadata.texture.channels;

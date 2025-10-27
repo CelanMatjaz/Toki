@@ -5,12 +5,18 @@
 int main() {
 	using namespace toki;
 
-	toki::memory_initialize({ .total_size = toki::MB(10) });
+	Allocator allocator(toki::MB(10));
+	DefaultAllocator::allocator = &allocator;
+
+	// toki::memory_initialize({ .total_size = toki::MB(100) });
 	u32 passed = 0;
 	u32 failed = 0;
 
 	toki::println("==== Running {} test(s) ====", total_test_count);
 	for (u32 i = 0; i < total_test_count; i++) {
+		if (i == 25) {
+			int a = 0;
+		}
 		TestCase& tc = test_cases[i];
 		bool ok = tc.fn(tc);
 

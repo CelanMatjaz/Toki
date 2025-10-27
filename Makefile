@@ -17,7 +17,7 @@ build-tests: generate-tests
 	cmake --build build
 
 test: build-tests
-	./build/tests/tests
+	./build/bin/tests
 
 clean:
 	rm -r build

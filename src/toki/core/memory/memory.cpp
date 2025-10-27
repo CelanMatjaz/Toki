@@ -17,6 +17,7 @@ static Allocator g_allocator;
 
 void memory_initialize(const MemoryConfig& config) {
 	g_allocator = toki::move(Allocator(config.total_size));
+	DefaultAllocator::allocator = &g_allocator;
 }
 
 void memory_shutdown() {
@@ -24,23 +25,23 @@ void memory_shutdown() {
 }
 
 void* DefaultAllocator::allocate(u64 size) {
-	return g_allocator.allocate(size);
+	return DefaultAllocator::allocator->allocate(size);
 }
 
 void* DefaultAllocator::allocate_aligned(u64 size, u64 alignment) {
-	return g_allocator.allocate_aligned(size, alignment);
+	return DefaultAllocator::allocator->allocate_aligned(size, alignment);
 }
 
 void DefaultAllocator::free(void* ptr) {
-	g_allocator.free(ptr);
+	DefaultAllocator::allocator->free(ptr);
 }
 
 void DefaultAllocator::free_aligned(void* ptr) {
-	g_allocator.free_aligned(ptr);
+	DefaultAllocator::allocator->free_aligned(ptr);
 }
 
 void* DefaultAllocator::reallocate(void* ptr, u64 size) {
-	return g_allocator.reallocate(ptr, size);
+	return DefaultAllocator::allocator->reallocate(ptr, size);
 }
 
 void* DefaultAllocator::reallocate_aligned(void* ptr, u64 size, u64 alignment) {

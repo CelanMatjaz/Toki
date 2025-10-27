@@ -120,9 +120,9 @@ constexpr f32 Vector3::dot(const Vector3& other) const {
 	return (x * other.x + y * other.y + z * other.z);
 }
 
-template <>
-struct Formatter<Vector3> {
-	static constexpr toki::String format(const Vector3& vector) {
+template <CIsAllocator AllocatorType>
+struct Formatter<Vector3, AllocatorType> {
+	static constexpr toki::String<AllocatorType> format(const Vector3& vector) {
 		return toki::format("Vector3 [{} {} {}]", vector.x, vector.y, vector.z);
 	}
 };

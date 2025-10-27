@@ -1,6 +1,7 @@
 #pragma once
 
 #include <toki/core/common/type_traits.h>
+#include <toki/core/memory/allocator.h>
 #include <toki/core/types.h>
 
 #if 0
@@ -21,6 +22,8 @@ struct DefaultAllocator {
 	static void free_aligned(void* ptr);
 	static void* reallocate(void* ptr, u64 size);
 	static void* reallocate_aligned(void* ptr, u64 size, u64 alignment);
+
+	static inline Allocator* allocator = nullptr;
 };
 
 static_assert(CIsAllocator<DefaultAllocator>);

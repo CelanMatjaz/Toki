@@ -37,6 +37,10 @@ public:
 
 	friend Formatter<Matrix4>;
 
+	const f32& operator[](u64 index) const {
+		return m[index];
+	}
+
 	f32& operator[](u64 index) {
 		return m[index];
 	}
@@ -197,7 +201,8 @@ constexpr Matrix4 Matrix4::inverse() const {
 
 template <>
 struct Formatter<Matrix4> {
-	static constexpr toki::String format(const Matrix4& matrix) {
+	template <CIsAllocator AllocatorType = DefaultAllocator>
+	static constexpr toki::String<AllocatorType> format(const Matrix4& matrix) {
 		return toki::format(
 			"Matrix4\n[{} {} {} {}]\n[{} {} {} {}]\n[{} {} {} {}]\n[{} {} {} {}]",
 			matrix.m[0],

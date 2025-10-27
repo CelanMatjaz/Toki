@@ -10,6 +10,8 @@ public:
 	Path() = default;
 	Path(const char* str): m_internalPath(str) {}
 	Path(char* str): m_internalPath(str) {}
+	Path(const char(&str)): Path(reinterpret_cast<const char*>(str)) {}
+	Path(CIsCArray auto str): Path(reinterpret_cast<const char*>(str)) {}
 	Path(toki::StringView str): m_internalPath(str.to_string()) {}
 	~Path() = default;
 
@@ -23,7 +25,7 @@ public:
 	}
 
 private:
-	toki::String m_internalPath;
+	toki::String<> m_internalPath;
 };
 
 }  // namespace toki

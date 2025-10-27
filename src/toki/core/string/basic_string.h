@@ -36,7 +36,9 @@ public:
 
 	constexpr BasicString(u64 size, T ch = 0) {
 		initialize_based_on_size(size);
-		toki::memset(get_ptr(), size, ch);
+		auto ptr = get_ptr();
+		toki::memset(ptr, size, ch);
+		auto a = 0;
 	}
 
 	constexpr BasicString(const BasicString& other) {
@@ -108,13 +110,11 @@ private:
 			AllocatorType::free_aligned(m_data.heap);
 		}
 
-		if (is_on_heap(len + 1)) {
-			m_data.heap = static_cast<T*>(AllocatorType::allocate_aligned((len + 1) * sizeof(T), alignof(T)));
-		} else {
-			memset(m_data.stack, len * sizeof(T), 0);
+		if (is_on_heap(len)) {
+			m_data.heap = static_cast<T*>(AllocatorType::allocate_aligned((len) * sizeof(T), alignof(T)));
 		}
 
-		m_size = len + 1;
+		m_size = len;
 	}
 
 	b8 is_on_heap(u64 len) const {
@@ -142,7 +142,9 @@ private:
 	} m_data{};
 };
 
-using String = BasicString<char>;
-using WideString = BasicString<wchar>;
+template <CIsAllocator AllocatorType = DefaultAllocator>
+using String = BasicString<char, AllocatorType>;
+template <CIsAllocator AllocatorType = DefaultAllocator>
+using WideString = BasicString<wchar, AllocatorType>;
 
 }  // namespace toki

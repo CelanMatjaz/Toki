@@ -14,10 +14,10 @@ namespace toki {
 	#if defined(_MSC_VER)
 		#define TK_DEBUG_BREAK() __debugbreak()
 	#elif defined(__clang__)
-		#if __has_builtin(__builtin_debugtrap)
-			#define TK_DEBUG_BREAK() __builtin_debugtrap();
-		#else
+		#if __has_builtin(__builtin_trap)
 			#define TK_DEBUG_BREAK() __builtin_trap();
+		#else
+			#define TK_DEBUG_BREAK() __builtin_debugtrap();
 		#endif
 	#elif defined(__GNUC__)
 		#define TK_DEBUG_BREAK() __builtin_trap();

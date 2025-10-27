@@ -9,7 +9,7 @@
             "MIMode": "gdb",
             "cwd": "${workspaceFolder}",
             "args": ["${workspaceFolder}/toki_sandbox"],
-            "program": "${workspaceFolder}/build/toki/toki/sandbox/sandbox",
+            "program": "${workspaceFolder}/build/bin/sandbox",
             "preLaunchTask": "Build Sandbox - Debug"
         },
         {
@@ -20,7 +20,7 @@
             "MIMode": "gdb",
             "cwd": "${workspaceFolder}",
             "args": ["${workspaceFolder}/toki_sandbox"],
-            "program": "${workspaceFolder}/build/tests/tests",
+            "program": "${workspaceFolder}/build/bin/tests",
             "preLaunchTask": "Build Tests - Debug"
         }
     ]

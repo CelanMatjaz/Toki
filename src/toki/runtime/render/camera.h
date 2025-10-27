@@ -11,16 +11,23 @@ public:
 	void set_projection(const Matrix4& projection);
 	void set_view(const Matrix4& view);
 
+	void set_position(const Vector3& position);
+	void set_rotation(const Vector3& rotation);
+
 	const Matrix4& get_view();
 	const Matrix4& get_projection();
 	const Matrix4& get_view_projection();
 
+	Vector3 forward() const;
+	Vector3 right() const;
+	Vector3 up() const;
+
 private:
-	Vector3 m_position{};
-	b8 m_dirty = true;
 	Matrix4 m_view{};
 	Matrix4 m_projection{};
-	Matrix4 m_viewProjection{};
+	Vector3 m_position{};
+	Vector3 m_forward{};
+	b8 m_dirty = true;
 };
 
 }  // namespace toki

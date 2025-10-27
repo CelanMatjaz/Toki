@@ -1,6 +1,6 @@
 #pragma once
 
-#include <toki/core/core.h>
+#include <toki/core/utils/path.h>
 #include <toki/runtime/resources/resources.h>
 
 namespace toki {

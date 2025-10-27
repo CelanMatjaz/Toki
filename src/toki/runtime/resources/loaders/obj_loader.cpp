@@ -38,8 +38,6 @@ ObjData load_obj(const Path& path) {
 	DynamicArray<u32> index_data;
 	index_data.reserve(face_count * 3);
 	vertex_count = normal_count = texture_coord_count = face_count = 0;
-	u32 vertex_data_count = 0;
-	u32 index_data_count = 0;
 
 	file.seek(0, FileCursorStart::BEGIN);
 

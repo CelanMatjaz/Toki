@@ -28,7 +28,6 @@ TK_TEST(Converters, atof) {
 	const char* temp = buf;
 	f64 value_out{};
 	f64 values[3]{};
-	u32 buf_index = 0;
 	for (u32 i = 0; i < 3; i++) {
 		u32 converted_count = atof(temp, value_out);
 		temp += converted_count - 1;

@@ -87,6 +87,8 @@ TK_TEST(Allocator, should_use_freed_memory_block_when_the_size_is_greater_or_equ
 
 		void* ptr3 = allocator.allocate(65);
 		TK_TEST_ASSERT(ptr1 != ptr3);
+
+		allocator.free(ptr2);
 	}
 
 	// Test smaller size, aligned
