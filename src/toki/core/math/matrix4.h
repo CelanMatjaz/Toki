@@ -19,9 +19,19 @@ public:
 		requires(sizeof...(Args) == 16 && CConjunction<IsConvertible<Args, f32>...>)
 	constexpr Matrix4(Args&&... args): m{ static_cast<f32>(toki::forward<Args>(args))... } {}
 
+	template <typename ContainerType>
+		requires(
+			IsCArray<ContainerType>::value && IsCArray<ContainerType>::COUNT == 16 &&
+			CIsSame<typename IsCArray<ContainerType>::type, f32>)
+	constexpr Matrix4(ContainerType values): m{} {
+		for (u32 i = 0; i < 16; i++) {
+			m[i] = static_cast<f32>(values[i]);
+		}
+	}
+
 	constexpr Matrix4(const Vector3& position);
 
-	constexpr Matrix4(const Matrix4&) = default;
+	constexpr Matrix4(const Matrix4&)			 = default;
 	constexpr Matrix4& operator=(const Matrix4&) = default;
 
 	constexpr b8 operator==(const Matrix4&) const = default;
@@ -50,8 +60,8 @@ private:
 };
 
 constexpr Matrix4::Matrix4() {
-	m[0] = 1.0f;
-	m[5] = 1.0f;
+	m[0]  = 1.0f;
+	m[5]  = 1.0f;
 	m[10] = 1.0f;
 	m[15] = 1.0f;
 }
@@ -93,8 +103,8 @@ constexpr Matrix4 Matrix4::translate(const Vector3& position) const {
 
 constexpr Matrix4 Matrix4::scale(f32 uniform_scale) const {
 	Matrix4 temp;
-	temp.m[0] = uniform_scale;
-	temp.m[5] = uniform_scale;
+	temp.m[0]  = uniform_scale;
+	temp.m[5]  = uniform_scale;
 	temp.m[10] = uniform_scale;
 	return *this * temp;
 }
@@ -109,9 +119,9 @@ constexpr Matrix4 Matrix4::scale(const Vector3& scale) const {
 
 constexpr Matrix4 Matrix4::rotate(const Vector3& axis, f32 angle) const {
 	Vector3 a = axis.normalize();
-	f32 c = cos(angle);
-	f32 s = sin(angle);
-	f32 t = 1.0f - c;
+	f32 c	  = cos(angle);
+	f32 s	  = sin(angle);
+	f32 t	  = 1.0f - c;
 
 	f32 x = a.x;
 	f32 y = a.y;
@@ -188,10 +198,10 @@ constexpr Matrix4 Matrix4::inverse() const {
 
 	f64 det = m[0] * inv.m[0] + m[1] * inv.m[4] + m[2] * inv.m[8] + m[3] * inv.m[12];
 
-	if (det == 0.0)
+	if (det == 0.0f)
 		return Matrix4{};
 
-	f64 inv_det = 1.0 / det;
+	f64 inv_det = 1.0f / det;
 
 	for (int i = 0; i < 16; i++)
 		inv.m[i] *= inv_det;

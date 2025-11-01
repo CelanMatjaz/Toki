@@ -28,7 +28,7 @@ enum struct ShaderType : u8 {
 };
 
 enum ShaderStageFlags : u8 {
-	SHADER_STAGE_VERTEX = 1 << 0,
+	SHADER_STAGE_VERTEX	  = 1 << 0,
 	SHADER_STAGE_FRAGMENT = 1 << 1,
 	SHADER_STAGE_SIZE
 };
@@ -144,6 +144,7 @@ struct ShaderOptions {
 	FrontFace front_face : 1;
 	b8 depth_test_enable : 1;
 	b8 depth_write_enable : 1;
+	b8 enable_blending : 1;
 };
 
 struct ShaderBindingConfig {
@@ -187,7 +188,7 @@ struct BufferConfig {
 };
 
 struct TextureConfig {
-	u32 flags;
+	u32 flags;	// toki::TextureFlags
 	u32 width;
 	u32 height;
 	u32 channels;
@@ -195,12 +196,12 @@ struct TextureConfig {
 };
 
 struct SamplerConfig {
-	SamplerFilter mag_filter = SamplerFilter::LINEAR;
-	SamplerFilter min_filter = SamplerFilter::LINEAR;
+	SamplerFilter mag_filter		  = SamplerFilter::LINEAR;
+	SamplerFilter min_filter		  = SamplerFilter::LINEAR;
 	SamplerAddressMode address_mode_u = SamplerAddressMode::CLAMP_TO_BORDER;
 	SamplerAddressMode address_mode_v = SamplerAddressMode::CLAMP_TO_BORDER;
 	SamplerAddressMode address_mode_w = SamplerAddressMode::CLAMP_TO_BORDER;
-	b8 use_normalized_coords = true;
+	b8 use_normalized_coords		  = true;
 };
 
 struct ShaderLayoutConfig {

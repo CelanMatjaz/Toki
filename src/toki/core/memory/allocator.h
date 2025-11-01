@@ -19,8 +19,8 @@ public:
 			return *this;
 		}
 
-		m_buffer = other.m_buffer;
-		m_size = other.m_size;
+		m_buffer	   = other.m_buffer;
+		m_size		   = other.m_size;
 		m_firstFreePtr = other.m_firstFreePtr;
 		other.m_buffer = nullptr;
 

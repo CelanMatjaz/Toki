@@ -1,10 +1,11 @@
 #pragma once
 
-#include "../core/common.h"
-#include "../core/concepts.h"
-#include "../core/log.h"
-#include "../memory/memory.h"
-#include "../string/string.h"
+#include <toki/core/common/assert.h>
+#include <toki/core/common/log.h>
+#include <toki/core/common/type_traits.h>
+#include <toki/core/platform/platform_types.h>
+#include <toki/core/types.h>
+#include <toki/core/utils/memory.h>
 
 // NOTE(Matjaž): https://programming.guide/robin-hood-hashing.html
 
@@ -12,16 +13,16 @@ namespace toki {
 
 template <typename T, typename HashType>
 concept HasHashFunction = requires(T value) {
-	{ HashType::hash(value) } -> SameAsConcept<u64>;
+	{ HashType::hash(value) } -> CIsSame<u64>;
 };
 
 struct HashFunctions {
 	template <typename T>
-		requires(IsIntegralValue<T>)
+		requires(CIsIntegral<T>)
 	static u64 hash(const T v) {
-		constexpr u32 multiplier = 107;
+		static constexpr u32 multiplier = 107;
 
-		T value = v;
+		T value	 = v;
 		T output = 0;
 		for (u32 i = 0; i < sizeof(T); i++) {
 			output += value * multiplier * ((value >> i) & 1);
@@ -35,7 +36,7 @@ struct HashFunctions {
 	}
 
 	static u64 hash(const char* str) {
-		constexpr u32 multiplier = 107;
+		static constexpr u32 multiplier = 107;
 
 		u64 output = 0;
 		for (u32 i = 0; i < toki::strlen(str); i++) {
@@ -44,21 +45,25 @@ struct HashFunctions {
 
 		return output;
 	}
+
+	static u64 hash(toki::StringView str) {
+		return hash(str.data());
+	}
 };
 
-template <typename K, typename V, typename H = HashFunctions>
+template <typename K, typename V, typename H = HashFunctions, CIsAllocator AllocatorType = DefaultAllocator>
 	requires HasHashFunction<K, H>
 class HashMap {
 private:
-	using KeyType = K;
-	using ValueType = V;
-	using HashType = H;
+	using KeyType						= K;
+	using ValueType						= V;
+	using HashType						= H;
 	constexpr static u64 EMPTY_SLOT_PSL = 0;
-	constexpr static u64 INITIAL_PSL = 1;
+	constexpr static u64 INITIAL_PSL	= 1;
 
 	// NOTE(Matjaž): invalid index is -1 to return
 	// the NOOP value to not crash program
-	constexpr static i32 INVALID_INDEX = -1;
+	constexpr static i64 INVALID_INDEX = static_cast<i64>(-1);
 
 	struct Bucket {
 		u64 psl;
@@ -67,12 +72,44 @@ private:
 	};
 
 public:
-	HashMap(u32 element_capacity): m_data(nullptr), m_element_capacity(element_capacity), m_count(0) {
-		m_data = memory_allocate_array<Bucket>(element_capacity + 1);
+	HashMap() = default;
+
+	HashMap(u32 element_capacity) {
+		reset(element_capacity);
 	}
 
 	~HashMap() {
-		memory_free(m_data);
+		AllocatorType::free(m_data);
+	}
+
+	HashMap(HashMap&& other) {
+		m_data			  = other.m_data;
+		m_count			  = other.m_count;
+		m_elementCapacity = other.m_elementCapacity;
+
+		other.m_data			= {};
+		other.m_count			= {};
+		other.m_elementCapacity = {};
+	}
+
+	HashMap& operator=(HashMap&& other) {
+		m_data			  = other.m_data;
+		m_count			  = other.m_count;
+		m_elementCapacity = other.m_elementCapacity;
+
+		other.m_data			= {};
+		other.m_count			= {};
+		other.m_elementCapacity = {};
+
+		return *this;
+	}
+
+	void reset(u32 element_count) {
+		m_elementCapacity = element_count;
+		m_count			  = 0;
+		m_data			  = reinterpret_cast<Bucket*>(
+			   AllocatorType::reallocate(m_data, static_cast<u64>(element_count * sizeof(Bucket))));
+		toki::memset(m_data, {}, element_count * sizeof(Bucket));
 	}
 
 	b8 contains(const KeyType& key) const {
@@ -80,7 +117,7 @@ public:
 	}
 
 	inline u32 capacity() const {
-		return m_element_capacity;
+		return m_elementCapacity;
 	}
 
 	inline u32 count() const {
@@ -89,12 +126,13 @@ public:
 
 	template <typename... Args>
 	void emplace(const KeyType& key, Args&&... args) {
+		TK_ASSERT(m_elementCapacity > 0);
 		u64 index = get_index(key);
 
 		Bucket& bucket = m_data[index];
 		// Empty slot
 		if (bucket.psl == 0) {
-			new (&bucket.value) ValueType(args...);
+			construct_at(&bucket.value, toki::forward<Args>(args)...);
 			bucket.key = key;
 			bucket.psl = INITIAL_PSL;
 			m_count++;
@@ -104,20 +142,22 @@ public:
 		Bucket new_bucket{};
 		new_bucket.psl = INITIAL_PSL;
 		new_bucket.key = key;
-		new (&new_bucket.value) ValueType(args...);
+		construct_at(&new_bucket.value, toki::forward<Args>(args)...);
 
 		// Handle collision
-		for (u32 i = index + 1; i < m_element_capacity; i++) {
+		for (u32 i = index + 1; i < m_elementCapacity; i++) {
 			Bucket& current_bucket = m_data[i];
 
 			// Found empty slot
 			if (current_bucket.psl == 0) {
-				current_bucket = new_bucket;
+				current_bucket = toki::move(new_bucket);
 				return;
 			}
 			// Found slot with lower PSL
 			else if (current_bucket.psl < new_bucket.psl) {
-				swap(new_bucket, current_bucket);
+				Bucket temp_bucket = toki::move(current_bucket);
+				current_bucket	   = toki::move(new_bucket);
+				new_bucket		   = toki::move(temp_bucket);
 			}
 
 			++new_bucket.psl;
@@ -133,12 +173,12 @@ public:
 		}
 
 		Bucket& bucket = m_data[index];
-		while (bucket.psl != INITIAL_PSL && index < m_element_capacity - 1) {
+		while (bucket.psl != INITIAL_PSL && index < m_elementCapacity - 1) {
 			*bucket = m_data[index + 1];
-			bucket = m_data[++index];
+			bucket	= m_data[++index];
 		}
 
-		if (static_cast<u64>(index) < m_element_capacity) {
+		if (static_cast<u64>(index) < m_elementCapacity) {
 			m_data[index].psl = EMPTY_SLOT_PSL;
 		}
 
@@ -151,86 +191,32 @@ public:
 
 	ValueType& at(const KeyType& key) const {
 		i64 index = lookup_index(key);
-		return m_data[index];
+		return m_data[index].value;
 	}
 
 private:
 	inline u64 get_index(const KeyType& key) const {
-		return HashType::hash(static_cast<KeyType>(key)) % m_element_capacity;
+		TK_ASSERT(m_elementCapacity > 0);
+		return HashType::hash(static_cast<KeyType>(key)) % m_elementCapacity;
 	}
 
 	i64 lookup_index(const KeyType& key) const {
 		u64 index = get_index(key);
-		while (m_data[index].psl != EMPTY_SLOT_PSL && index < m_element_capacity) {
-			if (m_data[index].key_value.key == key) {
+		while (m_data[index].psl != EMPTY_SLOT_PSL && index < m_elementCapacity) {
+			if (m_data[index].key == key) {
 				return index;
 			}
 			++index;
 		}
 
-		TK_LOG_TRACE(
+		TK_LOG_WARN(
 			"Attempting to lookup hash table value with a key that's not stored in the table, returning NOOP index");
 		return INVALID_INDEX;
 	}
 
-	Bucket* m_data;
-	u32 m_element_capacity;
-	u32 m_count;
-
-	// public:
-	//     class Iterator;
-	//
-	//     Iterator begin() {
-	//         return Iterator(mData, 0);
-	//     }
-	//
-	//     Iterator end() {
-	//         return Iterator(mData, mElementCapacity);
-	//     }
-	//
-	//     class Iterator {
-	//     public:
-	//         Iterator() = delete;
-	//         Iterator(Bucket* data, u64 index): mData(data), mIndex(index) {}
-	//         Iterator(const Iterator& other) = default;
-	//         Iterator& operator=(const Iterator& other) = default;
-	//
-	//         ValueType& operator*() const {
-	//             return mData[mIndex].value;
-	//         }
-	//
-	//         ValueType* operator->() const {
-	//             return &mData[mIndex].value;
-	//         }
-	//
-	//         Iterator& operator++() {
-	//             ++mIndex;
-	//
-	//             while (mData[mIndex].psl == EMPTY_SLOT_PSL) {
-	//                 ++mIndex;
-	//             }
-	//
-	//             return *this;
-	//         }
-	//
-	//         Iterator operator++(int) {
-	//             Iterator temp = *this;
-	//             ++mIndex;
-	//             return temp;
-	//         }
-	//
-	//         bool operator==(const Iterator& other) const {
-	//             return mIndex == other.mIndex;
-	//         }
-	//
-	//         bool operator!=(const Iterator& other) const {
-	//             return !(*this == other);
-	//         }
-	//
-	//     private:
-	//         Bucket* mData{};
-	//         u64 mIndex{};
-	//     };
+	Bucket* m_data{};
+	u32 m_elementCapacity{};
+	u32 m_count{};
 };
 
 }  // namespace toki

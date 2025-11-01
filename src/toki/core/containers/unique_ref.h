@@ -40,7 +40,7 @@ public:
 	}
 
 	void init(const T&& value) {
-		m_data = memory_allocate(sizeof(T));
+		m_data	= memory_allocate(sizeof(T));
 		*m_data = toki::move(value);
 	}
 

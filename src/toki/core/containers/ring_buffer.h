@@ -1,9 +1,8 @@
 #pragma once
 
 #include <toki/core/common/optional.h>
+#include <toki/core/memory/memory.h>
 #include <toki/core/types.h>
-
-#include "toki/core/memory/memory.h"
 
 namespace toki {
 
@@ -21,7 +20,7 @@ public:
 			return false;
 		}
 
-		out = m_data[m_head];
+		out	   = m_data[m_head];
 		m_head = (m_head + 1) % N;
 		m_size--;
 		return true;
@@ -33,7 +32,7 @@ public:
 		}
 
 		m_data[m_tail] = value;
-		m_tail = (m_tail + 1) % N;
+		m_tail		   = (m_tail + 1) % N;
 		m_size++;
 		return true;
 	}

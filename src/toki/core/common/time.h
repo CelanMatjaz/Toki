@@ -1,6 +1,5 @@
 #pragma once
 
-#include <X11/X.h>
 #include <toki/core/types.h>
 
 namespace toki {

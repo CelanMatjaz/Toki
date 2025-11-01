@@ -62,7 +62,7 @@ toki::Expected<TempDynamicArray<toki::byte>, RendererErrors> compile_shader(Shad
 	}
 
 	const size_t length = shaderc_result_get_length(result);
-	const char* bytes = shaderc_result_get_bytes(result);
+	const char* bytes	= shaderc_result_get_bytes(result);
 
 	TempDynamicArray<toki::byte> compiled_data(length);
 	toki::memcpy(compiled_data.data(), bytes, length);
@@ -76,9 +76,9 @@ toki::Expected<TempDynamicArray<toki::byte>, RendererErrors> compile_shader(Shad
 
 VkShaderModule create_shader_module(const VulkanState& state, Span<toki::byte> spirv) {
 	VkShaderModuleCreateInfo shader_module_create_info{};
-	shader_module_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	shader_module_create_info.sType	   = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	shader_module_create_info.codeSize = spirv.size();
-	shader_module_create_info.pCode = reinterpret_cast<const u32*>(spirv.data());
+	shader_module_create_info.pCode	   = reinterpret_cast<const u32*>(spirv.data());
 
 	VkShaderModule shader_module;
 	VkResult result = vkCreateShaderModule(

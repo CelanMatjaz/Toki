@@ -1,5 +1,7 @@
 #pragma once
 
+#include <toki/core/math/vector2.h>
+
 #include <toki/core/platform/input/mods.hpp>
 
 namespace toki {
@@ -135,7 +137,7 @@ struct MouseEventData {
 };
 
 struct WindowEventData {
-	i32 x, y;
+	Vector2i32 dimensions;
 };
 
 union EventData {

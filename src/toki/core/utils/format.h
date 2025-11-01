@@ -1,21 +1,38 @@
 #pragma once
 
 #include <toki/core/attributes.h>
+#include <toki/core/common/assert.h>
 #include <toki/core/common/common.h>
 #include <toki/core/common/defines.h>
 #include <toki/core/common/type_traits.h>
 #include <toki/core/string/basic_string.h>
-#include <toki/core/string/string_view.h>
 #include <toki/core/utils/memory.h>
 #include <toki/core/utils/string_dumpers.h>
-
-#include "toki/core/common/assert.h"
+#include <toki/core/utils/string_formatters.h>
 
 namespace toki {
 
+template <typename FirstArg, typename... Args>
+u32 format_to(const char* fmt, char* buf_out, const FirstArg& arg, const Args&... args);
+
+template <CIsAllocator AllocatorType>
+struct Formatter<StringView, AllocatorType> {
+	inline static constexpr const char* format_string = "{}";
+
+	static constexpr toki::String<AllocatorType> format(const StringView& str) {
+		return format(format_string, str);
+	}
+
+	static constexpr u64 format_to(char* buf_out, const StringView& str) {
+		return ::toki::format_to(format_string, buf_out, str.data());
+	}
+};
+
+static_assert(CHasStringFormatter<StringView>);
+
 template <typename Arg>
-	requires CHasDumpToString<typename RemoveConst<Arg>::type>
-u32 _dump_single_arg(char* out, const Arg& arg) {
+	requires(CHasDumpToString<typename RemoveConst<Arg>::type>)
+u32 dump_single_arg(char* out, const Arg& arg) {
 	using RawT = RemoveRef<typename RemoveConst<Arg>::type>::type;
 	return StringDumper<RawT>::dump_to_string(out, arg);
 }
@@ -33,10 +50,10 @@ inline u32 read_buffer_until_character(const char* str, char* buf_out, char c) {
 }
 
 template <typename FirstArg, typename... Args>
-u32 _format(const char* fmt, char* buf_out, FirstArg&& arg, Args&&... args) {
-	u32 offset = 0;
+u32 format_to(const char* fmt, char* buf_out, const FirstArg& arg, const Args&... args) {
+	u32 offset		   = 0;
 	u32 fmt_copy_start = 0;
-	u32 i = 0;
+	u32 i			   = 0;
 
 	auto copy_bytes = [&](u32 copy_len) {
 		toki::memcpy(&buf_out[offset], &fmt[fmt_copy_start], copy_len + 1);
@@ -74,10 +91,16 @@ u32 _format(const char* fmt, char* buf_out, FirstArg&& arg, Args&&... args) {
 
 				fmt_copy_start = i + 1;
 
-				offset += _dump_single_arg(&buf_out[offset], arg);
+				if constexpr (CHasStringFormatter<FirstArg>) {
+					offset += Formatter<FirstArg>::format_to(&buf_out[offset], arg);
+				} else if constexpr (CHasDumpToString<typename RemoveConst<FirstArg>::type>) {
+					offset += dump_single_arg(&buf_out[offset], arg);
+				} else {
+					static_assert(TypeFalseType<FirstArg>::value);
+				}
 
 				if constexpr (sizeof...(Args) > 0) {
-					offset += _format(&fmt[fmt_copy_start + 1], &buf_out[offset], toki::forward<Args>(args)...);
+					offset += format_to(&fmt[fmt_copy_start + 1], &buf_out[offset], toki::forward<const Args>(args)...);
 					return offset;
 				} else {
 					i++;
@@ -98,13 +121,14 @@ u32 _format(const char* fmt, char* buf_out, FirstArg&& arg, Args&&... args) {
 
 // TODO(Matjaž): add support for format properties in {}
 template <typename... Args, CIsAllocator AllocatorType = DefaultAllocator>
-toki::String<AllocatorType> format(const toki::StringView& str, Args... args) {
+toki::String<AllocatorType> format(const char* str, Args... args) {
 	if constexpr (sizeof...(args) == 0) {
-		return String{ str.data(), str.size() };
+		return String{ str };
 	}
 
 	char buf_out[4096]{};
-	u32 size = _format(str.data(), buf_out, toki::forward<Args>(args)...);
+	u32 size = format_to(str, buf_out, toki::forward<Args>(args)...);
+	TK_ASSERT(size <= 4096);
 	return toki::String{ buf_out, size };
 }
 

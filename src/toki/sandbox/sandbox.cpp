@@ -4,20 +4,12 @@
 #include <toki/runtime/runtime.h>
 #include <toki/sandbox/test_layer.h>
 
-int main() {
-	toki::window_system_initialize();
-	toki::memory_initialize({ .total_size = toki::GB(4) });
+toki::i32 toki::toki_entrypoint([[maybe_unused]] toki::Span<char*> _) {
+	toki::EngineConfig runtime_config{};
+	toki::Engine engine(runtime_config);
 
-	// auto model_data = toki::load_obj("zajecMatjazTrikotniki.obj");
+	engine.attach_layer(toki::make_unique<TestLayer>());
+	engine.run();
 
-	{
-		toki::EngineConfig runtime_config{};
-		toki::Engine engine(runtime_config);
-
-		engine.attach_layer(toki::make_unique<TestLayer>(1.0f));
-		engine.run();
-	}
-
-	toki::memory_shutdown();
-	toki::window_system_shutdown();
+	return 0;
 }

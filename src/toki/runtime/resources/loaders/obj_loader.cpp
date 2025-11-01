@@ -12,7 +12,7 @@ ObjData load_obj(const Path& path) {
 	u32 read_count{};
 	char buf[256]{};
 	do {
-		read_count = file.read_line(buf, 256);
+		read_count		= file.read_line(buf, 256);
 		buf[read_count] = 0;
 
 		if (toki::starts_with(buf, "#")) {
@@ -91,7 +91,7 @@ ObjData load_obj(const Path& path) {
 
 		// This is temporary until i make a map
 		for (u32 i = 0; i < vertex_data.size(); i++) {
-			Vertex& current = vertex_data[i];
+			Vertex& current	  = vertex_data[i];
 			auto current_hash = bootleg_hash(current);
 			if (current_hash == hash && temp_vertex == current) {
 				index_data.push_back(i);
@@ -108,7 +108,7 @@ ret:
 	char* temp{};
 	f64 value{};
 	do {
-		read_count = file.read_line(buf, 256);
+		read_count		= file.read_line(buf, 256);
 		buf[read_count] = 0;
 
 		if (toki::starts_with(buf, "#")) {
@@ -116,7 +116,7 @@ ret:
 		}
 
 		if (toki::starts_with(buf, "vn ")) {
-			temp = buf + 2;
+			temp			= buf + 2;
 			Vector3& normal = normals[normal_count++];
 			for (u32 i = 0; i < 3; i++) {
 				u32 converted_count = atof(temp, value);
@@ -124,7 +124,7 @@ ret:
 				reinterpret_cast<f32*>(&normal)[i] = value;
 			}
 		} else if (toki::starts_with(buf, "v ")) {
-			temp = buf + 1;
+			temp			= buf + 1;
 			Vector3& vertex = vertices[vertex_count++];
 			for (u32 i = 0; i < 3; i++) {
 				u32 converted_count = atof(temp, value);
@@ -132,7 +132,7 @@ ret:
 				reinterpret_cast<f32*>(&vertex)[i] = value;
 			}
 		} else if (toki::starts_with(buf, "vt ")) {
-			temp = buf + 2;
+			temp				   = buf + 2;
 			Vector2& texture_coord = texture_coords[texture_coord_count++];
 			for (u32 i = 0; i < 2; i++) {
 				u32 converted_count = atof(temp, value);

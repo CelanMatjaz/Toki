@@ -2,19 +2,14 @@
 
 #include <GLFW/glfw3.h>
 #include <toki/core/core.h>
-#include <vulkan/vulkan.h>
-#include <vulkan/vulkan_core.h>
-
-#include "toki/core/common/assert.h"
-#include "toki/core/utils/bytes.h"
-#include "toki/renderer/private/vulkan/vulkan_resources_utils.h"
-#include "toki/renderer/renderer_allocators.h"
-#include "toki/renderer/types.h"
+#include <toki/renderer/private/vulkan/vulkan_resources_utils.h>
+#include <toki/renderer/renderer_allocators.h>
+#include <toki/renderer/types.h>
 
 namespace toki {
 
 #define RENDERER (reinterpret_cast<VulkanBackend*>(m_internalData))
-#define STATE (RENDERER->m_state)
+#define STATE	 (RENDERER->m_state)
 
 VulkanBackend::VulkanBackend(const RendererConfig& config) {
 	initialize(config);
@@ -35,16 +30,16 @@ void VulkanBackend::initialize(const RendererConfig& config) {
 
 	VulkanSwapchainConfig swapchain_config{};
 	swapchain_config.window = config.window;
-	m_state.swapchain = VulkanSwapchain::create(swapchain_config, m_state);
+	m_state.swapchain		= VulkanSwapchain::create(swapchain_config, m_state);
 	config.window->register_listener(&m_state.swapchain, VulkanSwapchain::window_listen_function);
 
 	CommandPoolConfig command_pool_config{};
-	m_state.command_pool = VulkanCommandPool::create(command_pool_config, m_state);
+	m_state.command_pool		   = VulkanCommandPool::create(command_pool_config, m_state);
 	m_state.temporary_command_pool = VulkanCommandPool::create(command_pool_config, m_state);
 
 	StagingBufferConfig staging_buffer_config{};
 	staging_buffer_config.size = toki::MB(500);
-	m_state.staging_buffer = VulkanStagingBuffer::create(staging_buffer_config, m_state);
+	m_state.staging_buffer	   = VulkanStagingBuffer::create(staging_buffer_config, m_state);
 
 	TempDynamicArray<VkDescriptorPoolSize> pool_sizes;
 	pool_sizes.emplace_back(VK_DESCRIPTOR_TYPE_SAMPLER, 4);
@@ -53,15 +48,14 @@ void VulkanBackend::initialize(const RendererConfig& config) {
 	pool_sizes.emplace_back(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4);
 
 	DescriptorPoolConfig descriptor_pool_config{};
-	descriptor_pool_config.max_sets = 100;
+	descriptor_pool_config.max_sets	  = 100;
 	descriptor_pool_config.pool_sizes = pool_sizes;
-	m_state.descriptor_pool = VulkanDescriptorPool::create(descriptor_pool_config, m_state);
+	m_state.descriptor_pool			  = VulkanDescriptorPool::create(descriptor_pool_config, m_state);
 
-	auto command_buffers = m_state.command_pool.allocate_command_buffers(m_state, 1);
-	m_tempCommands = construct_at<VulkanCommands>(
-		reinterpret_cast<VulkanCommands*>(RendererPersistentAllocator::allocate_aligned(sizeof(VulkanCommands), 8)),
-		&m_state,
-		command_buffers[0]);
+	auto command_buffers	 = m_state.command_pool.allocate_command_buffers(m_state, 1);
+	m_tempCommandsData.state = &m_state;
+	m_tempCommandsData.cmd	 = command_buffers[0];
+
 	m_toSubmitCommands.resize(1);
 
 	RendererBumpAllocator::reset();
@@ -83,14 +77,12 @@ void VulkanBackend::cleanup() {
 void Renderer::frame_prepare() {
 	RendererBumpAllocator::reset();
 
-	RENDERER->m_tempCommands->m_cmd.begin();
+	RENDERER->m_tempCommandsData.cmd.begin();
 
 	STATE.frames.frame_prepare(STATE);
 
 	STATE.swapchain.get_current_image().transition_layout(
-		reinterpret_cast<VulkanCommands*>(get_commands())->m_cmd,
-		VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		RENDERER->m_tempCommandsData.cmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 }
 
 void Renderer::frame_cleanup() {
@@ -98,17 +90,15 @@ void Renderer::frame_cleanup() {
 }
 
 void Renderer::submit(Commands* commands) {
-	RENDERER->m_toSubmitCommands[0] = reinterpret_cast<VulkanCommands*>(commands);
+	RENDERER->m_toSubmitCommands[0] = commands;
 }
 
 void Renderer::present() {
 	STATE.swapchain.get_current_image().transition_layout(
-		reinterpret_cast<VulkanCommands*>(get_commands())->m_cmd,
-		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+		RENDERER->m_tempCommandsData.cmd, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-	reinterpret_cast<VulkanCommands*>(get_commands())->m_cmd.end();
-	VulkanCommandBuffer command_buffers[] = { reinterpret_cast<VulkanCommands*>(get_commands())->m_cmd };
+	RENDERER->m_tempCommandsData.cmd.end();
+	VulkanCommandBuffer command_buffers[] = { RENDERER->m_tempCommandsData.cmd };
 
 	STATE.frames.submit(STATE, command_buffers);
 
@@ -122,7 +112,8 @@ void Renderer::present() {
 }
 
 Commands* Renderer::get_commands() {
-	return RENDERER->m_tempCommands;
+	RENDERER->m_tempCommands.m_data = &RENDERER->m_tempCommandsData;
+	return &RENDERER->m_tempCommands;
 }
 
 void Renderer::set_buffer_data(BufferHandle handle, const void* data, u32 size) {
@@ -142,16 +133,16 @@ void Renderer::set_uniforms(const SetUniformConfig& config) {
 
 void VulkanBackend::initialize_instance() {
 	VkApplicationInfo application_info{};
-	application_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	application_info.pApplicationName = "Toki engine";
+	application_info.sType				= VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	application_info.pApplicationName	= "Toki engine";
 	application_info.applicationVersion = VK_MAKE_VERSION(0, 0, 0);
-	application_info.pEngineName = "Toki";
-	application_info.engineVersion = VK_MAKE_VERSION(0, 0, 0);
-	application_info.apiVersion = VK_API_VERSION_1_4;
+	application_info.pEngineName		= "Toki";
+	application_info.engineVersion		= VK_MAKE_VERSION(0, 0, 0);
+	application_info.apiVersion			= VK_API_VERSION_1_4;
 
 	VkInstanceCreateInfo instance_create_info{};
-	instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-	instance_create_info.pApplicationInfo = &application_info;
+	instance_create_info.sType			   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	instance_create_info.pApplicationInfo  = &application_info;
 	instance_create_info.enabledLayerCount = 0;
 
 	// u32 property_count;
@@ -171,10 +162,10 @@ void VulkanBackend::initialize_instance() {
 	toki::memcpy(instance_extensions.data(), glfw_extensions, instance_extensions.size() * sizeof(const char*));
 	// instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
-	instance_create_info.enabledExtensionCount = instance_extensions.size();
+	instance_create_info.enabledExtensionCount	 = instance_extensions.size();
 	instance_create_info.ppEnabledExtensionNames = instance_extensions.data();
 #else
-	instance_create_info.enabledExtensionCount = 0;
+	instance_create_info.enabledExtensionCount	 = 0;
 	instance_create_info.ppEnabledExtensionNames = nullptr;
 #endif
 
@@ -205,10 +196,10 @@ void VulkanBackend::initialize_instance() {
 
 	TK_ASSERT(required_layer_count == 0, "Not all required Vulkan instance layers found");
 
-	instance_create_info.enabledLayerCount = validation_layers.size();
+	instance_create_info.enabledLayerCount	 = validation_layers.size();
 	instance_create_info.ppEnabledLayerNames = validation_layers.data();
 #else
-	instance_create_info.enabledLayerCount = 0;
+	instance_create_info.enabledLayerCount	 = 0;
 	instance_create_info.ppEnabledLayerNames = nullptr;
 #endif
 
@@ -217,7 +208,7 @@ void VulkanBackend::initialize_instance() {
 }
 
 void VulkanBackend::initialize_device(Window* window) {
-	m_window = window;
+	m_window			 = window;
 	VkSurfaceKHR surface = create_surface(m_state, window);
 
 	u32 physical_device_count;
@@ -241,7 +232,7 @@ void VulkanBackend::initialize_device(Window* window) {
 	VkBool32 supports_present = false;
 
 	m_state.indices[GRAPHICS_FAMILY_INDEX] = static_cast<u32>(-1);
-	m_state.indices[PRESENT_FAMILY_INDEX] = static_cast<u32>(-1);
+	m_state.indices[PRESENT_FAMILY_INDEX]  = static_cast<u32>(-1);
 
 	for (u32 i = 0; i < queue_family_properties.size(); ++i) {
 		if (m_state.indices[PRESENT_FAMILY_INDEX] != static_cast<u32>(-1) &&
@@ -270,9 +261,9 @@ void VulkanBackend::initialize_device(Window* window) {
 
 	TempDynamicArray<VkDeviceQueueCreateInfo> queue_create_infos(2);
 	for (u32 i = 0; i < queue_create_infos.size(); i++) {
-		queue_create_infos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queue_create_infos[i].sType			   = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 		queue_create_infos[i].queueFamilyIndex = m_state.indices[i];
-		queue_create_infos[i].queueCount = 1;
+		queue_create_infos[i].queueCount	   = 1;
 		queue_create_infos[i].pQueuePriorities = &queue_priority;
 	}
 
@@ -291,16 +282,16 @@ void VulkanBackend::initialize_device(Window* window) {
 	physical_device_features.samplerAnisotropy = VK_TRUE;
 
 	VkPhysicalDeviceDynamicRenderingFeatures dynamic_rendering_features{};
-	dynamic_rendering_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
+	dynamic_rendering_features.sType			= VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
 	dynamic_rendering_features.dynamicRendering = VK_TRUE;
 
 	VkDeviceCreateInfo device_create_info{};
-	device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	device_create_info.pNext = &dynamic_rendering_features;
-	device_create_info.pQueueCreateInfos = queue_create_infos.data();
-	device_create_info.queueCreateInfoCount = queue_create_infos.size();
-	device_create_info.pEnabledFeatures = &physical_device_features;
-	device_create_info.enabledExtensionCount = device_extensions.size();
+	device_create_info.sType				   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	device_create_info.pNext				   = &dynamic_rendering_features;
+	device_create_info.pQueueCreateInfos	   = queue_create_infos.data();
+	device_create_info.queueCreateInfoCount	   = queue_create_infos.size();
+	device_create_info.pEnabledFeatures		   = &physical_device_features;
+	device_create_info.enabledExtensionCount   = device_extensions.size();
 	device_create_info.ppEnabledExtensionNames = device_extensions.data();
 
 	VkResult result = vkCreateDevice(
@@ -330,6 +321,7 @@ DEFINE_CREATE_RESOURCE(Sampler, sampler)
 	void Renderer::destroy_handle(type handle) { \
 		TK_ASSERT(STATE.arena.exists(handle));   \
 		STATE.arena.at(handle).destroy(STATE);   \
+		STATE.arena.clear(handle);               \
 	}
 
 DEFINE_DESTROY_HANDLE(ShaderHandle, shaders);

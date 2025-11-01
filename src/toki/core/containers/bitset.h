@@ -9,8 +9,8 @@ template <u64 N>
 	requires(N > 0)
 class Bitset {
 	// NOTE(Matjaž): Changing the chunk type to a type with greater bit count that 8 will break this container!
-	using ByteChunk = u8;
-	static constexpr u64 BYTE_CHUNK_COUNT = (N - 1) / (sizeof(ByteChunk) * 8) + 1;
+	using ByteChunk							  = u8;
+	static constexpr u64 BYTE_CHUNK_COUNT	  = (N - 1) / (sizeof(ByteChunk) * 8) + 1;
 	static constexpr u64 BYTE_CHUNK_BIT_COUNT = sizeof(ByteChunk) * 8;
 
 public:
@@ -48,7 +48,7 @@ public:
 	}
 
 	constexpr toki::Optional<u64> get_first_with_value_from(u64 index, b8 value) const {
-		u32 i = index >> 3;
+		u32 i	  = index >> 3;
 		u32 shift = index & 0b111;
 		for (; i < BYTE_CHUNK_COUNT; i++) {
 			if ((m_bits[i] == (value ? 0 : (static_cast<ByteChunk>(-1))))) {

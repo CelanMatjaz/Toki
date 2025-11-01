@@ -37,7 +37,7 @@ public:
 			return *this;
 		}
 
-		m_ptr = other.m_ptr;
+		m_ptr		= other.m_ptr;
 		other.m_ptr = nullptr;
 
 		return *this;
@@ -62,7 +62,7 @@ public:
 
 	[[nodiscard]] T* release() {
 		T* ptr = m_ptr;
-		m_ptr = nullptr;
+		m_ptr  = nullptr;
 		return ptr;
 	}
 

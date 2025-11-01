@@ -7,18 +7,12 @@
 
 namespace toki {
 
-class Engine;
-
-}
-
-namespace toki {
-
 struct RendererConfig {
 	Window* window;
 };
 
 class Renderer {
-	friend Engine;
+	friend class Engine;
 
 public:
 	static toki::UniquePtr<Renderer> create(const RendererConfig& config);

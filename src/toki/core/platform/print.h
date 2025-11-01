@@ -1,8 +1,9 @@
 #pragma once
 
 #include <toki/core/defines.h>
-#include <toki/platform/platform.h>
 #include <toki/core/string/string_view.h>
+#include <toki/platform/platform.h>
+
 #include "toki/core/common.h"
 #include "toki/core/string/basic_string.h"
 #include "toki/core/utils/format.h"

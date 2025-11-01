@@ -34,13 +34,14 @@ constexpr int strncmp(const char* s1, const char* s2, u32 length) {
 
 constexpr void memcpy(void* dst, const void* src, u64 size) {
 	for (u32 i = 0; i < size; i++) {
-		*&reinterpret_cast<byte*>(dst)[i] = *&reinterpret_cast<const byte*>(src)[i];
+		reinterpret_cast<byte*>(dst)[i] = reinterpret_cast<const byte*>(src)[i];
 	}
 }
 
-constexpr void memset(void* dst, u32 size, toki::byte ch) {
+template <typename T = toki::byte>
+constexpr void memset(void* dst, const T& ch, u64 size) {
 	for (u32 i = 0; i < size; i++) {
-		reinterpret_cast<toki::byte*>(dst)[i] = ch;
+		reinterpret_cast<T*>(dst)[i] = ch;
 	}
 }
 

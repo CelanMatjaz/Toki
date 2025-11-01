@@ -21,6 +21,12 @@ static_assert(!CHasValueField<int>);
 struct TrueType : BoolConstant<true> {};
 struct FalseType : BoolConstant<false> {};
 
+template <typename T>
+struct TypeTrueType : BoolConstant<true> {};
+
+template <typename T>
+struct TypeFalseType : BoolConstant<false> {};
+
 template <typename T1, typename T2>
 struct IsSame : FalseType {};
 
@@ -164,7 +170,7 @@ static_assert(!IsFloatingPoint<i32>::value);
 template <typename T, T val>
 	requires CIsIntegral<T>
 struct IntegralConstant {
-	using type = IntegralConstant;
+	using type				 = IntegralConstant;
 	static constexpr T value = val;
 };
 
@@ -321,11 +327,13 @@ struct IsCArray : FalseType {};
 
 template <typename T>
 struct IsCArray<T[]> : TrueType {
+	using type				   = T;
 	static constexpr u64 COUNT = sizeof(T) / sizeof(RemovePointer<T>::type);
 };
 
 template <typename T, u64 N>
 struct IsCArray<T[N]> : TrueType {
+	using type				   = T;
 	static constexpr u64 COUNT = N;
 };
 
@@ -352,6 +360,16 @@ static_assert(CIsSameWithoutConst<const volatile char*, volatile char*>);
 template <typename T>
 concept CHasDestructor = requires(T t) { t.~T(); };
 
+template <typename Allocator>
+concept CIsAllocator = requires(u64 size, void* ptr, u64 alignment) {
+	{ Allocator::allocate(size) } -> CIsSame<void*>;
+	{ Allocator::allocate_aligned(size, alignment) } -> CIsSame<void*>;
+	{ Allocator::free(ptr) } -> CIsSame<void>;
+	{ Allocator::free_aligned(ptr) } -> CIsSame<void>;
+	{ Allocator::reallocate(ptr, size) } -> CIsSame<void*>;
+	{ Allocator::reallocate_aligned(ptr, size, alignment) } -> CIsSame<void*>;
+};
+
 template <typename T>
 struct StringDumper;
 
@@ -368,16 +386,6 @@ concept CConvertTo = requires(FromType from) {
 template <typename ToType, typename FromType>
 concept CHasConvertTo = requires(const FromType& from) {
 	{ convert_to(from) } -> CIsSame<ToType>;
-};
-
-template <typename Allocator>
-concept CIsAllocator = requires(u64 size, void* ptr, u64 alignment) {
-	{ Allocator::allocate(size) } -> CIsSame<void*>;
-	{ Allocator::allocate_aligned(size, alignment) } -> CIsSame<void*>;
-	{ Allocator::free(ptr) } -> CIsSame<void>;
-	{ Allocator::free_aligned(ptr) } -> CIsSame<void>;
-	{ Allocator::reallocate(ptr, size) } -> CIsSame<void*>;
-	{ Allocator::reallocate_aligned(ptr, size, alignment) } -> CIsSame<void*>;
 };
 
 template <typename T, typename Container>

@@ -1,5 +1,1 @@
-format() {
-    find $1 -iname *.h -o -iname *.cpp | xargs clang-format -i
-}
-
-format "toki"
+find src -iname *.h -o -iname *.cpp | xargs clang-format -i

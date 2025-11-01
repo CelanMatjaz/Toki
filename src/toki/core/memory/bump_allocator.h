@@ -26,12 +26,12 @@ public:
 	void* allocate_aligned(u64 size, u64 alignment) {
 		TK_ASSERT((alignment & (alignment - 1)) == 0);
 
-		u64 total_size = size + alignment;
+		u64 total_size	   = size + alignment;
 		u64ptr raw_address = reinterpret_cast<u64ptr>(allocate(total_size));
 
-		u64 mask = alignment - 1;
+		u64 mask			= alignment - 1;
 		u64ptr misalignment = raw_address & mask;
-		u64ptr adjustment = alignment - misalignment;
+		u64ptr adjustment	= alignment - misalignment;
 
 		u64ptr aligned_address = raw_address + adjustment;
 

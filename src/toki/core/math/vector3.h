@@ -14,10 +14,10 @@ public:
 	constexpr Vector3(f32 value): x(value), y(value), z(value) {}
 	constexpr Vector3(f32 x_value, f32 y_value, f32 z_value): x(x_value), y(y_value), z(z_value) {}
 	constexpr Vector3(const Vector3&) = default;
-	constexpr Vector3(Vector3&&) = default;
+	constexpr Vector3(Vector3&&)	  = default;
 
 	constexpr Vector3& operator=(const Vector3&) = default;
-	constexpr Vector3& operator=(Vector3&&) = default;
+	constexpr Vector3& operator=(Vector3&&)		 = default;
 
 	friend constexpr Vector3& operator+=(Vector3& lhs, const Vector3& rhs);
 	constexpr Vector3 operator+(const Vector3& rhs) const;
@@ -103,7 +103,7 @@ constexpr f32 Vector3::length() const {
 }
 
 constexpr Vector3 Vector3::normalize() const {
-	f32 len = length();
+	f32 len		   = length();
 	Vector3 vector = *this;
 	vector.x /= len;
 	vector.y /= len;

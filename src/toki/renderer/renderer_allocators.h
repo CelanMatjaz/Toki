@@ -8,8 +8,8 @@ namespace toki {
 struct RendererBumpAllocator {
 	static void* allocate(u64 size);
 	static void* allocate_aligned(u64 size, u64 alignment);
-	static void free(void* ptr);				   // noop
-	static void free_aligned(void* ptr);		   // noop
+	static void free(void* ptr);		  // noop
+	static void free_aligned(void* ptr);  // noop
 	static void* reallocate(void* ptr, u64 size);
 	static void* reallocate_aligned(void* ptr, u64 size, u64 alignment);
 

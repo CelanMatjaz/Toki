@@ -1,6 +1,7 @@
 #pragma once
 
 //
+#include <toki/core/math/extent.h>
 #include <toki/core/math/math.h>
 #include <toki/core/math/matrix4.h>
 #include <toki/core/math/vector2.h>
@@ -11,9 +12,9 @@
 //
 #include <toki/core/common/assert.h>
 #include <toki/core/common/common.h>
+#include <toki/core/common/const_wrapper.h>
 #include <toki/core/common/defines.h>
 #include <toki/core/common/expected.h>
-#include <toki/core/common/format.h>
 #include <toki/core/common/log.h>
 #include <toki/core/common/macros.h>
 #include <toki/core/common/optional.h>
@@ -29,6 +30,7 @@
 #include <toki/core/containers/array.h>
 #include <toki/core/containers/bitset.h>
 #include <toki/core/containers/dynamic_array.h>
+#include <toki/core/containers/hash_map.h>
 #include <toki/core/containers/ring_buffer.h>
 
 //

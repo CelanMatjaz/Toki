@@ -1,3 +1,4 @@
+#include <toki/core/common/log.h>
 #include <toki/core/platform/window/glfw_defines.h>
 #include <toki/core/platform/window/window.h>
 #include <toki/core/types.h>
@@ -33,6 +34,8 @@ struct StaticWindowFunctions {
 Window::Window(const WindowConfig& config) {
 	TK_ASSERT(config.dimensions.x > 0 && config.dimensions.y > 0, "Invalid window dimensions");
 
+	TK_LOG_INFO("Creating GLFW window");
+
 	m_currentSize = { config.dimensions.x, config.dimensions.y };
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -59,10 +62,17 @@ Window::Window(const WindowConfig& config) {
 	glfwSetScrollCallback(HANDLE, StaticWindowFunctions::scroll_callback);
 
 	glfwSetWindowUserPointer(window, this);
+
+	m_input.mouse_delta	   = {};
+	m_input.mouse_position = {};
 }
 
 Window::~Window() {
 	glfwDestroyWindow(HANDLE);
+}
+
+void Window::pre_poll_events() {
+	m_input.mouse_delta = {};
 }
 
 b8 Window::should_close() const {
@@ -72,22 +82,36 @@ b8 Window::should_close() const {
 Vector2u32 Window::get_dimensions() const {
 	int width, height;
 	glfwGetFramebufferSize(HANDLE, &width, &height);
+	if (width == 0 || height == 0) {
+		return m_currentSize;
+	}
 	return Vector2u32{ static_cast<u32>(width), static_cast<u32>(height) };
 }
 
 void StaticWindowFunctions::cursor_position_callback(GLFWwindow* window, f64 xpos, f64 ypos) {
 	toki::Window* w = reinterpret_cast<toki::Window*>(glfwGetWindowUserPointer(window));
-	w->m_input.mouse_delta.x = w->m_input.mouse_position.x - xpos;
-	w->m_input.mouse_delta.y = w->m_input.mouse_position.y - ypos;
+	if (w->m_input.first_mouse_move) {
+		w->m_input.mouse_position.x = xpos;
+		w->m_input.mouse_position.y = ypos;
+		w->m_input.mouse_delta		= {};
+		w->m_input.first_mouse_move = false;
+		return;
+	}
+	f64 dx						= xpos - w->m_input.mouse_position.x;
+	f64 dy						= ypos - w->m_input.mouse_position.y;
 	w->m_input.mouse_position.x = xpos;
 	w->m_input.mouse_position.y = ypos;
+
+	w->m_input.mouse_delta.x += dx;
+	w->m_input.mouse_delta.y += dy;
 }
 
 static void handle_mods(Mods& mods, i32 button, i32 action);
 
 void StaticWindowFunctions::mouse_button_callback(
 	GLFWwindow* window, i32 button, i32 action, [[maybe_unused]] i32 mods) {
-	toki::Window* w = reinterpret_cast<toki::Window*>(glfwGetWindowUserPointer(window));
+	toki::Window* w				= reinterpret_cast<toki::Window*>(glfwGetWindowUserPointer(window));
+	w->m_input.first_mouse_move = true;
 
 	EventType type;
 	switch (action) {
@@ -144,7 +168,7 @@ void StaticWindowFunctions::framebuffer_size_callback(GLFWwindow* window, i32 wi
 
 	w->m_currentSize = { static_cast<u32>(width), static_cast<u32>(height) };
 
-	Event event(toki::EventType::WINDOW_RESIZE, { .window = { .x = width, .y = height } });
+	Event event(toki::EventType::WINDOW_RESIZE, { .window = { .dimensions = Vector2i32(width, height) } });
 	w->m_input.event_handler.dispatch_event(event, w);
 	w->m_input.event_queue.emplace_back(event);
 }

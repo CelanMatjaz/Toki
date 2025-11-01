@@ -6,7 +6,7 @@ namespace toki {
 
 struct NativeHandle {
 #if defined(TK_PLATFORM_LINUX)
-	using NativeHandleType = i32;
+	using NativeHandleType								   = i32;
 	static constexpr NativeHandleType INVALID_HANDLE_VALUE = -1;
 #endif
 	NativeHandle(NativeHandleType value): handle(value) {}

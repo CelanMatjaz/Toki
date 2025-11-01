@@ -44,11 +44,9 @@ void File::close() {
 
 u64 File::read_line(char* data, u64 count, byte delim) {
 	u64 read_count{}, n{};
-	char temp_buffer[256]{};
 	char b{};
 	for (n = 0; n < count; n++) {
 		read_count = read(&b, 1);
-		temp_buffer[n] = b;
 		if (read_count == 0) {
 			return 0;
 		} else if (read_count == 1) {

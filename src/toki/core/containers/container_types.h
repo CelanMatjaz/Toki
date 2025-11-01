@@ -17,6 +17,10 @@ struct Handle {
 	operator b8() const {
 		return m_value != 0;
 	}
+
+	b8 valid() const {
+		return m_value != 0;
+	}
 };
 
 }  // namespace toki

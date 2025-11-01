@@ -16,7 +16,7 @@ namespace toki {
 static Allocator g_allocator;
 
 void memory_initialize(const MemoryConfig& config) {
-	g_allocator = toki::move(Allocator(config.total_size));
+	g_allocator					= toki::move(Allocator(config.total_size));
 	DefaultAllocator::allocator = &g_allocator;
 }
 

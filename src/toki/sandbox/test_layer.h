@@ -4,8 +4,7 @@
 
 class TestLayer : public toki::Layer {
 public:
-	TestLayer() = delete;
-	TestLayer(toki::f32 offset);
+	TestLayer() = default;
 
 	virtual void on_attach() override;
 	virtual void on_detach() override;
@@ -15,8 +14,13 @@ public:
 
 	void create_shader();
 	void create_model();
-	void setup_uniforms();
 	void setup_textures();
+	void create_depth_buffer();
+	void create_font_resources();
+	void setup_uniforms(
+		const toki::ShaderLayoutHandle layout,
+		const toki::TextureHandle texture,
+		const toki::BufferHandle uniform_buffer);
 
 private:
 	toki::ShaderHandle m_shader;
@@ -28,14 +32,19 @@ private:
 	toki::TextureHandle m_depthBuffer;
 	toki::SamplerHandle m_sampler;
 
-	toki::u32 m_vertexCount = 0;
-	toki::f32 m_imageScale = 1.0;
-	toki::f32 m_offset = 1;
-	toki::f32 m_color = 0;
-	toki::f32 m_strafeDirection = 0;
-	toki::Vector3 m_position{ 0, 0, 1.0 };
-	toki::Vector3 m_cameraRotation{ 0, 0, 0 };
-	toki::b8 m_mouseDown = false;
+	toki::BufferHandle m_fontUniformBuffer;
+	toki::ShaderLayoutHandle m_fontShaderLayout;
+	toki::ShaderHandle m_fontShader;
 
-	toki::Camera m_camera;
+	toki::u32 m_vertexCount = 0;
+	toki::f32 m_imageScale	= 1.0;
+	toki::f32 m_offset		= 1;
+	toki::f32 m_color		= 0.5;
+
+	toki::ConstWrapper<toki::Font> m_font;
+	toki::Geometry m_fontGeometry;
+
+	toki::FreeFlightCameraController m_cameraController;
+	toki::Matrix4 m_view2D;
+	toki::Matrix4 m_projection2D;
 };

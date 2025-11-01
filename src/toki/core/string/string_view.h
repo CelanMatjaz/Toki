@@ -2,6 +2,7 @@
 
 #include <toki/core/string/basic_string.h>
 #include <toki/core/utils/memory.h>
+#include <toki/core/utils/string_formatters.h>
 
 namespace toki {
 
@@ -13,22 +14,26 @@ public:
 	constexpr BasicStringView(IsCArray<T> str): m_ptr(str), m_size(IsCArray<T>::COUNT) {}
 	constexpr BasicStringView(const T* str): m_ptr(str), m_size(toki::strlen(str)) {}
 	constexpr BasicStringView(const T* str, u64 length): m_ptr(str), m_size(length) {}
-	constexpr BasicStringView(const BasicStringView& other): m_ptr(other.m_ptr), m_size(other.m_size) {}
 	template <CIsAllocator AllocatorType>
 	constexpr BasicStringView(const BasicString<T, AllocatorType>& str): m_ptr(str.data()), m_size(str.size()) {}
 
+	constexpr BasicStringView(const BasicStringView& other): m_ptr(other.m_ptr), m_size(other.m_size) {}
+	constexpr BasicStringView(BasicStringView&& other): m_ptr(other.m_ptr), m_size(other.m_size) {}
+
+	constexpr b8 operator==(const BasicStringView& other) const {
+		return toki::strncmp(m_ptr, other.m_ptr, m_size * sizeof(T)) == 0;
+	}
+
 	constexpr BasicStringView& operator=(const BasicStringView& other) {
-		if (other == this) {
-			return this;
+		if (&other == this) {
+			return *this;
 		}
 
 		m_size = other.m_size;
-		m_ptr = other.m_ptr;
+		m_ptr  = other.m_ptr;
 
-		return this;
+		return *this;
 	}
-
-	constexpr BasicStringView(BasicStringView&& other): m_size(other.size), m_ptr(other.m_ptr) {}
 
 	constexpr BasicStringView& operator=(BasicStringView&& other) {
 		if (&other == this) {
@@ -36,9 +41,17 @@ public:
 		}
 
 		m_size = other.m_size;
-		m_ptr = other.m_ptr;
+		m_ptr  = other.m_ptr;
 
 		return *this;
+	}
+
+	constexpr T at(u64 index) {
+		return m_ptr[index];
+	}
+
+	constexpr T operator[](u64 index) {
+		return at(index);
 	}
 
 	constexpr u64 size() const {
@@ -59,7 +72,7 @@ private:
 	u64 m_size{};
 };
 
-using StringView = BasicStringView<char>;
+using StringView	 = BasicStringView<char>;
 using WideStringView = BasicStringView<wchar>;
 
 }  // namespace toki

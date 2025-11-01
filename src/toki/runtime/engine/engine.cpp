@@ -3,16 +3,21 @@
 namespace toki {
 
 Engine::Engine([[maybe_unused]] const EngineConfig& config): m_running(true) {
+	TK_LOG_INFO("Initializing engine");
+
 	WindowConfig window_config{};
-	window_config.title = "Window";
-	window_config.dimensions = { 800, 600 };
+	window_config.title			 = "Window";
+	window_config.dimensions	 = { 800, 600 };
 	window_config.min_dimensions = { 400, 300 };
-	window_config.flags = WINDOW_FLAG_SHOW_ON_CREATE;
-	m_window = toki::make_unique<Window>(window_config);
+	window_config.flags			 = WINDOW_FLAG_SHOW_ON_CREATE | WINDOW_FLAG_RESIZABLE;
+	m_window					 = toki::make_unique<Window>(window_config);
 
 	RendererConfig renderer_config{};
 	renderer_config.window = m_window.get();
-	m_renderer = Renderer::create(renderer_config);
+	m_renderer			   = Renderer::create(renderer_config);
+
+	SystemManagerConfig system_manager_config{};
+	m_systemManager = SystemManager::create(system_manager_config);
 }
 
 Engine::~Engine() {
@@ -20,11 +25,12 @@ Engine::~Engine() {
 }
 
 void Engine::run() {
-	toki::println("Starting application");
+	TK_LOG_INFO("Starting application");
 
-	Time now = Time::now();
+	Time now		   = Time::now();
 	Time previous_time = now;
 	while (m_running) {
+		m_window->pre_poll_events();
 		window_system_poll_events();
 
 		EventQueue& event_queue = m_window->get_event_queue();
@@ -41,9 +47,9 @@ void Engine::run() {
 		}
 		event_queue.clear();
 
-		now = Time::now();
+		now			   = Time::now();
 		f64 delta_time = (now - previous_time).as<TimePrecision::Seconds>();
-		previous_time = now;
+		previous_time  = now;
 
 		m_renderer->frame_prepare();
 
@@ -69,8 +75,7 @@ void Engine::run() {
 }
 
 void Engine::attach_layer(UniquePtr<Layer>&& layer) {
-	layer->m_renderer = m_renderer.get();
-	layer->m_window = m_window.get();
+	layer->m_engine = this;
 	layer->on_attach();
 	m_layers.push_back(toki::move(layer));
 }

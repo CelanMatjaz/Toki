@@ -5,17 +5,26 @@
 namespace toki {
 
 class Commands {
+	friend class Renderer;
+
+	Commands(void* data): m_data(data) {}
+
 public:
-	virtual void begin_pass(const BeginPassConfig& config) = 0;
-	virtual void end_pass() = 0;
+	Commands() = default;
 
-	virtual void bind_shader(ShaderHandle handle) = 0;
-	virtual void bind_index_buffer(BufferHandle handle) = 0;
-	virtual void bind_vertex_buffer(BufferHandle handle) = 0;
-	virtual void bind_uniforms(ShaderLayoutHandle handle) = 0;
+	virtual void begin_pass(const BeginPassConfig& config);
+	virtual void end_pass();
 
-	virtual void draw(u32 vertex_count) = 0;
-	virtual void draw_indexed(u32 index_count) = 0;
+	virtual void bind_shader(ShaderHandle handle);
+	virtual void bind_index_buffer(BufferHandle handle);
+	virtual void bind_vertex_buffer(BufferHandle handle);
+	virtual void bind_uniforms(ShaderLayoutHandle handle);
+
+	virtual void draw(u32 vertex_count);
+	virtual void draw_indexed(u32 index_count);
+
+private:
+	void* m_data;
 };
 
 }  // namespace toki

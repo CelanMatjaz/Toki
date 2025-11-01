@@ -4,6 +4,8 @@
 
 namespace toki {
 
+class Engine;
+
 class Layer {
 	friend class Engine;
 
@@ -15,8 +17,7 @@ public:
 	virtual void on_event([[maybe_unused]] Window* window, [[maybe_unused]] Event& event) {}
 
 protected:
-	Renderer* m_renderer;
-	toki::Window* m_window;
+	Engine* m_engine;
 };
 
 }  // namespace toki

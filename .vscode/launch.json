@@ -7,7 +7,7 @@
             "request": "launch",
             "stopAtEntry": false,
             "MIMode": "gdb",
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/src/toki/sandbox",
             "args": ["${workspaceFolder}/toki_sandbox"],
             "program": "${workspaceFolder}/build/bin/sandbox",
             "preLaunchTask": "Build Sandbox - Debug"

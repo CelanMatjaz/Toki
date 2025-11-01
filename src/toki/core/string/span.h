@@ -1,10 +1,7 @@
 #pragma once
 
+#include <toki/core/common/type_traits.h>
 #include <toki/core/types.h>
-
-#include "toki/core/common/common.h"
-#include "toki/core/common/type_traits.h"
-#include "toki/core/utils/memory.h"
 
 namespace toki {
 
@@ -13,23 +10,25 @@ class Span {
 public:
 	Span(): m_data(nullptr), m_size(0) {}
 
+	constexpr Span(const T* ptr, u64 size): m_data(ptr), m_size(size) {}
+
 	template <typename ContainerType>
 		requires CIsArrayContainer<const T, ContainerType>
-	Span(const ContainerType& container): m_data(container.data()), m_size(container.size()) {}
+	constexpr Span(const ContainerType& container): m_data(container.data()), m_size(container.size()) {}
 
 	template <typename ContainerType>
 		requires CIsArrayContainer<T, ContainerType>
-	Span(ContainerType& container): m_data(container.data()), m_size(container.size()) {}
+	constexpr Span(ContainerType& container): m_data(container.data()), m_size(container.size()) {}
 
 	template <typename ContainerType>
 		requires(IsCArray<ContainerType>::value)
-	Span(const ContainerType& container): m_data(container), m_size(IsCArray<ContainerType>::COUNT) {}
+	constexpr Span(ContainerType container): m_data(container), m_size(IsCArray<ContainerType>::COUNT) {}
 
 	template <typename ContainerType>
 		requires(IsCArray<ContainerType>::value)
-	Span(ContainerType& container): m_data(container), m_size(IsCArray<ContainerType>::COUNT) {}
+	constexpr Span(ContainerType& container): m_data(container), m_size(IsCArray<ContainerType>::COUNT) {}
 
-	~Span() = default;
+	constexpr ~Span() = default;
 
 	constexpr Span(const Span& other): m_data(other.m_data), m_size(other.m_size) {}
 
@@ -85,7 +84,7 @@ public:
 	}
 
 private:
-	T* m_data{};
+	const T* m_data{};
 	u64 m_size{};
 };
 

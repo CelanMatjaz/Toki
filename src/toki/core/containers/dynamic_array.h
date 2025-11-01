@@ -6,6 +6,7 @@
 #include <toki/core/common/type_traits.h>
 #include <toki/core/math/math.h>
 #include <toki/core/memory/memory.h>
+#include <toki/core/string/span.h>
 
 namespace toki {
 
@@ -20,21 +21,16 @@ public:
 
 	DynamicArray(u64 count, const T& default_value): m_data(nullptr), m_size(count) {
 		reallocate(count);
-		for (u64 i = 0; i < count; i++) {
-			m_data[i] = default_value;
-		}
+		fill(default_value);
 	}
 
-	// template <typename... Args>
-	// 	requires(Conjunction<IsSame<T, Args>...>::value && Conjunction<IsConvertible<Args, T>...>::value)
-	// DynamicArray(Args&&... args): DynamicArray(sizeof...(Args)) {
-	// 	u64 i = 0;
-	// 	((m_data[i++] = toki::forward<Args>(args)), ...);
-	// }
+	DynamicArray(toki::Span<T> list): DynamicArray(list.size()) {
+		memcpy(m_data, list.data(), list.size() * sizeof(T));
+	}
 
 	DynamicArray(DynamicArray&& other): m_data(other.m_data), m_size(other.m_size), m_capacity(other.m_capacity) {
-		other.m_data = nullptr;
-		other.m_size = 0;
+		other.m_data	 = nullptr;
+		other.m_size	 = 0;
 		other.m_capacity = 0;
 	}
 
@@ -76,6 +72,10 @@ public:
 		reallocate(new_capacity);
 	}
 
+	void fill(const T& value) {
+		toki::memset(m_data, value, m_size);
+	}
+
 	void shrink_to_size(u64 new_size) {
 		TK_ASSERT(new_size <= m_capacity, "New size cannot be larger than old size when shrinking");
 		m_size = new_size;
@@ -111,11 +111,11 @@ public:
 	}
 
 	void move(DynamicArray&& other) {
-		m_data = other.m_data;
-		m_size = other.m_size;
-		m_capacity = other.m_capacity;
-		other.m_data = nullptr;
-		other.m_size = 0;
+		m_data			 = other.m_data;
+		m_size			 = other.m_size;
+		m_capacity		 = other.m_capacity;
+		other.m_data	 = nullptr;
+		other.m_size	 = 0;
 		other.m_capacity = 0;
 	}
 

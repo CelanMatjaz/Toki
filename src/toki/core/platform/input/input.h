@@ -7,12 +7,12 @@
 
 namespace toki {
 
-constexpr const u32 MOUSE_BUTTON_COUNT = static_cast<u64>(MouseButton::MOUSE_BUTTON_COUNT);
+constexpr const u32 MOUSE_BUTTON_COUNT	  = static_cast<u64>(MouseButton::MOUSE_BUTTON_COUNT);
 constexpr const u32 KEYBOARD_BUTTON_COUNT = static_cast<u64>(Key::KEY_COUNT);
 
 struct Input {
-	Vector2 mouse_position;
-	Vector2 mouse_delta;
+	Vector2i32 mouse_position;
+	Vector2i32 mouse_delta;
 	Bitset<MOUSE_BUTTON_COUNT> mouse_buttons;
 	Bitset<KEYBOARD_BUTTON_COUNT> keys;
 	Mods mods;
@@ -21,6 +21,7 @@ struct Input {
 	EventHandler event_handler;
 
 	u32 state_index;
+	b8 first_mouse_move = true;
 
 	b8 is_key_down(Key) const;
 	b8 is_mouse_button_down(MouseButton key) const;

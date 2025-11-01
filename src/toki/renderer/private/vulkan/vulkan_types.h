@@ -11,13 +11,13 @@ constexpr const u32 MAX_FRAMES_IN_FLIGHT = 3;
 
 enum VsyncStatus : u8 {
 	VSYNC_STATUS_DISABLED = 0,
-	VSYNC_STATUS_ENABLED = 1,
+	VSYNC_STATUS_ENABLED  = 1,
 	VSYNC_STATUS_SIZE
 };
 
 enum QueueFamilyIndices {
 	GRAPHICS_FAMILY_INDEX = 0,
-	PRESENT_FAMILY_INDEX = 1,
+	PRESENT_FAMILY_INDEX  = 1,
 	QUEUE_FAMILY_INDICIES_SIZE
 };
 
@@ -31,7 +31,7 @@ enum CommandBufferState {
 
 enum VulkanSettingsFlags {
 	VSYNC_SUPPORTED = 1 << 0,
-	VSYNC_ENABLED = 1 << 1,
+	VSYNC_ENABLED	= 1 << 1,
 };
 
 union PresentModes {

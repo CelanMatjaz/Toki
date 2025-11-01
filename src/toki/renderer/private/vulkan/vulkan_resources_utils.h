@@ -6,11 +6,12 @@
 namespace toki {
 
 b8 is_depth_format(VkFormat format);
+b8 is_valid_extent(const VkExtent2D& extent);
 
 VkSurfaceKHR create_surface(const VulkanState& state, Window* window);
 PresentModes query_present_modes(const VulkanState& state, VkSurfaceKHR surface);
 VkSurfaceFormatKHR query_surface_formats(const VulkanState& state, VkSurfaceKHR surface);
-VkExtent2D query_surface_extent(VkSurfaceCapabilitiesKHR surface_capabilities);
+VkExtent2D query_surface_extent(VkSurfaceCapabilitiesKHR surface_capabilities, const Window* window);
 
 VkImageView create_image_view(const ImageViewConfig& config, const VulkanState& state);
 VkDeviceMemory allocate_device_memory(const MemoryAllocateConfig& config, const VulkanState& state);

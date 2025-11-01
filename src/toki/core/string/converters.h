@@ -11,7 +11,7 @@ template <typename T>
 	requires(toki::CIsIntegral<T>)
 u32 itoa(char* buf_out, T value, u32 radix = 10) {
 	char buf[20]{};
-	u32 offset = 0;
+	u32 offset	   = 0;
 	bool add_minus = value < 0;
 
 	if (value == 0) {
@@ -64,9 +64,9 @@ u32 itoa_pretty(char* buf_out, T value, u32 radix = 10) {
 		casted /= radix;
 	}
 
-	u32 start = 0;
+	u32 start  = 0;
 	buf_out[0] = '0';
-	start = 2;
+	start	   = 2;
 	switch (radix) {
 		case 2: {
 			buf_out[1] = 'b';
@@ -99,9 +99,9 @@ u32 ftoa(char* buf_out, T value, u32 precision = 6) {
 
 	char buf[30]{};
 	i32 int_value = value;
-	u32 buf_len = 0;
+	u32 buf_len	  = 0;
 	do {
-		u32 digit = int_value % 10;
+		u32 digit	   = int_value % 10;
 		buf[buf_len++] = digit + '0';
 		int_value /= 10;
 	} while (int_value > 0);
@@ -122,8 +122,8 @@ u32 ftoa(char* buf_out, T value, u32 precision = 6) {
 
 template <CIsIntegral T>
 u32 atoi(const char* buf, T& out_value) {
-	i32 sign = 1;
-	out_value = 0;
+	i32 sign		 = 1;
+	out_value		 = 0;
 	const char* temp = buf;
 
 	while (is_space(*temp)) {
@@ -151,8 +151,8 @@ u32 atoi(const char* buf, T& out_value) {
 
 inline f64 atof(const char* buf, f64& out_value) {
 	const char* temp = buf;
-	i32 sign = 1;
-	out_value = 0;
+	i32 sign		 = 1;
+	out_value		 = 0;
 
 	while (is_space(*temp)) {
 		++temp;

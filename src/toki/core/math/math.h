@@ -1,12 +1,12 @@
 #pragma once
 
-#include <toki/core/types.h>
 #include <toki/core/common/assert.h>
+#include <toki/core/types.h>
 
 namespace toki {
 
-constexpr f64 PI = 3.14159265358979;
-constexpr f64 TWO_PI = PI * 2;
+constexpr f64 PI		  = 3.14159265358979;
+constexpr f64 TWO_PI	  = PI * 2;
 constexpr const int TERMS = 10;
 
 template <typename T>
@@ -25,7 +25,7 @@ constexpr T clamp(T value, T min_value, T max_value) {
 }
 
 template <typename T>
-constexpr T pow(T value, u32 exp) {
+constexpr T pow(T value, T exp) {
 	if (exp == 0) {
 		return 1;
 	}
@@ -54,7 +54,7 @@ constexpr f64 sqrt(f64 value) {
 #if defined(__has_builtin) && __has_builtin(__builtin_sqrt)
 	return __builtin_sqrt(value);
 #else
-	f64 guess = value;
+	f64 guess				 = value;
 	constexpr u32 ITERATIONS = 10;
 
 	for (u32 i = 0; i < ITERATIONS; i++) {
@@ -104,17 +104,12 @@ constexpr f64 normalize_angle<AngleUnits::Degrees>(f64 angle) {
 	return angle;
 }
 
-template <AngleUnits = AngleUnits::Radians>
-constexpr f64 convert_angle_to(f64 angle);
-
-template <>
-constexpr f64 convert_angle_to<AngleUnits::Radians>(f64 angle) {
+constexpr f64 radians(f64 angle) {
 	f64 normalized = normalize_angle<AngleUnits::Degrees>(angle);
 	return normalized * (PI / 180.0f);
 }
 
-template <>
-constexpr f64 convert_angle_to<AngleUnits::Degrees>(f64 angle) {
+constexpr f64 degrees(f64 angle) {
 	f64 normalized = normalize_angle<AngleUnits::Radians>(angle);
 	return normalized * (180.0f / PI);
 }
@@ -129,22 +124,22 @@ constexpr f64 factorial(u64 n) {
 
 // x - Angle in radians
 constexpr f64 sin(f64 x) {
-	x = normalize_angle(x);
+	x		   = normalize_angle(x);
 	f64 result = 0.0f;
 	for (int n = 0; n < TERMS; n++) {
 		int sign = (n % 2 == 0) ? 1 : -1;
-		result += sign * pow(x, 2 * n + 1) / factorial(2 * n + 1);
+		result += sign * pow<f64>(x, 2 * n + 1) / factorial(2 * n + 1);
 	}
 	return result;
 }
 
 // x - Angle in radians
 constexpr f64 cos(f64 x) {
-	x = normalize_angle(x);
+	x		   = normalize_angle(x);
 	f64 result = 0.0f;
 	for (int n = 0; n < TERMS; n++) {
 		int sign = (n % 2 == 0) ? 1 : -1;
-		result += sign * pow(x, 2 * n) / factorial(2 * n);
+		result += sign * pow<f64>(x, 2 * n) / factorial(2 * n);
 	}
 	return result;
 }
@@ -161,6 +156,36 @@ constexpr f64 atan(f64 x) {
 	f64 sin_value = sin(x);
 	TK_ASSERT(sin_value != 0.0f);
 	return cos(x) / sin_value;
+}
+
+// x - Angle in radians
+constexpr f64 acos(f64 x) {
+	if (x > 1.0f)
+		x = 1.0f;
+	if (x < -1.0f)
+		x = -1.0f;
+
+	f64 theta = (-0.6981317f * x * x * x) + (0.8726646f * x) + 1.5707963f;
+
+	for (int i = 0; i < 3; ++i) {
+		f64 c = toki::cos(theta);
+		f64 s = toki::sin(theta);
+		theta -= (c - x) / (-s);
+	}
+	return theta;
+}
+
+constexpr i64 floor(f64 value) {
+	return static_cast<i64>(value);
+}
+
+constexpr i64 ceil(f64 value) {
+	return static_cast<i64>(value) + 1;
+}
+
+template <typename T>
+constexpr T mod(T x, T y) {
+	return x - y * (x / y);
 }
 
 }  // namespace toki

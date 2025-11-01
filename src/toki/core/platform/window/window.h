@@ -14,7 +14,7 @@ void window_system_shutdown();
 void window_system_poll_events();
 
 enum WindowFlags : u32 {
-	WINDOW_FLAG_RESIZABLE = 1 << 0,
+	WINDOW_FLAG_RESIZABLE	   = 1 << 0,
 	WINDOW_FLAG_SHOW_ON_CREATE = 1 << 0,
 };
 
@@ -22,7 +22,7 @@ struct WindowConfig {
 	Vector2u32 dimensions{};
 	Vector2u32 min_dimensions{};
 	const char* title;
-	WindowFlags flags;
+	u32 flags;	// toki::WindowFlags
 };
 
 struct StaticWindowFunctions;
@@ -37,8 +37,8 @@ public:
 	~Window();
 
 	Vector2u32 get_dimensions() const;
-	Vector2 get_mouse_position() const;
-	Vector2 get_mouse_delta() const;
+	Vector2i32 get_mouse_position() const;
+	Vector2i32 get_mouse_delta() const;
 	Mods get_mods() const;
 	b8 is_key_down(Key key) const;
 	b8 is_mouse_button_pressed(MouseButton mouse_button) const;
@@ -48,6 +48,7 @@ public:
 	void unregister_listener(void* listener);
 
 private:
+	void pre_poll_events();
 	b8 should_close() const;
 	b8 poll_event(Event& event);
 	EventQueue& get_event_queue();

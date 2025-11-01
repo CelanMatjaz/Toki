@@ -4,13 +4,9 @@
 #include <toki/core/memory/allocator.h>
 #include <toki/core/types.h>
 
-#if 0
-
-#else
-
+#if !defined(_NEW)
 void* operator new(unsigned long, void* p) noexcept;
 void operator delete(void*, void*);
-
 #endif
 
 namespace toki {

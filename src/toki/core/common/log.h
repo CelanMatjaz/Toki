@@ -1,32 +1,37 @@
 #pragma once
 
+#include <toki/core/string/string_view.h>
 #include <toki/core/types.h>
 
 namespace toki {
 
-#define LOG_LEVELS(X) \
-	X(INFO)           \
-	X(WARN)           \
-	X(ERROR)          \
-	X(FATAL)          \
-	X(DEBUG)          \
-	X(TRACE)
+template <typename... Args>
+void println(const StringView str, Args&&... args);
+
+#define LOG_LEVELS(X)      \
+	X(INFO, "\033[0;37m")  \
+	X(WARN, "\033[0;36m")  \
+	X(ERROR, "\033[0;33m") \
+	X(FATAL, "\033[0;31m") \
+	X(DEBUG, "\033[0;35m") \
+	X(TRACE, "\033[0;36m")
 
 enum struct LogLevel : u32 {
-#define X(name) name,
+#define X(name, color) name,
 	LOG_LEVELS(X)
 #undef X
 };
 
 inline const char* LOG_LEVEL_STRINGS[] = {
-#define X(name) "[" #name "]",
+#define X(name, color) color "[" #name "]",
 	LOG_LEVELS(X)
 #undef X
 };
 
 #define _LOG_PRINT(level, str, ...) \
 	toki::println(                  \
-		"{} " str, toki::LOG_LEVEL_STRINGS[static_cast<toki::u32>(toki::LogLevel::level)] __VA_OPT__(, ) __VA_ARGS__)
+		"{} " str "\033[0m",        \
+		toki::LOG_LEVEL_STRINGS[static_cast<toki::u32>(toki::LogLevel::level)] __VA_OPT__(, ) __VA_ARGS__)
 
 #if defined(LOG_INFO_OFF) || defined(LOGGING_OFF)
 	#define TK_LOG_INFO(message, ...)

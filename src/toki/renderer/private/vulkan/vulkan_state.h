@@ -39,7 +39,7 @@ struct VulkanState {
 	PersistentArena<VulkanShaderLayout, 4> shader_layouts;
 	PersistentArena<VulkanShader, 16> shaders;
 	PersistentArena<VulkanBuffer, 16> buffers;
-	PersistentArena<VulkanTexture, 4> textures;
+	PersistentArena<VulkanTexture, 256> textures;
 	PersistentArena<VulkanSampler, 4> samplers;
 };
 

@@ -11,7 +11,7 @@ namespace toki {
 template <typename T, CIsAllocator AllocatorType = DefaultAllocator>
 	requires Disjunction<IsSame<T, char>, IsSame<T, wchar>>::value
 class BasicString {
-	static constexpr u32 STACK_SPACE = 24;
+	static constexpr u32 STACK_SPACE		  = 24;
 	static constexpr u32 STACK_VS_HEAP_CUTOFF = STACK_SPACE / sizeof(T);
 
 public:
@@ -36,9 +36,7 @@ public:
 
 	constexpr BasicString(u64 size, T ch = 0) {
 		initialize_based_on_size(size);
-		auto ptr = get_ptr();
-		toki::memset(ptr, size, ch);
-		auto a = 0;
+		toki::memset(get_ptr(), ch, size);
 	}
 
 	constexpr BasicString(const BasicString& other) {
@@ -55,7 +53,7 @@ public:
 	}
 
 	constexpr BasicString(BasicString&& other) {
-		_swap(*this, other);
+		_swap(other);
 	}
 
 	constexpr BasicString& operator=(BasicString&& other) {

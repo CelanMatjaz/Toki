@@ -22,11 +22,11 @@ EventQueue& Window::get_event_queue() {
 	return m_input.event_queue;
 }
 
-Vector2 Window::get_mouse_position() const {
+Vector2i32 Window::get_mouse_position() const {
 	return m_input.mouse_position;
 }
 
-Vector2 Window::get_mouse_delta() const {
+Vector2i32 Window::get_mouse_delta() const {
 	return m_input.mouse_delta;
 }
 

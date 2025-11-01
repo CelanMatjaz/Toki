@@ -27,13 +27,14 @@ public:
 	}
 
 	b8 exists(const Handle& handle) const {
+		TK_ASSERT(handle.m_value != 0);
 		return m_bits[handle.m_value - 1];
 	}
 
 	void clear(Handle handle) {
 		m_bits.set(handle.m_value - 1, false);
 		if constexpr (CHasDestructor<T>) {
-			m_data[handle.m_value - 1]->~T();
+			m_data[handle.m_value - 1].~T();
 		}
 	}
 

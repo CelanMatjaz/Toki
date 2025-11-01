@@ -89,7 +89,7 @@ struct VulkanBufferConfig {
 	VulkanBufferConfig(const BufferConfig& config): buffer_config(config) {}
 
 	BufferConfig buffer_config;
-	VkBufferUsageFlags override_usage = 0;
+	VkBufferUsageFlags override_usage				 = 0;
 	VkMemoryPropertyFlags override_memory_properties = 0;
 };
 
@@ -120,7 +120,7 @@ public:
 	void copy_to_image(
 		VulkanCommandBuffer cmd,
 		const VulkanBufferImageCopyConfig& dst_buffer_copy_config = {},
-		u32 self_offset = 0) const;
+		u32 self_offset											  = 0) const;
 
 	operator VkBuffer() const {
 		return m_buffer;

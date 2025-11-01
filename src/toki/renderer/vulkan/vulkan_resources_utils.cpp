@@ -16,20 +16,24 @@ b8 is_depth_format(VkFormat format) {
 		VK_FORMAT_D32_SFLOAT_S8_UINT>(format);
 }
 
+b8 is_valid_extent(const VkExtent2D& extent) {
+	return extent.width != static_cast<u32>(-1) && extent.height != static_cast<u32>(-1);
+}
+
 VkImageView create_image_view(const ImageViewConfig& config, const VulkanState& state) {
 	VkImageViewCreateInfo image_view_create_info{};
-	image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	image_view_create_info.image = config.image;
-	image_view_create_info.format = config.format;
-	image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-	image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-	image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-	image_view_create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-	image_view_create_info.subresourceRange.baseMipLevel = 0;
-	image_view_create_info.subresourceRange.levelCount = 1;
+	image_view_create_info.sType						   = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	image_view_create_info.image						   = config.image;
+	image_view_create_info.format						   = config.format;
+	image_view_create_info.viewType						   = VK_IMAGE_VIEW_TYPE_2D;
+	image_view_create_info.components.r					   = VK_COMPONENT_SWIZZLE_IDENTITY;
+	image_view_create_info.components.g					   = VK_COMPONENT_SWIZZLE_IDENTITY;
+	image_view_create_info.components.b					   = VK_COMPONENT_SWIZZLE_IDENTITY;
+	image_view_create_info.components.a					   = VK_COMPONENT_SWIZZLE_IDENTITY;
+	image_view_create_info.subresourceRange.baseMipLevel   = 0;
+	image_view_create_info.subresourceRange.levelCount	   = 1;
 	image_view_create_info.subresourceRange.baseArrayLayer = 0;
-	image_view_create_info.subresourceRange.layerCount = 1;
+	image_view_create_info.subresourceRange.layerCount	   = 1;
 
 	if (is_depth_format(config.format)) {
 		image_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
@@ -49,8 +53,8 @@ VkDeviceMemory allocate_device_memory(const MemoryAllocateConfig& config, const 
 	VkDeviceMemory device_memory;
 
 	VkMemoryAllocateInfo memory_allocate_info{};
-	memory_allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	memory_allocate_info.allocationSize = config.memory_requirements.size;
+	memory_allocate_info.sType			 = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	memory_allocate_info.allocationSize	 = config.memory_requirements.size;
 	memory_allocate_info.memoryTypeIndex = find_memory_type(
 		state.physical_device_memory_properties,
 		config.memory_requirements.memoryTypeBits,
@@ -223,12 +227,12 @@ VkSurfaceFormatKHR query_surface_formats(const VulkanState& state, VkSurfaceKHR 
 	return surface_formats[0];
 }
 
-VkExtent2D query_surface_extent(VkSurfaceCapabilitiesKHR surface_capabilities) {
+VkExtent2D query_surface_extent(VkSurfaceCapabilitiesKHR surface_capabilities, const Window* window) {
 	if (surface_capabilities.currentExtent.width != static_cast<u32>(-1)) {
 		return surface_capabilities.currentExtent;
 	}
 
-	auto calculated_extent = convert_to<VkExtent2D>(Vector2u32{ 400, 400 });
+	auto calculated_extent	= convert_to<VkExtent2D>(window->get_dimensions());
 	calculated_extent.width = toki::clamp(
 		calculated_extent.width, surface_capabilities.minImageExtent.width, surface_capabilities.maxImageExtent.width);
 	calculated_extent.height = toki::clamp(

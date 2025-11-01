@@ -4,19 +4,24 @@
 #include <toki/core/common/common.h>
 #include <toki/core/common/type_traits.h>
 #include <toki/core/memory/memory.h>
+#include <toki/core/string/span.h>
 #include <toki/core/utils/memory.h>
 
 namespace toki {
 
-template <typename T, u64 N, CIsAllocator AllocatorType = DefaultAllocator>
+template <typename T, u64 N>
 	requires(N > 0)
 class Array {
 public:
-	constexpr Array() = default;
+	constexpr Array(): m_data{} {}
 
 	template <typename... Args>
 		requires(sizeof...(Args) == N && (CIsConvertible<Args, T> && ...))
 	constexpr Array(Args&&... args): m_data{ static_cast<T>(toki::forward<Args>(args))... } {}
+
+	constexpr Array(toki::Span<T> list) {
+		memcpy(m_data, list.data(), N * sizeof(T));
+	}
 
 	constexpr Array(T&& default_value): Array() {
 		for (u64 i = 0; i < N; i++) {

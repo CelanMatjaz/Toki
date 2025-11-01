@@ -38,41 +38,41 @@ constexpr Matrix4 ortho(f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 
 		2.0f / rl,
 		0.0f,
 		0.0f,
-		-(right + left) / rl,
+		0.0f,
 		0.0f,
 		2.0f / tb,
 		0.0f,
+		0.0f,
+		0.0f,
+		0.0f,
+		1.0f / fn,
+		0.0f,
+		-(right + left) / rl,
 		-(top + bottom) / tb,
-		0.0f,
-		0.0f,
-		-2.0f / fn,
-		-(far + near) / fn,
-		0.0f,
-		0.0f,
-		0.0f,
+		-near / fn,
 		1.0f);
 }
 
 constexpr Matrix4 perspective(f64 fov_radians, f64 aspect, f64 z_near, f64 z_far) {
-	const f64 f = 1.0 / tan(fov_radians * 0.5);
+	const f32 f = 1.0 / tan(fov_radians * 0.5);
 
 	return Matrix4(
 		f / aspect,
-		0,
-		0,
-		0,
-		0,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.0f,
 		f,
-		0,
-		0,
-		0,
-		0,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.0f,
 		z_far / (z_near - z_far),
-		-1,
-		0,
-		0,
+		-1.0f,
+		0.0f,
+		0.0f,
 		(z_near * z_far) / (z_near - z_far),
-		0);
+		0.0f);
 }
 
 }  // namespace toki

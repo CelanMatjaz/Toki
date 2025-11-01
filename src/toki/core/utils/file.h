@@ -9,8 +9,8 @@ namespace toki {
 class File {
 public:
 	File() = default;
-	File(StringView path, FileMode mode, u32 flags = 0);
-	File(const Path& path, FileMode mode, u32 flags = 0);
+	File(StringView path, FileMode mode = FileMode::READ, u32 flags = 0);
+	File(const Path& path, FileMode mode = FileMode::READ, u32 flags = 0);
 	~File();
 
 	void seek(i64 pos, FileCursorStart start = FileCursorStart::CURRENT);

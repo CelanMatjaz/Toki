@@ -8,7 +8,7 @@
 namespace toki {
 
 constexpr u32 EVENT_ARENA_QUEUE_ELEMENT_COUNT = 1024;
-using EventQueue = toki::RingBuffer<Event, EVENT_ARENA_QUEUE_ELEMENT_COUNT>;
+using EventQueue							  = toki::RingBuffer<Event, EVENT_ARENA_QUEUE_ELEMENT_COUNT>;
 
 using EventFunction = void (&)(void* sender, void* listener, const Event& event);
 
