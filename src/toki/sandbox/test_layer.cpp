@@ -13,7 +13,6 @@ void TestLayer::on_attach() {
 	using namespace toki;
 
 	toki::Renderer* renderer = m_engine->renderer();
-	toki::Window* window	 = m_engine->window();
 
 	create_shader();
 	create_model();
@@ -25,28 +24,6 @@ void TestLayer::on_attach() {
 	m_cameraController.camera().set_position({ 0.5, 0.0, 0.5 });
 	m_cameraController.camera().set_rotation({ 0.0, 0.0, 0.0 });
 
-	toki::LoadFontConfig load_font_config{};
-	load_font_config.size		= 50;
-	load_font_config.atlas_size = { 512, 512 };
-	load_font_config.path		= "assets/fonts/RobotoMono-Regular.ttf";
-	load_font_config.renderer	= renderer;
-
-	const toki::String font_name = "Test font";
-	m_engine->system_manager()->font_system().load_font(font_name, load_font_config);
-
-	toki::FontSystem& font_system = m_engine->system_manager()->font_system();
-
-	m_font		   = font_system.get_font(font_name);
-	m_fontGeometry = font_system.generate_geometry(font_name, "This is a test");
-	m_fontGeometry.upload(renderer);
-
-	const Vector2u32 window_dimensions = window->get_dimensions();
-	TK_LOG_DEBUG("Window dimensions {}", window_dimensions);
-	m_projection2D = toki::ortho(0, window_dimensions.x, window_dimensions.y, 0, 0.0001, 100.0);
-	// m_projection2D[5] *= -1;
-	m_view2D = Matrix4();
-
-	create_font_resources();
 	setup_textures();
 
 	Uniform uniform{ {}, {}, {}, { 1.0, 1.0, 1.0 } };
@@ -54,12 +31,9 @@ void TestLayer::on_attach() {
 	uniform_buffer_config.size = sizeof(uniform);
 	uniform_buffer_config.type = BufferType::UNIFORM;
 	m_uniformBuffer			   = renderer->create_buffer(uniform_buffer_config);
-	m_fontUniformBuffer		   = renderer->create_buffer(uniform_buffer_config);
 	renderer->set_buffer_data(m_uniformBuffer, &uniform, sizeof(uniform));
-	renderer->set_buffer_data(m_fontUniformBuffer, &uniform, sizeof(uniform));
 
 	setup_uniforms(m_shaderLayout, m_texture, m_uniformBuffer);
-	setup_uniforms(m_fontShaderLayout, m_font->atlas_handle, m_fontUniformBuffer);
 }
 
 void TestLayer::on_detach() {
@@ -71,15 +45,18 @@ void TestLayer::on_detach() {
 	renderer->destroy_handle(m_shaderLayout);
 	renderer->destroy_handle(m_texture);
 	renderer->destroy_handle(m_sampler);
-
-	m_fontGeometry.free(renderer);
 }
 
 void TestLayer::on_render(toki::Commands* cmd) {
+	DynamicArray<RenderTarget> render_targets;
+	render_targets.emplace_back(TextureHandle{}, RenderTargetLoadOp::CLEAR, RenderTargetStoreOp::STORE);
+	RenderTarget depth_buffer{ m_depthBuffer, RenderTargetLoadOp::CLEAR, RenderTargetStoreOp::STORE };
+
 	toki::BeginPassConfig begin_pass_config{};
 	begin_pass_config.render_area_size		 = m_engine->window()->get_dimensions();
-	begin_pass_config.depth_buffer			 = m_depthBuffer;
+	begin_pass_config.depth_buffer			 = depth_buffer;
 	begin_pass_config.swapchain_target_index = 0;
+	begin_pass_config.render_targets = render_targets;
 
 	cmd->begin_pass(begin_pass_config);
 	cmd->bind_shader(m_shader);
@@ -88,10 +65,6 @@ void TestLayer::on_render(toki::Commands* cmd) {
 	cmd->bind_uniforms(m_shaderLayout);
 	cmd->draw_indexed(m_vertexCount);
 
-	cmd->bind_uniforms(m_fontShaderLayout);
-	cmd->bind_shader(m_fontShader);
-	m_fontGeometry.draw(cmd);
-
 	cmd->end_pass();
 }
 
@@ -99,6 +72,11 @@ void TestLayer::on_update(toki::f32 delta_time) {
 	using namespace toki;
 
 	toki::Renderer* renderer = m_engine->renderer();
+
+	m_textRotation += 30 * delta_time;
+	if (m_textRotation > 360) {
+		m_textRotation = 0;
+	}
 
 	m_cameraController.on_update(delta_time, m_engine->window());
 
@@ -110,11 +88,6 @@ void TestLayer::on_update(toki::f32 delta_time) {
 					 { m_color, m_color, m_color } };
 
 	renderer->set_buffer_data(m_uniformBuffer, &uniform, sizeof(Uniform));
-	uniform.projection = m_projection2D;
-	uniform.view	   = m_view2D;
-	uniform.model	   = Matrix4();
-	;
-	renderer->set_buffer_data(m_fontUniformBuffer, &uniform, sizeof(Uniform));
 
 	SetUniform set_uniform{};
 	set_uniform.handle.uniform_buffer = m_uniformBuffer;
@@ -143,8 +116,6 @@ void TestLayer::on_event([[maybe_unused]] toki::Window* window, [[maybe_unused]]
 		// m_camera.set_projection(ortho(half_width, -half_width, -half_height, half_height, 0.01, 100.0));
 		m_cameraController.camera().set_projection(
 			perspective(toki::radians(90.0), data.dimensions.x / static_cast<f32>(data.dimensions.y), 0.01, 1000.0));
-
-		m_projection2D = toki::ortho(0, data.dimensions.x, data.dimensions.y, 0, 0.0001, 100.0);
 
 		create_depth_buffer();
 	}
@@ -242,7 +213,6 @@ void TestLayer::setup_uniforms(
 	set_uniform_config.layout	= layout;
 	set_uniform_config.uniforms = uniforms_to_set;
 	renderer->set_uniforms(set_uniform_config);
-	renderer->set_buffer_data(m_fontUniformBuffer, &uniform, sizeof(uniform));
 }
 
 void TestLayer::setup_textures() {
@@ -290,48 +260,4 @@ void TestLayer::create_depth_buffer() {
 	texture_config.channels = 1;
 	texture_config.format	= ColorFormat::DEPTH_STENCIL;
 	m_depthBuffer			= renderer->create_texture(texture_config);
-}
-
-void TestLayer::create_font_resources() {
-	toki::Renderer* renderer = m_engine->renderer();
-
-	{
-		DynamicArray<UniformConfig> set0_uniforms;
-		// count, binding, type shader_stage_flags
-		set0_uniforms.emplace_back(1, 0, UniformType::UNIFORM_BUFFER, ShaderStageFlags::SHADER_STAGE_VERTEX);
-		set0_uniforms.emplace_back(1, 1, UniformType::TEXTURE_WITH_SAMPLER, ShaderStageFlags::SHADER_STAGE_FRAGMENT);
-
-		DynamicArray<UniformSetConfig> uniform_set_configs;
-		uniform_set_configs.emplace_back(set0_uniforms);
-
-		ShaderLayoutConfig shader_layout_config{};
-		shader_layout_config.uniform_sets = uniform_set_configs;
-
-		m_fontShaderLayout = renderer->create_shader_layout(shader_layout_config);
-	}
-
-	ColorFormat color_formats[1]{ ColorFormat::RGBA8 };
-
-	ResourceData vertex_shader	 = load_text("assets/shaders/font.glsl.vert");
-	ResourceData fragment_shader = load_text("assets/shaders/font.glsl.frag");
-
-	ShaderConfig shader_config{};
-	shader_config.color_formats				 = color_formats;
-	shader_config.depth_format				 = ColorFormat::DEPTH_STENCIL;
-	shader_config.layout_handle				 = m_shaderLayout;
-	shader_config.options.front_face		 = FrontFace::COUNTER_CLOCKWISE;
-	shader_config.options.primitive_topology = PrimitiveTopology::TRIANGLE_LIST;
-	shader_config.options.polygon_mode		 = PolygonMode::FILL;
-	shader_config.options.cull_mode			 = CullMode::NONE;
-	shader_config.options.depth_test_enable	 = false;
-	shader_config.options.depth_write_enable = true;
-	shader_config.options.depth_compare_op	 = CompareOp::LESS;
-	shader_config.options.enable_blending	 = true;
-	shader_config.bindings					 = FontVertex::vertex_bindings;
-	shader_config.attributes				 = FontVertex::vertex_attributes;
-	shader_config.sources[ShaderStageFlags::SHADER_STAGE_VERTEX] =
-		StringView(static_cast<char*>(vertex_shader.data), vertex_shader.size);
-	shader_config.sources[ShaderStageFlags::SHADER_STAGE_FRAGMENT] =
-		StringView(static_cast<char*>(fragment_shader.data), fragment_shader.size);
-	m_fontShader = renderer->create_shader(shader_config);
 }

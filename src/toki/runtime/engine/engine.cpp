@@ -67,8 +67,6 @@ void Engine::run() {
 		m_renderer->present();
 
 		m_renderer->frame_cleanup();
-
-		// break;
 	}
 
 	toki::println("Stopping application");

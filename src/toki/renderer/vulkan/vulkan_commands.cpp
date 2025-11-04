@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 
 #include "toki/renderer/commands.h"
+#include "toki/renderer/private/vulkan/vulkan_resources_utils.h"
 
 namespace toki {
 
@@ -24,15 +25,18 @@ void Commands::begin_pass(const BeginPassConfig& config) {
 	u32 attachment_count = config.render_targets.size() > 0 ? config.render_targets.size() : 1;
 	TempDynamicArray<VkRenderingAttachmentInfoKHR> rendering_attachments(attachment_count);
 	for (u32 i = 0; i < rendering_attachments.size(); i++) {
+		const RenderTarget& render_target = config.render_targets[i];
+
 		TK_ASSERT(
 			i == config.swapchain_target_index.value_or(~static_cast<u32>(0)) ||
-			STATE->textures.exists(config.render_targets[i]));
+			STATE->textures.exists(render_target.handle));
+
 		VkRenderingAttachmentInfoKHR& rendering_attachment_info = rendering_attachments[i] = {};
 		rendering_attachment_info.sType						  = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 		rendering_attachment_info.imageLayout				  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		rendering_attachment_info.resolveMode				  = VK_RESOLVE_MODE_NONE;
-		rendering_attachment_info.loadOp					  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		rendering_attachment_info.storeOp					  = VK_ATTACHMENT_STORE_OP_STORE;
+		rendering_attachment_info.loadOp					  = get_attachment_load_op(render_target.load_op);
+		rendering_attachment_info.storeOp					  = get_attachment_store_op(render_target.store_op);
 		rendering_attachment_info.clearValue.color.float32[0] = 1.0f;
 		rendering_attachment_info.clearValue.color.float32[1] = 1.0f;
 		rendering_attachment_info.clearValue.color.float32[2] = 1.0f;
@@ -40,19 +44,20 @@ void Commands::begin_pass(const BeginPassConfig& config) {
 		if (config.swapchain_target_index.has_value()) {
 			rendering_attachment_info.imageView = STATE->swapchain.get_current_image().image_view();
 		} else {
-			rendering_attachment_info.imageView = STATE->textures.at(config.render_targets[i]).image_view();
+			rendering_attachment_info.imageView = STATE->textures.at(render_target.handle).image_view();
 		}
 	}
 
 	VkRenderingAttachmentInfoKHR depth_buffer_attachment_info{};
 	if (config.depth_buffer.has_value()) {
-		TK_ASSERT(STATE->textures.exists(config.depth_buffer.value()));
-		depth_buffer_attachment_info.sType		 = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-		depth_buffer_attachment_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-		depth_buffer_attachment_info.resolveMode = VK_RESOLVE_MODE_NONE;
-		depth_buffer_attachment_info.loadOp		 = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depth_buffer_attachment_info.storeOp	 = VK_ATTACHMENT_STORE_OP_STORE;
-		depth_buffer_attachment_info.imageView	 = STATE->textures.at(config.depth_buffer.value()).image_view();
+		const RenderTarget& depth_buffer = config.depth_buffer.value();
+		TK_ASSERT(STATE->textures.exists(depth_buffer.handle));
+		depth_buffer_attachment_info.sType					 = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		depth_buffer_attachment_info.imageLayout			 = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+		depth_buffer_attachment_info.resolveMode			 = VK_RESOLVE_MODE_NONE;
+		depth_buffer_attachment_info.loadOp					 = get_attachment_load_op(depth_buffer.load_op);
+		depth_buffer_attachment_info.storeOp				 = get_attachment_store_op(depth_buffer.store_op);
+		depth_buffer_attachment_info.imageView				 = STATE->textures.at(depth_buffer.handle).image_view();
 		depth_buffer_attachment_info.clearValue.depthStencil = { 1.0f, 0 };
 		rendering_info.pDepthAttachment						 = &depth_buffer_attachment_info;
 	}

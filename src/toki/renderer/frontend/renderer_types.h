@@ -171,6 +171,17 @@ enum struct UniformType {
 	TEXTURE_WITH_SAMPLER
 };
 
+enum struct RenderTargetLoadOp {
+	CLEAR,
+	LOAD,
+	DONT_CARE
+};
+
+enum struct RenderTargetStoreOp {
+	STORE,
+	DONT_CARE
+};
+
 struct UniformConfig {
 	u32 count = 1;
 	u32 binding;
@@ -240,10 +251,16 @@ struct SetUniformConfig {
 	Span<SetUniform> uniforms;
 };
 
+struct RenderTarget {
+	TextureHandle handle;
+	RenderTargetLoadOp load_op	 = RenderTargetLoadOp::DONT_CARE;
+	RenderTargetStoreOp store_op = RenderTargetStoreOp::DONT_CARE;
+};
+
 struct BeginPassConfig {
 	Vector2u32 render_area_size;
-	toki::Span<TextureHandle> render_targets;
-	toki::Optional<TextureHandle> depth_buffer;
+	toki::Span<RenderTarget> render_targets;
+	toki::Optional<RenderTarget> depth_buffer;
 	toki::Optional<u32> swapchain_target_index;
 };
 

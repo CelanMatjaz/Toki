@@ -269,4 +269,25 @@ VkShaderStageFlags get_shader_stage_flags(u32 flags) {
 	return flags_out;
 }
 
+VkAttachmentLoadOp get_attachment_load_op(RenderTargetLoadOp op) {
+	switch (op) {
+		case RenderTargetLoadOp::CLEAR:
+			return VK_ATTACHMENT_LOAD_OP_CLEAR;
+		case RenderTargetLoadOp::LOAD:
+			return VK_ATTACHMENT_LOAD_OP_LOAD;
+		case RenderTargetLoadOp::DONT_CARE:
+			return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			break;
+	}
+}
+
+VkAttachmentStoreOp get_attachment_store_op(RenderTargetStoreOp op) {
+	switch (op) {
+		case RenderTargetStoreOp::STORE:
+			return VK_ATTACHMENT_STORE_OP_STORE;
+		case RenderTargetStoreOp::DONT_CARE:
+			return VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	}
+}
+
 }  // namespace toki

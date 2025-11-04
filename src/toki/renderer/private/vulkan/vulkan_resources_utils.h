@@ -24,5 +24,7 @@ VkSamplerAddressMode get_address_mode(SamplerAddressMode address_mode);
 VkFilter get_filter(SamplerFilter filter);
 VkDescriptorType get_descriptor_type(UniformType type);
 VkShaderStageFlags get_shader_stage_flags(u32 flags);
+VkAttachmentLoadOp get_attachment_load_op(RenderTargetLoadOp op);
+VkAttachmentStoreOp get_attachment_store_op(RenderTargetStoreOp op);
 
 }  // namespace toki

@@ -16,7 +16,6 @@ public:
 	void create_model();
 	void setup_textures();
 	void create_depth_buffer();
-	void create_font_resources();
 	void setup_uniforms(
 		const toki::ShaderLayoutHandle layout,
 		const toki::TextureHandle texture,
@@ -32,19 +31,13 @@ private:
 	toki::TextureHandle m_depthBuffer;
 	toki::SamplerHandle m_sampler;
 
-	toki::BufferHandle m_fontUniformBuffer;
-	toki::ShaderLayoutHandle m_fontShaderLayout;
-	toki::ShaderHandle m_fontShader;
-
 	toki::u32 m_vertexCount = 0;
 	toki::f32 m_imageScale	= 1.0;
 	toki::f32 m_offset		= 1;
 	toki::f32 m_color		= 0.5;
 
-	toki::ConstWrapper<toki::Font> m_font;
-	toki::Geometry m_fontGeometry;
+	toki::f32 m_textRotation = 0.0f;
+
 
 	toki::FreeFlightCameraController m_cameraController;
-	toki::Matrix4 m_view2D;
-	toki::Matrix4 m_projection2D;
 };
