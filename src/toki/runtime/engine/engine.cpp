@@ -39,7 +39,7 @@ void Engine::run() {
 				continue;
 			}
 			for (i32 i = static_cast<i32>(m_layers.size() - 1); i >= 0; i--) {
-				m_layers[static_cast<u32>(i)]->on_event(m_window.get(), event);
+				m_layers[static_cast<u32>(i)]->on_event(event);
 				if (event.handled()) {
 					break;
 				}
@@ -53,17 +53,14 @@ void Engine::run() {
 
 		m_renderer->frame_prepare();
 
-		auto commands = m_renderer->get_commands();
-
 		for (i32 i = static_cast<i32>(m_layers.size() - 1); i >= 0; i--) {
 			m_layers[static_cast<u32>(i)]->on_update(delta_time);
 		}
 
 		for (i32 i = static_cast<i32>(m_layers.size() - 1); i >= 0; i--) {
-			m_layers[static_cast<u32>(i)]->on_render(commands);
+			m_layers[static_cast<u32>(i)]->on_render();
 		}
 
-		m_renderer->submit(commands);
 		m_renderer->present();
 
 		m_renderer->frame_cleanup();
@@ -75,7 +72,7 @@ void Engine::run() {
 void Engine::attach_layer(UniquePtr<Layer>&& layer) {
 	layer->m_engine = this;
 	layer->on_attach();
-	m_layers.push_back(toki::move(layer));
+	m_layers.emplace_back(toki::move(layer));
 }
 
 void Engine::cleanup() {

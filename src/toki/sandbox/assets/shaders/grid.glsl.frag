@@ -85,7 +85,7 @@ void main() {
         }
     }
 
-    float opacity_falloff = (1.0 - satf(length(in_world_position.xz - ubo.position.xz) / ggridsize));
+    float opacity_falloff = (1.0 - satf(length(in_world_position.xz - ubo.position.xz) / GRID_SIZE));
     color.a *= opacity_falloff;
 
     out_color = color;

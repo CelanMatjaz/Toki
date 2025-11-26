@@ -54,6 +54,10 @@ struct MemoryAllocateConfig {
 
 struct CommandPoolConfig {};
 
+struct SemaphoreConfig {
+	VkPipelineStageFlags stage_flags = 0;
+};
+
 struct DescriptorPoolConfig {
 	Span<VkDescriptorPoolSize> pool_sizes;
 	u32 max_sets = 1;
@@ -79,6 +83,8 @@ struct VulkanSwapchainConfig {
 struct StagingBufferConfig {
 	u32 size;
 };
+
+struct VulkanCommandsConfig {};
 
 struct VulkanSettings {
 	u64 flags = 0;

@@ -26,6 +26,14 @@ public:
 
 	VulkanTexture& get_current_image() const;
 
+	VkSwapchainKHR swapchain() const {
+		return m_swapchain;
+	}
+
+	u32 image_index() const {
+		return m_currentImageIndex;
+	}
+
 	operator VkFormat() const {
 		return m_surfaceFormat.format;
 	}
@@ -233,6 +241,7 @@ struct VulkanCommandBuffer {
 	void begin(VkCommandBufferUsageFlags flags = 0);
 	void end();
 	void reset();
+	void free(const VulkanState& state);
 };
 
 struct VulkanCommandPool {
@@ -247,32 +256,78 @@ public:
 	VulkanCommandBuffer begin_single_time_submit_command_buffer(const VulkanState& state) const;
 	void submit_single_time_submit_command_buffer(const VulkanState& state, VulkanCommandBuffer command_buffer) const;
 
+	VkCommandPool command_pool() const {
+		return m_commandPool;
+	}
+
 private:
 	VkCommandPool m_commandPool;
 };
 
+struct VulkanFence {
+	static VulkanFence create(b8 signaled, const VulkanState& state);
+	void destroy(const VulkanState& state);
+
+	void wait(const VulkanState& state, u64 timeout = U64_MAX);
+	void reset(const VulkanState& state);
+
+	VkFence fence() const {
+		return m_fence;
+	}
+
+	operator VkFence() const {
+		return m_fence;
+	}
+
+private:
+	VkFence m_fence;
+};
+
+struct VulkanSemaphore {
+	static VulkanSemaphore create(const SemaphoreConfig& config, const VulkanState& state);
+	void destroy(const VulkanState& state);
+
+	VkSemaphore semaphore() const {
+		return m_semaphore;
+	}
+
+	VkPipelineStageFlags stage_flags() const {
+		return m_stageFlags;
+	}
+
+	operator VkSemaphore() const {
+		return m_semaphore;
+	}
+
+private:
+	VkSemaphore m_semaphore;
+	VkPipelineStageFlags m_stageFlags;
+};
+
 struct VulkanFrames {
 public:
-	static VulkanFrames create(const VulkanState& state);
+	static VulkanFrames create(VulkanState& state);
 	void destroy(const VulkanState& state);
 
 	void frame_prepare(VulkanState& state);
-	void frame_present(VulkanState& state);
 	void frame_cleanup(VulkanState& state);
-	b8 submit(const VulkanState& state, toki::Span<VulkanCommandBuffer> command_buffers);
 
-	VkSemaphore get_image_available_semaphore() const;
-	VkSemaphore get_render_finished_semaphore() const;
-	VkFence get_in_flight_fence() const;
+	VulkanSemaphore get_image_available_semaphore(const VulkanState& state) const;
+	VulkanSemaphore get_render_finished_semaphore(const VulkanState& state) const;
+	VulkanFence get_in_flight_fence(const VulkanState& state) const;
+
+	SemaphoreHandle get_image_available_semaphore_handle() const;
+	SemaphoreHandle get_render_finished_semaphore_handle() const;
+	FenceHandle get_in_flight_fence_handle() const;
 
 private:
 	void increment_frame();
 
 	u32 m_currentFrame{};
 
-	Array<VkSemaphore, MAX_FRAMES_IN_FLIGHT> m_imageAvailableSemaphores;
-	Array<VkSemaphore, MAX_FRAMES_IN_FLIGHT> m_renderFinishedSemaphores;
-	Array<VkFence, MAX_FRAMES_IN_FLIGHT> m_inFlightFences;
+	Array<SemaphoreHandle, MAX_FRAMES_IN_FLIGHT> m_imageAvailableSemaphoreHandles;
+	Array<SemaphoreHandle, MAX_FRAMES_IN_FLIGHT> m_renderFinishedSemaphoreHandles;
+	Array<FenceHandle, MAX_FRAMES_IN_FLIGHT> m_inFlightFenceHandles;
 };
 
 struct VulkanDescriptorPool {

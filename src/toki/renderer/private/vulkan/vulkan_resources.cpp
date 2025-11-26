@@ -7,7 +7,6 @@
 #include <toki/renderer/private/vulkan/vulkan_utils.h>
 #include <toki/renderer/types.h>
 #include <vulkan/vulkan.h>
-#include <vulkan/vulkan_core.h>
 
 namespace toki {
 
@@ -111,8 +110,8 @@ void VulkanSwapchain::acquire_next_image(const VulkanState& state) {
 	VkResult result = vkAcquireNextImageKHR(
 		state.logical_device,
 		m_swapchain,
-		~static_cast<u64>(0),
-		state.frames.get_image_available_semaphore(),
+		U64_MAX,
+		state.frames.get_image_available_semaphore(state).semaphore(),
 		VK_NULL_HANDLE,
 		&m_currentImageIndex);
 
@@ -191,6 +190,7 @@ void VulkanShaderLayout::create_descriptor_set_layout(
 	descriptor_set_layout_info.sType		= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	descriptor_set_layout_info.bindingCount = static_cast<u32>(layout_bindinds.size());
 	descriptor_set_layout_info.pBindings	= layout_bindinds.data();
+	descriptor_set_layout_info.flags		= VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
 
 	VkDescriptorSetLayout descriptor_set_layout;
 	VkResult result = vkCreateDescriptorSetLayout(
@@ -566,7 +566,7 @@ VulkanShader VulkanShader::create(const ShaderConfig& config, const VulkanState&
 	graphics_pipeline_create_info.sType				  = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	graphics_pipeline_create_info.pNext				  = &pipeline_rendering_create_info;
 	graphics_pipeline_create_info.stageCount		  = shader_stage_create_infos.size();
-	graphics_pipeline_create_info.pStages			  = shader_stage_create_infos;
+	graphics_pipeline_create_info.pStages			  = shader_stage_create_infos.data();
 	graphics_pipeline_create_info.pVertexInputState	  = &vertex_input_state_create_info;
 	graphics_pipeline_create_info.pInputAssemblyState = &input_assembly_state_create_info;
 	graphics_pipeline_create_info.pRasterizationState = &rasterization_state_create_info;
@@ -929,6 +929,10 @@ void VulkanCommandBuffer::reset() {
 	this->m_state = CommandBufferState::INITIAL;
 }
 
+void VulkanCommandBuffer::free(const VulkanState& state) {
+	vkFreeCommandBuffers(state.logical_device, state.command_pool.command_pool(), 1, &m_commandBuffer);
+}
+
 VulkanCommandPool VulkanCommandPool::create(
 	[[maybe_unused]] const CommandPoolConfig& config, const VulkanState& state) {
 	VulkanCommandPool command_pool{};
@@ -1005,35 +1009,15 @@ void VulkanCommandPool::submit_single_time_submit_command_buffer(
 	free_command_buffers(state, command_buffers);
 }
 
-VulkanFrames VulkanFrames::create(const VulkanState& state) {
+VulkanFrames VulkanFrames::create(VulkanState& state) {
 	VulkanFrames vulkan_frames{};
 
-	VkFenceCreateInfo fence_create_info{};
-	fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-	fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-	VkSemaphoreCreateInfo semaphore_create_info{};
-	semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-	VkResult result = VK_SUCCESS;
 	for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		result = vkCreateFence(
-			state.logical_device, &fence_create_info, state.allocation_callbacks, &vulkan_frames.m_inFlightFences[i]);
-		TK_ASSERT(result == VK_SUCCESS);
-
-		result = vkCreateSemaphore(
-			state.logical_device,
-			&semaphore_create_info,
-			state.allocation_callbacks,
-			&vulkan_frames.m_imageAvailableSemaphores[i]);
-		TK_ASSERT(result == VK_SUCCESS);
-
-		result = vkCreateSemaphore(
-			state.logical_device,
-			&semaphore_create_info,
-			state.allocation_callbacks,
-			&vulkan_frames.m_renderFinishedSemaphores[i]);
-		TK_ASSERT(result == VK_SUCCESS);
+		vulkan_frames.m_inFlightFenceHandles[i] = { state.fences.emplace_at_first(VulkanFence::create(true, state)) };
+		vulkan_frames.m_imageAvailableSemaphoreHandles[i] = { state.semaphores.emplace_at_first(
+			VulkanSemaphore::create({ .stage_flags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT }, state)) };
+		vulkan_frames.m_renderFinishedSemaphoreHandles[i] = { state.semaphores.emplace_at_first(
+			VulkanSemaphore::create({ .stage_flags = 0 }, state)) };
 	}
 
 	return vulkan_frames;
@@ -1041,17 +1025,22 @@ VulkanFrames VulkanFrames::create(const VulkanState& state) {
 
 void VulkanFrames::destroy(const VulkanState& state) {
 	for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		vkDestroySemaphore(state.logical_device, m_renderFinishedSemaphores[i], state.allocation_callbacks);
-		vkDestroySemaphore(state.logical_device, m_imageAvailableSemaphores[i], state.allocation_callbacks);
-		vkDestroyFence(state.logical_device, m_inFlightFences[i], state.allocation_callbacks);
+		state.fences.at(m_inFlightFenceHandles[i]).destroy(state);
+		state.semaphores.at(m_imageAvailableSemaphoreHandles[i]).destroy(state);
+		state.semaphores.at(m_renderFinishedSemaphoreHandles[i]).destroy(state);
 	}
 }
 
 void VulkanFrames::frame_prepare(VulkanState& state) {
-	vkWaitForFences(state.logical_device, 1, &m_inFlightFences[m_currentFrame], VK_TRUE, ~static_cast<u64>(0));
-	vkResetFences(state.logical_device, 1, &m_inFlightFences[m_currentFrame]);
+	VkFence fence = get_in_flight_fence(state).fence();
+
+	VkResult result = vkWaitForFences(state.logical_device, 1, &fence, VK_TRUE, U64_MAX);
+	TK_ASSERT(result == VK_SUCCESS);
 
 	state.swapchain.acquire_next_image(state);
+
+	result = vkResetFences(state.logical_device, 1, &fence);
+	TK_ASSERT(result == VK_SUCCESS);
 }
 
 void VulkanFrames::frame_cleanup(VulkanState& state) {
@@ -1059,79 +1048,28 @@ void VulkanFrames::frame_cleanup(VulkanState& state) {
 	increment_frame();
 }
 
-b8 VulkanFrames::submit(const VulkanState& state, toki::Span<VulkanCommandBuffer> command_buffers) {
-	VkSemaphore wait_semaphores[]	= { get_image_available_semaphore() };
-	VkSemaphore signal_semaphores[] = { get_render_finished_semaphore() };
-
-	if (command_buffers.size() == 0) {
-		VkSemaphoreWaitInfo semaphore_wait_info{};
-		semaphore_wait_info.sType		   = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
-		semaphore_wait_info.pSemaphores	   = wait_semaphores;
-		semaphore_wait_info.semaphoreCount = ARRAY_SIZE(wait_semaphores);
-		VkResult result = vkWaitSemaphores(state.logical_device, &semaphore_wait_info, ~static_cast<u64>(0));
-		TK_ASSERT(result == VK_SUCCESS);
-
-		VkSemaphoreSignalInfo semaphore_signal_info{};
-		semaphore_signal_info.sType		= VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO;
-		semaphore_signal_info.semaphore = get_render_finished_semaphore();
-		result							= vkSignalSemaphore(state.logical_device, &semaphore_signal_info);
-		TK_ASSERT(result == VK_SUCCESS);
-
-		result = vkQueueSubmit(state.graphics_queue, 0, nullptr, get_in_flight_fence());
-		TK_ASSERT(result == VK_SUCCESS);
-
-		return false;
-	}
-
-	VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-
-	TempDynamicArray<VkCommandBuffer> to_submit_command_buffers(command_buffers.size());
-	for (u32 i = 0; i < command_buffers.size(); i++) {
-		to_submit_command_buffers[i] = command_buffers[i].m_commandBuffer;
-	}
-
-	VkSubmitInfo submit_info{};
-	submit_info.sType				 = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submit_info.waitSemaphoreCount	 = 1;
-	submit_info.pWaitSemaphores		 = wait_semaphores;
-	submit_info.pWaitDstStageMask	 = wait_stages;
-	submit_info.commandBufferCount	 = to_submit_command_buffers.size();
-	submit_info.pCommandBuffers		 = to_submit_command_buffers.data();
-	submit_info.signalSemaphoreCount = 1;
-	submit_info.pSignalSemaphores	 = signal_semaphores;
-
-	VkResult result = vkQueueSubmit(state.graphics_queue, 1, &submit_info, get_in_flight_fence());
-	TK_ASSERT(result == VK_SUCCESS);
-
-	return true;
+VulkanSemaphore VulkanFrames::get_image_available_semaphore(const VulkanState& state) const {
+	return state.semaphores.at(m_imageAvailableSemaphoreHandles[m_currentFrame]);
 }
 
-void VulkanFrames::frame_present(VulkanState& state) {
-	VkSemaphore signal_semaphores[] = { get_render_finished_semaphore() };
-	VkSwapchainKHR swapchains[]		= { state.swapchain.m_swapchain };
-
-	VkPresentInfoKHR present_info{};
-	present_info.sType				= VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	present_info.waitSemaphoreCount = 1;
-	present_info.pWaitSemaphores	= signal_semaphores;
-	present_info.swapchainCount		= 1;
-	present_info.pSwapchains		= swapchains;
-	present_info.pImageIndices		= &state.swapchain.m_currentImageIndex;
-
-	VkResult result = vkQueuePresentKHR(state.present_queue, &present_info);
-	TK_ASSERT(result == VK_SUCCESS);
+VulkanSemaphore VulkanFrames::get_render_finished_semaphore(const VulkanState& state) const {
+	return state.semaphores.at(m_renderFinishedSemaphoreHandles[m_currentFrame]);
 }
 
-VkSemaphore VulkanFrames::get_image_available_semaphore() const {
-	return m_imageAvailableSemaphores[m_currentFrame];
+VulkanFence VulkanFrames::get_in_flight_fence(const VulkanState& state) const {
+	return state.fences.at(m_inFlightFenceHandles[m_currentFrame]);
 }
 
-VkSemaphore VulkanFrames::get_render_finished_semaphore() const {
-	return m_renderFinishedSemaphores[m_currentFrame];
+SemaphoreHandle VulkanFrames::get_image_available_semaphore_handle() const {
+	return m_imageAvailableSemaphoreHandles[m_currentFrame];
 }
 
-VkFence VulkanFrames::get_in_flight_fence() const {
-	return m_inFlightFences[m_currentFrame];
+SemaphoreHandle VulkanFrames::get_render_finished_semaphore_handle() const {
+	return m_renderFinishedSemaphoreHandles[m_currentFrame];
+}
+
+FenceHandle VulkanFrames::get_in_flight_fence_handle() const {
+	return m_inFlightFenceHandles[m_currentFrame];
 }
 
 void VulkanFrames::increment_frame() {
@@ -1146,6 +1084,7 @@ VulkanDescriptorPool VulkanDescriptorPool::create(const DescriptorPoolConfig& co
 	descriptor_pool_create_info.poolSizeCount = static_cast<u32>(config.pool_sizes.size());
 	descriptor_pool_create_info.pPoolSizes	  = config.pool_sizes.data();
 	descriptor_pool_create_info.maxSets		  = config.max_sets;
+	descriptor_pool_create_info.flags		  = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
 
 	VkResult result = vkCreateDescriptorPool(
 		state.logical_device,
@@ -1159,6 +1098,49 @@ VulkanDescriptorPool VulkanDescriptorPool::create(const DescriptorPoolConfig& co
 
 void VulkanDescriptorPool::destroy(const VulkanState& state) {
 	vkDestroyDescriptorPool(state.logical_device, m_descriptorPool, state.allocation_callbacks);
+}
+
+VulkanFence VulkanFence::create(b8 signaled, const VulkanState& state) {
+	VulkanFence fence{};
+
+	VkFenceCreateInfo fence_create_info{};
+	fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	fence_create_info.flags = signaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
+	VkResult result =
+		vkCreateFence(state.logical_device, &fence_create_info, state.allocation_callbacks, &fence.m_fence);
+	TK_ASSERT(result == VK_SUCCESS);
+
+	return fence;
+}
+
+void VulkanFence::destroy(const VulkanState& state) {
+	vkDestroyFence(state.logical_device, m_fence, state.allocation_callbacks);
+}
+
+void VulkanFence::wait(const VulkanState& state, u64 timeout) {
+	vkWaitForFences(state.logical_device, 1, &m_fence, VK_TRUE, timeout);
+}
+
+void VulkanFence::reset(const VulkanState& state) {
+	vkResetFences(state.logical_device, 1, &m_fence);
+}
+
+VulkanSemaphore VulkanSemaphore::create(const SemaphoreConfig& config, const VulkanState& state) {
+	VulkanSemaphore semaphore{};
+	semaphore.m_stageFlags = config.stage_flags;
+
+	VkSemaphoreCreateInfo semaphore_create_info{};
+	semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	semaphore_create_info.flags = 0;
+	VkResult result				= vkCreateSemaphore(
+		state.logical_device, &semaphore_create_info, state.allocation_callbacks, &semaphore.m_semaphore);
+	TK_ASSERT(result == VK_SUCCESS);
+
+	return semaphore;
+}
+
+void VulkanSemaphore::destroy(const VulkanState& state) {
+	vkDestroySemaphore(state.logical_device, m_semaphore, state.allocation_callbacks);
 }
 
 }  // namespace toki

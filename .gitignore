@@ -11,4 +11,6 @@ build/*
 **/*.vcxproj*
 **.sln
 
+vendor/*
+
 compile_commands.json

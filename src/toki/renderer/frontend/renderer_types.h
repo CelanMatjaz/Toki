@@ -11,6 +11,9 @@ struct ShaderLayoutHandle : public Handle {};
 struct BufferHandle : public Handle {};
 struct TextureHandle : public Handle {};
 struct SamplerHandle : public Handle {};
+struct CommandsHandle : public Handle {};
+struct SemaphoreHandle : public Handle {};
+struct FenceHandle : public Handle {};
 
 enum struct ColorFormat : u16 {
 	NONE,
@@ -262,6 +265,12 @@ struct BeginPassConfig {
 	toki::Span<RenderTarget> render_targets;
 	toki::Optional<RenderTarget> depth_buffer;
 	toki::Optional<u32> swapchain_target_index;
+};
+
+struct SubmitOptions {
+	toki::Span<SemaphoreHandle> wait_semaphores;
+	toki::Span<SemaphoreHandle> signal_semaphores;
+	FenceHandle signal_fence;
 };
 
 }  // namespace toki

@@ -8,8 +8,8 @@ public:
 	virtual void on_attach() override;
 	virtual void on_detach() override;
 	virtual void on_update(toki::f32 delta_time) override;
-	virtual void on_render(toki::Commands* commands) override;
-	virtual void on_event(toki::Window* window, toki::Event& event) override;
+	virtual void on_render() override;
+	virtual void on_event(toki::Event& event) override;
 
 	void create_font_resources();
 	void create_font_shader_handle();

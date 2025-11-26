@@ -11,6 +11,8 @@ public:
 	void on_update(f32 delta_time, const Window* window);
 	void on_event(toki::Event& event);
 
+	const Vector3& position() const;
+
 private:
 	Camera m_camera;
 	Vector3 m_position{};

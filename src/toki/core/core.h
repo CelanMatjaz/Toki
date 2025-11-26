@@ -15,6 +15,7 @@
 #include <toki/core/common/const_wrapper.h>
 #include <toki/core/common/defines.h>
 #include <toki/core/common/expected.h>
+#include <toki/core/common/function.h>
 #include <toki/core/common/log.h>
 #include <toki/core/common/macros.h>
 #include <toki/core/common/optional.h>

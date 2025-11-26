@@ -64,6 +64,10 @@ public:
 		}
 	}
 
+	void grow(u64 size) {
+		resize(m_size + size);
+	}
+
 	void reserve(u64 new_capacity) {
 		if (new_capacity <= m_capacity) {
 			return;
@@ -123,22 +127,9 @@ public:
 		return m_data[m_size - 1];
 	}
 
-	operator T*() const {
-		return m_data;
-	}
-
-	operator const T*() const {
-		return m_data;
-	}
-
 	void push_back(const T& value) {
 		maybe_allocate_for_new_element();
 		m_data[m_size++] = value;
-	}
-
-	void push_back(T&& value) {
-		maybe_allocate_for_new_element();
-		m_data[m_size++] = toki::move(value);
 	}
 
 	template <typename... Args>

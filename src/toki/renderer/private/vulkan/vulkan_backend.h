@@ -36,10 +36,6 @@ private:
 	VulkanState m_state{};
 	VulkanSettings m_settings{};
 	Window* m_window;
-	TempDynamicArray<Commands*> m_toSubmitCommands;
-	// TODO(Matjaž): remove
-	Commands m_tempCommands;
-	VulkanCommandsData m_tempCommandsData;
 };
 
 }  // namespace toki

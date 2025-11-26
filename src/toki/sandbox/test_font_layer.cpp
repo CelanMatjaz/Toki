@@ -41,23 +41,25 @@ void TestFontLayer::on_update(toki::f32 delta_time) {
 	renderer->set_buffer_data(m_fontUniformBuffer, &uniform, sizeof(Uniform));
 }
 
-void TestFontLayer::on_render(toki::Commands* cmd) {
-	DynamicArray<RenderTarget> render_targets;
-	render_targets.emplace_back(TextureHandle{}, RenderTargetLoadOp::LOAD, RenderTargetStoreOp::STORE);
+void TestFontLayer::on_render() {
+	m_engine->renderer()->submit([this](toki::Commands* cmd) {
+		DynamicArray<RenderTarget> render_targets;
+		render_targets.emplace_back(TextureHandle{}, RenderTargetLoadOp::LOAD, RenderTargetStoreOp::STORE);
 
-	toki::BeginPassConfig begin_pass_config{};
-	begin_pass_config.render_area_size		 = m_engine->window()->get_dimensions();
-	begin_pass_config.swapchain_target_index = 0;
-	begin_pass_config.render_targets		 = render_targets;
+		toki::BeginPassConfig begin_pass_config{};
+		begin_pass_config.render_area_size		 = m_engine->window()->get_dimensions();
+		begin_pass_config.swapchain_target_index = 0;
+		begin_pass_config.render_targets		 = render_targets;
 
-	cmd->begin_pass(begin_pass_config);
-	cmd->bind_shader(m_fontShader);
-	cmd->bind_uniforms(m_fontShaderLayout);
-	m_fontGeometry.draw(cmd);
-	cmd->end_pass();
+		cmd->begin_pass(begin_pass_config);
+		cmd->bind_shader(m_fontShader);
+		cmd->bind_uniforms(m_fontShaderLayout);
+		m_fontGeometry.draw(cmd);
+		cmd->end_pass();
+	});
 }
 
-void TestFontLayer::on_event(toki::Window* window, toki::Event& event) {
+void TestFontLayer::on_event(toki::Event& event) {
 	if (event.has_type(EventType::WINDOW_RESIZE)) {
 		auto data	   = event.data().window;
 		m_projection2D = toki::ortho(0, data.dimensions.x, data.dimensions.y, 0, 0.0001, 100.0);

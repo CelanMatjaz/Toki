@@ -17,7 +17,7 @@ b8 is_depth_format(VkFormat format) {
 }
 
 b8 is_valid_extent(const VkExtent2D& extent) {
-	return extent.width != static_cast<u32>(-1) && extent.height != static_cast<u32>(-1);
+	return extent.width != U32_MAX && extent.height != U32_MAX;
 }
 
 VkImageView create_image_view(const ImageViewConfig& config, const VulkanState& state) {
@@ -228,7 +228,7 @@ VkSurfaceFormatKHR query_surface_formats(const VulkanState& state, VkSurfaceKHR 
 }
 
 VkExtent2D query_surface_extent(VkSurfaceCapabilitiesKHR surface_capabilities, const Window* window) {
-	if (surface_capabilities.currentExtent.width != static_cast<u32>(-1)) {
+	if (surface_capabilities.currentExtent.width != U32_MAX) {
 		return surface_capabilities.currentExtent;
 	}
 
@@ -279,6 +279,8 @@ VkAttachmentLoadOp get_attachment_load_op(RenderTargetLoadOp op) {
 			return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			break;
 	}
+
+	TK_UNREACHABLE();
 }
 
 VkAttachmentStoreOp get_attachment_store_op(RenderTargetStoreOp op) {
@@ -288,6 +290,8 @@ VkAttachmentStoreOp get_attachment_store_op(RenderTargetStoreOp op) {
 		case RenderTargetStoreOp::DONT_CARE:
 			return VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	}
+
+	TK_UNREACHABLE();
 }
 
 }  // namespace toki

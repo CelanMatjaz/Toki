@@ -9,8 +9,8 @@ public:
 	virtual void on_attach() override;
 	virtual void on_detach() override;
 	virtual void on_update(toki::f32 delta_time) override;
-	virtual void on_render(toki::Commands* commands) override;
-	virtual void on_event(toki::Window* window, toki::Event& event) override;
+	virtual void on_render() override;
+	virtual void on_event( toki::Event& event) override;
 
 	void create_shader();
 	void create_model();
@@ -20,6 +20,7 @@ public:
 		const toki::ShaderLayoutHandle layout,
 		const toki::TextureHandle texture,
 		const toki::BufferHandle uniform_buffer);
+	void create_grid_resources();
 
 private:
 	toki::ShaderHandle m_shader;
@@ -31,13 +32,14 @@ private:
 	toki::TextureHandle m_depthBuffer;
 	toki::SamplerHandle m_sampler;
 
+	toki::ShaderHandle m_gridShader;
+
 	toki::u32 m_vertexCount = 0;
 	toki::f32 m_imageScale	= 1.0;
 	toki::f32 m_offset		= 1;
 	toki::f32 m_color		= 0.5;
 
 	toki::f32 m_textRotation = 0.0f;
-
 
 	toki::FreeFlightCameraController m_cameraController;
 };

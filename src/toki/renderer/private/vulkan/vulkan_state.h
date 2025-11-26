@@ -30,8 +30,10 @@ struct VulkanState {
 	// Commands
 	VulkanCommandPool command_pool;
 	VulkanCommandPool temporary_command_pool;
-	// UniquePtr<VulkanCommands> commands;
-	// PersistentDynamicArray<CommandBuffer> command_buffers;
+	VkFence submit_fence;
+	VulkanFence signal_fence;
+	SemaphoreHandle queued_commands_semaphore;
+	PersistentDynamicArray<VulkanCommandBuffer> queued_command_buffers;
 
 	// Resources
 	VulkanDescriptorPool descriptor_pool;
@@ -41,6 +43,9 @@ struct VulkanState {
 	PersistentArena<VulkanBuffer, 16> buffers;
 	PersistentArena<VulkanTexture, 256> textures;
 	PersistentArena<VulkanSampler, 4> samplers;
+	PersistentArena<VulkanCommandBuffer, 64> commands;
+	PersistentArena<VulkanSemaphore, 16> semaphores;
+	PersistentArena<VulkanFence, 16> fences;
 };
 
 }  // namespace toki

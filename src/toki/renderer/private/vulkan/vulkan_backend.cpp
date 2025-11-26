@@ -52,11 +52,10 @@ void VulkanBackend::initialize(const RendererConfig& config) {
 	descriptor_pool_config.pool_sizes = pool_sizes;
 	m_state.descriptor_pool			  = VulkanDescriptorPool::create(descriptor_pool_config, m_state);
 
-	auto command_buffers	 = m_state.command_pool.allocate_command_buffers(m_state, 1);
-	m_tempCommandsData.state = &m_state;
-	m_tempCommandsData.cmd	 = command_buffers[0];
-
-	m_toSubmitCommands.resize(1);
+	SemaphoreConfig queued_commands_semaphore_config{};
+	queued_commands_semaphore_config.stage_flags = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	m_state.queued_commands_semaphore			 = m_state.semaphores.emplace_at_first<SemaphoreHandle>(
+		   VulkanSemaphore::create(queued_commands_semaphore_config, m_state));
 
 	RendererBumpAllocator::reset();
 }
@@ -77,43 +76,133 @@ void VulkanBackend::cleanup() {
 void Renderer::frame_prepare() {
 	RendererBumpAllocator::reset();
 
-	RENDERER->m_tempCommandsData.cmd.begin();
-
 	STATE.frames.frame_prepare(STATE);
 
-	STATE.swapchain.get_current_image().transition_layout(
-		RENDERER->m_tempCommandsData.cmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	submit([state = &STATE](Commands* cmd) -> void {
+		state->swapchain.get_current_image().transition_layout(
+			reinterpret_cast<VulkanCommandsData*>(cmd->m_data)->cmd,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	});
 }
 
 void Renderer::frame_cleanup() {
 	STATE.frames.frame_cleanup(STATE);
 }
 
-void Renderer::submit(Commands* commands) {
-	RENDERER->m_toSubmitCommands[0] = commands;
+CommandsHandle Renderer::record_persitent_commands(Function<void(Commands*)> record_function) {
+	VulkanCommandBuffer command_buffer = STATE.command_pool.allocate_command_buffers(STATE, 1)[0];
+	VulkanCommandsData command_data{};
+	command_data.cmd   = command_buffer;
+	command_data.state = &STATE;
+	Commands commands(&command_data);
+
+	command_buffer.begin();
+	record_function(&commands);
+	command_buffer.end();
+
+	return { STATE.commands.emplace_at_first(command_buffer) };
+}
+
+void Renderer::submit(Function<void(Commands*)> fn) {
+	VulkanCommandBuffer command_buffer = STATE.command_pool.allocate_command_buffers(STATE, 1)[0];
+	VulkanCommandsData command_data{};
+	command_data.cmd   = command_buffer;
+	command_data.state = &STATE;
+	Commands commands(&command_data);
+
+	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	fn(&commands);
+	command_buffer.end();
+
+	STATE.queued_command_buffers.emplace_back(command_buffer);
+}
+
+void Renderer::submit(toki::Span<CommandsHandle> recorded_commands) {
+	u32 start = STATE.queued_command_buffers.size();
+	STATE.queued_command_buffers.grow(recorded_commands.size());
+	for (u32 i = start; i < STATE.queued_command_buffers.size(); i++) {
+		TK_ASSERT(STATE.commands.exists(recorded_commands[i]));
+		STATE.queued_command_buffers.push_back(STATE.commands.at(recorded_commands[i]));
+	}
+}
+
+void Renderer::flush_queue(const SubmitOptions& options) {
+	TK_ASSERT(STATE.queued_command_buffers.size() > 0);
+
+	TempDynamicArray<VkCommandBuffer> command_buffers(STATE.queued_command_buffers.size());
+
+	for (u32 i = 0; i < STATE.queued_command_buffers.size(); i++) {
+		command_buffers[i] = STATE.queued_command_buffers[i].m_commandBuffer;
+	}
+
+	TempDynamicArray<VkSemaphore> wait_semaphores(options.wait_semaphores.size());
+	TempDynamicArray<VkPipelineStageFlags> wait_stages(options.wait_semaphores.size());
+	for (u32 i = 0; i < options.wait_semaphores.size(); i++) {
+		TK_ASSERT(STATE.semaphores.exists(options.wait_semaphores[i]))
+		VulkanSemaphore& semaphore = STATE.semaphores.at(options.wait_semaphores[i]);
+		wait_semaphores[i]		   = semaphore.semaphore();
+		wait_stages[i]			   = semaphore.stage_flags();
+	}
+
+	TempDynamicArray<VkSemaphore> signal_semaphores(options.signal_semaphores.size());
+	for (u32 i = 0; i < options.signal_semaphores.size(); i++) {
+		TK_ASSERT(STATE.semaphores.exists(options.signal_semaphores[i]))
+		VulkanSemaphore& semaphore = STATE.semaphores.at(options.signal_semaphores[i]);
+		signal_semaphores[i]	   = semaphore.semaphore();
+	}
+
+	VkSubmitInfo submit_info{};
+	submit_info.sType				 = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submit_info.pWaitDstStageMask	 = wait_stages.data();
+	submit_info.waitSemaphoreCount	 = wait_stages.size();
+	submit_info.pWaitSemaphores		 = wait_semaphores.data();
+	submit_info.signalSemaphoreCount = signal_semaphores.size();
+	submit_info.pSignalSemaphores	 = signal_semaphores.data();
+	submit_info.commandBufferCount	 = command_buffers.size();
+	submit_info.pCommandBuffers		 = command_buffers.data();
+
+	VkFence fence	= STATE.fences.at(options.signal_fence);
+	VkResult result = vkQueueSubmit(STATE.graphics_queue, 1, &submit_info, fence);
+	TK_ASSERT(result == VK_SUCCESS);
 }
 
 void Renderer::present() {
-	STATE.swapchain.get_current_image().transition_layout(
-		RENDERER->m_tempCommandsData.cmd, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+	submit([state = &STATE](Commands* cmd) -> void {
+		state->swapchain.get_current_image().transition_layout(
+			reinterpret_cast<VulkanCommandsData*>(cmd->m_data)->cmd,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+	});
 
-	RENDERER->m_tempCommandsData.cmd.end();
-	VulkanCommandBuffer command_buffers[] = { RENDERER->m_tempCommandsData.cmd };
+	if (STATE.queued_command_buffers.size() > 0) {
+		SemaphoreHandle wait_semahores[]{ STATE.frames.get_image_available_semaphore_handle() };
+		SemaphoreHandle signal_semaphores[]{ STATE.frames.get_render_finished_semaphore_handle() };
 
-	STATE.frames.submit(STATE, command_buffers);
-
-	if (RENDERER->m_toSubmitCommands.size() == 0) {
-		return;
+		SubmitOptions submit_options{};
+		submit_options.wait_semaphores	 = wait_semahores;
+		submit_options.signal_semaphores = signal_semaphores;
+		submit_options.signal_fence		 = STATE.frames.get_in_flight_fence_handle();
+		flush_queue(submit_options);
 	}
 
-	STATE.frames.frame_present(STATE);
+	VkSemaphore wait_semaphores[] = { STATE.frames.get_render_finished_semaphore(STATE) };
+	VkSwapchainKHR swapchains[]	  = { STATE.swapchain.swapchain() };
+	Array<u32, 1> image_indices{ STATE.swapchain.image_index() };
 
-	RENDERER->m_state.staging_buffer.reset();
-}
+	VkPresentInfoKHR present_info{};
+	present_info.sType				= VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	present_info.waitSemaphoreCount = 1;
+	present_info.pWaitSemaphores	= wait_semaphores;
+	present_info.swapchainCount		= 1;
+	present_info.pSwapchains		= swapchains;
+	present_info.pImageIndices		= image_indices.data();
 
-Commands* Renderer::get_commands() {
-	RENDERER->m_tempCommands.m_data = &RENDERER->m_tempCommandsData;
-	return &RENDERER->m_tempCommands;
+	VkResult result = vkQueuePresentKHR(STATE.present_queue, &present_info);
+	TK_ASSERT(result == VK_SUCCESS);
+
+	STATE.staging_buffer.reset();
+	STATE.queued_command_buffers.clear();
 }
 
 void Renderer::set_buffer_data(BufferHandle handle, const void* data, u32 size) {
@@ -231,31 +320,28 @@ void VulkanBackend::initialize_device(Window* window) {
 
 	VkBool32 supports_present = false;
 
-	m_state.indices[GRAPHICS_FAMILY_INDEX] = static_cast<u32>(-1);
-	m_state.indices[PRESENT_FAMILY_INDEX]  = static_cast<u32>(-1);
+	m_state.indices[GRAPHICS_FAMILY_INDEX] = U32_MAX;
+	m_state.indices[PRESENT_FAMILY_INDEX]  = U32_MAX;
 
 	for (u32 i = 0; i < queue_family_properties.size(); ++i) {
-		if (m_state.indices[PRESENT_FAMILY_INDEX] != static_cast<u32>(-1) &&
-			m_state.indices[GRAPHICS_FAMILY_INDEX] != static_cast<u32>(-1)) {
+		if (m_state.indices[PRESENT_FAMILY_INDEX] != U32_MAX && m_state.indices[GRAPHICS_FAMILY_INDEX] != U32_MAX) {
 			break;
 		}
 
 		if ((queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) &&
-			m_state.indices[PRESENT_FAMILY_INDEX] == static_cast<u32>(-1)) {
+			m_state.indices[PRESENT_FAMILY_INDEX] == U32_MAX) {
 			m_state.indices[GRAPHICS_FAMILY_INDEX] = i;
 			continue;
 		}
 
 		vkGetPhysicalDeviceSurfaceSupportKHR(m_state.physical_device, i, surface, &supports_present);
-		if (supports_present && m_state.indices[PRESENT_FAMILY_INDEX] == static_cast<u32>(-1)) {
+		if (supports_present && m_state.indices[PRESENT_FAMILY_INDEX] == U32_MAX) {
 			m_state.indices[PRESENT_FAMILY_INDEX] = i;
 			continue;
 		}
 	}
 
-	TK_ASSERT(
-		m_state.indices[PRESENT_FAMILY_INDEX] != static_cast<u32>(-1) &&
-		m_state.indices[GRAPHICS_FAMILY_INDEX] != static_cast<u32>(-1));
+	TK_ASSERT(m_state.indices[PRESENT_FAMILY_INDEX] != U32_MAX && m_state.indices[GRAPHICS_FAMILY_INDEX] != U32_MAX);
 
 	f32 queue_priority = 1.0f;
 
@@ -331,5 +417,11 @@ DEFINE_DESTROY_HANDLE(TextureHandle, textures);
 DEFINE_DESTROY_HANDLE(SamplerHandle, samplers);
 
 #undef DEFINE_DESTROY_HANDLE
+
+void Renderer::destroy_handle(CommandsHandle handle) {
+	TK_ASSERT(STATE.commands.exists(handle));
+	STATE.commands.at(handle).free(STATE);
+	STATE.commands.clear(handle);
+}
 
 }  // namespace toki

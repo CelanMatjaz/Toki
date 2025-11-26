@@ -13,8 +13,8 @@ public:
 	virtual void on_attach() {}
 	virtual void on_detach() {}
 	virtual void on_update([[maybe_unused]] f32 delta_time) {}
-	virtual void on_render([[maybe_unused]] Commands* commands) {}
-	virtual void on_event([[maybe_unused]] Window* window, [[maybe_unused]] Event& event) {}
+	virtual void on_render() {}
+	virtual void on_event([[maybe_unused]] Event& event) {}
 
 protected:
 	Engine* m_engine;

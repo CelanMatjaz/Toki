@@ -23,6 +23,11 @@ public:
 
 	T& at(const Handle handle) const {
 		TK_ASSERT((handle.m_value - 1) < N);
+
+#if !defined(TK_DIST)
+		TK_ASSERT(exists(handle));
+#endif
+
 		return m_data[handle.m_value - 1];
 	}
 
@@ -49,6 +54,11 @@ public:
 		m_bits.set(index.value(), true);
 		construct_at<T>(&m_data[index.value()], forward<Args>(args)...);
 		return Handle{ index.value() + 1 };
+	}
+
+	template <typename HandleType, typename... Args>
+	HandleType emplace_at_first(Args&&... args) {
+		return HandleType{ emplace_at_first(toki::forward<Args>(args)...) };
 	}
 
 	void invalidate(Handle handle) {
