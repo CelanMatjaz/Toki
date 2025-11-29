@@ -80,6 +80,12 @@ function(common_target_options target dir deps)
 	if(TOKI_USE_GLFW)
 		target_link_libraries(${target} PUBLIC glfw)
 	endif()
+
+	set_target_properties(${target} PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${BINARY_OUTPUT_DIR}"
+		LIBRARY_OUTPUT_DIRECTORY "${BINARY_OUTPUT_DIR}"
+		ARCHIVE_OUTPUT_DIRECTORY "${BINARY_OUTPUT_DIR}"
+	)
 endfunction()
 
 function(add_library_target target dir deps)

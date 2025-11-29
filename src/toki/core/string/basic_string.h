@@ -84,14 +84,6 @@ public:
 		return m_data[pos];
 	}
 
-	operator T*() {
-		return m_data;
-	}
-
-	operator void*() {
-		return m_data;
-	}
-
 private:
 	constexpr void _copy(const BasicString& other) {
 		initialize_based_on_size(other.size());

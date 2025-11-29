@@ -21,8 +21,8 @@ public:
 private:
 	Renderer() = delete;
 
-	DELETE_COPY(Renderer);
-	DELETE_MOVE(Renderer);
+	DELETE_COPY(Renderer)
+	DELETE_MOVE(Renderer)
 
 	// virtual void attach_window(platform::Window* window) = 0;
 public:

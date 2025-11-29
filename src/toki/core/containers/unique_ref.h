@@ -1,11 +1,12 @@
 #pragma once
 
-#include "../core/macros.h"
-#include "../memory/memory.h"
+#include <toki/core/common/common.h>
+#include <toki/core/common/macros.h>
+#include <toki/core/memory/memory.h>
 
 namespace toki {
 
-template <typename T>
+template <typename T, typename AllocatorType = DefaultAllocator>
 class UniqueRef {
 public:
 	UniqueRef(): m_data(nullptr) {}
@@ -19,7 +20,7 @@ public:
 		init(toki::move(args)...);
 	}
 
-	DELETE_COPY(UniqueRef);
+	DELETE_COPY(UniqueRef)
 
 	~UniqueRef() {
 		reset();
@@ -40,20 +41,20 @@ public:
 	}
 
 	void init(const T&& value) {
-		m_data	= memory_allocate(sizeof(T));
+		m_data	= AllocatorType::allocate(sizeof(T));
 		*m_data = toki::move(value);
 	}
 
 	template <typename... Args>
 	void init(const Args&&... args) {
-		m_data = memory_allocate(sizeof(T));
+		m_data	= AllocatorType::allocate(sizeof(T));
 		emplace<T>(m_data, toki::move(args)...);
 	}
 
 	void reset() {
 		if (m_data != nullptr) {
 			(*m_data).~T();
-			memory_free(m_data);
+			AllocatorType::free(m_data);
 			m_data = nullptr;
 		}
 	}

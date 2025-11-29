@@ -15,10 +15,6 @@ list(APPEND SOURCES
 
 set(DEPS core)
 
-foreach(var ${SOURCES})
-	message(${var})
-endforeach()
-
 add_executable_target(tests ${CMAKE_CURRENT_SOURCE_DIR} "${DEPS}")
 
 target_compile_definitions(tests PRIVATE TK_TESTING_ENABLED)

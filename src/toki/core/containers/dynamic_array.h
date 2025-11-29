@@ -40,7 +40,7 @@ public:
 		}
 	}
 
-	DELETE_COPY(DynamicArray);
+	DELETE_COPY(DynamicArray)
 
 	DynamicArray& operator=(DynamicArray&& other) {
 		if (this != &other) {

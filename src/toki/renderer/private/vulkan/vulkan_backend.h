@@ -22,8 +22,8 @@ public:
 private:
 	VulkanBackend() = delete;
 
-	DELETE_COPY(VulkanBackend);
-	DELETE_MOVE(VulkanBackend);
+	DELETE_COPY(VulkanBackend)
+	DELETE_MOVE(VulkanBackend)
 
 private:
 	void initialize(const RendererConfig& config);

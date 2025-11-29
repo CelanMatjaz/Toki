@@ -4,6 +4,7 @@ project(Toki LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+include("cmake/common.env.cmake")
 include("cmake/common.global.cmake")
 include("cmake/common.project.cmake")
 

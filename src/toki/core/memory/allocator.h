@@ -12,7 +12,7 @@ public:
 	Allocator(u64 size);
 	~Allocator();
 
-	DELETE_COPY(Allocator);
+	DELETE_COPY(Allocator)
 
 	Allocator& operator=(Allocator&& other) {
 		if (&other == this) {

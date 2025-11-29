@@ -34,7 +34,7 @@ void FreeFlightCameraController::on_update(f32 delta_time, const Window* window)
 	if (window->is_key_down(toki::Key::LEFT_CONTROL)) {
 		vertical_direction += +1;
 	}
-	m_position += m_camera.up() * vertical_direction * m_speed * delta_time;
+	m_position += Vector3(0, 1, 0) * vertical_direction * m_speed * delta_time;
 
 	Vector2i32 mouse_delta = window->get_mouse_delta();
 	if (m_mouseDown && mouse_delta.length() > 0) {

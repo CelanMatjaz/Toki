@@ -12,7 +12,7 @@ public:
 	Resource(const Path& path, ResourceType type);
 	~Resource();
 
-	DELETE_COPY(Resource);
+	DELETE_COPY(Resource)
 
 	Resource(Resource&& other) {
 		toki::swap(m_data, other.m_data);

@@ -33,7 +33,7 @@ static_assert(CHasStringFormatter<StringView>);
 template <typename Arg>
 	requires(CHasDumpToString<typename RemoveConst<Arg>::type>)
 u32 dump_single_arg(char* out, const Arg& arg) {
-	using RawT = RemoveRef<typename RemoveConst<Arg>::type>::type;
+	using RawT = typename RemoveConst<Arg>::type;
 	return StringDumper<RawT>::dump_to_string(out, arg);
 }
 
@@ -120,8 +120,8 @@ u32 format_to(const char* fmt, char* buf_out, const FirstArg& arg, const Args&..
 }
 
 // TODO(Matjaž): add support for format properties in {}
-template <typename... Args, CIsAllocator AllocatorType = DefaultAllocator>
-toki::String<AllocatorType> format(const char* str, Args... args) {
+template <typename... Args>
+toki::String<DefaultAllocator> format(const char* str, Args... args) {
 	if constexpr (sizeof...(args) == 0) {
 		return String{ str };
 	}
