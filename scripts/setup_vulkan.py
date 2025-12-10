@@ -2,7 +2,6 @@ import os
 import tempfile
 import tarfile
 import pathlib
-import platform
 import sys
 import urllib.request
 from dotenv import load_dotenv
@@ -42,28 +41,25 @@ def handle_file():
     extract_dir = get_output_path()
 
     if dir_exists(extract_dir):
-        # print(f"Vulkan SDK path already exists, nothing to do.")
-        print(f"{extract_dir}/{VULKAN_SDK_VERSION}/x86_64")
+        print(f"Vulkan SDK path already exists, nothing to do.")
         exit(0)
 
     link = get_link(VULKAN_SDK_VERSION)
+    print(link)
     p = pathlib.Path(link)
     ext = "".join(p.suffixes)
     downloaded_file_path = get_download_file_path(ext)
 
     if dir_exists(downloaded_file_path):
-        # print(f"No download needed, found Vulkan sdk file in {extract_dir}")
-        pass
+        print(f"No download needed, found Vulkan sdk file in {extract_dir}")
     else:
-        # print("Downloading Vulkan SDK")
+        print("Downloading Vulkan SDK")
         urllib.request.urlretrieve(link, downloaded_file_path)
 
     if (TARGET == "LINUX"):
-        # print(f"Extracting {extract_dir}")
+        print(f"Extracting {extract_dir}")
         with tarfile.open(downloaded_file_path, "r:xz") as tar:
             tar.extractall(path=extract_dir)
-
-    print(f"{extract_dir}/{VULKAN_SDK_VERSION}/x86_64")
 
 if __name__ == "__main__":
     if VULKAN_SDK_VERSION is None:

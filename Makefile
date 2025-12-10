@@ -5,20 +5,19 @@ endif
 CMAKE_DEFINES := \
  	-G$(GENERATOR) \
 	-DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-	-DCMAKE_SYSTEM_NAME=$(TARGET) \
 	-DTOKI_USE_GLFW=$(TOKI_USE_GLFW) \
-	-DCMAKE_C_COMPILER=$(C_COMPILER) \
-	-DCMAKE_CXX_COMPILER=$(CXX_COMPILER)
+
+UNAME := $(shell uname -n | tr '[:upper:]' '[:lower:]')
 
 submodule:
 	git submodule update --init --recursive
 
 generate: 
-	mkdir -p build
+	mkdir -p build/$(UNAME)
 	cmake -S . -B build $(CMAKE_DEFINES) -GNinja
 
 build-linux: generate
-	cmake --build build
+	cmake --build build/$(UNAME)
 
 generate-tests:
 	cmake -S . -B build $(CMAKE_DEFINES) -GNinja
@@ -47,3 +46,9 @@ docker-clean:
 
 clean:
 	rm -r build
+
+
+
+
+
+
