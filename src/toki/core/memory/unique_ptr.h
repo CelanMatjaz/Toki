@@ -1,22 +1,14 @@
 #pragma once
 
+#include <toki/core/common/common.h>
+#include <toki/core/common/type_traits.h>
 #include <toki/core/memory/memory.h>
-
-#include "toki/core/common/assert.h"
-#include "toki/core/common/common.h"
-#include "toki/core/common/type_traits.h"
 
 namespace toki {
 
 template <typename T = void, CIsAllocator AllocatorType = DefaultAllocator>
 class UniquePtr {
 public:
-	// template <typename... Args>
-	// UniquePtr(Args&&... args): m_ptr(reinterpret_cast<T*>(AllocatorType::allocate(sizeof(T)))) {
-	// 	TK_ASSERT(m_ptr != nullptr, "Internal pointer cannot be nullptr");
-	// 	new (m_ptr) T(toki::forward<Args>(args)...);
-	// }
-
 	template <typename Derived>
 	UniquePtr(UniquePtr<Derived>&& derived): m_ptr(derived.release()) {}
 
@@ -24,9 +16,7 @@ public:
 
 	explicit constexpr UniquePtr(const T*& obj): m_ptr(obj) {}
 
-	explicit constexpr UniquePtr(T*& obj): m_ptr(obj) {}
-
-	explicit constexpr UniquePtr(T*&& obj): m_ptr(obj) {}
+	explicit constexpr UniquePtr(T* obj): m_ptr(obj) {}
 
 	explicit constexpr UniquePtr(UniquePtr&& other): m_ptr(other.m_ptr) {
 		other.m_ptr = nullptr;

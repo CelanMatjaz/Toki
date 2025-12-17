@@ -11,7 +11,7 @@ void print(StringView str, Args&&... args) {
 	if constexpr (sizeof...(args) == 0) {
 		toki::write(toki::STD_OUT, str.data(), str.size());
 	} else {
-		toki::String formatted = toki::move(toki::format(str.data(), toki::forward<Args>(args)...));
+		toki::String formatted = toki::format<Args...>(str.data(), toki::forward<Args>(args)...);
 		toki::write(toki::STD_OUT, formatted.data(), formatted.size());
 	}
 }

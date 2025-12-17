@@ -23,4 +23,8 @@ struct NativeHandle {
 	NativeHandle(): handle(INVALID_HANDLE_VALUE) {}
 };
 
+#if defined(TK_PLATFORM_LINUX)
+using MutexState = i32;
+#endif
+
 }  // namespace toki

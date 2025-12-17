@@ -40,9 +40,15 @@ inline constexpr void swap(T& t1, T& t2) {
 }
 
 template <typename T, typename... Args>
+	requires(!CIsSame<void, T>)
+inline T* construct_at(void* dst, Args&&... args) {
+	return ::new (reinterpret_cast<void*>(dst)) T(toki::forward<Args>(args)...);
+}
+
+template <typename T, typename... Args>
+	requires(!CIsSame<void, T>)
 inline T* construct_at(T* dst, Args&&... args) {
-	static_assert(!CIsSame<void, T>);
-	return ::new (static_cast<void*>(dst)) T(toki::forward<Args>(args)...);
+	return ::new (reinterpret_cast<void*>(dst)) T(toki::forward<Args>(args)...);
 }
 
 template <typename T>
@@ -53,5 +59,12 @@ inline constexpr void destroy_at(T* t) {
 
 template <typename To, typename From>
 To convert_to(const From& from);
+
+template <typename T = void>
+T* align_up_to(void* ptr, u8 alignment) {
+	u64ptr raw = reinterpret_cast<u64ptr>(ptr);
+	raw		   = (raw + alignment - 1) & ~static_cast<byte>(alignment - 1);
+	return reinterpret_cast<T*>(raw);
+}
 
 }  // namespace toki

@@ -9,7 +9,18 @@
             "MIMode": "gdb",
             "cwd": "${workspaceFolder}/src/toki/sandbox",
             "args": ["${workspaceFolder}/toki_sandbox"],
-            "program": "${workspaceFolder}/build/bin/sandbox",
+            "program": "${workspaceFolder}/build/local/bin/sandbox",
+            "preLaunchTask": "Build Sandbox - Debug"
+        },
+        {
+            "name": "Launch Threadding sandbox - Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "stopAtEntry": false,
+            "MIMode": "gdb",
+            "cwd": "${workspaceFolder}/src/toki/threadding_sandbox",
+            "args": ["${workspaceFolder}/toki_sandbox"],
+            "program": "${workspaceFolder}/build/local/bin/threadding_sandbox",
             "preLaunchTask": "Build Sandbox - Debug"
         },
         {

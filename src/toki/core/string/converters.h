@@ -10,13 +10,20 @@ namespace toki {
 template <typename T>
 	requires(toki::CIsIntegral<T>)
 u32 itoa(char* buf_out, T value, u32 radix = 10) {
-	char buf[20]{};
-	u32 offset	   = 0;
-	bool add_minus = value < 0;
-
 	if (value == 0) {
-		buf_out[offset++] = '0';
-		return offset;
+		buf_out[0] = '0';
+		return 1;
+	}
+
+	b8 is_negative = value < 0;
+
+	char buf[20]{};
+	u32 offset = 0;
+
+	if (is_negative) {
+		*buf_out = '-';
+		buf_out++;
+		value *= -1;
 	}
 
 	while (value > 0) {
@@ -24,15 +31,11 @@ u32 itoa(char* buf_out, T value, u32 radix = 10) {
 		value /= radix;
 	}
 
-	if (add_minus) {
-		buf[offset++] = '-';
-	}
-
 	for (u32 i = 0; i < offset; i++) {
 		buf_out[i] = buf[offset - i - 1];
 	}
 
-	return offset;
+	return offset + static_cast<u32>(is_negative);
 }
 
 template <typename T, CIsAllocator AllocatorType = DefaultAllocator>

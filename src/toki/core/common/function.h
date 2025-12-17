@@ -11,43 +11,64 @@ struct Function {};
 template <typename T, typename... Args>
 class Function<T(Args...)> {
 public:
-	using ResultType = T;
+	using ReturnType	  = T;
+	using FunctionPtrType = ReturnType (*)(Args...);
 
 	~Function() {
 		DefaultAllocator::free_aligned(m_callablePtr);
 	}
 
+	Function() = default;
+
 	template <typename Callable>
+		requires CIsCorrectCallable<Callable, ReturnType, Args...>
 	Function(Callable callable) {
 		init(callable);
 	}
 
+	template <FunctionPtrType Fn>
+		requires CIsCorrectFn<ReturnType, Args...>
+	Function(FunctionPtrType func) {
+		init(func);
+	}
+
 	template <typename Callable>
+		requires CIsCorrectCallable<Callable, ReturnType, Args...>
 	Function& operator=(Callable callable) {
 		init(callable);
 		return *this;
 	}
 
-	ResultType operator()(Args&&... args) {
+	template <FunctionPtrType Fn>
+		requires CIsCorrectFn<ReturnType, Args...>
+	Function& operator=(T (*func)(Args...)) {
+		init(func);
+		return *this;
+	}
+
+	ReturnType operator()(Args&&... args) {
 		return m_invoke(m_callablePtr, toki::forward<Args>(args)...);
+	}
+
+	FunctionPtrType function_ptr() const {
+		return m_functionPtr;
 	}
 
 private:
 	void* m_callablePtr{};
-	ResultType (*m_invoke)(const void*, Args...);
+	ReturnType (*m_functionPtr)(Args...);
+	ReturnType (*m_invoke)(const void*, Args...);
 
 	template <typename Callable>
 	void init(Callable c) {
 		m_callablePtr = DefaultAllocator::allocate_aligned(sizeof(Callable), alignof(Callable));
 		construct_at<Callable>(reinterpret_cast<decltype(c)*>(m_callablePtr), c);
 
-		m_invoke = [](const void* self, Args... args) -> ResultType {
+		m_invoke = [](const void* self, Args... args) -> ReturnType {
 			const Callable* callable = static_cast<const Callable*>(self);
 			return (*callable)(args...);
 		};
 	}
-
-	ResultType (*m_functionPtr)(Args...);
 };
 
 }  // namespace toki

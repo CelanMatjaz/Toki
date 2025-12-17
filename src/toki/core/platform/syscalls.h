@@ -7,6 +7,8 @@
 #include <toki/core/platform/platform_types.h>
 #include <toki/core/types.h>
 
+#include "toki/core/common/time.h"
+
 namespace toki {
 
 toki::Expected<void*, TokiError> allocate(u64 size);
@@ -25,5 +27,7 @@ toki::Expected<u64, TokiError> get_file_pointer(NativeHandle handle);
 
 // Current time in nanoseconds since epoch
 toki::u64 get_current_time();
+
+void sleep(u32 millis);
 
 }  // namespace toki

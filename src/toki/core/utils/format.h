@@ -13,7 +13,7 @@
 namespace toki {
 
 template <typename FirstArg, typename... Args>
-u32 format_to(const char* fmt, char* buf_out, const FirstArg& arg, const Args&... args);
+u32 format_to(const char* fmt, char* buf_out, const FirstArg& arg, Args&&... args);
 
 template <CIsAllocator AllocatorType>
 struct Formatter<StringView, AllocatorType> {
@@ -50,7 +50,7 @@ inline u32 read_buffer_until_character(const char* str, char* buf_out, char c) {
 }
 
 template <typename FirstArg, typename... Args>
-u32 format_to(const char* fmt, char* buf_out, const FirstArg& arg, const Args&... args) {
+u32 format_to(const char* fmt, char* buf_out, const FirstArg& arg, Args&&... args) {
 	u32 offset		   = 0;
 	u32 fmt_copy_start = 0;
 	u32 i			   = 0;

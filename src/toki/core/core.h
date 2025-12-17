@@ -53,4 +53,7 @@
 #include <toki/core/utils/utils.h>
 
 //
+#include <toki/core/platform/threads/atomic.h>
+#include <toki/core/platform/threads/mutex.h>
+#include <toki/core/platform/threads/thread.h>
 #include <toki/core/platform/window/window.h>

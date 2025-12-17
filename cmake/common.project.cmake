@@ -71,11 +71,18 @@ function(common_target_options target dir deps)
 	endif()
 
 	if(MSVC)
-	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
-					CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+		target_compile_definitions(${target} PRIVATE TOKI_MSVC)
+	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 		target_compile_options(${target}
 				PRIVATE -ftrivial-auto-var-init=pattern -fno-exceptions ${COMMON_WARNINGS})
+
+		if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+			target_compile_definitions(${target} PRIVATE TOKI_GCC)
+		elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+			target_compile_definitions(${target} PRIVATE TOKI_CLANG)
+		endif()
 	endif()
+
 
 	if(TOKI_USE_GLFW)
 		target_link_libraries(${target} PUBLIC glfw)

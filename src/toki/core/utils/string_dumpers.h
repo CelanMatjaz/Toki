@@ -11,6 +11,15 @@ namespace toki {
 template <typename T>
 struct StringDumper {};
 
+template <u64 N>
+struct StringDumper<char[N]> {
+	static constexpr u64 dump_to_string(char* out, const char arg[N]) {
+		u64 length = toki::strlen(arg);
+		toki::memcpy(out, arg, toki::strlen(arg));
+		return length;
+	}
+};
+
 template <>
 struct StringDumper<char*> {
 	static constexpr u64 dump_to_string(char* out, const char* arg) {
@@ -50,7 +59,7 @@ static_assert(CHasDumpToString<bool>);
 template <typename T>
 	requires CIsIntegral<T>
 struct StringDumper<T> {
-	static constexpr u64 dump_to_string(char* out, const T arg) {
+	static constexpr u64 dump_to_string(char* out, const typename RemoveCV<T>::type arg) {
 		return itoa(out, remove_ref(arg));
 	}
 };

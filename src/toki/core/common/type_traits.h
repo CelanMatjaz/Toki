@@ -89,6 +89,44 @@ static_assert(IsSame<RemoveRef<u32&>::type, u32>::value);
 static_assert(IsSame<RemoveRef<u32&&>::type, u32>::value);
 
 template <typename T>
+struct RemoveVolatile {
+	using type = T;
+};
+
+template <typename T>
+struct RemoveVolatile<volatile T> {
+	using type = T;
+};
+
+static_assert(IsSame<RemoveVolatile<u32>::type, u32>::value);
+static_assert(IsSame<RemoveVolatile<volatile u32>::type, u32>::value);
+
+template <typename T>
+struct RemoveCV {
+	using type = T;
+};
+
+template <typename T>
+struct RemoveCV<const T> {
+	using type = T;
+};
+
+template <typename T>
+struct RemoveCV<volatile T> {
+	using type = T;
+};
+
+template <typename T>
+struct RemoveCV<const volatile T> {
+	using type = T;
+};
+
+static_assert(IsSame<RemoveCV<u32>::type, u32>::value);
+static_assert(IsSame<RemoveCV<const u32>::type, u32>::value);
+static_assert(IsSame<RemoveCV<volatile u32>::type, u32>::value);
+static_assert(IsSame<RemoveCV<const volatile u32>::type, u32>::value);
+
+template <typename T>
 struct RemovePointer {
 	using type = T;
 };
@@ -102,13 +140,19 @@ static_assert(IsSame<RemovePointer<u32>::type, u32>::value);
 static_assert(IsSame<RemovePointer<u32*>::type, u32>::value);
 
 template <typename T>
-struct IsReference : FalseType {};
+struct IsReference : FalseType {
+	using ref_type = T;
+};
 
 template <typename T>
-struct IsReference<T&> : TrueType {};
+struct IsReference<T&> : TrueType {
+	using ref_type = T&;
+};
 
 template <typename T>
-struct IsReference<T&&> : TrueType {};
+struct IsReference<T&&> : TrueType {
+	using ref_type = T&&;
+};
 
 template <typename T>
 concept CIsReference = IsReference<T>::value;
@@ -373,7 +417,7 @@ concept CIsAllocator = requires(u64 size, void* ptr, u64 alignment) {
 template <typename T>
 struct StringDumper;
 
-template <typename Type, typename Container = StringDumper<Type>>
+template <typename Type, typename Container = StringDumper<typename RemoveCV<Type>::type>>
 concept CHasDumpToString = requires(Container c, const Type t, char* out) {
 	{ Container::dump_to_string(out, t) } -> CIsSame<u64>;
 };
@@ -392,6 +436,30 @@ template <typename T, typename Container>
 concept CIsArrayContainer = requires(const Container container) {
 	{ container.data() } -> CIsSame<const T*>;
 	{ container.size() } -> CIsSame<u64>;
+};
+
+template <u64... Is>
+struct IndexSequence {};
+
+template <u64 N, u64... Is>
+struct MakeIndexSequenceHelper : MakeIndexSequenceHelper<N - 1, N - 1, Is...> {};
+
+template <u64... Is>
+struct MakeIndexSequenceHelper<0, Is...> {
+	using type = IndexSequence<Is...>;
+};
+
+template <u64 N>
+using MakeIndexSequence = typename MakeIndexSequenceHelper<N>::type;
+
+template <typename Callable, typename ReturnType, typename... Args>
+concept CIsCorrectCallable = requires(Callable fn, Args... args) {
+	{ fn(args...) } -> CIsSame<ReturnType>;
+};
+
+template <typename ReturnType, typename... Args>
+concept CIsCorrectFn = requires(ReturnType (*fn)(Args...), Args... args) {
+	{ fn(args...) } -> CIsSame<ReturnType>;
 };
 
 }  // namespace toki
