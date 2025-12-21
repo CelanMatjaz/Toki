@@ -21,12 +21,12 @@ public:
 	constexpr Span(ContainerType& container): m_data(container.data()), m_size(container.size()) {}
 
 	template <typename ContainerType>
-		requires(IsCArray<ContainerType>::value)
-	constexpr Span(ContainerType container): m_data(container), m_size(IsCArray<ContainerType>::COUNT) {}
+		requires(CIsBoundedArray<ContainerType>)
+	constexpr Span(ContainerType container): m_data(container), m_size(IsBoundedArray<ContainerType>::COUNT) {}
 
 	template <typename ContainerType>
-		requires(IsCArray<ContainerType>::value)
-	constexpr Span(ContainerType& container): m_data(container), m_size(IsCArray<ContainerType>::COUNT) {}
+		requires(CIsBoundedArray<ContainerType>)
+	constexpr Span(ContainerType& container): m_data(container), m_size(IsBoundedArray<ContainerType>::COUNT) {}
 
 	constexpr ~Span() = default;
 

@@ -34,9 +34,9 @@ inline constexpr T&& forward(typename RemoveRef<T>::type&& t) {
 
 template <typename T>
 inline constexpr void swap(T& t1, T& t2) {
-	T temp = t1;
-	t1	   = t2;
-	t2	   = temp;
+	T temp = move(t1);
+	t1	   = move(t2);
+	t2	   = move(temp);
 }
 
 template <typename T, typename... Args>
@@ -52,7 +52,7 @@ inline T* construct_at(T* dst, Args&&... args) {
 }
 
 template <typename T>
-	requires(!CIsCArray<T> && CHasDestructor<T>)
+	requires(!CIsBoundedArray<T> && CHasDestructor<T>)
 inline constexpr void destroy_at(T* t) {
 	t->T::~T();
 }

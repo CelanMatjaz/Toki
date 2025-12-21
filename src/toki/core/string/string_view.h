@@ -11,7 +11,7 @@ class BasicStringView {
 public:
 	BasicStringView() = default;
 
-	constexpr BasicStringView(IsCArray<T> str): m_ptr(str), m_size(IsCArray<T>::COUNT) {}
+	constexpr BasicStringView(IsBoundedArray<T> str): m_ptr(str), m_size(IsBoundedArray<T>::COUNT) {}
 	constexpr BasicStringView(const T* str): m_ptr(str), m_size(toki::strlen(str)) {}
 	constexpr BasicStringView(const T* str, u64 length): m_ptr(str), m_size(length) {}
 	template <CIsAllocator AllocatorType>

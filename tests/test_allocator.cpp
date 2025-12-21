@@ -115,7 +115,7 @@ TK_TEST(Allocator, should_use_freed_memory_block_when_the_size_is_greater_or_equ
 	{
 		toki::Allocator allocator(toki::MB(10));
 		void* ptr1 = allocator.allocate_aligned(64, 8);
-		void* ptr2 = allocator.allocate_aligned(64, 8);
+		void* _ = allocator.allocate_aligned(64, 8);
 		allocator.free_aligned(ptr1);
 
 		void* ptr3 = allocator.allocate_aligned(65, 8);

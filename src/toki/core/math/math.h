@@ -25,7 +25,7 @@ constexpr T clamp(T value, T min_value, T max_value) {
 }
 
 template <typename T>
-constexpr T pow(T value, T exp) {
+constexpr T pow(T value, f64 exp) {
 	if (exp == 0) {
 		return 1;
 	}

@@ -42,7 +42,6 @@ inline toki::Array<TestCase, MAX_TESTS> test_cases;
 	{                                                               \
 		if (!(condition)) {                                         \
 			tc.failed_file_line = __FILE__ ":" AS_STRING(__LINE__); \
-			std::raise(5);                                          \
 			return false;                                           \
 		}                                                           \
 	}

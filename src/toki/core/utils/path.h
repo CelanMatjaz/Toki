@@ -11,7 +11,7 @@ public:
 	Path(const char* str): m_internalPath(str) {}
 	Path(char* str): m_internalPath(str) {}
 	Path(const char(&str)): Path(reinterpret_cast<const char*>(str)) {}
-	Path(CIsCArray auto str): Path(reinterpret_cast<const char*>(str)) {}
+	Path(CIsBoundedArray auto str): Path(reinterpret_cast<const char*>(str)) {}
 	Path(toki::StringView str): m_internalPath(str.to_string()) {}
 	~Path() = default;
 

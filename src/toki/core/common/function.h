@@ -41,7 +41,7 @@ public:
 
 	template <FunctionPtrType Fn>
 		requires CIsCorrectFn<ReturnType, Args...>
-	Function& operator=(T (*func)(Args...)) {
+	Function& operator=(FunctionPtrType func) {
 		init(func);
 		return *this;
 	}
@@ -50,16 +50,18 @@ public:
 		return m_invoke(m_callablePtr, toki::forward<Args>(args)...);
 	}
 
-	FunctionPtrType function_ptr() const {
-		return m_functionPtr;
-	}
-
 private:
 	void* m_callablePtr{};
-	ReturnType (*m_functionPtr)(Args...);
 	ReturnType (*m_invoke)(const void*, Args...);
 
+	template <FunctionPtrType Fn>
+		requires CIsCorrectFn<ReturnType, Args...>
+	void init(FunctionPtrType f) {
+		m_callablePtr = f;
+	}
+
 	template <typename Callable>
+		requires CIsCorrectCallable<Callable, ReturnType, Args...>
 	void init(Callable c) {
 		m_callablePtr = DefaultAllocator::allocate_aligned(sizeof(Callable), alignof(Callable));
 		construct_at<Callable>(reinterpret_cast<decltype(c)*>(m_callablePtr), c);

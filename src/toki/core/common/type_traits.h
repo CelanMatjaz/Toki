@@ -367,22 +367,26 @@ static_assert(!CIsConst<i32>);
 static_assert(CIsConst<const i32>);
 
 template <typename T>
-struct IsCArray : FalseType {};
+struct IsBoundedArray : FalseType {};
 
-template <typename T>
-struct IsCArray<T[]> : TrueType {
+template <typename T, u64 N>
+struct IsBoundedArray<T[N]> : TrueType {
 	using type				   = T;
-	static constexpr u64 COUNT = sizeof(T) / sizeof(RemovePointer<T>::type);
+	static constexpr u64 COUNT = N;
 };
 
 template <typename T, u64 N>
-struct IsCArray<T[N]> : TrueType {
+struct IsBoundedArray<const T[N]> : TrueType {
 	using type				   = T;
 	static constexpr u64 COUNT = N;
 };
 
 template <typename T>
-concept CIsCArray = IsCArray<T>::value;
+concept CIsBoundedArray = IsBoundedArray<T>::value;
+
+static_assert(!CIsBoundedArray<u32>);
+static_assert(!CIsBoundedArray<u32[]>);
+static_assert(CIsBoundedArray<u32[1]>);
 
 template <typename T>
 concept AllocatorConcept = requires(T a, u64 size, void* free_ptr) {

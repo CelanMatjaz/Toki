@@ -32,10 +32,8 @@ TK_TEST(BasicString, multiple_sized_strings) {
 	for (u32 i = 0; i < 100; i++) {
 		if (i % 7 == 1) {
 			auto b = TempString(string_size * i, i % 10 + '0');
-			int a = 0;
 		}
 		auto b = TempString(string_size + i, i % 10 + '0');
-		int a = 0;
 	}
 
 	TempAllocator::allocator = nullptr;

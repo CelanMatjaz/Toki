@@ -75,7 +75,6 @@ TK_TEST(Vector3, fromatter) {
 
 	Matrix4 mat{vec};
 	toki::String string1 = Formatter<Matrix4>::format(mat);
-	println(string1);
 
 	return true;
 }

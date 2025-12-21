@@ -31,7 +31,7 @@
             "MIMode": "gdb",
             "cwd": "${workspaceFolder}",
             "args": ["${workspaceFolder}/toki_sandbox"],
-            "program": "${workspaceFolder}/build/bin/tests",
+            "program": "${workspaceFolder}/build/local/bin/tests",
             "preLaunchTask": "Build Tests - Debug"
         }
     ]

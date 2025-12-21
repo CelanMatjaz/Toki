@@ -9,7 +9,7 @@ CMAKE_DEFINES := \
 
 UNAME := $(shell uname -n | tr '[:upper:]' '[:lower:]')
 
-OUTPUT_DIR := "build/local"
+OUTPUT_DIR := build/local
 
 submodule:
 	git submodule update --init --recursive
@@ -22,10 +22,10 @@ build-linux: generate
 	cmake --build $(OUTPUT_DIR)
 
 generate-tests:
-	cmake -S . -B $(OUTPUT_DIR) $(CMAKE_DEFINES) -GNinja
+	cmake -S . -B $(OUTPUT_DIR) $(CMAKE_DEFINES) -DTOKI_ENABLE_TESTING=ON -GNinja
 
 build-tests: generate-tests
-	cmake --build $(OUTPUT_DIR)
+	cmake --build $(OUTPUT_DIR) --target tests
 
 test: build-tests
 	./$(OUTPUT_DIR)/bin/tests

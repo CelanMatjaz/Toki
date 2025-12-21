@@ -1,6 +1,7 @@
 #pragma once
 
 #include <toki/core/common/assert.h>
+#include <toki/core/common/function.h>
 #include <toki/core/common/utility.h>
 #include <toki/core/containers/tuple.h>
 #include <toki/core/memory/unique_ptr.h>
@@ -54,6 +55,8 @@ private:
 	};
 
 public:
+	Thread() = default;
+
 	template <typename Callable, typename... Args>
 		requires CIsCorrectCallable<Callable, void, Args...>
 	explicit Thread(Callable&& callable, Args&&... args) {
@@ -62,6 +65,17 @@ public:
 
 	~Thread() {
 		join();
+	}
+
+	template <typename... Args>
+	void start(Function<void(Args...)> fn, Args&&... args) {
+		start_thread(fn, toki::forward<Args>(args)...);
+	}
+
+	template <typename Callable, typename... Args>
+		requires CIsCorrectCallable<Callable, void, Args...>
+	void start(Callable&& callable, Args&&... args) {
+		start_thread(toki::forward<Callable>(callable), toki::forward<Args>(args)...);
 	}
 
 	void join() {
@@ -75,12 +89,9 @@ private:
 
 		m_state = construct_at<StateImpl<Invoker<Tuple<Callable, Args...>>>>(
 			m_stack, toki::forward<Callable>(callable), toki::forward<Args>(args)...);
-		_setup_thread(m_state);
-	}
-
-	void _setup_thread(State* state) {
 		byte* stack_top = reinterpret_cast<byte*>(m_stack) + STACK_SIZE;
-		_start_internal(stack_top, state);
+
+		_start_internal(stack_top, m_state);
 	}
 
 	void _start_internal(void* stack_top, void* ptr);

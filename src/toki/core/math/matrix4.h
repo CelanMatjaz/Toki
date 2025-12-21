@@ -21,8 +21,8 @@ public:
 
 	template <typename ContainerType>
 		requires(
-			IsCArray<ContainerType>::value && IsCArray<ContainerType>::COUNT == 16 &&
-			CIsSame<typename IsCArray<ContainerType>::type, f32>)
+			IsBoundedArray<ContainerType>::value && IsBoundedArray<ContainerType>::COUNT == 16 &&
+			CIsSame<typename IsBoundedArray<ContainerType>::type, f32>)
 	constexpr Matrix4(ContainerType values): m{} {
 		for (u32 i = 0; i < 16; i++) {
 			m[i] = static_cast<f32>(values[i]);
