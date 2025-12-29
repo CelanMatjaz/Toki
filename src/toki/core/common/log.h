@@ -28,10 +28,9 @@ inline const char* LOG_LEVEL_STRINGS[] = {
 #undef X
 };
 
-#define _LOG_PRINT(level, str, ...) \
-	toki::println(                  \
-		"{} " str "\033[0m",        \
-		toki::LOG_LEVEL_STRINGS[static_cast<toki::u32>(toki::LogLevel::level)] __VA_OPT__(, ) __VA_ARGS__)
+#define _LOG_PRINT(level, str, ...)    \
+	toki::println("{} " str "\033[0m", \
+				  toki::LOG_LEVEL_STRINGS[static_cast<toki::u32>(toki::LogLevel::level)] __VA_OPT__(, ) __VA_ARGS__)
 
 #if defined(LOG_INFO_OFF) || defined(LOGGING_OFF)
 	#define TK_LOG_INFO(message, ...)
@@ -66,7 +65,10 @@ inline const char* LOG_LEVEL_STRINGS[] = {
 #if defined(LOG_TRACE_OFF) || defined(LOGGING_OFF)
 	#define TK_LOG_TRACE(message, ...)
 #else
-	#define TK_LOG_TRACE(...) _LOG_PRINT(TRACE __VA_OPT__(, ) __VA_ARGS__)
+	#define TK_LOG_TRACE(...)                                                                               \
+		toki::println("{} - " __FILE__ ":" AS_STRING(__LINE__) "\033[0m",                                 \
+					  toki::LOG_LEVEL_STRINGS[static_cast<toki::u32>(toki::LogLevel::TRACE)] __VA_OPT__(, ) \
+						  __VA_ARGS__)
 #endif
 
 }  // namespace toki

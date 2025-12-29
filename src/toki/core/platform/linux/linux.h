@@ -1,3 +1,3 @@
 #pragma once
 
-namespace toki {}
+namespace toki {}  // namespace toki

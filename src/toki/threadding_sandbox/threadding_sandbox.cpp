@@ -14,23 +14,58 @@ void thread_func(u64 num) {
 		ScopedLock lock(g_mutex);
 		sum = sum + 1;
 	};
+
+	ScopedLock lock(g_mutex);
+	toki::println("Ended thread, current sum: {}", sum);
 }
 
-toki::i32 toki::toki_entrypoint([[maybe_unused]] toki::Span<char*> _) {
-	u64 total_inc = 10000000;
+void test_lambda_and_function_ptr() {
+	u64 total_inc = 10101010;
 	{
+		// Lambda
 		toki::Thread thread_lambda(
 			[](u64 num) {
 				thread_func(num);
 			},
 			total_inc);
-		toki::Thread thread_function_ptr(thread_func, 10000 + total_inc);
 
-		thread_lambda.join();
-		thread_function_ptr.join();
+		// Function pointer
+		toki::Thread thread_function_ptr(thread_func, total_inc * 2);
+
+		// toki::Function
+		toki::Function<void(u64)> fn = thread_func;
+		toki::Thread thread_toki_function(fn, total_inc * 4);
 	}
 
 	toki::println("sum: {}", sum);
+}
+
+i32 test_worker_functions_running = true;
+
+void test_worker_functions() {
+	toki::atomic_store(&test_worker_functions_running, true);
+
+	ThreadPool thread_pool;
+	thread_pool.add_worker(
+		[](u64 count) {
+			while (test_worker_functions_running) {
+				sum += count;
+			}
+		},
+		1);
+
+	TK_LOG_DEBUG("Sum: {}", sum);
+	u64 ms = 2000;
+	TK_LOG_DEBUG("Waiting for {}ms", ms);
+	auto _ = sleep(ms);
+	toki::atomic_store(&test_worker_functions_running, false);
+	toki::atomic_notify_all(&test_worker_functions_running);
+	TK_LOG_DEBUG("Sum: {}", sum);
+}
+
+toki::i32 toki::toki_entrypoint([[maybe_unused]] toki::Span<char*> _) {
+	// test_lambda_and_function_ptr();
+	test_worker_functions();
 
 	return 0;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <toki/core/common/common.h>
+#include <toki/core/containers/tuple.h>
 
 namespace toki {
 

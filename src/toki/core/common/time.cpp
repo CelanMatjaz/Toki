@@ -4,7 +4,8 @@
 namespace toki {
 
 Time Time::now() {
-	return get_current_time();
+	auto result = get_current_time();
+	return result.value_or(0);
 }
 
 #define TIME_AS(precision, divider)                  \

@@ -3,7 +3,15 @@
 namespace toki {
 
 ObjData load_obj(const Path& path) {
-	File file(path, FileMode::READ);
+	auto open_result = toki::open(path.c_str(), FileMode::READ, 0);
+	if (open_result.is_error()) {
+		TK_LOG_ERROR("Could not load font file {}", path.c_str());
+	}
+
+	LifetimeWrapper file(toki::move(open_result), [](NativeHandle& handle) {
+		auto _ = toki::close(handle);
+	});
+
 	u32 vertex_count{};
 	u32 normal_count{};
 	u32 texture_coord_count{};
@@ -12,7 +20,7 @@ ObjData load_obj(const Path& path) {
 	u32 read_count{};
 	char buf[256]{};
 	do {
-		read_count		= file.read_line(buf, 256);
+		read_count		= read_line(file.get(), buf, 256, '\n').value_or(0);
 		buf[read_count] = 0;
 
 		if (toki::starts_with(buf, "#")) {
@@ -39,7 +47,10 @@ ObjData load_obj(const Path& path) {
 	index_data.reserve(face_count * 3);
 	vertex_count = normal_count = texture_coord_count = face_count = 0;
 
-	file.seek(0, FileCursorStart::BEGIN);
+	auto seek_result = toki::seek(file.get(), 0, FileCursorStart::BEGIN);
+	if (seek_result.is_error()) {
+		TK_LOG_ERROR("Could not set file pointer for file {}", path.c_str());
+	}
 
 	auto handle_face = [&](const char* face_string) {
 		const char* temp = face_string;
@@ -108,7 +119,7 @@ ret:
 	char* temp{};
 	f64 value{};
 	do {
-		read_count		= file.read_line(buf, 256);
+		read_count		= read_line(file.get(), buf, 256, '\n').value_or(0);
 		buf[read_count] = 0;
 
 		if (toki::starts_with(buf, "#")) {

@@ -3,8 +3,8 @@
 #include <toki/core/core.h>
 #include <toki/renderer/renderer.h>
 #include <toki/runtime/engine/layer.h>
-
-#include "toki/runtime/systems/system_manager.h"
+#include <toki/runtime/systems/system_manager.h>
+#include <toki/runtime/threads/thread_pool.h>
 
 namespace toki {
 
@@ -38,6 +38,8 @@ private:
 	toki::UniquePtr<Window> m_window{};
 	toki::UniquePtr<SystemManager> m_systemManager{};
 	toki::b32 m_running{};
+
+	ThreadPool m_threadPool;
 
 	DynamicArray<UniquePtr<Layer>> m_layers;
 };

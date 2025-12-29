@@ -11,6 +11,6 @@
 
 #elif
 
-static_assert(false, "Unsupported platform");
+	#error "Unsupported platform";
 
 #endif

@@ -31,10 +31,6 @@ struct HashFunctions {
 		return value;
 	}
 
-	static inline u64 hash(const NativeHandle handle) {
-		return hash(handle.handle);
-	}
-
 	static u64 hash(const char* str) {
 		static constexpr u32 multiplier = 107;
 

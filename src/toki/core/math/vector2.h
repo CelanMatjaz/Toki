@@ -2,9 +2,9 @@
 
 #include <toki/core/math/math.h>
 #include <toki/core/string/basic_string.h>
+#include <toki/core/string/string_formatters.h>
 #include <toki/core/types.h>
 #include <toki/core/utils/format.h>
-#include <toki/core/utils/string_formatters.h>
 
 namespace toki {
 

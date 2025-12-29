@@ -8,8 +8,10 @@ using b16 = unsigned short;
 static_assert(sizeof(b16) == 2);
 using b32 = unsigned int;
 static_assert(sizeof(b32) == 4);
+using b32i = unsigned int;
+static_assert(sizeof(b32i) == 4);
 
-using i8 = char;
+using i8 = signed char;
 static_assert(sizeof(i8) == 1);
 using u8 = unsigned char;
 static_assert(sizeof(u8) == 1);
@@ -45,5 +47,7 @@ static_assert(sizeof(wchar) == 4);
 
 using u64ptr = u64;
 static_assert(sizeof(u64ptr) == 8);
+
+#define TOKI_INTEGER_TYPES_X X(i8) X(u8) X(i16) X(u16) X(i32) X(u32) X(i64) X(u64)
 
 }  // namespace toki

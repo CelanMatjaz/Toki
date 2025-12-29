@@ -54,6 +54,10 @@ public:
 		return m_hasValue;
 	}
 
+	toki::b8 has_error() const {
+		return !m_hasValue;
+	}
+
 	operator b8() const {
 		return m_hasValue;
 	}

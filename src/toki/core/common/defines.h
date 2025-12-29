@@ -4,6 +4,8 @@
 
 namespace toki {
 
+#define TK_NODISCARD [[nodiscard]]
+
 constexpr u64 STD_IN  = 0;
 constexpr u64 STD_OUT = 1;
 constexpr u64 STD_ERR = 2;

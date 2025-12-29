@@ -30,7 +30,7 @@ Allocator::Allocator(u64 size): m_size(size) {
 
 Allocator::~Allocator() {
 	if (m_buffer != nullptr) {
-		toki::free(m_buffer);
+		auto _ = toki::free(m_buffer);
 	}
 }
 

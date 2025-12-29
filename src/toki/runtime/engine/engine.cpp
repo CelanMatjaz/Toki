@@ -2,6 +2,8 @@
 
 namespace toki {
 
+static volatile b8 run = true;
+
 Engine::Engine([[maybe_unused]] const EngineConfig& config): m_running(true) {
 	TK_LOG_INFO("Initializing engine");
 
@@ -9,7 +11,7 @@ Engine::Engine([[maybe_unused]] const EngineConfig& config): m_running(true) {
 	window_config.title			 = "Window";
 	window_config.dimensions	 = { 800, 600 };
 	window_config.min_dimensions = { 400, 300 };
-	window_config.flags			 = WINDOW_FLAG_SHOW_ON_CREATE | WINDOW_FLAG_RESIZABLE;
+	window_config.flags			 = WINDOW_CREATE_FLAG_SHOW_ON_CREATE | WINDOW_CREATE_FLAG_RESIZABLE;
 	m_window					 = toki::make_unique<Window>(window_config);
 
 	RendererConfig renderer_config{};
@@ -38,6 +40,12 @@ void Engine::run() {
 			if (event.type() == EventType::NONE) {
 				continue;
 			}
+
+			if (event.has_type(EventType::KEY_PRESS) && event.data().key.key == Key::ENTER) {
+				TK_LOG_INFO("Pressed enter, stopping application");
+				m_running = false;
+			}
+
 			for (i32 i = static_cast<i32>(m_layers.size() - 1); i >= 0; i--) {
 				m_layers[static_cast<u32>(i)]->on_event(event);
 				if (event.handled()) {
@@ -66,10 +74,11 @@ void Engine::run() {
 		m_renderer->frame_cleanup();
 	}
 
-	toki::println("Stopping application");
+	TK_LOG_INFO("Stopping application");
 }
 
 void Engine::attach_layer(UniquePtr<Layer>&& layer) {
+	TK_LOG_INFO("Attaching new layer");
 	layer->m_engine = this;
 	layer->on_attach();
 	m_layers.emplace_back(toki::move(layer));

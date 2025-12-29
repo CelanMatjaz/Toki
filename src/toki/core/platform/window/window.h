@@ -13,16 +13,16 @@ void window_system_initialize(const WindowSystemConfig& config = {});
 void window_system_shutdown();
 void window_system_poll_events();
 
-enum WindowFlags : u32 {
-	WINDOW_FLAG_RESIZABLE	   = 1 << 0,
-	WINDOW_FLAG_SHOW_ON_CREATE = 1 << 0,
+enum WindowCreateFlags : u32 {
+	WINDOW_CREATE_FLAG_RESIZABLE	  = 1 << 0,
+	WINDOW_CREATE_FLAG_SHOW_ON_CREATE = 1 << 0,
 };
 
 struct WindowConfig {
 	Vector2u32 dimensions{};
 	Vector2u32 min_dimensions{};
 	const char* title;
-	u32 flags;	// toki::WindowFlags
+	u32 flags;	// toki::WindowCreateFlags
 };
 
 struct StaticWindowFunctions;

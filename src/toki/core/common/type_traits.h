@@ -40,28 +40,35 @@ static_assert(IsSame<i32, i32>::value);
 static_assert(!IsSame<i32, u32>::value);
 
 template <typename T>
+struct AddPointer {
+	using type = T*;
+};
+
+static_assert(IsSame<AddPointer<u32>::type, u32*>::value);
+
+template <typename T>
 struct RemoveConst {
 	using type = T;
 };
 
 template <typename T>
 struct RemoveConst<const T> {
-	using type = RemoveConst<T>::type;
+	using type = T;
 };
 
 template <typename T>
 struct RemoveConst<const T*> {
-	using type = RemoveConst<T>::type*;
+	using type = T*;
 };
 
 template <typename T>
 struct RemoveConst<const T&> {
-	using type = RemoveConst<T>::type&;
+	using type = T&;
 };
 
 template <typename T>
 struct RemoveConst<const volatile T> {
-	using type = volatile RemoveConst<T>::type;
+	using type = volatile T;
 };
 
 static_assert(IsSame<RemoveConst<u32>::type, u32>::value);
@@ -102,29 +109,43 @@ static_assert(IsSame<RemoveVolatile<u32>::type, u32>::value);
 static_assert(IsSame<RemoveVolatile<volatile u32>::type, u32>::value);
 
 template <typename T>
-struct RemoveCV {
+struct RemoveConstVolatile {
 	using type = T;
 };
 
 template <typename T>
-struct RemoveCV<const T> {
+struct RemoveConstVolatile<const T> {
 	using type = T;
 };
 
 template <typename T>
-struct RemoveCV<volatile T> {
+struct RemoveConstVolatile<volatile T> {
 	using type = T;
 };
 
 template <typename T>
-struct RemoveCV<const volatile T> {
+struct RemoveConstVolatile<const volatile T> {
 	using type = T;
 };
 
-static_assert(IsSame<RemoveCV<u32>::type, u32>::value);
-static_assert(IsSame<RemoveCV<const u32>::type, u32>::value);
-static_assert(IsSame<RemoveCV<volatile u32>::type, u32>::value);
-static_assert(IsSame<RemoveCV<const volatile u32>::type, u32>::value);
+static_assert(IsSame<RemoveConstVolatile<u32>::type, u32>::value);
+static_assert(IsSame<RemoveConstVolatile<const u32>::type, u32>::value);
+static_assert(IsSame<RemoveConstVolatile<volatile u32>::type, u32>::value);
+static_assert(IsSame<RemoveConstVolatile<const volatile u32>::type, u32>::value);
+
+template <typename T>
+struct RemoveConstRef {
+	using type = RemoveConst<typename RemoveRef<T>::type>::type;
+};
+
+static_assert(IsSame<RemoveConstRef<u32>::type, u32>::value);
+static_assert(IsSame<RemoveConstRef<const u32>::type, u32>::value);
+static_assert(IsSame<RemoveConstRef<const u32&>::type, u32>::value);
+
+template <typename T>
+struct RemoveCVR {
+	using type = RemoveConstVolatile<typename RemoveRef<T>::type>::type;
+};
 
 template <typename T>
 struct RemovePointer {
@@ -367,6 +388,26 @@ static_assert(!CIsConst<i32>);
 static_assert(CIsConst<const i32>);
 
 template <typename T>
+struct IsArray : FalseType {};
+
+template <typename T>
+struct IsArray<T[]> : TrueType {
+	using type = T;
+};
+
+template <typename T, u64 N>
+struct IsArray<T[N]> : TrueType {
+	using type = T;
+};
+
+template <typename T>
+concept CIsArray = IsArray<T>::value;
+
+static_assert(!CIsArray<u32>);
+static_assert(CIsArray<u32[]>);
+static_assert(CIsArray<u32[1]>);
+
+template <typename T>
 struct IsBoundedArray : FalseType {};
 
 template <typename T, u64 N>
@@ -387,6 +428,40 @@ concept CIsBoundedArray = IsBoundedArray<T>::value;
 static_assert(!CIsBoundedArray<u32>);
 static_assert(!CIsBoundedArray<u32[]>);
 static_assert(CIsBoundedArray<u32[1]>);
+
+template <typename T>
+struct RemoveExtent {
+	using type = T;
+};
+
+template <typename T>
+struct RemoveExtent<T[]> {
+	using type = T;
+};
+
+template <typename T, u64 N>
+struct RemoveExtent<T[N]> {
+	using type = T;
+};
+
+static_assert(CIsSame<RemoveExtent<u32>::type, u32>);
+static_assert(CIsSame<RemoveExtent<u32[]>::type, u32>);
+static_assert(CIsSame<RemoveExtent<u32[1]>::type, u32>);
+
+template <typename T>
+struct Decay {
+private:
+	using Type = RemoveRef<T>::type;
+
+public:
+	using type = Conditional<CIsArray<Type>,
+							 typename AddPointer<typename RemoveExtent<Type>::type>::type,
+							 typename RemoveConstVolatile<Type>::type>::type;
+};
+
+static_assert(CIsSame<Decay<u32>::type, u32>);
+static_assert(CIsSame<Decay<u32[]>::type, u32*>);
+static_assert(CIsSame<Decay<u32[1]>::type, u32*>);
 
 template <typename T>
 concept AllocatorConcept = requires(T a, u64 size, void* free_ptr) {
@@ -421,7 +496,7 @@ concept CIsAllocator = requires(u64 size, void* ptr, u64 alignment) {
 template <typename T>
 struct StringDumper;
 
-template <typename Type, typename Container = StringDumper<typename RemoveCV<Type>::type>>
+template <typename Type, typename Container = StringDumper<typename RemoveConstVolatile<Type>::type>>
 concept CHasDumpToString = requires(Container c, const Type t, char* out) {
 	{ Container::dump_to_string(out, t) } -> CIsSame<u64>;
 };
@@ -457,12 +532,12 @@ template <u64 N>
 using MakeIndexSequence = typename MakeIndexSequenceHelper<N>::type;
 
 template <typename Callable, typename ReturnType, typename... Args>
-concept CIsCorrectCallable = requires(Callable fn, Args... args) {
-	{ fn(args...) } -> CIsSame<ReturnType>;
+concept CIsCorrectCallable = requires(Callable&& fn, Args&&... args) {
+	{ fn(static_cast<Args&&>(args)...) } -> CIsSame<ReturnType>;
 };
 
 template <typename ReturnType, typename... Args>
-concept CIsCorrectFn = requires(ReturnType (*fn)(Args...), Args... args) {
+concept CIsCorrectFn = requires(ReturnType (*fn)(Args...), Args&&... args) {
 	{ fn(args...) } -> CIsSame<ReturnType>;
 };
 

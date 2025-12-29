@@ -9,13 +9,31 @@ namespace toki {
 ResourceData load_text(const Path& path) {
 	ResourceData resource_data{};
 
-	File file(path, FileMode::READ, FileFlags::FILE_FLAG_OPEN_EXISTING);
-	file.seek(0, FileCursorStart::END);
-	resource_data.size = file.tell();
-	file.seek(0, FileCursorStart::BEGIN);
+	auto open_result = toki::open(path.c_str(), FileMode::READ, FileFlags::FILE_FLAG_OPEN_EXISTING);
+	if (open_result.is_error()) {
+		return {};
+	}
+
+	LifetimeWrapper file(toki::move(open_result), [](NativeHandle& handle) {
+		auto _ = toki::close(handle);
+	});
+
+	auto seek_result = toki::seek(file.get(), 0, FileCursorStart::END);
+	if (seek_result.is_error()) {
+		return {};
+	}
+
+	auto tell_result = toki::tell(file.get());
+	if (tell_result.is_error()) {
+		return {};
+	}
+	resource_data.size = tell_result.value();
 
 	resource_data.data = ResourceAllocator::allocate(resource_data.size);
-	file.read(resource_data.data, resource_data.size);
+	auto read_result   = toki::read(file.get(), resource_data.data, resource_data.size);
+	if (read_result.is_error()) {
+		return {};
+	}
 
 	return resource_data;
 }

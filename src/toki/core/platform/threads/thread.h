@@ -23,34 +23,22 @@ private:
 		i32 joinable{};
 	};
 
-	template <typename Callable>
+	template <typename Callable, typename... Args>
 	struct StateImpl : public State {
-		Callable func;
+		using TupleType = Tuple<Callable, Args...>;
 
-		template <typename... Args>
-		StateImpl(Args&&... args): func(toki::forward<Args>(args)...) {}
+		StateImpl(Callable callable, Args... args):
+			tuple(make_tuple<Callable, Args...>(toki::forward<Callable>(callable), toki::forward<Args>(args)...)) {}
 
 		virtual void invoke() override {
-			func();
+			_invoke(MakeIndexSequence<TupleType::size>{});
 		}
-	};
-
-	template <typename TupleType>
-	struct Invoker {
-	public:
-		template <typename... Args>
-		explicit Invoker(Args&&... args): tuple(toki::forward<Args>(args)...) {}
 
 		template <u64... Is>
-		auto invoke(IndexSequence<Is...>) {
-			return toki::invoke(get<Is>(toki::move(tuple))...);
+		void _invoke(IndexSequence<Is...>) {
+			toki::invoke(get<Is>(toki::move(tuple))...);
 		}
 
-		auto operator()() {
-			return invoke(MakeIndexSequence<TupleType::size>{});
-		}
-
-	public:
 		TupleType tuple;
 	};
 
@@ -60,41 +48,60 @@ public:
 	template <typename Callable, typename... Args>
 		requires CIsCorrectCallable<Callable, void, Args...>
 	explicit Thread(Callable&& callable, Args&&... args) {
-		start_thread(toki::forward<Callable>(callable), toki::forward<Args>(args)...);
+		_start_thread(toki::forward<Callable>(callable), toki::forward<Args>(args)...);
+	}
+
+	DELETE_COPY(Thread)
+
+	Thread(Thread&& other) {
+		toki::swap(m_data, other.m_data);
+	}
+	Thread& operator=(Thread&& other) {
+		toki::swap(m_data, other.m_data);
+		return *this;
 	}
 
 	~Thread() {
 		join();
 	}
 
-	template <typename... Args>
-	void start(Function<void(Args...)> fn, Args&&... args) {
-		start_thread(fn, toki::forward<Args>(args)...);
-	}
-
 	template <typename Callable, typename... Args>
 		requires CIsCorrectCallable<Callable, void, Args...>
 	void start(Callable&& callable, Args&&... args) {
-		start_thread(toki::forward<Callable>(callable), toki::forward<Args>(args)...);
+		_start_thread(toki::forward<Callable>(callable), toki::forward<Args>(args)...);
 	}
 
 	void join() {
-		atomic_wait(&m_state->joinable, 0);
+		if (m_data.stack == nullptr) {
+			return;
+		}
+
+		atomic_wait(&m_data.state->joinable, 0);
+		_cleanup();
 	}
 
 private:
 	template <typename Callable, typename... Args>
-	void start_thread(Callable&& callable, Args&&... args) {
-		m_stack = DefaultAllocator::allocate_aligned(STACK_SIZE, 16);
+	void _start_thread(Callable&& callable, Args&&... args) {
+		m_data.stack = DefaultAllocator::allocate_aligned(STACK_SIZE, 16);
 
-		m_state = construct_at<StateImpl<Invoker<Tuple<Callable, Args...>>>>(
-			m_stack, toki::forward<Callable>(callable), toki::forward<Args>(args)...);
-		byte* stack_top = reinterpret_cast<byte*>(m_stack) + STACK_SIZE;
+		Tuple<Callable, Args...> tuple{ toki::forward<Callable>(callable), toki::forward<Args>(args)... };
 
-		_start_internal(stack_top, m_state);
+		m_data.state = construct_at<StateImpl<Callable, Args...>>(
+			m_data.stack, toki::forward<Callable>(callable), toki::forward<Args>(args)...);
+		byte* stack_top = reinterpret_cast<byte*>(m_data.stack) + STACK_SIZE;
+
+		_start_internal(stack_top, m_data.state);
 	}
 
 	void _start_internal(void* stack_top, void* ptr);
+	void _wait_internal();
+
+	void _cleanup() {
+		_wait_internal();
+		destroy_at(m_data.state);
+		DefaultAllocator::free_aligned(m_data.stack);
+	}
 
 	static int _trampoline(void* ptr) {
 		State* state = reinterpret_cast<State*>(ptr);
@@ -112,9 +119,12 @@ private:
 private:
 	static constexpr const u64 STACK_SIZE = 1024 * 1024;
 
-	void* m_stack{};
-	State* m_state{};
-	i64 m_pid{};
+	struct {
+		void* stack{};
+		State* state{};
+		i32 ctid{};
+		i32 pid{};
+	} m_data{};
 };
 
 }  // namespace toki

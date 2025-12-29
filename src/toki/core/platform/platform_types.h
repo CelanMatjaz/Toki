@@ -4,27 +4,29 @@
 
 namespace toki {
 
-struct NativeHandle {
-#if defined(TK_PLATFORM_LINUX)
-	using NativeHandleType								   = i32;
-	static constexpr NativeHandleType INVALID_HANDLE_VALUE = -1;
-#endif
-	NativeHandle(NativeHandleType value): handle(value) {}
-	NativeHandleType handle;
+using NativeHandle = i32;
 
-	operator NativeHandleType() const {
-		return handle;
-	}
-
-	b8 valid() const {
-		return handle != INVALID_HANDLE_VALUE;
-	}
-
-	NativeHandle(): handle(INVALID_HANDLE_VALUE) {}
-};
-
-#if defined(TK_PLATFORM_LINUX)
-using MutexState = i32;
-#endif
+// struct NativeHandle {
+// #if defined(TK_PLATFORM_LINUX)
+// 	using NativeHandleType								   = i32;
+// 	static constexpr NativeHandleType INVALID_HANDLE_VALUE = -1;
+// #endif
+// 	NativeHandle(NativeHandleType value): handle(value) {}
+// 	NativeHandleType handle;
+//
+// 	operator NativeHandleType() const {
+// 		return handle;
+// 	}
+//
+// 	operator NativeHandleType&()  {
+// 		return handle;
+// 	}
+//
+// 	b8 valid() const {
+// 		return handle != INVALID_HANDLE_VALUE;
+// 	}
+//
+// 	NativeHandle(): handle(INVALID_HANDLE_VALUE) {}
+// };
 
 }  // namespace toki

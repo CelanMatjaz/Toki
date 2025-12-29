@@ -1,6 +1,7 @@
 #pragma once
 
 #include <toki/core/common/assert.h>
+#include <toki/core/common/log.h>
 #include <toki/core/common/type_traits.h>
 #include <toki/core/memory/memory.h>
 #include <toki/core/platform/syscalls.h>
@@ -15,7 +16,10 @@ public:
 	BumpAllocator(u64 size): m_data(toki::allocate(size).value_or({})), m_marker(0) {}
 
 	~BumpAllocator() {
-		toki::free(m_data);
+		auto result = toki::free(m_data);
+		if (!result.ok()) {
+			TK_LOG_TRACE("Error freeing memory");
+		}
 	}
 
 	void* allocate(u64 size) {

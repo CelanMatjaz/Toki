@@ -54,27 +54,20 @@ struct StringDumper<bool> {
 	}
 };
 
-static_assert(CHasDumpToString<bool>);
+static_assert(CHasDumpToString<b8>);
 
-template <typename T>
-	requires CIsIntegral<T>
+template <CIsIntegral T>
 struct StringDumper<T> {
-	static constexpr u64 dump_to_string(char* out, const typename RemoveCV<T>::type arg) {
+	static constexpr u64 dump_to_string(char* out, const typename RemoveConstVolatile<T>::type arg) {
 		return itoa(out, remove_ref(arg));
 	}
 };
 
-static_assert(CHasDumpToString<u8>);
-static_assert(CHasDumpToString<i8>);
-static_assert(CHasDumpToString<u16>);
-static_assert(CHasDumpToString<i16>);
-static_assert(CHasDumpToString<u32>);
-static_assert(CHasDumpToString<i32>);
-static_assert(CHasDumpToString<u64>);
-static_assert(CHasDumpToString<i64>);
+#define X(type) static_assert(CHasDumpToString<type>);
+TOKI_INTEGER_TYPES_X
+#undef X
 
-template <typename T>
-	requires CIsFloatingPoint<T>
+template <CIsFloatingPoint T>
 struct StringDumper<T> {
 	static constexpr u64 dump_to_string(char* out, const T arg) {
 		return ftoa(out, arg, 6);
@@ -85,8 +78,7 @@ static_assert(CHasDumpToString<f32>);
 static_assert(CHasDumpToString<f64>);
 static_assert(CHasDumpToString<f128>);
 
-template <typename T>
-	requires CIsPointer<T>
+template <CIsPointer T>
 struct StringDumper<T> {
 	static constexpr u64 dump_to_string(char* out, const T arg) {
 		return itoa_pretty(out, arg, 16);

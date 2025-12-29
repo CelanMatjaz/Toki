@@ -18,7 +18,7 @@ struct Font {
 
 struct LoadFontConfig {
 	Renderer* renderer;
-	StringView path;
+	Path path;
 	Vector2u32 atlas_size;
 	f32 size;
 };

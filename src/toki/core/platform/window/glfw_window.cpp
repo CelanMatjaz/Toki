@@ -39,14 +39,14 @@ Window::Window(const WindowConfig& config) {
 	m_currentSize = { config.dimensions.x, config.dimensions.y };
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, config.flags & WINDOW_FLAG_RESIZABLE);
+	glfwWindowHint(GLFW_RESIZABLE, config.flags & WINDOW_CREATE_FLAG_RESIZABLE);
 
 	GLFWwindow* window = glfwCreateWindow(
 		static_cast<i32>(config.dimensions.x), static_cast<i32>(config.dimensions.y), config.title, nullptr, nullptr);
 	TK_ASSERT(window != nullptr, "Window was not created");
 	m_handle = window;
 
-	if (config.flags & WINDOW_FLAG_SHOW_ON_CREATE) {
+	if (config.flags & WINDOW_CREATE_FLAG_SHOW_ON_CREATE) {
 		glfwShowWindow(window);
 	}
 

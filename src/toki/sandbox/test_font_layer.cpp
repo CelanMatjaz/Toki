@@ -73,7 +73,7 @@ void TestFontLayer::create_font_resources() {
 	toki::LoadFontConfig load_font_config{};
 	load_font_config.size		= 50;
 	load_font_config.atlas_size = { 512, 512 };
-	load_font_config.path		= "assets/fonts/RobotoMono-Regular.ttf";
+	load_font_config.path		= StringView("assets/fonts/RobotoMono-Regular.ttf");
 	load_font_config.renderer	= renderer;
 
 	const toki::String font_name = "Test font";

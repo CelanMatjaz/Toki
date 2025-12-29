@@ -6,14 +6,14 @@
 #include <toki/core/common/defines.h>
 #include <toki/core/common/type_traits.h>
 #include <toki/core/string/basic_string.h>
+#include <toki/core/string/string_dumpers.h>
+#include <toki/core/string/string_formatters.h>
 #include <toki/core/utils/memory.h>
-#include <toki/core/utils/string_dumpers.h>
-#include <toki/core/utils/string_formatters.h>
 
 namespace toki {
 
 template <typename FirstArg, typename... Args>
-u32 format_to(const char* fmt, char* buf_out, const FirstArg& arg, Args&&... args);
+u32 format_to(const char* fmt, char* buf_out, const FirstArg& arg, const Args&&... args);
 
 template <CIsAllocator AllocatorType>
 struct Formatter<StringView, AllocatorType> {
@@ -31,10 +31,10 @@ struct Formatter<StringView, AllocatorType> {
 static_assert(CHasStringFormatter<StringView>);
 
 template <typename Arg>
-	requires(CHasDumpToString<typename RemoveConst<Arg>::type>)
-u32 dump_single_arg(char* out, const Arg& arg) {
-	using RawT = typename RemoveConst<Arg>::type;
-	return StringDumper<RawT>::dump_to_string(out, arg);
+	requires(CHasDumpToString<typename RemoveConstRef<Arg>::type>)
+u32 dump_single_arg(char* out, Arg&& arg) {
+	using RawT = typename RemoveConstRef<Arg>::type;
+	return StringDumper<RawT>::dump_to_string(out, toki::forward<Arg>(arg));
 }
 
 template <u32 N>
@@ -50,7 +50,7 @@ inline u32 read_buffer_until_character(const char* str, char* buf_out, char c) {
 }
 
 template <typename FirstArg, typename... Args>
-u32 format_to(const char* fmt, char* buf_out, const FirstArg& arg, Args&&... args) {
+u32 format_to(const char* fmt, char* buf_out, const FirstArg& arg, const Args&&... args) {
 	u32 offset		   = 0;
 	u32 fmt_copy_start = 0;
 	u32 i			   = 0;
@@ -93,14 +93,17 @@ u32 format_to(const char* fmt, char* buf_out, const FirstArg& arg, Args&&... arg
 
 				if constexpr (CHasStringFormatter<FirstArg>) {
 					offset += Formatter<FirstArg>::format_to(&buf_out[offset], arg);
-				} else if constexpr (CHasDumpToString<typename RemoveConst<FirstArg>::type>) {
-					offset += dump_single_arg(&buf_out[offset], arg);
+				} else if constexpr (CHasDumpToString<typename RemoveCVR<FirstArg>::type>) {
+					// int asd[] = { 0 };
+
+					offset += dump_single_arg(
+						&buf_out[offset], toki::forward<FirstArg>(arg));
 				} else {
 					static_assert(TypeFalseType<FirstArg>::value);
 				}
 
 				if constexpr (sizeof...(Args) > 0) {
-					offset += format_to(&fmt[fmt_copy_start + 1], &buf_out[offset], toki::forward<const Args>(args)...);
+					offset += format_to(&fmt[fmt_copy_start + 1], &buf_out[offset], toki::forward<Args>(args)...);
 					return offset;
 				} else {
 					i++;
@@ -127,7 +130,7 @@ toki::String<DefaultAllocator> format(const char* str, Args... args) {
 	}
 
 	char buf_out[4096]{};
-	u32 size = format_to(str, buf_out, toki::forward<Args>(args)...);
+	u32 size = format_to(str, buf_out, toki::forward<typename Decay<Args>::type>(args)...);
 	TK_ASSERT(size <= 4096);
 	return toki::String{ buf_out, size };
 }

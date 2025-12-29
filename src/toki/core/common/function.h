@@ -3,6 +3,8 @@
 #include <toki/core/common/common.h>
 #include <toki/core/memory/memory.h>
 
+#include "toki/core/common/assert.h"
+
 namespace toki {
 
 template <typename T, typename... Args>
@@ -15,7 +17,7 @@ public:
 	using FunctionPtrType = ReturnType (*)(Args...);
 
 	~Function() {
-		DefaultAllocator::free_aligned(m_callablePtr);
+		_cleanup();
 	}
 
 	Function() = default;
@@ -23,30 +25,35 @@ public:
 	template <typename Callable>
 		requires CIsCorrectCallable<Callable, ReturnType, Args...>
 	Function(Callable callable) {
-		init(callable);
+		_init(callable);
 	}
 
 	template <FunctionPtrType Fn>
 		requires CIsCorrectFn<ReturnType, Args...>
 	Function(FunctionPtrType func) {
-		init(func);
+		_init(func);
 	}
 
 	template <typename Callable>
 		requires CIsCorrectCallable<Callable, ReturnType, Args...>
 	Function& operator=(Callable callable) {
-		init(callable);
+		_init(callable);
 		return *this;
 	}
 
 	template <FunctionPtrType Fn>
 		requires CIsCorrectFn<ReturnType, Args...>
 	Function& operator=(FunctionPtrType func) {
-		init(func);
+		_init(func);
 		return *this;
 	}
 
+	void cleanup() {
+		_cleanup();
+	}
+
 	ReturnType operator()(Args&&... args) {
+		TK_ASSERT(m_callablePtr != nullptr);
 		return m_invoke(m_callablePtr, toki::forward<Args>(args)...);
 	}
 
@@ -56,13 +63,13 @@ private:
 
 	template <FunctionPtrType Fn>
 		requires CIsCorrectFn<ReturnType, Args...>
-	void init(FunctionPtrType f) {
+	void _init(FunctionPtrType f) {
 		m_callablePtr = f;
 	}
 
 	template <typename Callable>
 		requires CIsCorrectCallable<Callable, ReturnType, Args...>
-	void init(Callable c) {
+	void _init(Callable c) {
 		m_callablePtr = DefaultAllocator::allocate_aligned(sizeof(Callable), alignof(Callable));
 		construct_at<Callable>(reinterpret_cast<decltype(c)*>(m_callablePtr), c);
 
@@ -70,6 +77,11 @@ private:
 			const Callable* callable = static_cast<const Callable*>(self);
 			return (*callable)(args...);
 		};
+	}
+
+	void _cleanup() {
+		DefaultAllocator::free_aligned(m_callablePtr);
+		m_callablePtr = nullptr;
 	}
 };
 

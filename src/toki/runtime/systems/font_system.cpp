@@ -32,12 +32,32 @@ void FontSystem::load_font(toki::StringView name, const LoadFontConfig& config) 
 
 	Font font{};
 
-	File file(config.path);
-	file.seek(0, FileCursorStart::END);
-	u32 file_byte_count = file.tell();
-	DynamicArray<u8> ttf_bytes(file_byte_count);
-	file.seek(0, FileCursorStart::BEGIN);
-	file.read(ttf_bytes.data(), file_byte_count);
+	auto open_result = toki::open(config.path.c_str(), FileMode::READ, 0);
+	if (open_result.is_error()) {
+		TK_LOG_ERROR("Could not load font file {}", config.path.c_str());
+	}
+
+	LifetimeWrapper file(toki::move(open_result), [](NativeHandle& handle) {
+		auto _ = toki::close(handle);
+	});
+
+	auto seek_result = toki::seek(file.get(), 0, FileCursorStart::END);
+	if (seek_result.is_error()) {
+		TK_LOG_ERROR("Could not load font file {}", config.path.c_str());
+	}
+
+	auto tell_result = toki::tell(file.get());
+	if (tell_result.is_error()) {
+		TK_LOG_ERROR("Could not load font file {}", config.path.c_str());
+	}
+
+	DynamicArray<u8> ttf_bytes(tell_result.value());
+	seek_result = toki::seek(file.get(), 0, FileCursorStart::BEGIN);
+	if (seek_result.is_error()) {
+		TK_LOG_ERROR("Could not load font file {}", config.path.c_str());
+	}
+
+	auto read_result = read(file.get(), ttf_bytes.data(), tell_result.value());
 
 	using PixelType = u8;
 	u32 pixel_count = config.atlas_size.x * config.atlas_size.y;
@@ -45,16 +65,15 @@ void FontSystem::load_font(toki::StringView name, const LoadFontConfig& config) 
 
 	DynamicArray<Glyph> glyphs(char_count);
 
-	i32 result = stbtt_BakeFontBitmap(
-		ttf_bytes.data(),
-		0,
-		config.size,
-		reinterpret_cast<u8*>(initial_pixels.data()),
-		static_cast<i32>(config.atlas_size.x),
-		static_cast<i32>(config.atlas_size.y),
-		first_char,
-		char_count,
-		reinterpret_cast<stbtt_bakedchar*>(glyphs.data()));
+	i32 result = stbtt_BakeFontBitmap(ttf_bytes.data(),
+									  0,
+									  config.size,
+									  reinterpret_cast<u8*>(initial_pixels.data()),
+									  static_cast<i32>(config.atlas_size.x),
+									  static_cast<i32>(config.atlas_size.y),
+									  first_char,
+									  char_count,
+									  reinterpret_cast<stbtt_bakedchar*>(glyphs.data()));
 	TK_ASSERT(result > 0);
 
 	union Temp {

@@ -14,6 +14,7 @@ struct Unexpected {
 public:
 	Unexpected() = delete;
 	Unexpected(T&& value): m_value(value) {}
+	Unexpected(const T& value): m_value(value) {}
 	~Unexpected() = default;
 
 	T m_value;

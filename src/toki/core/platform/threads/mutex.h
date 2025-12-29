@@ -16,12 +16,17 @@ public:
 	DELETE_COPY(Mutex)
 	DEFAULT_MOVE(Mutex);
 
+	b8 is_locked();
 	void lock();
 	b8 try_lock();
 	void unlock();
 
-	static constexpr MutexState MUTEX_UNLOCKED = 0;
-	static constexpr MutexState MUTEX_LOCKED   = 1;
+	i32& state() {
+		return m_state;
+	}
+
+	static constexpr i32 MUTEX_UNLOCKED = 0;
+	static constexpr i32 MUTEX_LOCKED	= 1;
 
 private:
 	i32 m_state;

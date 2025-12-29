@@ -20,6 +20,8 @@ VulkanBackend::~VulkanBackend() {
 }
 
 void VulkanBackend::initialize(const RendererConfig& config) {
+	TK_LOG_INFO("Initializing Vulkan backend");
+
 	initialize_instance();
 	initialize_device(config.window);
 
@@ -292,6 +294,7 @@ void VulkanBackend::initialize_instance() {
 	instance_create_info.ppEnabledLayerNames = nullptr;
 #endif
 
+	TK_LOG_INFO("Creating Vulkan instance");
 	VkResult result = vkCreateInstance(&instance_create_info, m_state.allocation_callbacks, &m_state.instance);
 	TK_ASSERT(result == VK_SUCCESS);
 }
@@ -306,9 +309,9 @@ void VulkanBackend::initialize_device(Window* window) {
 	vkEnumeratePhysicalDevices(m_state.instance, &physical_device_count, physical_devices.data());
 
 	VkPhysicalDeviceProperties physical_device_properties;
-	for (u32 i = 0; i < physical_devices.size(); ++i) {
-		vkGetPhysicalDeviceProperties(physical_devices[i], &physical_device_properties);
-	}
+	vkGetPhysicalDeviceProperties(physical_devices[0], &physical_device_properties);
+
+	TK_LOG_INFO("Using GPU: {}, driver: {}", physical_device_properties.deviceName, physical_device_properties.driverVersion);
 
 	m_state.physical_device = physical_devices[0];
 
@@ -380,6 +383,7 @@ void VulkanBackend::initialize_device(Window* window) {
 	device_create_info.enabledExtensionCount   = device_extensions.size();
 	device_create_info.ppEnabledExtensionNames = device_extensions.data();
 
+	TK_LOG_INFO("Creating Vulkan logical device");
 	VkResult result = vkCreateDevice(
 		m_state.physical_device, &device_create_info, m_state.allocation_callbacks, &m_state.logical_device);
 	TK_ASSERT(result == VK_SUCCESS, "Could not create Vulkan device");

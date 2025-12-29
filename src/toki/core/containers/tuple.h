@@ -47,8 +47,7 @@ struct Tuple : TupleImpl<MakeIndexSequence<sizeof...(Ts)>, Ts...> {
 
 	constexpr Tuple() = default;
 
-	template <class... Us>
-	constexpr Tuple(Us&&... args): TupleImpl<MakeIndexSequence<sizeof...(Ts)>, Ts...>(toki::forward<Us>(args)...) {}
+	constexpr Tuple(Ts&&... args): TupleImpl<MakeIndexSequence<sizeof...(Ts)>, Ts...>(toki::forward<Ts>(args)...) {}
 };
 
 #define TUPLE_GET(CONST, REF)                                         \
